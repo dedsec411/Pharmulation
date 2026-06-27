@@ -1,0 +1,1 @@
+ALTER TABLE public.scores ADD COLUMN IF NOT EXISTS errors_detail JSONB NOT NULL DEFAULT '[]'::jsonb;
