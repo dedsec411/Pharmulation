@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
+import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
 import { computeScore, submitScore, toastScore } from "@/lib/game/shared";
@@ -177,32 +178,41 @@ function SubmodeBadge({ mode }: { mode: "rx" | "otc" }) {
 // ─── Root component ───────────────────────────────────────────────────────────
 function CommunityGame() {
   // We randomly pick from BOTH rx and otc cases
-  const rxLoader  = useCaseLoader("rx");
-  const otcLoader = useCaseLoader("otc");
 
   // Choose which loader to use — alternate or random per session
   const [activeMode] = useState<"rx" | "otc">(() =>
     Math.random() < 0.5 ? "rx" : "otc"
   );
+  const { difficulty, difficultyModal } = useDifficultyChoice(activeMode);
+  const rxLoader = useCaseLoader("rx", difficulty);
+  const otcLoader = useCaseLoader("otc", difficulty);
 
   const loader = activeMode === "rx" ? rxLoader : otcLoader;
   const LIMIT  = activeMode === "rx" ? LIMIT_RX : LIMIT_OTC;
 
   if (loader.loading || !loader.caseData) {
     return (
-      <main className="grid min-h-[60vh] place-items-center">
-        <div className="text-center space-y-3">
-          <div className="text-4xl animate-pulse">💊</div>
-          <p className="text-muted-foreground text-sm">Loading community case…</p>
-        </div>
-      </main>
+      <>
+        {difficultyModal}
+        <main className="grid min-h-[60vh] place-items-center">
+          <div className="text-center space-y-3">
+            <div className="text-4xl animate-pulse">Rx</div>
+            <p className="text-muted-foreground text-sm">Loading community case...</p>
+          </div>
+        </main>
+      </>
     );
   }
 
-  return activeMode === "rx" ? (
-    <RxGame caseData={loader.caseData} next={loader.next} LIMIT={LIMIT} />
-  ) : (
-    <OtcGame caseData={loader.caseData} next={loader.next} LIMIT={LIMIT} />
+  return (
+    <>
+      {difficultyModal}
+      {activeMode === "rx" ? (
+        <RxGame caseData={loader.caseData} next={loader.next} LIMIT={LIMIT} />
+      ) : (
+        <OtcGame caseData={loader.caseData} next={loader.next} LIMIT={LIMIT} />
+      )}
+    </>
   );
 }
 
@@ -320,6 +330,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
 
   async function finish(timedOut: boolean) {
     const score = computeScore({
+      difficulty: caseData?.difficulty,
       correctDrugs: correct, wrongDrugs: wrong, infoRead,
       correctLabels, wrongLabels, hintsUsed: hints,
       pauseUsed: timer.pauseUsed,
@@ -583,6 +594,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
 
   async function finish(timedOut: boolean, cl = 0, wl = 0) {
     const score = computeScore({
+      difficulty: caseData?.difficulty,
       correctDrugs: correct, wrongDrugs: wrong, correctLabels: cl, wrongLabels: wl,
       hintsUsed: hints, pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,

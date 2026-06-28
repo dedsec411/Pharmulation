@@ -2,6 +2,47 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export type Mode = "rx" | "otc" | "hospital" | "oncology" | "cosmetic" | "emergency" | "industry" | "warehousing";
+export type Difficulty = "easy" | "medium" | "hard";
+
+export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  easy: "Easy",
+  medium: "Medium",
+  hard: "Hard",
+};
+
+export const DIFFICULTY_RULES: Record<Difficulty, {
+  base: number;
+  rewardMultiplier: number;
+  penaltyMultiplier: number;
+  speedBonus: number;
+  pausePenalty: number;
+  timeoutMultiplier: number;
+}> = {
+  easy: {
+    base: 90,
+    rewardMultiplier: 0.85,
+    penaltyMultiplier: 0.65,
+    speedBonus: 15,
+    pausePenalty: 10,
+    timeoutMultiplier: 0.65,
+  },
+  medium: {
+    base: 100,
+    rewardMultiplier: 1,
+    penaltyMultiplier: 1,
+    speedBonus: 30,
+    pausePenalty: 20,
+    timeoutMultiplier: 0.5,
+  },
+  hard: {
+    base: 120,
+    rewardMultiplier: 1.25,
+    penaltyMultiplier: 1.5,
+    speedBonus: 45,
+    pausePenalty: 35,
+    timeoutMultiplier: 0.4,
+  },
+};
 
 export const MODE_TIMERS: Record<Mode, number> = {
   rx: 180,
@@ -26,6 +67,7 @@ export const MODE_LABEL: Record<Mode, string> = {
 };
 
 export type ScoreInput = {
+  difficulty?: Difficulty | string | null;
   correctDrugs?: number;
   wrongDrugs?: number;
   infoRead?: number;
@@ -40,26 +82,38 @@ export type ScoreInput = {
 };
 
 export function computeScore(i: ScoreInput) {
-  let s = 100;
-  s += (i.correctDrugs ?? 0) * 20;
-  s += (i.infoRead ?? 0) * 15;
-  s += (i.correctLabels ?? 0) * 25;
-  s -= (i.wrongDrugs ?? 0) * 15;
-  s -= (i.wrongLabels ?? 0) * 10;
-  s -= (i.hintsUsed ?? 0) * 10;
-  if (i.pauseUsed) s -= 20;
-  if (i.timeTakenSec < i.timeLimitSec / 2) s += 30;
-  if (i.timedOut) s = Math.floor(s * 0.5);
+  const difficulty = (i.difficulty === "easy" || i.difficulty === "hard" || i.difficulty === "medium")
+    ? i.difficulty
+    : "medium";
+  const rules = DIFFICULTY_RULES[difficulty];
+  let s = rules.base;
+  s += (i.correctDrugs ?? 0) * 20 * rules.rewardMultiplier;
+  s += (i.infoRead ?? 0) * 15 * rules.rewardMultiplier;
+  s += (i.correctLabels ?? 0) * 25 * rules.rewardMultiplier;
+  s -= (i.wrongDrugs ?? 0) * 15 * rules.penaltyMultiplier;
+  s -= (i.wrongLabels ?? 0) * 10 * rules.penaltyMultiplier;
+  s -= (i.hintsUsed ?? 0) * 10 * rules.penaltyMultiplier;
+  if (i.pauseUsed) s -= rules.pausePenalty;
+  if (i.timeTakenSec < i.timeLimitSec / 2) s += rules.speedBonus;
+  if (i.timedOut) s = Math.floor(s * rules.timeoutMultiplier);
   if (i.emergencyMultiplier) s = s * 3;
   return Math.max(0, Math.round(s));
 }
 
-export async function fetchRandomCase(mode: Mode) {
-  const { data, error } = await supabase
+export async function fetchRandomCase(mode: Mode, difficulty?: Difficulty | null) {
+  let query = supabase
     .from("cases")
     .select("*")
     .eq("mode", mode);
+  if (difficulty) query = query.eq("difficulty", difficulty);
+
+  let { data, error } = await query;
   if (error) throw error;
+  if ((!data || data.length === 0) && difficulty) {
+    const fallback = await supabase.from("cases").select("*").eq("mode", mode);
+    if (fallback.error) throw fallback.error;
+    data = fallback.data;
+  }
   if (!data || data.length === 0) return null;
   return data[Math.floor(Math.random() * data.length)];
 }

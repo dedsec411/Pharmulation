@@ -14,6 +14,7 @@ import { Check, X as XIcon, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
+import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
 export const Route = createFileRoute("/_authenticated/game/rx")({
   head: () => ({ meta: [{ title: "Rx Cases — PharmaVerse" }] }),
@@ -29,8 +30,9 @@ const LIMIT = MODE_TIMERS.rx;
 
 function RxGame() {
   const onExit = useGameExit("/modes");
+  const { difficulty, difficultyModal } = useDifficultyChoice("rx");
   const { profile } = useAuthStore();
-  const { caseData, loading, next } = useCaseLoader("rx");
+  const { caseData, loading, next } = useCaseLoader("rx", difficulty);
   const [phase, setPhase] = useState<Phase>("collect");
   const [collected, setCollected] = useState<string[]>([]);
   const [wrong, setWrong] = useState(0);
@@ -140,6 +142,7 @@ function RxGame() {
 
   async function finish(timedOut: boolean) {
     const score = computeScore({
+      difficulty: caseData?.difficulty,
       correctDrugs: correct, wrongDrugs: wrong, infoRead, correctLabels, wrongLabels,
       hintsUsed: hints, pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
@@ -158,7 +161,7 @@ function RxGame() {
     setHints((n) => n + 1); setShowHint(true); toastScore(-10, "hint used");
   }
 
-  if (loading || !caseData) return <Loading />;
+  if (loading || !caseData) return <>{difficultyModal}<Loading /></>;
   if (phase === "done" && result) {
     return (
       <FeedbackScreen
@@ -183,6 +186,7 @@ function RxGame() {
 
   return (
     <>
+      {difficultyModal}
       <GameHeader
         title={caseData.title ?? "Rx Case"}
         remaining={timer.remaining} pct={timer.pct}

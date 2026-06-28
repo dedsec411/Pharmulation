@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
+import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
 import {
@@ -28,7 +29,8 @@ type Phase = "receiving" | "dispatch" | "expiry" | "reconcile" | "done";
 function WarehouseGame() {
   const onExit = useGameExit("/modes");
   const { profile } = useAuthStore();
-  const { caseData, loading, next } = useCaseLoader("warehousing");
+  const { difficulty, difficultyModal } = useDifficultyChoice("warehousing");
+  const { caseData, loading, next } = useCaseLoader("warehousing", difficulty);
   const s = caseData?.shipment_json;
   const [phase, setPhase] = useState<Phase>("receiving");
 
@@ -68,7 +70,12 @@ function WarehouseGame() {
   }, [caseData?.id]);
 
   if (loading || !caseData || !s) {
-    return <main className="grid min-h-[60vh] place-items-center text-muted-foreground">Loading warehouse…</main>;
+    return (
+      <>
+        {difficultyModal}
+        <main className="grid min-h-[60vh] place-items-center text-muted-foreground">Loading warehouse...</main>
+      </>
+    );
   }
 
   function placeShipment(zoneOrQuarantine: string) {
@@ -221,6 +228,7 @@ function WarehouseGame() {
     let totalPoints = points;
     if (contaminated) totalPoints -= 30;
     const score = computeScore({
+      difficulty: caseData?.difficulty,
       hintsUsed: hints, pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
     }) - 100 + Math.max(0, totalPoints);
@@ -258,6 +266,7 @@ function WarehouseGame() {
 
   return (
     <>
+      {difficultyModal}
       <GameHeader
         title={`Warehouse · ${phaseLabel[phase]}`}
         remaining={timer.remaining} pct={timer.pct}
@@ -451,3 +460,4 @@ function TempLogChart({ log }: { log: { min: number; max: number; excursion: boo
     </div>
   );
 }
+

@@ -11,6 +11,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { User } from "lucide-react";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
+import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
 export const Route = createFileRoute("/_authenticated/game/otc")({
   head: () => ({ meta: [{ title: "OTC Consultation — PharmaVerse" }] }),
@@ -24,8 +25,9 @@ type Step = "questions" | "drug" | "dose" | "advice" | "done";
 
 function OtcGame() {
   const onExit = useGameExit("/modes");
+  const { difficulty, difficultyModal } = useDifficultyChoice("otc");
   const { profile } = useAuthStore();
-  const { caseData, loading, next } = useCaseLoader("otc");
+  const { caseData, loading, next } = useCaseLoader("otc", difficulty);
   const [step, setStep] = useState<Step>("questions");
   const [qi, setQi] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -45,7 +47,7 @@ function OtcGame() {
     setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setResult(null);
   }, [caseData?.id]);
 
-  if (loading || !caseData) return <Loading />;
+  if (loading || !caseData) return <>{difficultyModal}<Loading /></>;
   const ans = caseData.correct_answer_json ?? {};
   const questions: any[] = ans.questions ?? [];
 
@@ -113,6 +115,7 @@ function OtcGame() {
 
   async function finish(timedOut: boolean, cl = 0, wl = 0) {
     const score = computeScore({
+      difficulty: caseData?.difficulty,
       correctDrugs: correct, wrongDrugs: wrong, correctLabels: cl, wrongLabels: wl,
       hintsUsed: hints, pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
@@ -142,6 +145,7 @@ function OtcGame() {
   const currentScore = correct * 20 - wrong * 15;
   return (
     <>
+      {difficultyModal}
       <GameHeader title={caseData.title ?? "OTC"} remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause} score={currentScore}
         onExit={onExit}

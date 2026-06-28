@@ -12,6 +12,7 @@ import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
+import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
 export const Route = createFileRoute("/_authenticated/game/hospital")({
   head: () => ({ meta: [{ title: "Hospital — PharmaVerse" }] }),
@@ -37,8 +38,9 @@ function listFromJson(value: unknown): string[] {
 export function HospitalGame({ mode }: { mode: Mode }) {
   const LIMIT = MODE_TIMERS[mode];
   const onExit = useGameExit("/modes");
+  const { difficulty, difficultyModal } = useDifficultyChoice(mode);
   const { profile } = useAuthStore();
-  const { caseData, loading, next } = useCaseLoader(mode);
+  const { caseData, loading, next } = useCaseLoader(mode, difficulty);
   const [allDrugs, setAllDrugs] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -137,6 +139,7 @@ export function HospitalGame({ mode }: { mode: Mode }) {
     });
 
     const score = computeScore({
+      difficulty: caseData?.difficulty,
       correctDrugs, wrongDrugs, correctLabels, wrongLabels,
       hintsUsed: hints, pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
@@ -151,7 +154,7 @@ export function HospitalGame({ mode }: { mode: Mode }) {
     setResult({ score, xpGain, correctOrders, remove });
   }
 
-  if (loading || !caseData) return <Loading />;
+  if (loading || !caseData) return <>{difficultyModal}<Loading /></>;
   if (done && result) {
     return (
       <FeedbackScreen
@@ -171,6 +174,7 @@ export function HospitalGame({ mode }: { mode: Mode }) {
   const currentMeds = listFromJson(patient.current_meds);
   return (
     <>
+      {difficultyModal}
       <GameHeader title={caseData.title ?? "Hospital"}onExit={onExit} remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause} score={orders.length * 5}
         onHint={() => { setHints((n) => n + 1); toastScore(-10, "hint used"); toast.info(`Hint: ${caseData.mentor_tip}`); }} />

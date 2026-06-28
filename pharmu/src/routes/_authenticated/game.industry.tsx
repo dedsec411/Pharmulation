@@ -14,6 +14,7 @@ import { Check, X as XIcon, Thermometer, Droplets, FlaskConical } from "lucide-r
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
+import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
 export const Route = createFileRoute("/_authenticated/game/industry")({
   head: () => ({ meta: [{ title: "Industry — PharmaVerse" }] }),
@@ -32,8 +33,9 @@ type Stage = typeof STAGES[number];
 
 function IndustryGame() {
   const onExit = useGameExit("/modes");
+  const { difficulty, difficultyModal } = useDifficultyChoice("industry");
   const { profile } = useAuthStore();
-  const { caseData, loading, next } = useCaseLoader("industry");
+  const { caseData, loading, next } = useCaseLoader("industry", difficulty);
   const f = caseData?.formula_json;
   const [phase, setPhase] = useState<Phase>("formula");
 
@@ -101,7 +103,12 @@ function IndustryGame() {
   }, [caseData?.id]);
 
   if (loading || !caseData || !f) {
-    return <main className="grid min-h-[60vh] place-items-center text-muted-foreground">Loading batch…</main>;
+    return (
+      <>
+        {difficultyModal}
+        <main className="grid min-h-[60vh] place-items-center text-muted-foreground">Loading batch...</main>
+      </>
+    );
   }
 
   function acknowledgeFormula() {
@@ -262,6 +269,7 @@ function IndustryGame() {
   async function finish(timedOut: boolean, releaseDelta = 0) {
     const totalPoints = points + releaseDelta;
     const score = computeScore({
+      difficulty: caseData?.difficulty,
       correctDrugs: 0, wrongDrugs: 0,
       hintsUsed: hints, pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
@@ -312,6 +320,7 @@ function IndustryGame() {
 
   return (
     <>
+      {difficultyModal}
       <GameHeader
         title={`Batch · ${f.product}`}
         remaining={timer.remaining} pct={timer.pct}

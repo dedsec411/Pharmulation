@@ -14,6 +14,7 @@ import { Siren, Lock } from "lucide-react";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { BackButton } from "@/components/BackButton";
+import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
 export const Route = createFileRoute("/_authenticated/game/emergency")({
   head: () => ({ meta: [{ title: "Emergency — PharmaVerse" }] }),
@@ -56,8 +57,9 @@ const LIMIT = MODE_TIMERS.emergency;
 type Step = "drug" | "dose" | "route" | "done";
 
 function EmergencyGame() {
+  const { difficulty, difficultyModal } = useDifficultyChoice("emergency");
   const { profile } = useAuthStore();
-  const { caseData, loading, next } = useCaseLoader("emergency");
+  const { caseData, loading, next } = useCaseLoader("emergency", difficulty);
   const [step, setStep] = useState<Step>("drug");
   const [correct, setCorrect] = useState(0);
   const [wrong, setWrong] = useState(0);
@@ -72,7 +74,14 @@ function EmergencyGame() {
   });
   useEffect(() => { setStep("drug"); setCorrect(0); setWrong(0); setResult(null); }, [caseData?.id]);
 
-  if (loading || !caseData) return <main className="grid min-h-[60vh] place-items-center text-muted-foreground">Loading…</main>;
+  if (loading || !caseData) {
+    return (
+      <>
+        {difficultyModal}
+        <main className="grid min-h-[60vh] place-items-center text-muted-foreground">Loading...</main>
+      </>
+    );
+  }
   const ans = caseData.correct_answer_json ?? {};
   const patient = caseData.patient_info_json ?? {};
 
@@ -113,6 +122,7 @@ function EmergencyGame() {
 
   async function finish(timedOut: boolean) {
     const score = computeScore({
+      difficulty: caseData?.difficulty,
       correctDrugs: correct, wrongDrugs: wrong,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
       emergencyMultiplier: true,
@@ -140,6 +150,7 @@ function EmergencyGame() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-950/40 to-background">
+      {difficultyModal}
       <GameHeader title={caseData.title ?? "EMERGENCY"} onExit={onExit} remaining={timer.remaining} pct={timer.pct}
         paused={false} togglePause={() => {}} score={correct * 30 - wrong * 15} hidePause />
       <main className="mx-auto max-w-3xl px-4 py-6">
