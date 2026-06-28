@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { LogoVideo } from "@/components/LogoVideo";
 
 export function Navbar() {
   const { profile } = useAuthStore();
@@ -23,7 +24,9 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-40 glass border-b border-border">
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 h-16">
-        <Link to="/dashboard" className="text-xl font-extrabold text-gradient-teal">Pharmulation</Link>
+        <Link to="/dashboard" className="flex h-12 w-28 items-center">
+          <LogoVideo className="aspect-video w-full" />
+        </Link>
         <div className="hidden md:flex items-center gap-1 text-sm">
           {[
             { to: "/dashboard", label: "Dashboard" },

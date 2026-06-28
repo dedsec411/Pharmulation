@@ -8,6 +8,7 @@ import {
   Box,
 } from "lucide-react";
 import { PillBackground } from "@/components/PillBackground";
+import { LogoVideo } from "@/components/LogoVideo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -71,10 +72,10 @@ export default function Landing() {
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             Built by pharmacists, for pharmacists
           </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
-            <span className="text-gradient-teal">Pharmulation</span>
+          <h1 className="mx-auto -mt-2 flex justify-center">
+            <LogoVideo className="aspect-video w-[min(82vw,560px)]" />
           </h1>
-          <p className="mt-6 text-xl md:text-2xl text-foreground/80 font-medium">
+          <p className="mt-8 text-xl md:text-2xl text-foreground/80 font-medium">
             Train Like a Real Pharmacist. <span className="text-primary">Anywhere.</span> Anytime.
           </p>
           <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
