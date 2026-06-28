@@ -15,7 +15,7 @@ function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"student" | "graduate" | "pharmd">("student");
+  const [role, setRole] = useState<"student" | "graduate">("student");
   const [loading, setLoading] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
@@ -72,7 +72,6 @@ function SignupPage() {
             className="w-full rounded-xl glass px-4 py-3 outline-none focus:border-primary">
             <option value="student" className="bg-card">Pharmacy Student</option>
             <option value="graduate" className="bg-card">Graduate Pharmacist</option>
-            <option value="pharmd" className="bg-card">PharmD</option>
           </select>
           <button disabled={loading} className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:scale-[1.02] transition disabled:opacity-60">
             {loading ? "Creating…" : "Create account"}
