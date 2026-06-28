@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Trophy, Zap, ArrowLeft, HelpCircle, Pause, Play } from "lucide-react";
+import { Trophy, Zap, ArrowLeft, HelpCircle, Pause, Play, AlertTriangle } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ThemeToggleButton } from "./ModeTheme";
 
 interface GameHeaderProps {
@@ -60,11 +61,28 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   onHint,
   hidePause = false,
 }) => {
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const state = getTimerState(pct);
   const circumference = 2 * Math.PI * 20;
   const dashOffset = circumference * (1 - pct / 100);
+  const timerIsTicking = remaining > 0 && !paused;
+
+  function handleExit() {
+    if (!onExit) return;
+    if (timerIsTicking) {
+      setShowExitConfirm(true);
+      return;
+    }
+    onExit();
+  }
+
+  function confirmExit() {
+    setShowExitConfirm(false);
+    onExit?.();
+  }
 
   return (
+    <>
     <header className="w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
 
@@ -72,7 +90,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
-            onClick={onExit}
+            onClick={handleExit}
             className="
               group inline-flex shrink-0 items-center gap-2
               rounded-xl border border-white/15 bg-white/[0.07]
@@ -193,5 +211,58 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
         />
       )}
     </header>
+
+    <AnimatePresence>
+      {showExitConfirm && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[70] grid place-items-end bg-black/70 p-4 backdrop-blur-sm sm:place-items-center"
+          onClick={() => setShowExitConfirm(false)}
+        >
+          <motion.div
+            initial={{ y: 40, opacity: 0, scale: 0.96 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 40, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 24 }}
+            className="relative w-full max-w-md overflow-hidden rounded-2xl border border-amber-500/35 bg-card shadow-2xl"
+            style={{ borderLeft: "4px solid #F59E0B" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5">
+              <div className="flex items-center gap-2 text-amber-300">
+                <AlertTriangle className="size-5" />
+                <h3 className="text-base font-bold uppercase tracking-wider">Leave this mode?</h3>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-foreground/90">
+                Your current progress will be lost if you leave now.
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Timer is still running: <span className="font-semibold text-foreground">{formatTime(remaining)}</span> left.
+              </p>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowExitConfirm(false)}
+                  className="flex-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  Stay in mode
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmExit}
+                  className="flex-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/15"
+                >
+                  Leave anyway
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 };
