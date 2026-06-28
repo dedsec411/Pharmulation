@@ -166,6 +166,41 @@
   animation: float-pill 8s ease-in-out infinite;
 }
 
+@keyframes hero-dust-fall {
+  0% {
+    background-position:
+      0 -120px,
+      90px -240px,
+      180px -80px;
+  }
+  100% {
+    background-position:
+      0 260px,
+      90px 140px,
+      180px 300px;
+  }
+}
+
+.hero-copy-layer {
+  isolation: isolate;
+}
+
+.hero-dust-field {
+  position: absolute;
+  inset: -180px -90px -70px;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(circle, oklch(0.82 0.14 185 / 0.75) 0 1px, transparent 2px),
+    radial-gradient(circle, oklch(0.92 0.04 210 / 0.45) 0 1px, transparent 2px),
+    radial-gradient(circle, oklch(0.74 0.14 180 / 0.35) 0 1.5px, transparent 3px);
+  background-size: 120px 190px, 180px 260px, 240px 320px;
+  filter: drop-shadow(0 0 8px oklch(0.74 0.14 180 / 0.45));
+  mask-image: linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
+  animation: hero-dust-fall 7s linear infinite;
+}
+
 
 /* =====================================================================
  * Mode theming — per-mode accent overrides + ambient animations

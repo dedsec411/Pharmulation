@@ -23,8 +23,8 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-40 glass border-b border-border">
-      <div className="mx-auto max-w-7xl flex items-center justify-between px-6 h-16">
-        <Link to="/dashboard" className="flex h-12 w-28 items-center">
+      <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
+        <Link to="/dashboard" className="flex h-20 w-60 items-center overflow-visible">
           <LogoVideo className="aspect-video w-full" />
         </Link>
         <div className="hidden md:flex items-center gap-1 text-sm">

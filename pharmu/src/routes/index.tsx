@@ -72,22 +72,25 @@ export default function Landing() {
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             Built by pharmacists, for pharmacists
           </div>
-          <h1 className="mx-auto -mt-2 flex justify-center">
-            <LogoVideo className="aspect-video w-[min(82vw,560px)]" />
+          <h1 className="relative z-10 mx-auto -mt-10 -mb-28 flex justify-center md:-mb-36">
+            <LogoVideo className="aspect-video w-[min(98vw,860px)]" />
           </h1>
-          <p className="mt-8 text-xl md:text-2xl text-foreground/80 font-medium">
-            Train Like a Real Pharmacist. <span className="text-primary">Anywhere.</span> Anytime.
-          </p>
-          <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
-            Four immersive training modes. 500+ drug entries. Real prescriptions, real patients, real consequences — without the risk.
-          </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link to="/login" className="rounded-full bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03]">
-              Start Training
-            </Link>
-            <Link to="/leaderboard" className="rounded-full border border-border glass px-8 py-3.5 text-base font-semibold text-foreground hover:border-primary/50 transition">
-              View Leaderboard
-            </Link>
+          <div className="hero-copy-layer relative z-30 mx-auto max-w-3xl">
+            <div className="hero-dust-field" aria-hidden="true" />
+            <p className="relative z-10 mt-0 text-xl font-medium text-foreground/90 md:text-2xl">
+              Train Like a Real Pharmacist. <span className="text-primary">Anywhere.</span> Anytime.
+            </p>
+            <p className="relative z-10 mx-auto mt-4 max-w-2xl text-muted-foreground">
+              Four immersive training modes. 500+ drug entries. Real prescriptions, real patients, real consequences - without the risk.
+            </p>
+            <div className="relative z-10 mt-10 flex flex-wrap justify-center gap-3">
+              <Link to="/login" className="rounded-full bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03]">
+                Start Training
+              </Link>
+              <Link to="/leaderboard" className="rounded-full border border-border glass px-8 py-3.5 text-base font-semibold text-foreground hover:border-primary/50 transition">
+                View Leaderboard
+              </Link>
+            </div>
           </div>
         </motion.div>
       </section>
