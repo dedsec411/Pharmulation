@@ -38,6 +38,128 @@ const FREQS     = ["once daily", "twice daily", "three times daily", "as needed"
 const TIMINGS   = ["morning", "with food", "before sleep", "as needed"];
 const DURATIONS = ["7 days", "14 days", "4 weeks", "ongoing"];
 
+function SimulatedPrescription({ caseData }: { caseData: any }) {
+  const rx = caseData.electronic_prescription_json ?? {};
+  const patient = caseData.patient_info_json ?? {};
+  const items = rx.items ?? [];
+  const patientName = rx.patient ?? patient.name ?? "Training Patient";
+  const prescriber = rx.prescriber ?? "Simulation Prescriber";
+  const today = new Date();
+  const date = `${today.getDate()} / ${today.getMonth() + 1} / ${today.getFullYear()}`;
+  const handwriting = {
+    fontFamily: '"Comic Sans MS", "Segoe Print", cursive',
+    letterSpacing: "0.01em",
+  };
+  const visibleItems = items.slice(0, 4);
+
+  return (
+    <motion.div
+      key="handwritten"
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      className="flex justify-center rounded-lg border border-border/40 bg-slate-950/30 px-2 py-5 sm:px-5"
+    >
+      <div
+        className="relative w-full max-w-[430px] -rotate-[1.2deg] overflow-hidden bg-[#f6f2e8] text-slate-900 shadow-[0_24px_55px_rgba(0,0,0,0.45)]"
+        style={{
+          aspectRatio: "0.71",
+          backgroundImage:
+            "linear-gradient(90deg, rgba(255,255,255,0.45), transparent 22%, transparent 82%, rgba(0,0,0,0.06)), radial-gradient(circle at 35% 18%, rgba(255,255,255,0.5), transparent 32%), linear-gradient(#fbf8ef, #eee8dc)",
+        }}
+      >
+        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          <div className="-rotate-12 text-center text-3xl font-black uppercase tracking-[0.28em] text-red-500/[0.08]">
+            Training Only
+          </div>
+        </div>
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(transparent_0,rgba(0,0,0,0.035)_1px,transparent_2px)] bg-[length:100%_38px] opacity-40" />
+        <div className="relative m-5 h-[calc(100%-2.5rem)] border border-slate-500/70 bg-white/35">
+          <div className="grid grid-cols-[1fr_1.05fr] border-b border-slate-500/70 text-[9px] leading-tight">
+            <div className="flex min-h-[92px] flex-col items-center justify-center border-r border-slate-500/70 p-2 text-center">
+              <div className="mb-1 grid h-8 w-8 place-items-center rounded-full border border-slate-600/70 text-[10px] font-bold">Rx</div>
+              <p className="font-bold uppercase">Pharmulation</p>
+              <p className="font-bold uppercase">Community Pharmacy Simulator</p>
+              <p className="mt-1 text-[8px] font-bold text-red-600">Training document - not valid for dispensing</p>
+            </div>
+            <div>
+              <div className="border-b border-slate-500/70 p-2">
+                <p className="text-[8px] font-semibold">Patient Name</p>
+                <p
+                  className="mt-1 truncate text-2xl text-slate-800"
+                  style={{ ...handwriting, transform: "rotate(-2deg)" }}
+                >
+                  {patientName}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 text-[8px]">
+                <div className="border-r border-slate-500/70 p-2">
+                  <span className="font-semibold">Training Case ID</span>
+                  <span className="ml-1 font-mono">{String(caseData.id ?? "").slice(0, 8)}</span>
+                </div>
+                <div className="p-2">
+                  <span className="font-semibold">Date</span>
+                  <span className="ml-2 text-base" style={handwriting}>{date}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-b border-slate-500/70 py-1 text-center text-[11px] font-bold uppercase tracking-wide">
+            Simulated Prescription
+          </div>
+          <div className="grid grid-cols-4 border-b border-slate-500/70 text-[8px]">
+            <div className="border-r border-slate-500/70 px-2 py-1">Diagnosis</div>
+            <div className="border-r border-slate-500/70 px-2 py-1">Allergies: {patient.allergies ?? "N/A"}</div>
+            <div className="border-r border-slate-500/70 px-2 py-1">Weight</div>
+            <div className="px-2 py-1">Age: {patient.age ?? ""}</div>
+          </div>
+
+          <div className="relative h-[270px] overflow-hidden px-7 py-6">
+            <p className="absolute left-5 top-5 text-3xl font-serif font-bold leading-none">Rx</p>
+            <div className="ml-12 mt-6 space-y-3 text-slate-800" style={handwriting}>
+              {visibleItems.map((it: any, i: number) => (
+                <div
+                  key={`${it.drug}-${i}`}
+                  className="max-w-[260px] text-[17px] leading-tight"
+                  style={{
+                    transform: `rotate(${i % 2 === 0 ? -0.7 : 0.6}deg)`,
+                    marginLeft: `${Math.min(i * 8, 18)}px`,
+                  }}
+                >
+                  <p className="break-words">{it.drug} {it.strength}</p>
+                  <p className="ml-5 break-words text-[15px] leading-tight">{it.sig}</p>
+                </div>
+              ))}
+              {items.length === 0 && (
+                <p className="text-[17px]" style={{ transform: "rotate(-1deg)" }}>
+                  Medication as prescribed
+                </p>
+              )}
+              {items.length > visibleItems.length && (
+                <p className="ml-3 text-[13px] text-slate-600">+ additional items on typed view</p>
+              )}
+            </div>
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 grid h-[82px] grid-cols-2 border-t border-slate-500/70 text-[8px]">
+            <div>
+              <div className="h-[27px] truncate border-b border-slate-500/70 px-2 py-1">Prescriber: {prescriber}</div>
+              <div className="h-[27px] border-b border-slate-500/70 px-2 py-1">Checked By:</div>
+              <div className="h-[27px] px-2 py-1 font-bold text-red-600">Simulation only</div>
+            </div>
+            <div className="border-l border-slate-500/70">
+              <div className="h-[27px] border-b border-slate-500/70 px-2 py-1">Training Signature:</div>
+              <div className="h-[27px] border-b border-slate-500/70 px-2 py-1">Pharmacist's Notes:</div>
+              <div className="h-[27px] px-2 py-1 text-center">Not a legal prescription</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Sub-mode badge ───────────────────────────────────────────────────────────
 function SubmodeBadge({ mode }: { mode: "rx" | "otc" }) {
   return (
@@ -281,17 +403,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                   </ul>
                 </motion.div>
               ) : (
-                <motion.div key="handwritten"
-                  initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-                  className="flex min-h-[180px] items-center justify-center rounded-lg border border-dashed border-border/50 bg-gradient-to-br from-amber-50/5 to-amber-100/5">
-                  <div className="-rotate-1 p-6 text-center">
-                    <FileText className="mx-auto mb-2 size-7 opacity-30" />
-                    <p className="font-serif text-lg italic text-foreground/70">
-                      ℞ {(caseData.electronic_prescription_json?.items ?? []).map((i: any) => i.drug).join(", ")}
-                    </p>
-                    <p className="mt-2 text-xs text-muted-foreground italic">Tap "Show typed" to reveal clearly</p>
-                  </div>
-                </motion.div>
+                <SimulatedPrescription caseData={caseData} />
               )}
             </AnimatePresence>
 
