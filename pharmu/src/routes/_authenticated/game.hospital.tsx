@@ -23,6 +23,17 @@ export const Route = createFileRoute("/_authenticated/game/hospital")({
 const ROUTES = ["oral", "IV", "IM", "SC"];
 const FREQS = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"];
 
+function listFromJson(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((item) => String(item)).filter(Boolean);
+  if (typeof value === "string") {
+    return value.split(/[,;\n]/).map((item) => item.trim()).filter(Boolean);
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value).map((item) => String(item)).filter(Boolean);
+  }
+  return [];
+}
+
 export function HospitalGame({ mode }: { mode: Mode }) {
   const LIMIT = MODE_TIMERS[mode];
   const onExit = useGameExit("/modes");
@@ -157,6 +168,7 @@ export function HospitalGame({ mode }: { mode: Mode }) {
   }
 
   const patient = caseData.patient_info_json ?? {};
+  const currentMeds = listFromJson(patient.current_meds);
   return (
     <>
       <GameHeader title={caseData.title ?? "Hospital"}onExit={onExit} remaining={timer.remaining} pct={timer.pct}
@@ -168,11 +180,11 @@ export function HospitalGame({ mode }: { mode: Mode }) {
           <h2 className="mt-1 text-lg font-bold">{patient.name}</h2>
           <p className="text-sm text-muted-foreground">Age {patient.age} · {patient.diagnosis ?? patient.condition}</p>
           {patient.allergies && <Row label="Allergies" value={patient.allergies} />}
-          {patient.current_meds?.length > 0 && (
+          {currentMeds.length > 0 && (
             <div className="mt-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-primary">Current meds</p>
               <ul className="mt-1 list-disc pl-5 text-sm text-muted-foreground">
-                {patient.current_meds.map((m: string, i: number) => <li key={i}>{m}</li>)}
+                {currentMeds.map((m, i) => <li key={i}>{m}</li>)}
               </ul>
             </div>
           )}
