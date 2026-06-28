@@ -55,7 +55,7 @@ function Modes() {
       <Navbar />
       <main className="mx-auto max-w-7xl px-6 py-10">
         <div className="mb-6">
-          <BackButton to="/dashboard" label="Dashboard" />
+          <BackButton to="/dashboard" />
         </div>
         <h1 className="text-3xl font-bold">Training Modes</h1>
         <p className="mt-2 text-muted-foreground">Pick a mode — each case has a timer and a mentor tip.</p>

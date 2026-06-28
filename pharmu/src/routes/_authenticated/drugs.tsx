@@ -92,7 +92,7 @@ function DrugsPage() {
       <Navbar />
       <main className="mx-auto max-w-6xl px-6 py-8">
         
-        <div className="mb-6"><BackButton to="/dashboard" label="Dashboard" /></div>
+        <div className="mb-6"><BackButton to="/dashboard" /></div>
         <div className="flex items-end justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-3xl font-bold">Drug Database</h1>

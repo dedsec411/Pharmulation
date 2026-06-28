@@ -75,7 +75,7 @@ function LeaderboardPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
-      <div className="mb-6"><BackButton to="/dashboard" label="Dashboard" /></div>
+      <div className="mb-6"><BackButton to={profile ? "/dashboard" : "/"} /></div>
       <div className="mt-3 flex items-end justify-between flex-wrap gap-3">
         <h1 className="text-4xl font-extrabold flex items-center gap-3">
           <Trophy className="h-8 w-8 text-primary" /> Leaderboard

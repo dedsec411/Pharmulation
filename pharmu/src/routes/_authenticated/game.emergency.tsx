@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Siren, Lock } from "lucide-react";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
+import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/game/emergency")({
   head: () => ({ meta: [{ title: "Emergency — PharmaVerse" }] }),
@@ -42,7 +43,9 @@ function EmergencyGate() {
         <Lock className="mx-auto size-10 text-amber-500" />
         <h1 className="mt-4 text-2xl font-bold">Emergency mode locked</h1>
         <p className="mt-2 text-muted-foreground">Complete 10 cases in any mode to unlock. You have {count} / 10.</p>
-        <Link to="/dashboard" className="mt-6 inline-flex rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">Back to dashboard</Link>
+        <div className="mt-6 flex justify-center">
+          <BackButton to="/dashboard" />
+        </div>
       </main>
     );
   }

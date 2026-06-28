@@ -93,7 +93,7 @@ function ProfilePage() {
       <Navbar />
       <main className="mx-auto max-w-5xl px-6 py-8">
         
-       <div className="mb-6"><BackButton to="/dashboard" label="Dashboard" /></div>
+       <div className="mb-6"><BackButton to="/dashboard" /></div>
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 flex flex-col md:flex-row items-center gap-5">
           <div className="h-20 w-20 rounded-2xl bg-primary text-primary-foreground grid place-items-center text-3xl font-bold">

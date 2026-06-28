@@ -44,7 +44,7 @@ function SettingsPage() {
     <>
       <Navbar />
       <main className="mx-auto max-w-2xl px-6 py-8 space-y-6">
-        <div><BackButton to="/profile" label="Profile" /></div>
+        <div><BackButton to="/profile" /></div>
         <h1 className="text-3xl font-bold">Settings</h1>
 
         <section className="glass-card p-6 space-y-4">

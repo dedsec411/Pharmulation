@@ -10,6 +10,7 @@ import { computeScore, submitScore, MODE_TIMERS, toastScore } from "@/lib/game/s
 import { useAuthStore } from "@/lib/auth-store";
 import { User } from "lucide-react";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
+import { useGameExit } from "@/lib/game/useGameExit";
 
 export const Route = createFileRoute("/_authenticated/game/otc")({
   head: () => ({ meta: [{ title: "OTC Consultation — PharmaVerse" }] }),
@@ -22,6 +23,7 @@ const LIMIT = MODE_TIMERS.otc;
 type Step = "questions" | "drug" | "dose" | "advice" | "done";
 
 function OtcGame() {
+  const onExit = useGameExit("/modes");
   const { profile } = useAuthStore();
   const { caseData, loading, next } = useCaseLoader("otc");
   const [step, setStep] = useState<Step>("questions");
@@ -142,6 +144,7 @@ function OtcGame() {
     <>
       <GameHeader title={caseData.title ?? "OTC"} remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause} score={currentScore}
+        onExit={onExit}
         onHint={() => { setHints((n) => n + 1); toastScore(-10, "hint used"); }} />
       <main className="mx-auto grid max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[1fr_2fr]">
         <aside className="rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur">

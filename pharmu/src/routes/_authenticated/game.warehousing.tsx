@@ -13,7 +13,6 @@ import { useAuthStore } from "@/lib/auth-store";
 import { Snowflake, Lock, AlertTriangle, Package } from "lucide-react";
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
-import { BackButton } from "@/components/BackButton";
 import { useGameExit } from "@/lib/game/useGameExit";
 
 export const Route = createFileRoute("/_authenticated/game/warehousing")({

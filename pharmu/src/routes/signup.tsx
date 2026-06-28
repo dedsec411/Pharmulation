@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Sign up — PharmaVerse" }] }),
@@ -43,7 +44,10 @@ function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="fixed left-4 top-4 z-10">
+        <BackButton to="/" />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="glass-card w-full max-w-md p-8"

@@ -70,12 +70,22 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
         {/* LEFT — exit + title */}
         <div className="flex items-center gap-3 min-w-0">
-          <Button
-            variant="ghost" size="icon" onClick={onExit}
-            className="text-muted-foreground hover:text-foreground shrink-0"
+          <button
+            type="button"
+            onClick={onExit}
+            className="
+              group inline-flex shrink-0 items-center gap-2
+              rounded-xl border border-white/15 bg-white/[0.07]
+              px-4 py-2 text-sm font-semibold text-foreground/90
+              shadow-[0_8px_30px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]
+              backdrop-blur-2xl transition-all duration-150
+              hover:border-white/25 hover:bg-white/[0.12] hover:text-foreground
+            "
+            aria-label="Back"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+            <ArrowLeft className="h-4 w-4 transition-transform duration-150 group-hover:-translate-x-0.5" />
+            <span>Back</span>
+          </button>
           {title && (
             <span className="font-bold text-sm truncate hidden sm:block">{title}</span>
           )}

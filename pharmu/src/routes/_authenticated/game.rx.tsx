@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Check, X as XIcon, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
-import { BackButton } from "@/components/BackButton"
+import { useGameExit } from "@/lib/game/useGameExit";
 
 export const Route = createFileRoute("/_authenticated/game/rx")({
   head: () => ({ meta: [{ title: "Rx Cases — PharmaVerse" }] }),
@@ -28,6 +28,7 @@ type Phase = "collect" | "info" | "label" | "done";
 const LIMIT = MODE_TIMERS.rx;
 
 function RxGame() {
+  const onExit = useGameExit("/modes");
   const { profile } = useAuthStore();
   const { caseData, loading, next } = useCaseLoader("rx");
   const [phase, setPhase] = useState<Phase>("collect");
@@ -187,6 +188,7 @@ function RxGame() {
         remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause}
         score={correct * 20 - wrong * 15 + infoRead * 15 + correctLabels * 25 - wrongLabels * 10}
+        onExit={onExit}
         onHint={useHint}
       />
       {phase === "collect" && (
