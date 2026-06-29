@@ -22,6 +22,7 @@ type Props = {
 };
 
 const AUTO_DISMISS_SEC = 15;
+const DOCTOR_IMAGE = "/doctor-mentor.png";
 
 export function ErrorExplanationPanel({ entry, mentorTip, onDismiss }: Props) {
   const [count, setCount] = useState(AUTO_DISMISS_SEC);
@@ -67,7 +68,15 @@ export function ErrorExplanationPanel({ entry, mentorTip, onDismiss }: Props) {
           >
             {/* Mentor avatar */}
             <div className="absolute right-4 top-4 flex flex-col items-end gap-1">
-              <div className="grid size-9 place-items-center rounded-full bg-primary/15 text-base">🧑‍🏫</div>
+              <div className="grid size-12 place-items-center overflow-hidden rounded-2xl border border-primary/25 bg-primary/10">
+                <motion.img
+                  src={DOCTOR_IMAGE}
+                  alt=""
+                  className="h-14 w-12 object-contain object-top drop-shadow-[0_8px_14px_rgba(0,0,0,0.2)]"
+                  animate={{ y: [0, -2, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                />
+              </div>
               <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[10px] tabular-nums text-muted-foreground">{count}s</span>
             </div>
 

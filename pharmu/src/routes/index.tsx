@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Pharmulation — Train Like a Real Pharmacist" },
-      { name: "description", content: "Interactive web-based pharmacy training simulator with real-world cases across Community, hospital, oncology, and emergencies." },
+      { name: "description", content: "Interactive web-based pharmacy training simulator with real-world cases across Community, clinical, oncology, and emergencies." },
       { property: "og:title", content: "Pharmulation" },
       { property: "og:description", content: "Train Like a Real Pharmacist. Anywhere. Anytime." },
     ],
@@ -55,7 +55,7 @@ const stats = [
 const testimonials = [
   { name: "Dr. Layla H.", role: "PharmD, Cairo", quote: "Pharmulation is the closest thing to real pharmacy I've found online. The oncology cases are brilliant." },
   { name: "Omar K.", role: "Pharmacy student, Year 4", quote: "I went from terrified of prescriptions to confident in 3 weeks. The mentor tips are gold." },
-  { name: "Sara M.", role: "Hospital pharmacist", quote: "Finally a CE platform that doesn't put me to sleep. The streaks keep me coming back daily." },
+  { name: "Sara M.", role: "Clinical pharmacist", quote: "Finally a CE platform that doesn't put me to sleep. The streaks keep me coming back daily." },
 ];
 
 export default function Landing() {

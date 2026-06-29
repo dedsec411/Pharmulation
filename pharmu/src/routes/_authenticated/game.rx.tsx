@@ -197,10 +197,10 @@ function RxGame() {
       />
       {phase === "collect" && (
         <main className="mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.2fr]">
-          {/* Prescription */}
+          {/* Rx Cases */}
           <div className="rounded-xl border border-border/40 bg-card/50 p-4 backdrop-blur">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Prescription</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Rx Cases</p>
               <button onClick={() => setShowHint((s) => !s)} className="text-xs text-primary hover:underline">
                 {showHint ? "Show handwritten" : "Show clean prescription"}
               </button>

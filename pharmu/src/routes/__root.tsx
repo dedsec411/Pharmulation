@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { TutorialBot } from "@/components/TutorialBot";
 import { useInitAuth } from "@/lib/use-init-auth";
 
 function NotFoundComponent() {
@@ -76,14 +77,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Pharmulation — Train Like a Real Pharmacist" },
-      { name: "description", content: "Browser-based pharmacy training simulator. Real prescriptions, OTC, hospital, oncology, cosmetics and emergency cases." },
-      { property: "og:title", content: "Pharmulation — Train Like a Real Pharmacist" },
-      { property: "og:description", content: "Browser-based pharmacy training simulator. Real prescriptions, OTC, hospital, oncology, cosmetics and emergency cases." },
+      { title: "Pharmulation - Train Like a Real Pharmacist" },
+      { name: "description", content: "Browser-based pharmacy training simulator. Real prescriptions, OTC, clinical, oncology, cosmetics and emergency cases." },
+      { property: "og:title", content: "Pharmulation - Train Like a Real Pharmacist" },
+      { property: "og:description", content: "Browser-based pharmacy training simulator. Real prescriptions, OTC, clinical, oncology, cosmetics and emergency cases." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Pharmulation — Train Like a Real Pharmacist" },
-      { name: "twitter:description", content: "Browser-based pharmacy training simulator. Real prescriptions, OTC, hospital, oncology, cosmetics and emergency cases." },
+      { name: "twitter:title", content: "Pharmulation - Train Like a Real Pharmacist" },
+      { name: "twitter:description", content: "Browser-based pharmacy training simulator. Real prescriptions, OTC, clinical, oncology, cosmetics and emergency cases." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ad21e273-1c51-419d-9dc8-989c38b350ef/id-preview-308e8334--a89de76e-398b-4993-be82-7ff82fc0f1af.lovable.app-1781339392769.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ad21e273-1c51-419d-9dc8-989c38b350ef/id-preview-308e8334--a89de76e-398b-4993-be82-7ff82fc0f1af.lovable.app-1781339392769.png" },
     ],
@@ -129,7 +130,11 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthBootstrap />
       <Outlet />
+      <TutorialBot />
       <Toaster position="top-right" theme="dark" richColors />
     </QueryClientProvider>
   );
 }
+
+
+

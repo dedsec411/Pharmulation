@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Trophy, Zap, ArrowLeft, HelpCircle, Pause, Play, AlertTriangle } from "lucide-react";
+import { Activity, Trophy, Zap, ArrowLeft, HelpCircle, Pause, Play, AlertTriangle } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ThemeToggleButton } from "./ModeTheme";
 
@@ -63,9 +63,8 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 }) => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const state = getTimerState(pct);
-  const circumference = 2 * Math.PI * 20;
-  const dashOffset = circumference * (1 - pct / 100);
   const timerIsTicking = remaining > 0 && !paused;
+  const heartRate = Math.round(62 + (100 - pct) * 0.58);
 
   function handleExit() {
     if (!onExit) return;
@@ -86,7 +85,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
     <header className="w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
 
-        {/* LEFT — exit + title */}
+        {/* LEFT - exit + title */}
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -109,49 +108,66 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           )}
         </div>
 
-        {/* CENTER — TIMER */}
+        {/* CENTER - TIMER */}
         <div className="flex items-center gap-3">
-          {/* SVG ring */}
           <div
-            className="relative flex items-center justify-center"
-            style={{ filter: `drop-shadow(0 0 8px ${state.glowColor})` }}
+            className="relative hidden min-w-[310px] overflow-hidden rounded-2xl border border-white/10 bg-black/30 px-4 py-2 shadow-inner backdrop-blur-xl md:block"
+            style={{ boxShadow: `inset 0 0 26px oklch(0 0 0 / 0.35), 0 0 24px -14px ${state.glowColor}` }}
           >
-            <svg width="52" height="52" viewBox="0 0 52 52" className="-rotate-90">
-              <circle cx="26" cy="26" r="20" fill="none"
-                stroke="oklch(1 0 0 / 0.08)" strokeWidth="3.5" />
-              <circle cx="26" cy="26" r="20" fill="none"
-                stroke={state.color} strokeWidth="3.5"
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={dashOffset}
-                style={{ transition: "stroke-dashoffset 0.9s linear, stroke 0.4s ease" }}
-              />
-            </svg>
-            <span
-              className={`absolute text-[10px] font-black tabular-nums ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`}
-            >
-              {formatTime(remaining)}
-            </span>
-          </div>
-
-          {/* Linear bar — desktop only */}
-          <div className="hidden md:flex flex-col gap-1 w-36">
-            <div className="flex justify-between text-[10px] font-medium text-muted-foreground">
-              <span>Time left</span>
-              <span className={`${state.textColor} font-bold`}>{formatTime(remaining)}</span>
+            <div className="pointer-events-none absolute inset-0 opacity-35"
+              style={{ backgroundImage: "linear-gradient(oklch(1 0 0 / 0.045) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.035) 1px, transparent 1px)", backgroundSize: "14px 14px" }} />
+            <div className="vital-monitor-scan pointer-events-none absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-white/12 to-transparent" />
+            <div className="relative flex items-center justify-between gap-4">
+              <div className="min-w-[82px]">
+                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground">
+                  <Activity className="h-3.5 w-3.5" /> ECG
+                </div>
+                <div className={`mt-0.5 font-mono text-xl font-black tabular-nums ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`}>
+                  {formatTime(remaining)}
+                </div>
+              </div>
+              <svg viewBox="0 0 150 44" className="h-11 flex-1" preserveAspectRatio="none">
+                <polyline
+                  points="0,24 18,24 25,24 31,14 38,32 45,24 58,24 64,24 70,7 77,38 84,24 103,24 110,18 117,28 124,24 150,24"
+                  fill="none"
+                  stroke={state.color}
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="vital-ecg-line"
+                  style={{ filter: `drop-shadow(0 0 5px ${state.glowColor})` }}
+                />
+              </svg>
+              <div className="text-right font-mono">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">HR</div>
+                <div className="text-lg font-black tabular-nums" style={{ color: state.color }}>{heartRate}</div>
+              </div>
             </div>
-            <div className="h-2 rounded-full bg-white/8 overflow-hidden">
+            <div className="relative mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full"
                 style={{
                   width: `${pct}%`,
-                  background: state.color,
+                  background: `linear-gradient(90deg, ${state.color}, oklch(0.92 0.06 190))`,
                   boxShadow: `0 0 8px ${state.glowColor}`,
                   transition: "width 0.9s linear, background 0.4s ease",
                 }}
               />
             </div>
           </div>
+
+          <div
+            className="relative flex h-12 w-24 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/30 md:hidden"
+            style={{ filter: `drop-shadow(0 0 8px ${state.glowColor})` }}
+          >
+            <svg viewBox="0 0 86 28" className="absolute inset-x-1 top-1 h-7 opacity-80" preserveAspectRatio="none">
+              <polyline points="0,16 15,16 22,8 28,22 34,16 48,16 54,5 60,24 66,16 86,16" fill="none" stroke={state.color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="vital-ecg-line" />
+            </svg>
+            <span className={`relative mt-4 font-mono text-xs font-black tabular-nums ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`}>
+              {formatTime(remaining)}
+            </span>
+          </div>
+
 
           {/* Pause/play */}
           {!hidePause && (
@@ -169,7 +185,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           )}
         </div>
 
-        {/* RIGHT — score, streak, hint, theme */}
+        {/* RIGHT - score, streak, hint, theme */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="flex items-center bg-muted/60 px-3 py-1.5 rounded-lg border border-border/40 text-sm font-medium">
             <Trophy className="h-4 w-4 text-amber-500 mr-1.5 shrink-0" />
@@ -190,7 +206,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 variant="ghost" size="icon"
                 onClick={onHint}
                 className="text-muted-foreground hover:text-foreground"
-                title="Hint (−10 pts)"
+                title="Hint (-10 pts)"
               >
                 <HelpCircle className="h-5 w-5" />
               </Button>

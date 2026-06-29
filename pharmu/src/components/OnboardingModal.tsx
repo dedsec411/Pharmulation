@@ -14,7 +14,7 @@ const steps = [
   {
     icon: FileText,
     title: "Start with Rx Cases",
-    body: "Prescription handling is the heart of pharmacy. We recommend starting here to build core reflexes.",
+    body: "Rx Cases are the heart of pharmacy. We recommend starting here to build core reflexes.",
   },
   {
     icon: Trophy,

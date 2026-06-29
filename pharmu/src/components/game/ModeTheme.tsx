@@ -1,6 +1,7 @@
 import React, { useEffect, useState, type ReactNode } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ModeAmbientLayer } from "./ModeAmbientLayer";
 
 // ─── Mode accent colours (must match styles.css body.mode-* vars) ─────────────
 const MODE_ACCENTS: Record<string, string> = {
@@ -41,7 +42,12 @@ export function ModeTheme({ mode, children }: ModeThemeProps) {
     };
   }, [mode]);
 
-  return <>{children}</>;
+  return (
+    <div className="relative min-h-screen overflow-hidden">
+      <ModeAmbientLayer mode={mode} intensity="screen" />
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
 }
 
 // ─── Light / dark toggle button ───────────────────────────────────────────────

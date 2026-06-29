@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
+import { SimulatedPrescription as PrescriptionSheet } from "@/components/game/SimulatedPrescription";
 import { useTimer } from "@/lib/game/useTimer";
 import { computeScore, submitScore, toastScore } from "@/lib/game/shared";
 import { useGameExit } from "@/lib/game/useGameExit";
@@ -21,7 +22,7 @@ import {
 
 // ─── Route ───────────────────────────────────────────────────────────────────
 export const Route = createFileRoute("/_authenticated/game/community")({
-  head: () => ({ meta: [{ title: "Community Pharmacy — PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Community Pharmacy - PharmaVerse" }] }),
   component: () => (
     <ModeTheme mode="rx">
       <CommunityGame />
@@ -39,6 +40,18 @@ const FREQS     = ["once daily", "twice daily", "three times daily", "as needed"
 const TIMINGS   = ["morning", "with food", "before sleep", "as needed"];
 const DURATIONS = ["7 days", "14 days", "4 weeks", "ongoing"];
 
+function CommunityFloatingPills({ className = "" }: { className?: string }) {
+  return (
+    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden="true">
+      <span className="floating-pill absolute left-[5%] top-[14%] h-3 w-12 rounded-full bg-gradient-to-r from-primary to-white/80 shadow-[0_0_22px_oklch(0.74_0.14_180/0.4)]" />
+      <span className="floating-pill absolute right-[10%] top-[22%] h-4 w-14 rounded-full bg-gradient-to-r from-cyan-300 to-primary [animation-delay:-2.5s]" />
+      <span className="floating-pill absolute bottom-[18%] left-[16%] h-3 w-10 rounded-full bg-gradient-to-r from-white/85 to-emerald-300 [animation-delay:-5s]" />
+      <span className="floating-pill absolute bottom-[10%] right-[28%] h-3.5 w-12 rounded-full bg-gradient-to-r from-primary to-sky-200 [animation-delay:-7s]" />
+      <span className="floating-pill absolute left-[52%] top-[44%] h-3 w-9 rounded-full bg-gradient-to-r from-emerald-300 to-white/75 [animation-delay:-9s]" />
+    </div>
+  );
+}
+
 function SimulatedPrescription({ caseData }: { caseData: any }) {
   const rx = caseData.electronic_prescription_json ?? {};
   const patient = caseData.patient_info_json ?? {};
@@ -46,113 +59,198 @@ function SimulatedPrescription({ caseData }: { caseData: any }) {
   const patientName = rx.patient ?? patient.name ?? "Training Patient";
   const prescriber = rx.prescriber ?? "Simulation Prescriber";
   const today = new Date();
-  const date = `${today.getDate()} / ${today.getMonth() + 1} / ${today.getFullYear()}`;
+  const date = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
+  const caseId = String(caseData.id ?? "").slice(0, 8);
+  const complaint = patient.complaint ?? patient.symptoms ?? caseData.title ?? "";
+  const diagnosis = patient.diagnosis ?? caseData.diagnosis ?? "";
   const handwriting = {
     fontFamily: '"Comic Sans MS", "Segoe Print", cursive',
     letterSpacing: "0.01em",
   };
-  const visibleItems = items.slice(0, 4);
+  const itemText = items.length
+    ? items.map((it: any) => `${it.drug ?? "Medication"} ${it.strength ?? ""} ${it.sig ?? ""}`.trim())
+    : ["Medication as prescribed"];
+  const lineClass = "relative min-h-[18px] border-b border-slate-300";
+  const labelClass = "shrink-0 text-[10px] font-bold";
+  const valueClass = "min-h-[14px] flex-1 truncate text-[10px]";
+
+  function InfoRow({
+    label,
+    value,
+    unit,
+  }: {
+    label: string;
+    value?: any;
+    unit?: string;
+  }) {
+    return (
+      <div className="mb-1 flex items-end gap-1 border-b border-slate-950 pb-0.5">
+        <span className={labelClass}>{label}</span>
+        <span className={valueClass}>{value ?? ""}</span>
+        {unit && <span className="text-[9px] text-slate-700">{unit}</span>}
+      </div>
+    );
+  }
+
+  function WriteLines({
+    count,
+    children,
+  }: {
+    count: number;
+    children?: ReactNode;
+  }) {
+    return (
+      <div className="relative">
+        {children}
+        {Array.from({ length: count }).map((_, i) => (
+          <span key={i} className={lineClass} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <motion.div
-      key="handwritten"
+      key="template-prescription"
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       className="flex justify-center rounded-lg border border-border/40 bg-slate-950/30 px-2 py-5 sm:px-5"
     >
-      <div
-        className="relative w-full max-w-[430px] -rotate-[1.2deg] overflow-hidden bg-[#f6f2e8] text-slate-900 shadow-[0_24px_55px_rgba(0,0,0,0.45)]"
-        style={{
-          aspectRatio: "0.71",
-          backgroundImage:
-            "linear-gradient(90deg, rgba(255,255,255,0.45), transparent 22%, transparent 82%, rgba(0,0,0,0.06)), radial-gradient(circle at 35% 18%, rgba(255,255,255,0.5), transparent 32%), linear-gradient(#fbf8ef, #eee8dc)",
-        }}
-      >
-        <div className="pointer-events-none absolute inset-0 grid place-items-center">
-          <div className="-rotate-12 text-center text-3xl font-black uppercase tracking-[0.28em] text-red-500/[0.08]">
+      <div className="relative w-full max-w-[680px] -rotate-[0.6deg] bg-white px-5 py-4 text-slate-950 shadow-[0_24px_55px_rgba(0,0,0,0.45)]">
+        <div className="pointer-events-none absolute inset-0 grid place-items-center overflow-hidden">
+          <div className="-rotate-12 border-2 border-red-500/15 px-8 py-2 text-center text-3xl font-black uppercase tracking-[0.24em] text-red-500/10">
             Training Only
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(transparent_0,rgba(0,0,0,0.035)_1px,transparent_2px)] bg-[length:100%_38px] opacity-40" />
-        <div className="relative m-5 h-[calc(100%-2.5rem)] border border-slate-500/70 bg-white/35">
-          <div className="grid grid-cols-[1fr_1.05fr] border-b border-slate-500/70 text-[9px] leading-tight">
-            <div className="flex min-h-[92px] flex-col items-center justify-center border-r border-slate-500/70 p-2 text-center">
-              <div className="mb-1 grid h-8 w-8 place-items-center rounded-full border border-slate-600/70 text-[10px] font-bold">Rx</div>
-              <p className="font-bold uppercase">Pharmulation</p>
-              <p className="font-bold uppercase">Community Pharmacy Simulator</p>
-              <p className="mt-1 text-[8px] font-bold text-red-600">Training document - not valid for dispensing</p>
+        <div className="relative">
+          <div className="border-b-2 border-slate-950 pb-1 text-center">
+            <span className="mr-2 inline-block align-middle">
+              <svg width="36" height="22" viewBox="0 0 36 22" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="34" height="20" rx="10" ry="10" fill="none" stroke="#000" strokeWidth="1.8" />
+                <line x1="18" y1="1" x2="18" y2="21" stroke="#000" strokeWidth="1.5" />
+                <rect x="1" y="1" width="17" height="20" rx="10" ry="10" fill="#222" />
+                <rect x="18" y="1" width="17" height="20" rx="10" ry="10" fill="white" />
+                <rect x="1" y="1" width="34" height="20" rx="10" ry="10" fill="none" stroke="#000" strokeWidth="1.8" />
+                <line x1="18" y1="1" x2="18" y2="21" stroke="#000" strokeWidth="1.5" />
+              </svg>
+            </span>
+            <span className="align-middle text-[22px] font-black uppercase tracking-[0.08em]">Pharmulation</span>
+            <span className="ml-2 inline-grid h-7 w-7 place-items-center rounded-full border-2 border-slate-950 align-middle text-[10px] font-bold">
+              24hr
+            </span>
+            <p className="mt-1 text-[9px] font-bold uppercase text-red-600">Simulation template - not valid for dispensing</p>
+          </div>
+
+          <div className="my-2 text-center text-sm font-bold underline">
+            Department: Community Pharmacy Training
+          </div>
+
+          <div className="mb-2 grid gap-x-4 gap-y-1 text-[11px] sm:grid-cols-2">
+            <div>
+              <InfoRow label="Patient Name:" value={patientName} />
+              <InfoRow label="Age:" value={patient.age} />
+              <div className="flex gap-2">
+                <div className="flex-1"><InfoRow label="Gender:" value={patient.gender} /></div>
+                <div className="flex-1"><InfoRow label="Weight:" value={patient.weight} unit="kg" /></div>
+              </div>
+              <InfoRow label="BMI:" value={patient.bmi} unit="kg/m2" />
+              <InfoRow label="Doctor Name:" value={prescriber} />
             </div>
             <div>
-              <div className="border-b border-slate-500/70 p-2">
-                <p className="text-[8px] font-semibold">Patient Name</p>
-                <p
-                  className="mt-1 truncate text-2xl text-slate-800"
-                  style={{ ...handwriting, transform: "rotate(-2deg)" }}
-                >
-                  {patientName}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 text-[8px]">
-                <div className="border-r border-slate-500/70 p-2">
-                  <span className="font-semibold">Training Case ID</span>
-                  <span className="ml-1 font-mono">{String(caseData.id ?? "").slice(0, 8)}</span>
-                </div>
-                <div className="p-2">
-                  <span className="font-semibold">Date</span>
-                  <span className="ml-2 text-base" style={handwriting}>{date}</span>
-                </div>
+              <InfoRow label="M.R. No.:" value={`TR-${caseId}`} />
+              <InfoRow label="Slip No.:" value={caseId} />
+              <InfoRow label="Arrival Date/Time:" value={date} />
+              <InfoRow label="Contact:" value={patient.contact} />
+              <div className="mt-1 flex gap-4">
+                {["Smoker", "Non-Smoker"].map((label) => (
+                  <span key={label} className="flex items-center gap-1 text-[10px] font-bold">
+                    <span className="inline-block h-[11px] w-[11px] border border-slate-950" /> {label}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="border-b border-slate-500/70 py-1 text-center text-[11px] font-bold uppercase tracking-wide">
-            Simulated Prescription
-          </div>
-          <div className="grid grid-cols-4 border-b border-slate-500/70 text-[8px]">
-            <div className="border-r border-slate-500/70 px-2 py-1">Diagnosis</div>
-            <div className="border-r border-slate-500/70 px-2 py-1">Allergies: {patient.allergies ?? "N/A"}</div>
-            <div className="border-r border-slate-500/70 px-2 py-1">Weight</div>
-            <div className="px-2 py-1">Age: {patient.age ?? ""}</div>
-          </div>
-
-          <div className="relative h-[270px] overflow-hidden px-7 py-6">
-            <p className="absolute left-5 top-5 text-3xl font-serif font-bold leading-none">Rx</p>
-            <div className="ml-12 mt-6 space-y-3 text-slate-800" style={handwriting}>
-              {visibleItems.map((it: any, i: number) => (
-                <div
-                  key={`${it.drug}-${i}`}
-                  className="max-w-[260px] text-[17px] leading-tight"
-                  style={{
-                    transform: `rotate(${i % 2 === 0 ? -0.7 : 0.6}deg)`,
-                    marginLeft: `${Math.min(i * 8, 18)}px`,
-                  }}
-                >
-                  <p className="break-words">{it.drug} {it.strength}</p>
-                  <p className="ml-5 break-words text-[15px] leading-tight">{it.sig}</p>
+          <div className="grid gap-x-4 border-t-2 border-slate-950 pt-1 sm:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[11px] font-bold uppercase">Presenting Complaint:-</div>
+              <WriteLines count={3}>
+                <p className="absolute left-1 top-0 max-w-[95%] truncate text-[15px] text-slate-800" style={handwriting}>
+                  {complaint}
+                </p>
+              </WriteLines>
+              <div className="mb-1 mt-2 text-[11px] font-bold uppercase">Examination / Injuries:-</div>
+              <WriteLines count={4}>
+                <p className="absolute left-1 top-0 max-w-[95%] truncate text-[14px] text-slate-800" style={handwriting}>
+                  Allergies: {patient.allergies ?? "N/A"}
+                </p>
+              </WriteLines>
+            </div>
+            <div>
+              <div className="mb-1 text-[11px] font-bold underline">VITALS</div>
+              {[
+                ["B.P.", "bp", "mmHg"],
+                ["PULSE", "pulse", "/min"],
+                ["SP O2", "spo2", "%"],
+                ["Res.R", "resp_rate", "/min"],
+                ["TEMP.", "temp", "F"],
+                ["GCS", "gcs", "/15"],
+                ["RBS", "rbs", "mg/dl"],
+              ].map(([label, key, unit]) => (
+                <div key={key} className="mb-1 flex items-center gap-1">
+                  <span className="w-12 shrink-0 text-[10px] font-bold">{label}</span>
+                  <span className="min-h-[14px] flex-1 border-b border-slate-950 text-[10px]">{patient[key] ?? ""}</span>
+                  <span className="text-[9px] text-slate-700">{unit}</span>
                 </div>
               ))}
-              {items.length === 0 && (
-                <p className="text-[17px]" style={{ transform: "rotate(-1deg)" }}>
-                  Medication as prescribed
+              <div className="mb-1 mt-2 text-[11px] font-bold underline">PROVISIONAL DIAGNOSIS</div>
+              <WriteLines count={3}>
+                <p className="absolute left-1 top-0 max-w-[95%] truncate text-[14px] text-slate-800" style={handwriting}>
+                  {diagnosis}
                 </p>
-              )}
-              {items.length > visibleItems.length && (
-                <p className="ml-3 text-[13px] text-slate-600">+ additional items on typed view</p>
-              )}
+              </WriteLines>
+              <div className="mb-1 mt-2 text-[11px] font-bold underline">REFER TO</div>
+              <WriteLines count={2} />
             </div>
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 grid h-[82px] grid-cols-2 border-t border-slate-500/70 text-[8px]">
-            <div>
-              <div className="h-[27px] truncate border-b border-slate-500/70 px-2 py-1">Prescriber: {prescriber}</div>
-              <div className="h-[27px] border-b border-slate-500/70 px-2 py-1">Checked By:</div>
-              <div className="h-[27px] px-2 py-1 font-bold text-red-600">Simulation only</div>
+          <div className="mt-1 border-t-2 border-slate-950 pt-1">
+            <div className="mb-1 text-[11px] font-bold uppercase">Treatment Given:-</div>
+            <div className="relative min-h-[150px]">
+              <div className="pointer-events-none absolute inset-x-2 top-1 z-10 space-y-2 text-slate-800" style={handwriting}>
+                <p className="text-3xl font-serif font-bold leading-none text-slate-950">Rx</p>
+                {itemText.slice(0, 5).map((line: string, i: number) => (
+                  <p
+                    key={`${line}-${i}`}
+                    className="ml-8 max-w-[92%] break-words text-[18px] leading-tight"
+                    style={{ transform: `rotate(${i % 2 === 0 ? -0.6 : 0.45}deg)` }}
+                  >
+                    {line}
+                  </p>
+                ))}
+              </div>
+              <WriteLines count={8} />
             </div>
-            <div className="border-l border-slate-500/70">
-              <div className="h-[27px] border-b border-slate-500/70 px-2 py-1">Training Signature:</div>
-              <div className="h-[27px] border-b border-slate-500/70 px-2 py-1">Pharmacist's Notes:</div>
-              <div className="h-[27px] px-2 py-1 text-center">Not a legal prescription</div>
+          </div>
+
+          <div className="mt-2 grid gap-x-4 border-t-2 border-slate-950 pt-1 sm:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[11px] font-bold uppercase">Test Advised</div>
+              <WriteLines count={3} />
+            </div>
+            <div className="text-center">
+              <div className="mb-1 text-[11px] font-bold uppercase">Sign &amp; Stamp</div>
+              <div className="grid h-10 place-items-center border border-slate-950 text-[10px] font-bold text-red-600">
+                Simulation only
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2 flex gap-1 border-t-2 border-slate-950 pt-1">
+            <span className="shrink-0 text-[10px] font-bold">Advise / Follow-Up:-</span>
+            <div className="flex-1">
+              <WriteLines count={2} />
             </div>
           </div>
         </div>
@@ -170,7 +268,7 @@ function SubmodeBadge({ mode }: { mode: "rx" | "otc" }) {
         : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
     }`}>
       {mode === "rx" ? <FileText className="h-3 w-3" /> : <ShoppingBag className="h-3 w-3" />}
-      {mode === "rx" ? "Prescription" : "OTC Consultation"}
+      {mode === "rx" ? "Rx Cases" : "OTC Consultation"}
     </span>
   );
 }
@@ -180,9 +278,81 @@ function CommunityGame() {
   // We randomly pick from BOTH rx and otc cases
 
   // Choose which loader to use — alternate or random per session
-  const [activeMode] = useState<"rx" | "otc">(() =>
-    Math.random() < 0.5 ? "rx" : "otc"
+  const [activeMode, setActiveMode] = useState<"rx" | "otc" | null>(null);
+
+  if (!activeMode) {
+    return <CommunityModePicker onPick={setActiveMode} />;
+  }
+
+  return <CommunityRun activeMode={activeMode} />;
+}
+
+function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void }) {
+  return (
+    <main className="relative mx-auto grid min-h-[70vh] max-w-5xl place-items-center px-4 py-10">
+      <CommunityFloatingPills className="opacity-45" />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 w-full rounded-3xl border border-border/40 bg-card/60 p-6 shadow-2xl shadow-primary/5 backdrop-blur md:p-8"
+      >
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Community Pharmacy</p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Choose your training type</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Pick whether you want to practice prescription dispensing or OTC patient consultation.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <button
+            onClick={() => onPick("rx")}
+            className="group rounded-2xl border border-blue-500/25 bg-blue-500/10 p-5 text-left transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-blue-500/15"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="grid size-12 place-items-center rounded-2xl bg-blue-500/15 text-blue-300">
+                <FileText className="size-6" />
+              </span>
+              <span className="rounded-full border border-blue-400/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-200">
+                Rx
+              </span>
+            </div>
+            <h2 className="mt-5 text-xl font-bold">Rx Cases</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Read a simulated prescription, collect the required medicines, review drug info, and create labels.
+            </p>
+            <span className="mt-5 inline-flex text-sm font-semibold text-blue-200 transition group-hover:translate-x-1">
+              Play Rx Cases &rarr;
+            </span>
+          </button>
+
+          <button
+            onClick={() => onPick("otc")}
+            className="group rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-5 text-left transition hover:-translate-y-0.5 hover:border-emerald-400/60 hover:bg-emerald-500/15"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="grid size-12 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-300">
+                <ShoppingBag className="size-6" />
+              </span>
+              <span className="rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-200">
+                OTC
+              </span>
+            </div>
+            <h2 className="mt-5 text-xl font-bold">OTC Consultation</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Ask follow-up questions, choose the safest medicine, pick the dose, and counsel the patient.
+            </p>
+            <span className="mt-5 inline-flex text-sm font-semibold text-emerald-200 transition group-hover:translate-x-1">
+              Play OTC &rarr;
+            </span>
+          </button>
+        </div>
+      </motion.div>
+    </main>
   );
+}
+
+function CommunityRun({ activeMode }: { activeMode: "rx" | "otc" }) {
   const { difficulty, difficultyModal } = useDifficultyChoice(activeMode);
   const rxLoader = useCaseLoader("rx", difficulty);
   const otcLoader = useCaseLoader("otc", difficulty);
@@ -384,13 +554,14 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
       </div>
 
       {phase === "collect" && (
-        <main className="mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.2fr]">
+        <main className="relative mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.2fr]">
+          <CommunityFloatingPills className="opacity-35" />
           {/* Prescription panel */}
-          <div className="rounded-xl border border-border/40 bg-card/50 p-4 backdrop-blur">
+          <div className="relative z-10 rounded-xl border border-border/40 bg-card/50 p-4 backdrop-blur">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">Prescription</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Rx Cases</p>
               </div>
               <button onClick={() => setShowClean((s) => !s)} className="text-xs text-primary hover:underline">
                 {showClean ? "Show handwritten" : "Show typed"}
@@ -414,21 +585,65 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                   </ul>
                 </motion.div>
               ) : (
-                <SimulatedPrescription caseData={caseData} />
+                <PrescriptionSheet caseData={caseData} />
               )}
             </AnimatePresence>
 
             <div className="mt-3 rounded-lg bg-muted/30 p-3 text-xs">
               <p className="font-semibold">Patient</p>
               <p className="text-muted-foreground">
-                {caseData.patient_info_json?.name}, {caseData.patient_info_json?.age}y ·
-                Allergies: {caseData.patient_info_json?.allergies ?? "—"}
+                {caseData.patient_info_json?.name}, {caseData.patient_info_json?.age}y -
+                Allergies: {caseData.patient_info_json?.allergies ?? "-"}
               </p>
             </div>
           </div>
 
           {/* Drug shelf + tray */}
-          <div className="space-y-3">
+          <div className="relative z-10 space-y-3">
+            {/* Dispensing tray */}
+            <motion.div
+              layout
+              className="sticky top-20 z-30 rounded-2xl border border-primary/40 bg-gradient-to-b from-card/95 to-background/90 p-3 shadow-[0_20px_55px_-22px_oklch(0.74_0.14_180/0.85),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-xl"
+            >
+              <div className="pointer-events-none absolute inset-x-5 top-1 h-px bg-white/20" />
+              <p className="mb-2 flex items-center justify-between gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <ClipboardList className="h-3.5 w-3.5 text-primary" /> Dispensing tray
+                </span>
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                  {collected.length} selected
+                </span>
+              </p>
+              {collected.length === 0 ? (
+                <p className="py-3 text-center text-sm text-muted-foreground">Tap drugs below to add</p>
+              ) : (
+                <motion.ul layout className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-white/10 bg-black/15 p-2 pr-1 shadow-inner">
+                  <AnimatePresence initial={false}>
+                  {collected.map((c) => (
+                    <motion.li
+                      layout
+                      key={c}
+                      initial={{ opacity: 0, scale: 0.78, y: -12 }}
+                      animate={{ opacity: 1, scale: [0.96, 1.08, 1], y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, x: 18 }}
+                      transition={{ type: "spring", stiffness: 520, damping: 24 }}
+                      className="flex items-center justify-between rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_oklch(0.74_0.14_180/0.9)]"
+                    >
+                      <span>{c}</span>
+                      <button onClick={() => setCollected((x) => x.filter((n) => n !== c))} className="text-muted-foreground hover:text-destructive">
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </motion.li>
+                  ))}
+                  </AnimatePresence>
+                </motion.ul>
+              )}
+              <button onClick={confirmCollection} disabled={collected.length === 0}
+                className="mt-3 w-full rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_10px_30px_-15px_oklch(0.74_0.14_180/0.9)] transition hover:brightness-110 disabled:opacity-40">
+                Confirm collection &gt;
+              </button>
+            </motion.div>
+
             <div className="flex flex-wrap gap-1.5 rounded-xl border border-border/40 bg-card/50 p-2 backdrop-blur">
               {DRUG_CATEGORIES.map((c) => (
                 <button key={c} onClick={() => setCategory(c)}
@@ -437,41 +652,37 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {filtered.map((d) => (
-                <motion.button key={d.id} whileTap={{ scale: 0.95 }}
+            <div className="rounded-2xl border border-border/35 bg-card/35 p-3 shadow-inner backdrop-blur">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Drug shelf</p>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{filtered.length} items</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {filtered.map((d, i) => {
+                const isCollected = collected.includes(d.name);
+                return (
+                <motion.button
+                  key={d.id}
+                  initial={{ opacity: 0, x: 42 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: Math.min(i * 0.025, 0.35), type: "spring", stiffness: 260, damping: 24 }}
+                  whileHover={{ y: -6, scale: 1.025, boxShadow: "0 18px 38px -20px oklch(0.74 0.14 180 / 0.95)" }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => addDrug(d.name)}
-                  className="rounded-xl border border-border/40 bg-card/60 p-3 text-left hover:border-primary/40 hover:bg-primary/5 transition">
+                  className={`rounded-xl border p-3 text-left transition ${
+                    isCollected
+                      ? "border-primary/45 bg-primary/10 text-foreground"
+                      : "border-border/40 bg-card/70 hover:border-primary/70 hover:bg-primary/10 hover:text-foreground"
+                  }`}
+                >
                   <p className="text-sm font-semibold">{d.name}</p>
                   <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{d.category}</p>
                 </motion.button>
-              ))}
+              );
+              })}
+              </div>
             </div>
 
-            {/* Dispensing tray */}
-            <div className="rounded-xl border border-border/40 bg-card/50 p-3 backdrop-blur">
-              <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <ClipboardList className="h-3.5 w-3.5" /> Dispensing tray
-              </p>
-              {collected.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground">Tap drugs above to add</p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {collected.map((c) => (
-                    <li key={c} className="flex items-center justify-between rounded-lg border border-border/30 bg-muted/30 px-3 py-2 text-sm">
-                      <span>{c}</span>
-                      <button onClick={() => setCollected((x) => x.filter((n) => n !== c))} className="text-muted-foreground hover:text-destructive">
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <button onClick={confirmCollection} disabled={collected.length === 0}
-                className="mt-3 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40 transition">
-                Confirm collection →
-              </button>
-            </div>
           </div>
         </main>
       )}
@@ -638,9 +849,10 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
         <span className="text-xs text-muted-foreground">{caseData.title}</span>
       </div>
 
-      <main className="mx-auto grid max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[1fr_2fr]">
+      <main className="relative mx-auto grid max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[1fr_2fr]">
+        <CommunityFloatingPills className="opacity-30" />
         {/* Patient panel */}
-        <aside className="rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur">
+        <aside className="relative z-10 rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur">
           <div className="flex items-center gap-2 mb-3">
             <User className="size-4 text-primary" />
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Patient</p>
@@ -651,7 +863,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
             </div>
             <div>
               <p className="font-semibold">{caseData.patient_info_json?.name}</p>
-              <p className="text-xs text-muted-foreground">Age {caseData.patient_info_json?.age ?? "—"}</p>
+              <p className="text-xs text-muted-foreground">Age {caseData.patient_info_json?.age ?? "-"}</p>
             </div>
           </div>
           <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
@@ -662,7 +874,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
         </aside>
 
         {/* Question / answer area */}
-        <section>
+        <section className="relative z-10">
           <motion.div key={`${step}-${qi}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">

@@ -2,24 +2,57 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Flame, Trophy, Factory, Package, Hospital, FileText, Lightbulb, ChevronRight } from "lucide-react";
+import { CalendarDays, Flame, Trophy, Factory, Package, Hospital, FileText, Lightbulb, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
-import { OnboardingModal } from "@/components/OnboardingModal";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
+import { MODE_LABEL } from "@/lib/game/shared";
+import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Pharmulation" }] }),
+  head: () => ({ meta: [{ title: "Dashboard - Pharmulation" }] }),
   component: Dashboard,
   errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
   notFoundComponent: () => <div className="p-8">Not found</div>,
 });
 
-const MODE_META: Record<string, { icon: any; label: string; tag: string; color: string; to: string }> = {
-  rx: { icon: FileText, label: "Community Pharmacy", tag: "Beginner-friendly", color: "from-teal-500/20 to-cyan-500/10", to: "/game/community" },
-  hospital: { icon: Hospital, label: "Hospital Cases", tag: "Medium", color: "from-blue-500/20 to-indigo-500/10", to: "/game/hospital" },
-  industry: { icon: Factory, label: "Industry / Production", tag: "Medium", color: "from-slate-500/20 to-zinc-500/10", to: "/game/industry" },
-  warehousing: { icon: Package, label: "Warehousing", tag: "Medium", color: "from-orange-500/20 to-amber-500/10", to: "/game/warehousing" },
+const MODE_META: Record<string, { icon: any; label: string; tag: string; accent: string; glow: string; tint: string; to: string }> = {
+  rx: {
+    icon: FileText,
+    label: "Community Pharmacy",
+    tag: "Beginner-friendly",
+    accent: "oklch(0.74 0.14 180)",
+    glow: "oklch(0.74 0.14 180 / 0.9)",
+    tint: "linear-gradient(135deg, oklch(0.74 0.14 180 / 0.24), oklch(0.72 0.16 165 / 0.1) 48%, oklch(1 0 0 / 0.045))",
+    to: "/game/community",
+  },
+  hospital: {
+    icon: Hospital,
+    label: "Clinical",
+    tag: "Medium",
+    accent: "oklch(0.60 0.20 270)",
+    glow: "oklch(0.60 0.20 270 / 0.9)",
+    tint: "linear-gradient(135deg, oklch(0.62 0.19 240 / 0.22), oklch(0.60 0.20 270 / 0.16) 50%, oklch(1 0 0 / 0.04))",
+    to: "/game/hospital",
+  },
+  industry: {
+    icon: Factory,
+    label: "Industry",
+    tag: "Medium",
+    accent: "oklch(0.78 0.16 75)",
+    glow: "oklch(0.78 0.16 75 / 0.9)",
+    tint: "linear-gradient(135deg, oklch(0.78 0.16 75 / 0.25), oklch(0.70 0.14 55 / 0.12) 52%, oklch(1 0 0 / 0.04))",
+    to: "/game/industry",
+  },
+  warehousing: {
+    icon: Package,
+    label: "Warehousing",
+    tag: "Medium",
+    accent: "oklch(0.60 0.18 220)",
+    glow: "oklch(0.60 0.18 220 / 0.9)",
+    tint: "linear-gradient(135deg, oklch(0.60 0.18 220 / 0.25), oklch(0.72 0.13 210 / 0.12) 52%, oklch(1 0 0 / 0.04))",
+    to: "/game/warehousing",
+  },
 };
 
 const MENTOR_TIPS = [
@@ -28,21 +61,33 @@ const MENTOR_TIPS = [
   "When in doubt, call the prescriber. Clarification prevents harm.",
   "Counsel one medicine at a time. Patients remember only a few key points.",
   "Cold chain breaks happen in seconds. Check the temperature log every time.",
-  "FEFO isn't optional. First expired, first out—every single time.",
+  "FEFO isn't optional. First expired, first out - every single time.",
   "Look for drug interactions before adding a new medicine to the regimen.",
   "Never assume a handwritten prescription. Verify unclear orders immediately.",
-  "Right patient, right drug, right dose, right route, right time—every case.",
+  "Right patient, right drug, right dose, right route, right time - every case.",
   "Insulin is a high-alert medication. Double-check every dose before dispensing.",
   "A missed contraindication can be more dangerous than a missed diagnosis.",
   "Check renal and hepatic function before recommending dose adjustments.",
   "Store look-alike and sound-alike medicines separately to prevent mix-ups.",
-  "Patient counseling is part of the treatment—not an optional extra.",
+  "Patient counseling is part of the treatment - not an optional extra.",
   "Always confirm the expiry date before dispensing or stocking medicines.",
   "Document every intervention. Good records protect both patients and pharmacists.",
   "Generic substitution is valuable, but only when clinically appropriate.",
   "If a medicine requires refrigeration, never leave it at room temperature unnecessarily.",
   "Quality begins with accurate inventory and proper storage conditions.",
   "The safest pharmacist is the one who never stops double-checking."
+];
+const DOCTOR_IMAGE = "/doctor-mentor.png";
+const DASHBOARD_CARD_HOVER = {
+  y: -6,
+  scale: 1.012,
+  boxShadow: "0 22px 55px -30px oklch(0.74 0.14 180 / 0.82)",
+};
+const DAILY_CHALLENGES = [
+  { label: "Rx Case", mode: "rx", difficulty: "Medium", to: "/game/community", bonus: "2x XP" },
+  { label: "Clinical Review", mode: "hospital", difficulty: "Hard", to: "/game/hospital", bonus: "2x XP" },
+  { label: "Industry Batch", mode: "industry", difficulty: "Medium", to: "/game/industry", bonus: "1.5x XP" },
+  { label: "Warehouse Audit", mode: "warehousing", difficulty: "Medium", to: "/game/warehousing", bonus: "1.5x XP" },
 ];
 
 // Typewriter hook
@@ -63,13 +108,33 @@ function useTypewriter(text: string, speed = 28) {
   return { displayed, done };
 }
 
+function dayOfYear(date: Date) {
+  const start = Date.UTC(date.getFullYear(), 0, 0);
+  const today = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.floor((today - start) / 86400000);
+}
+
+function formatActivityDate(value?: string | null) {
+  if (!value) return "Just now";
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value));
+}
+
+function activityMeta(mode: string) {
+  if (mode === "community" || mode === "rx" || mode === "otc") return MODE_META.rx;
+  if (mode === "hospital" || mode === "clinical") return MODE_META.hospital;
+  if (mode === "industry") return MODE_META.industry;
+  if (mode === "warehousing") return MODE_META.warehousing;
+  return { ...MODE_META.rx, icon: FileText, label: MODE_LABEL[mode as keyof typeof MODE_LABEL] ?? mode };
+}
+
 function MentorTipBanner({ tip }: { tip: string }) {
   const { displayed, done } = useTypewriter(tip, 25);
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      initial={{ opacity: 0, x: -42, y: -4 }}
+      animate={{ opacity: 1, x: 0, y: 0 }}
+      whileHover={DASHBOARD_CARD_HOVER}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
       className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-cyan-500/5 to-primary/10"
       style={{ boxShadow: "0 0 40px -10px oklch(0.74 0.14 180 / 0.35), inset 0 0 60px -30px oklch(0.74 0.14 180 / 0.1)" }}
     >
@@ -77,11 +142,17 @@ function MentorTipBanner({ tip }: { tip: string }) {
       <div className="absolute inset-0 rounded-2xl pointer-events-none"
         style={{ background: "linear-gradient(90deg, transparent 0%, oklch(0.74 0.14 180 / 0.15) 50%, transparent 100%)", animation: "ekg-scroll 4s linear infinite", backgroundSize: "200% 100%" }} />
 
-      <div className="relative flex items-start gap-4 px-5 py-4">
+      <div className="relative flex items-start gap-5 px-6 py-5">
         {/* Dr. Hakim avatar */}
         <div className="shrink-0 relative">
-          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary/30 to-cyan-500/20 border border-primary/40 grid place-items-center text-xl shadow-[0_0_16px_oklch(0.74_0.14_180/0.4)]">
-            👨‍⚕️
+          <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border border-primary/40 bg-background/55 text-transparent shadow-[0_0_18px_oklch(0.74_0.14_180/0.35)]">
+            <motion.img
+              src={DOCTOR_IMAGE}
+              alt=""
+              className="absolute inset-x-0 top-0 mx-auto h-16 w-14 object-contain object-top"
+              animate={{ y: [0, -2, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
           </div>
           {/* Online pulse */}
           <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-primary border-2 border-background animate-pulse" />
@@ -89,19 +160,28 @@ function MentorTipBanner({ tip }: { tip: string }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Dr. Hakim · Mentor</span>
-            <span className="text-[10px] text-muted-foreground">· tip of the day</span>
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">PAGER</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Dr. Hakim</span>
+            <span className="text-[10px] text-muted-foreground">tip of the day</span>
             <Lightbulb className="h-3 w-3 text-primary animate-pulse" />
           </div>
-          <p className="text-sm text-foreground/90 leading-relaxed font-medium min-h-[1.4rem]">
+          <p className="min-h-[2.1rem] text-base font-semibold leading-relaxed text-foreground/95 sm:text-lg lg:text-xl">
             "{displayed}
-            {!done && <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 animate-pulse align-middle" />}"
+            {!done && <span className="ml-1 inline-block h-5 w-0.5 animate-pulse bg-primary align-middle sm:h-6" />}"
           </p>
         </div>
 
         {/* Decorative Rx watermark */}
-        <div className="shrink-0 self-center font-serif text-4xl font-bold text-primary/10 select-none leading-none">
-          ℞
+        <motion.img
+          src={DOCTOR_IMAGE}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none hidden h-24 w-20 shrink-0 self-end object-contain object-bottom opacity-80 drop-shadow-[0_14px_24px_rgba(0,0,0,0.28)] sm:block"
+          animate={{ y: [0, -4, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <div className="hidden shrink-0 self-center font-serif text-4xl font-bold text-primary/10 select-none leading-none">
+          Rx
         </div>
       </div>
     </motion.div>
@@ -147,22 +227,27 @@ function Dashboard() {
   });
 
   const xpToNext = (profile?.level ?? 1) * 500;
-  const xpPct = Math.min(100, ((profile?.xp ?? 0) / xpToNext) * 100);
+  const currentXp = profile?.xp ?? 0;
+  const xpPct = Math.min(100, (currentXp / xpToNext) * 100);
+  const dailyChallenge = DAILY_CHALLENGES[dayOfYear(new Date()) % DAILY_CHALLENGES.length];
+  const dailyMeta = activityMeta(dailyChallenge.mode);
+  const DailyIcon = dailyMeta.icon;
 
   return (
     <>
       <Navbar />
-      <OnboardingModal />
       <main className="mx-auto max-w-7xl px-6 py-6 space-y-5">
 
-        {/* ── MENTOR TIP — top, first thing you see ── */}
+        {/* MENTOR TIP - top, first thing you see */}
         <MentorTipBanner tip={tip} />
 
-        {/* ── PLAYER CARD + DAILY CHALLENGE ── */}
+        {/* PLAYER CARD + DAILY CHALLENGE */}
         <div className="grid lg:grid-cols-3 gap-5">
           <motion.div
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="glass-card p-6 lg:col-span-2"
+            whileHover={DASHBOARD_CARD_HOVER}
+            whileTap={{ scale: 0.99 }}
+            className="glass-card p-6 lg:col-span-2 transition duration-300 hover:border-primary/40"
           >
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 rounded-2xl bg-primary text-primary-foreground grid place-items-center text-2xl font-bold">
@@ -170,41 +255,88 @@ function Dashboard() {
               </div>
               <div className="flex-1">
                 <div className="text-xl font-bold">{profile?.full_name ?? "Pharmacist"}</div>
-                <div className="text-xs text-muted-foreground capitalize">{profile?.role} • Level {profile?.level}</div>
+                <div className="text-xs text-muted-foreground capitalize">{profile?.role} | Level {profile?.level}</div>
               </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-warning/15 px-3 py-1.5 text-warning text-sm font-semibold">
-                <Flame className="h-4 w-4" /> {profile?.streak_days ?? 0} day{profile?.streak_days === 1 ? "" : "s"}
-              </div>
+              <motion.div
+                className="flex items-center gap-2 rounded-full border border-warning/30 bg-warning/15 px-4 py-2 text-warning shadow-[0_12px_30px_-18px_oklch(0.78_0.16_75/0.9)]"
+                animate={{ boxShadow: ["0 12px 30px -18px oklch(0.78 0.16 75 / 0.75)", "0 14px 36px -16px oklch(0.78 0.16 75 / 1)", "0 12px 30px -18px oklch(0.78 0.16 75 / 0.75)"] }}
+                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Flame className="h-6 w-6 drop-shadow-[0_0_10px_oklch(0.78_0.16_75/0.75)]" />
+                <span className="text-base font-black">{profile?.streak_days ?? 0}</span>
+                <span className="text-xs font-bold uppercase tracking-wider">day{profile?.streak_days === 1 ? "" : "s"}</span>
+              </motion.div>
             </div>
             <div className="mt-5">
-              <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-                <span>{profile?.xp ?? 0} XP</span>
-                <span>{xpToNext} XP to Lv {(profile?.level ?? 1) + 1}</span>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">XP dose meter</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold tabular-nums text-foreground">{currentXp} / {xpToNext} XP</p>
+                </div>
+                <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary shadow-[0_10px_24px_-18px_oklch(0.74_0.14_180/0.9)]">
+                  {Math.round(xpPct)}%
+                </span>
               </div>
-              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                <motion.div className="h-full bg-gradient-to-r from-primary to-cyan-400"
-                  initial={{ width: 0 }} animate={{ width: `${xpPct}%` }} transition={{ duration: 0.8 }} />
+              <div className="relative h-7 overflow-hidden rounded-lg border border-white/10 bg-black/25 shadow-inner">
+                <div className="absolute inset-x-2 top-1 flex justify-between">
+                  {Array.from({ length: 11 }).map((_, i) => (
+                    <span key={i} className={`w-px rounded-full bg-white/35 ${i % 5 === 0 ? "h-5" : "h-3"}`} />
+                  ))}
+                </div>
+                <motion.div
+                  className="relative h-full overflow-hidden rounded-lg bg-gradient-to-r from-primary via-cyan-300 to-emerald-300 shadow-[0_0_24px_oklch(0.74_0.14_180/0.55)]"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${xpPct}%` }}
+                  transition={{ duration: 0.9, ease: "easeOut" }}
+                >
+                  <motion.div
+                    className="absolute inset-y-0 w-20 -skew-x-12 bg-white/35 blur-sm"
+                    initial={{ x: "-120%" }}
+                    animate={{ x: ["-120%", "260%"] }}
+                    transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 0.8, ease: "easeInOut" }}
+                  />
+                </motion.div>
+                <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-b from-white/20 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-2 bottom-0.5 flex justify-between font-mono text-[8px] font-bold tabular-nums text-white/45">
+                  <span>0</span>
+                  <span>25</span>
+                  <span>50</span>
+                  <span>75</span>
+                  <span>100</span>
+                </div>
               </div>
             </div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="glass-card p-6 bg-gradient-to-br from-primary/15 to-transparent border-primary/30"
+            whileHover={DASHBOARD_CARD_HOVER}
+            whileTap={{ scale: 0.99 }}
+            className="glass-card p-6 bg-gradient-to-br from-primary/15 to-transparent border-primary/30 transition duration-300 hover:border-primary/50"
           >
-            <div className="text-xs font-semibold text-primary uppercase tracking-wider">Daily Challenge</div>
-            <div className="mt-2 text-lg font-bold">Today: Rx Case · Medium</div>
-            <p className="mt-1 text-sm text-muted-foreground">2× XP for completing before midnight.</p>
-            <Link to="/game/rx"
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold text-primary uppercase tracking-wider">Daily Challenge</div>
+                <div className="mt-2 text-lg font-bold">Today: {dailyChallenge.label} · {dailyChallenge.difficulty}</div>
+              </div>
+              <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/15 text-primary">
+                <DailyIcon className="h-5 w-5" />
+              </div>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{dailyChallenge.bonus} for completing before midnight.</p>
+            <Link to={dailyChallenge.to as any}
               className="mt-4 block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:scale-105 transition text-center">
               Start challenge
             </Link>
           </motion.div>
         </div>
 
-        {/* ── 4 MODES ── */}
+        {/* 4 MODES */}
         <section>
-          <h2 className="text-lg font-bold mb-3">Pick your training mode</h2>
+          <div className="mb-3">
+            <h2 className="text-lg font-bold">Pick your training mode</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Each session is timed · Earn XP · Unlock badges</p>
+          </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Object.entries(MODE_META).map(([key, m], i) => {
               const Icon = m.icon;
@@ -213,19 +345,40 @@ function Dashboard() {
                   key={key}
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  className={`glass-card p-5 bg-gradient-to-br ${m.color} hover:border-primary/40 transition group`}
+                  whileHover={{ y: -8, scale: 1.025 }}
+                  whileTap={{ scale: 0.985 }}
+                  className="group relative overflow-hidden rounded-2xl border p-5 shadow-lg backdrop-blur-xl transition duration-300"
+                  style={{
+                    background: m.tint,
+                    borderColor: "oklch(1 0 0 / 0.12)",
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.borderColor = m.accent;
+                    event.currentTarget.style.boxShadow = `0 22px 55px -28px ${m.glow}`;
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.borderColor = "oklch(1 0 0 / 0.12)";
+                    event.currentTarget.style.boxShadow = "";
+                  }}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="h-10 w-10 rounded-xl bg-primary/15 grid place-items-center text-primary group-hover:scale-110 transition">
-                      <Icon className="h-5 w-5" />
+                  <ModeAmbientLayer mode={key} intensity="card" />
+                  <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"
+                    style={{ background: `linear-gradient(135deg, transparent 0%, ${m.glow.replace("0.9", "0.16")} 45%, transparent 75%)` }} />
+                  <div className="relative flex items-start justify-between">
+                    <div
+                      className="relative grid h-10 w-10 place-items-center rounded-xl transition duration-300 group-hover:scale-110 group-hover:rotate-3"
+                      style={{ backgroundColor: m.glow.replace("0.9", "0.15"), color: m.accent }}
+                    >
+                      <Icon className="h-5 w-5 transition duration-300 group-hover:-translate-y-0.5" />
                     </div>
                     <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full bg-white/10 px-2 py-1">{m.tag}</span>
                   </div>
-                  <div className="mt-4 text-base font-bold">{m.label}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{(counts as any)[key] ?? 0} cases completed</div>
+                  <div className="relative mt-4 text-base font-bold transition duration-300 group-hover:brightness-125" style={{ color: m.accent }}>{m.label}</div>
+                  <div className="relative text-xs text-muted-foreground mt-0.5">{(counts as any)[key] ?? 0} cases completed</div>
                   <Link to={m.to as any}
-                    className="mt-4 flex items-center justify-center gap-1 w-full rounded-full bg-primary/90 py-2 text-center text-sm font-semibold text-primary-foreground hover:bg-primary transition">
-                    Play <ChevronRight className="h-3.5 w-3.5" />
+                    className="relative mt-4 flex items-center justify-center gap-1 w-full rounded-full py-2 text-center text-sm font-semibold text-background transition duration-300 hover:brightness-110"
+                    style={{ backgroundColor: m.accent, boxShadow: `0 12px 28px -18px ${m.glow}` }}>
+                    Play <ChevronRight className="h-3.5 w-3.5 transition duration-300 group-hover:translate-x-0.5" />
                   </Link>
                 </motion.div>
               );
@@ -233,25 +386,54 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* ── RECENT + MINI LEADERBOARD ── */}
+        {/* RECENT + MINI LEADERBOARD */}
         <div className="grid lg:grid-cols-3 gap-5">
-          <div className="glass-card p-6 lg:col-span-2">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={DASHBOARD_CARD_HOVER}
+            whileTap={{ scale: 0.99 }}
+            className="glass-card p-6 lg:col-span-2 transition duration-300 hover:border-primary/40"
+          >
             <h3 className="font-bold mb-3">Recent activity</h3>
             {scores.length === 0 ? (
               <p className="text-sm text-muted-foreground">No cases yet. Pick a mode above to start training.</p>
             ) : (
-              <ul className="divide-y divide-border">
-                {scores.map((s: any) => (
-                  <li key={s.id} className="flex justify-between py-3 text-sm">
-                    <span className="capitalize">{s.mode}</span>
-                    <span className="text-primary font-semibold">{s.score} pts</span>
-                  </li>
-                ))}
+              <ul className="space-y-2">
+                {scores.map((s: any) => {
+                  const meta = activityMeta(s.mode);
+                  const ActivityIcon = meta.icon;
+                  return (
+                    <li key={s.id} className="flex items-center gap-3 rounded-xl border border-border/35 bg-white/[0.03] px-3 py-2.5 text-sm transition hover:border-primary/30 hover:bg-primary/5">
+                      <div
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+                        style={{ backgroundColor: meta.glow.replace("0.9", "0.14"), color: meta.accent }}
+                      >
+                        <ActivityIcon className="h-4.5 w-4.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold">{MODE_LABEL[s.mode as keyof typeof MODE_LABEL] ?? meta.label}</p>
+                        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {formatActivityDate(s.completed_at)}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{s.score} pts</span>
+                    </li>
+                  );
+                })}
               </ul>
             )}
-          </div>
+          </motion.div>
 
-          <div className="glass-card p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.06 }}
+            whileHover={DASHBOARD_CARD_HOVER}
+            whileTap={{ scale: 0.99 }}
+            className="glass-card p-6 transition duration-300 hover:border-primary/40"
+          >
             <h3 className="font-bold mb-3 flex items-center gap-2"><Trophy className="h-4 w-4 text-primary" /> Top this week</h3>
             <ol className="space-y-2.5 text-sm">
               {topPlayers.length === 0 && <li className="text-muted-foreground text-xs">Be the first on the board.</li>}
@@ -264,9 +446,9 @@ function Dashboard() {
               ))}
             </ol>
             <Link to="/leaderboard" className="mt-4 block text-center text-xs text-primary hover:underline">
-              View full leaderboard →
+              View full leaderboard &gt;
             </Link>
-          </div>
+          </motion.div>
         </div>
 
       </main>

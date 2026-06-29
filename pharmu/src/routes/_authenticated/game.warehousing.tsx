@@ -24,7 +24,143 @@ export const Route = createFileRoute("/_authenticated/game/warehousing")({
 });
 
 const LIMIT = MODE_TIMERS.warehousing;
-type Phase = "receiving" | "dispatch" | "expiry" | "reconcile" | "done";
+type Phase = "receiving" | "dispatch" | "expiry" | "audit" | "reconcile" | "done";
+
+type AuditScenario = {
+  id: string;
+  title: string;
+  tag: string;
+  prompt: string;
+  options: string[];
+  correctAction: string;
+  points: number;
+  penalty: number;
+  errorType: string;
+  whyWrong: string;
+  whatToKnow: string;
+};
+
+function buildAuditScenarios(s: any): AuditScenario[] {
+  const shipments = Array.isArray(s.shipments) ? s.shipments : [];
+  const expiring = Array.isArray(s.expiring) ? s.expiring : [];
+  const reconciliation = Array.isArray(s.reconciliation) ? s.reconciliation : [];
+  const excursion = shipments.find((ship: any) => ship.tempLog?.excursion);
+  const controlled = shipments.find((ship: any) => ship.controlled);
+  const nearExpiry = expiring[0] ?? shipments.find((ship: any) => ship.expiry);
+  const variance = reconciliation.find((row: any) => row.investigate) ?? reconciliation[0];
+
+  const scenarios: AuditScenario[] = [];
+
+  if (excursion) {
+    scenarios.push({
+      id: "cold-chain-deviation",
+      title: "Cold-chain deviation",
+      tag: `${excursion.drug} reached ${excursion.tempLog?.max ?? "unsafe"}C`,
+      prompt: `${excursion.drug} batch ${excursion.batch} arrived with a temperature log outside its safe range. The delivery note is complete and the ward is asking for urgent release. What is the safest warehouse action?`,
+      options: [
+        "Release it because the paperwork is complete",
+        "Move it to ambient stock and add a verbal note",
+        "Quarantine affected stock and open a temperature deviation report",
+        "Rewrite the log after checking the fridge is now stable",
+      ],
+      correctAction: "Quarantine affected stock and open a temperature deviation report",
+      points: 25,
+      penalty: 20,
+      errorType: "Cold-chain deviation released",
+      whyWrong: "A temperature excursion means product quality is uncertain until the deviation is investigated and stability guidance is reviewed.",
+      whatToKnow: "Cold-chain excursions require quarantine, deviation documentation, pharmacist/QA review, and manufacturer stability advice before any release.",
+    });
+  }
+
+  if (controlled) {
+    scenarios.push({
+      id: "controlled-stock-discrepancy",
+      title: "Controlled stock discrepancy",
+      tag: `${controlled.drug} requires secure register control`,
+      prompt: `During handover, the controlled-drug count for ${controlled.drug} batch ${controlled.batch} does not match the register. The next dispatch run is waiting. What should you do?`,
+      options: [
+        "Adjust the count so the dispatch is not delayed",
+        "Dispatch the requested stock and investigate later",
+        "Escalate discrepancy, lock stock, and investigate the controlled register",
+        "Ignore it until the monthly stock count",
+      ],
+      correctAction: "Escalate discrepancy, lock stock, and investigate the controlled register",
+      points: 25,
+      penalty: 20,
+      errorType: "Controlled stock discrepancy mishandled",
+      whyWrong: "Controlled medicines need immediate secure investigation. Adjusting or ignoring the register can hide diversion or dispensing errors.",
+      whatToKnow: "For controlled stock, stop movement, secure the stock, verify physical count against the register, and escalate according to SOP.",
+    });
+  }
+
+  if (nearExpiry) {
+    const drug = nearExpiry.drug ?? nearExpiry.item ?? "near-expiry stock";
+    const batch = nearExpiry.batch ?? "selected";
+    scenarios.push({
+      id: "near-expiry-recall-screen",
+      title: "Recall and near-expiry screen",
+      tag: `${drug} batch ${batch}`,
+      prompt: `A store requests ${drug}, but the same batch is on the near-expiry watchlist while a recall email is being checked. Which action prevents avoidable patient risk?`,
+      options: [
+        "Block affected batch and notify stores before dispatch",
+        "Send it first because FEFO says earliest expiry goes out first",
+        "Hide the batch until someone asks for it again",
+        "Return all stock without checking the recall details",
+      ],
+      correctAction: "Block affected batch and notify stores before dispatch",
+      points: 20,
+      penalty: 15,
+      errorType: "Recall screen missed",
+      whyWrong: "FEFO does not override a possible recall or safety hold. Stock under investigation must be blocked before dispatch.",
+      whatToKnow: "Recall and safety alerts take priority over dispatch. Block the affected batch, trace locations, and communicate the hold clearly.",
+    });
+  }
+
+  if (variance) {
+    const diff = Number(variance.actual ?? 0) - Number(variance.expected ?? 0);
+    scenarios.push({
+      id: "reconciliation-capa",
+      title: "Reconciliation CAPA",
+      tag: `${variance.item ?? "Stock"} variance ${diff > 0 ? "+" : ""}${diff}`,
+      prompt: `Reconciliation shows ${variance.item ?? "an item"} expected ${variance.expected ?? "?"} but actual ${variance.actual ?? "?"}. The team wants to close the count quickly. What is the correct closure step?`,
+      options: [
+        "Investigate variance, recount, and document CAPA before closing",
+        "Change the expected quantity to match the shelf count",
+        "Close the count and wait for the next cycle count",
+        "Move stock from another location to balance the line",
+      ],
+      correctAction: "Investigate variance, recount, and document CAPA before closing",
+      points: 20,
+      penalty: 15,
+      errorType: "Variance closed without investigation",
+      whyWrong: "Closing a variance without investigation leaves the root cause unknown and can conceal picking, receiving, theft, or system-entry errors.",
+      whatToKnow: "Reconciliation needs a recount, transaction review, documented cause, and corrective/preventive action before closure.",
+    });
+  }
+
+  if (scenarios.length < 3) {
+    scenarios.push({
+      id: "segregation-audit",
+      title: "Segregation audit",
+      tag: "Damaged and saleable stock mixed",
+      prompt: "A shelf check finds a damaged carton stored beside saleable stock, with no quarantine label. What is the correct action?",
+      options: [
+        "Leave it in place and tell the next shift",
+        "Remove and quarantine damaged stock with documentation",
+        "Open the carton and use undamaged packs first",
+        "Put it behind the saleable stock until QA visits",
+      ],
+      correctAction: "Remove and quarantine damaged stock with documentation",
+      points: 20,
+      penalty: 15,
+      errorType: "Damaged stock not segregated",
+      whyWrong: "Damaged stock can be accidentally supplied if it remains in the saleable area.",
+      whatToKnow: "Damaged, recalled, expired, or suspect stock must be physically segregated and documented immediately.",
+    });
+  }
+
+  return scenarios.slice(0, 4);
+}
 
 function WarehouseGame() {
   const onExit = useGameExit("/modes");
@@ -50,6 +186,10 @@ function WarehouseGame() {
   // expiring
   const [expiryAns, setExpiryAns] = useState<Record<number, string>>({});
 
+  // operations audit
+  const [auditIdx, setAuditIdx] = useState(0);
+  const [auditAns, setAuditAns] = useState<Record<number, string>>({});
+
   // reconciliation
   const [reconChecked, setReconChecked] = useState<Record<number, boolean>>({});
 
@@ -61,12 +201,13 @@ function WarehouseGame() {
     mentorTip: caseData?.mentor_tip,
     setExternalPaused: timer.setExternalPaused,
   });
+  const auditScenarios = useMemo(() => s ? buildAuditScenarios(s) : [], [caseData?.id, s]);
 
   useEffect(() => {
     setPhase("receiving"); setPoints(0); setErrors(0); setPlaced({});
     setActiveShip(null); setRegisterOpen(null); setRegisterData({ qty: "", receiver: "" });
     setContaminated(false); setHints(0); setDispatchIdx(0); setDispatchAns({});
-    setExpiryAns({}); setReconChecked({}); setResult(null);
+    setExpiryAns({}); setAuditIdx(0); setAuditAns({}); setReconChecked({}); setResult(null);
   }, [caseData?.id]);
 
   if (loading || !caseData || !s) {
@@ -194,7 +335,7 @@ function WarehouseGame() {
       });
     }
     if (dispatchIdx + 1 < s.dispatch.length) setDispatchIdx((i) => i + 1);
-    else setPhase(s.expiring?.length ? "expiry" : "reconcile");
+    else setPhase(s.expiring?.length ? "expiry" : "audit");
   }
 
   function answerExpiry(idx: number, action: string) {
@@ -214,6 +355,30 @@ function WarehouseGame() {
     }
   }
   const allExpiryAnswered = (s.expiring ?? []).every((_: any, i: number) => expiryAns[i]);
+
+  function answerAudit(action: string) {
+    const scenario = auditScenarios[auditIdx];
+    if (!scenario) return;
+    const ok = action === scenario.correctAction;
+    setAuditAns((m) => ({ ...m, [auditIdx]: action }));
+    if (ok) {
+      setPoints((p) => p + scenario.points);
+      toastScore(scenario.points, "Audit decision");
+    } else {
+      setErrors((e) => e + 1);
+      setPoints((p) => p - scenario.penalty);
+      toastScore(-scenario.penalty, "Wrong audit decision");
+      errPanel.logError({
+        errorType: scenario.errorType,
+        wrongChoice: action,
+        correctChoice: scenario.correctAction,
+        whyWrong: scenario.whyWrong,
+        whatToKnow: scenario.whatToKnow,
+      });
+    }
+    if (auditIdx + 1 < auditScenarios.length) setAuditIdx((i) => i + 1);
+    else setPhase("reconcile");
+  }
 
   function finishReconcile() {
     s.reconciliation.forEach((r: any, i: number) => {
@@ -261,7 +426,7 @@ function WarehouseGame() {
 
   const phaseLabel: Record<Phase, string> = {
     receiving: "Receiving stock", dispatch: "Dispatch (FEFO)", expiry: "Expiry management",
-    reconcile: "Reconciliation", done: "Done",
+    audit: "Operations audit", reconcile: "Reconciliation", done: "Done",
   };
 
   return (
@@ -374,10 +539,60 @@ function WarehouseGame() {
                 </li>
               ))}
             </ul>
-            <button disabled={!allExpiryAnswered} onClick={() => setPhase("reconcile")}
+            <button disabled={!allExpiryAnswered} onClick={() => setPhase("audit")}
               className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
-              Continue to reconciliation →
+              Continue to operations audit →
             </button>
+          </section>
+        )}
+
+        {phase === "audit" && auditScenarios[auditIdx] && (
+          <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <aside className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Operations audit</p>
+              <h3 className="mt-1 text-lg font-bold">Deviation dashboard</h3>
+              <div className="mt-4 space-y-2">
+                {auditScenarios.map((item, i) => (
+                  <div
+                    key={item.id}
+                    className={`rounded-xl border px-3 py-2 text-xs ${
+                      i === auditIdx
+                        ? "border-primary/50 bg-primary/10"
+                        : auditAns[i]
+                          ? "border-primary/25 bg-primary/5"
+                          : "border-border/35 bg-muted/20"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold">{item.title}</span>
+                      <span className="rounded-full bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {auditAns[i] ? "Done" : i === auditIdx ? "Active" : "Pending"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-muted-foreground">{item.tag}</p>
+                  </div>
+                ))}
+              </div>
+            </aside>
+
+            <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Audit decision {auditIdx + 1} / {auditScenarios.length}
+              </p>
+              <h3 className="mt-1 text-xl font-bold">{auditScenarios[auditIdx].title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{auditScenarios[auditIdx].prompt}</p>
+              <div className="mt-5 grid gap-2">
+                {auditScenarios[auditIdx].options.map((option: string) => (
+                  <button
+                    key={option}
+                    onClick={() => answerAudit(option)}
+                    className="rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm transition hover:border-primary/45 hover:bg-primary/5"
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
           </section>
         )}
 

@@ -58,11 +58,11 @@ export const MODE_TIMERS: Record<Mode, number> = {
 export const MODE_LABEL: Record<Mode, string> = {
   rx: "Rx Cases",
   otc: "OTC Consultation",
-  hospital: "Hospital",
+  hospital: "Clinical",
   oncology: "Oncology",
   cosmetic: "Cosmetics",
   emergency: "Emergency",
-  industry: "Industry / Production",
+  industry: "Industry",
   warehousing: "Warehousing",
 };
 
@@ -195,6 +195,15 @@ export async function bumpCounterBadge(
 }
 
 export function toastScore(delta: number, label: string) {
-  if (delta >= 0) toast.success(`+${delta} ${label}`);
-  else toast.error(`${delta} ${label}`);
+  if (delta >= 0) {
+    toast.success(`+${delta} ${label}`, {
+      className: "score-toast-correct",
+      description: "Vitals stable",
+    });
+  } else {
+    toast.error(`${delta} ${label}`, {
+      className: "score-toast-wrong",
+      description: "Vital alert",
+    });
+  }
 }

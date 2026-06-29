@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
+import { SimulatedPrescription } from "@/components/game/SimulatedPrescription";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
@@ -150,7 +151,7 @@ function OtcGame() {
         paused={timer.paused} togglePause={timer.togglePause} score={currentScore}
         onExit={onExit}
         onHint={() => { setHints((n) => n + 1); toastScore(-10, "hint used"); }} />
-      <main className="mx-auto grid max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[1fr_2fr]">
+      <main className="mx-auto grid max-w-6xl gap-4 px-4 py-6 xl:grid-cols-[1.05fr_1fr]">
         <aside className="rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Patient</p>
           <div className="mt-3 flex items-center gap-3">
@@ -165,6 +166,9 @@ function OtcGame() {
               <li key={k}><span className="font-medium text-foreground">{k}:</span> {String(v)}</li>
             ))}
           </ul>
+          <div className="mt-4 overflow-hidden rounded-xl">
+            <SimulatedPrescription caseData={caseData} department="OTC Consultation Training" />
+          </div>
         </aside>
 
         <section>
