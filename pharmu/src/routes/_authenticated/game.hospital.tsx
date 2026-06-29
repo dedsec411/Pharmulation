@@ -52,38 +52,72 @@ function ClinicalEkgFloor() {
 
 type ChartTab = "vitals" | "meds" | "labs" | "order";
 
-function VitalBar({ label, value, pct, tone = "primary" }: { label: string; value: string; pct: number; tone?: "primary" | "red" | "sky" }) {
+function toFiniteNumber(value: unknown, fallback: number) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function bpPercent(value: string) {
+  const systolic = Number(value.match(/\d+/)?.[0]);
+  if (!Number.isFinite(systolic)) return 70;
+  return Math.max(35, Math.min(100, ((systolic - 80) / 80) * 100));
+}
+
+function VitalWave({ label, value, pct, tone = "primary" }: { label: string; value: string; pct: number; tone?: "primary" | "red" | "sky" }) {
   const theme = tone === "red"
     ? {
-      wrap: "border-red-200 bg-red-50/95",
+      wrap: "border-red-200 bg-red-50/95 shadow-[0_14px_34px_-28px_rgba(239,68,68,0.9)]",
       label: "text-red-700",
       value: "text-red-900",
       track: "bg-red-100",
       fill: "bg-red-500 shadow-[0_0_18px_rgba(239,68,68,0.7)]",
+      stroke: "rgb(239 68 68)",
+      glow: "rgba(239,68,68,0.65)",
     }
     : tone === "sky"
       ? {
-        wrap: "border-sky-200 bg-sky-50/95",
+        wrap: "border-sky-200 bg-sky-50/95 shadow-[0_14px_34px_-28px_rgba(14,165,233,0.9)]",
         label: "text-sky-700",
         value: "text-sky-950",
         track: "bg-sky-100",
         fill: "bg-sky-500 shadow-[0_0_18px_rgba(14,165,233,0.7)]",
+        stroke: "rgb(14 165 233)",
+        glow: "rgba(14,165,233,0.65)",
       }
       : {
-        wrap: "border-emerald-200 bg-emerald-50/95",
+        wrap: "border-emerald-200 bg-emerald-50/95 shadow-[0_14px_34px_-28px_rgba(16,185,129,0.9)]",
         label: "text-emerald-700",
         value: "text-emerald-950",
         track: "bg-emerald-100",
         fill: "bg-emerald-500 shadow-[0_0_18px_rgba(16,185,129,0.7)]",
+        stroke: "rgb(16 185 129)",
+        glow: "rgba(16,185,129,0.65)",
       };
+  const safePct = Math.max(8, Math.min(100, Number.isFinite(pct) ? pct : 72));
   return (
-    <div className={`rounded-lg border p-2 ${theme.wrap}`}>
-      <div className="mb-1 flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-wider">
-        <span className={theme.label}>{label}</span>
-        <span className={`font-black ${theme.value}`}>{value}</span>
+    <div className={`relative overflow-hidden rounded-xl border p-2.5 ${theme.wrap}`}>
+      <div className="pointer-events-none absolute inset-0 opacity-55"
+        style={{ backgroundImage: "linear-gradient(rgba(15,23,42,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.04) 1px, transparent 1px)", backgroundSize: "12px 12px" }} />
+      <div className="relative flex items-center gap-3">
+        <div className="w-10 font-mono text-[10px] font-black uppercase tracking-wider">
+          <span className={theme.label}>{label}</span>
+        </div>
+        <svg viewBox="0 0 150 34" className="h-9 min-w-0 flex-1" preserveAspectRatio="none" aria-hidden="true">
+          <polyline
+            points="0,19 18,19 24,19 30,10 36,26 43,19 58,19 64,19 70,5 77,31 84,19 101,19 110,14 118,24 126,19 150,19"
+            fill="none"
+            stroke={theme.stroke}
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="vital-ecg-line"
+            style={{ filter: `drop-shadow(0 0 5px ${theme.glow})` }}
+          />
+        </svg>
+        <div className={`w-16 text-right font-mono text-xs font-black tabular-nums ${theme.value}`}>{value}</div>
       </div>
-      <div className={`h-2.5 overflow-hidden rounded-full ${theme.track}`}>
-        <div className={`h-full rounded-full ${theme.fill}`} style={{ width: `${Math.max(8, Math.min(100, pct))}%`, animation: "vital-monitor-scan 2.6s ease-in-out infinite" }} />
+      <div className={`relative mt-1.5 h-1.5 overflow-hidden rounded-full ${theme.track}`}>
+        <div className={`h-full rounded-full ${theme.fill}`} style={{ width: `${safePct}%`, transition: "width 0.7s ease" }} />
       </div>
     </div>
   );
@@ -262,9 +296,9 @@ export function HospitalGame({ mode }: { mode: Mode }) {
   const patient = caseData.patient_info_json ?? {};
   const currentMeds = listFromJson(patient.current_meds);
   const vitals = patient.vitals ?? {};
-  const hr = Number(vitals.hr ?? vitals.heartRate ?? 82);
+  const hr = toFiniteNumber(vitals.hr ?? vitals.heartRate ?? vitals.pulse, 82);
   const bp = String(vitals.bp ?? vitals.BP ?? "124/78");
-  const o2 = Number(vitals.o2 ?? vitals.spo2 ?? vitals.SpO2 ?? 97);
+  const o2 = toFiniteNumber(vitals.o2 ?? vitals.spo2 ?? vitals.SpO2, 97);
   return (
     <>
       {difficultyModal}
@@ -300,9 +334,9 @@ export function HospitalGame({ mode }: { mode: Mode }) {
           <div className="min-h-52 pt-3">
             {chartTab === "vitals" && (
               <div className="grid gap-2">
-                <VitalBar label="HR" value={`${hr} bpm`} pct={hr} tone={hr > 100 ? "red" : "primary"} />
-                <VitalBar label="BP" value={bp} pct={72} tone="sky" />
-                <VitalBar label="O2" value={`${o2}%`} pct={o2} tone={o2 < 94 ? "red" : "primary"} />
+                <VitalWave label="HR" value={`${hr} bpm`} pct={Math.min(100, hr)} tone={hr > 100 ? "red" : "primary"} />
+                <VitalWave label="BP" value={bp} pct={bpPercent(bp)} tone="sky" />
+                <VitalWave label="O2" value={`${o2}%`} pct={o2} tone={o2 < 94 ? "red" : "primary"} />
                 {patient.allergies && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
                     <span className="text-xs font-black uppercase tracking-wider text-amber-700">Allergies:</span> {String(patient.allergies)}
