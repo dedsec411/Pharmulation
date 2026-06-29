@@ -1,9 +1,9 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-Dih5gLYV.mjs";
+import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-BPfPvWlH.mjs";
 import { a as MODE_TIMERS, c as computeScore, s as submitScore, t as toastScore, b as bumpCounterBadge, e as awardBadge } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-CdwnHMYR.mjs";
+import { u as useAuthStore } from "./router-xkoTwkF_.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { P as Pill, a5 as CupSoda, a6 as PackageCheck, v as Sparkles, a7 as Thermometer, a8 as Droplets, O as Check, i as FlaskConical, a9 as Cog } from "../_libs/lucide-react.mjs";
+import { P as Pill, a8 as CupSoda, a9 as PackageCheck, v as Sparkles, N as Thermometer, aa as Droplets, V as Check, i as FlaskConical, ab as Cog } from "../_libs/lucide-react.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
 import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__react-router.mjs";
@@ -603,20 +603,20 @@ function IndustryRun({
         /* @__PURE__ */ jsxRuntimeExports.jsx(InfoChip, { label: "Batch", value: batchSizeLabel }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(InfoChip, { label: "Errors", value: String(errors) })
       ] }),
-      phase === "formula" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "relative overflow-hidden rounded-2xl border border-slate-300 bg-slate-50 p-6 text-slate-950 shadow-[0_24px_70px_-42px_rgba(0,0,0,0.8)]", children: [
+      phase === "formula" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "relative overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-950/55 p-6 text-slate-100 shadow-[0_24px_70px_-42px_rgba(245,158,11,0.65)] backdrop-blur-xl", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(OfficialStamp, {}),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative border-b-2 border-slate-900 pb-3", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-mono text-[10px] font-black uppercase tracking-[0.24em] text-amber-700", children: "Batch Manufacturing Record" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative border-b border-amber-200/25 pb-3", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-mono text-[10px] font-black uppercase tracking-[0.24em] text-amber-300", children: "Batch Manufacturing Record" }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-2 grid gap-2 sm:grid-cols-[1fr_auto]", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-2xl font-black uppercase tracking-tight", children: batchProduct }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-sm font-semibold text-slate-600", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-sm font-semibold text-slate-300", children: [
                 productChoice.form,
                 " dosage form - Batch size: ",
                 batchSizeLabel
               ] })
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded border border-slate-400 bg-white px-3 py-2 font-mono text-xs", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded border border-amber-200/25 bg-white/5 px-3 py-2 font-mono text-xs text-slate-200 backdrop-blur", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
                 "BMR No. PHM-",
                 caseData.id?.slice?.(0, 5) ?? "00001"
@@ -625,38 +625,38 @@ function IndustryRun({
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative mt-4 rounded-none border-2 border-slate-900 bg-white p-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative mt-4 rounded-xl border border-amber-200/20 bg-amber-400/5 p-4 backdrop-blur", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-end justify-between gap-3", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "industry-batch-size", className: "text-xs font-black uppercase tracking-wider text-amber-700", children: "Batch size" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-xs text-slate-500", children: "Adjust the batch and the master formula recalculates all ingredient targets." })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "industry-batch-size", className: "text-xs font-black uppercase tracking-wider text-amber-300", children: "Batch size" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-xs text-slate-400", children: "Adjust the batch and the master formula recalculates all ingredient targets." })
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("input", { id: "industry-batch-size", type: "number", min: minBatchCount, max: maxBatchCount, step: batchStep, value: batchCount || "", onChange: (e) => updateBatchCount(Number(e.target.value)), className: "h-10 w-36 rounded border border-slate-400 bg-slate-50 px-3 text-right font-mono text-sm tabular-nums outline-none focus:border-amber-600" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("input", { id: "industry-batch-size", type: "number", min: minBatchCount, max: maxBatchCount, step: batchStep, value: batchCount || "", onChange: (e) => updateBatchCount(Number(e.target.value)), className: "h-10 w-36 rounded border border-amber-200/25 bg-slate-950/60 px-3 text-right font-mono text-sm tabular-nums text-slate-100 outline-none focus:border-amber-400" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "rounded border border-amber-200/20 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300", children: [
                 batchScale.toFixed(2),
                 "x"
               ] })
             ] })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("input", { type: "range", min: minBatchCount, max: maxBatchCount, step: batchStep, value: batchCount || baseBatchCount || minBatchCount, onChange: (e) => updateBatchCount(Number(e.target.value)), className: "mt-4 w-full accent-amber-600" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: formatBatchSize(f.batchSize, minBatchCount) }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: formatBatchSize(f.batchSize, maxBatchCount) })
           ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "relative mt-4 divide-y divide-slate-300 border-2 border-slate-900 bg-white", children: ingredients.map((i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "grid grid-cols-[26px_1fr_auto] items-center gap-3 p-3 text-sm", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "grid h-4 w-4 place-items-center border border-slate-700 text-[10px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "size-3 text-amber-700" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "relative mt-4 divide-y divide-amber-200/15 rounded-xl border border-amber-200/20 bg-slate-950/35 backdrop-blur", children: ingredients.map((i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "grid grid-cols-[26px_1fr_auto] items-center gap-3 p-3 text-sm", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "grid h-4 w-4 place-items-center border border-amber-200/40 bg-amber-400/10 text-[10px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "size-3 text-amber-300" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: i.name }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-500", children: i.role })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-400", children: i.role })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-right font-mono tabular-nums", children: [
             formatAmount(i.target),
             " ",
             i.unit,
             " ",
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-500", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400", children: [
               "(",
               formatAmount(i.min),
               "-",
@@ -745,8 +745,8 @@ function IndustryRun({
             }) }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur", children: /* @__PURE__ */ jsxRuntimeExports.jsx(StagePicker, { stage: STAGES[stageIdx], spec: f.process[STAGES[stageIdx]], dryTemp, setDryTemp, onAnswer: (ok) => chooseStage(STAGES[stageIdx], ok) }) })
           ] }),
-          phase === "qc" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "overflow-hidden rounded-2xl border border-slate-300/50 bg-slate-100/90 p-6 text-slate-950 shadow-[0_20px_60px_-38px_rgba(0,0,0,0.8)] backdrop-blur", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-black uppercase tracking-wider text-amber-700", children: "Step 5 - Quality Control" }),
+          phase === "qc" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-950/55 p-6 text-slate-100 shadow-[0_20px_60px_-38px_rgba(245,158,11,0.65)] backdrop-blur-xl", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-black uppercase tracking-wider text-amber-300", children: "Step 5 - Quality Control" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "mt-1 text-lg font-bold", children: "Judge each test" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "mt-3 space-y-3", children: f.qc.map((t, i) => {
               const ans = qcAnswers[i];
@@ -762,7 +762,7 @@ function IndustryRun({
                 type: "spring",
                 stiffness: 220,
                 damping: 24
-              }, className: "relative overflow-hidden rounded-none border border-slate-300 bg-white p-3 font-mono text-sm shadow-[0_14px_30px_-24px_rgba(0,0,0,0.8)] before:absolute before:inset-x-0 before:top-0 before:h-2 before:bg-[repeating-linear-gradient(90deg,#d1d5db_0_8px,transparent_8px_16px)]", children: [
+              }, className: "relative overflow-hidden rounded-xl border border-amber-200/20 bg-slate-900/70 p-3 font-mono text-sm shadow-[0_14px_30px_-24px_rgba(245,158,11,0.8)] backdrop-blur before:absolute before:inset-x-0 before:top-0 before:h-2 before:bg-[repeating-linear-gradient(90deg,rgba(251,191,36,.26)_0_8px,transparent_8px_16px)]", children: [
                 stamped && /* @__PURE__ */ jsxRuntimeExports.jsx(motion.div, { initial: {
                   opacity: 0,
                   scale: 1.8,
@@ -779,11 +779,11 @@ function IndustryRun({
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-3", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: t.test }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-500", children: t.result })
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-400", children: t.result })
                   ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-1", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: ans !== void 0, onClick: () => answerQc(i, true), className: `rounded-full px-3 py-1 text-xs ${ans === true ? "bg-emerald-600 text-white" : "border border-slate-300 bg-slate-50"}`, children: "Pass" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: ans !== void 0, onClick: () => answerQc(i, false), className: `rounded-full px-3 py-1 text-xs ${ans === false ? "bg-red-600 text-white" : "border border-slate-300 bg-slate-50"}`, children: "Fail" })
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: ans !== void 0, onClick: () => answerQc(i, true), className: `rounded-full px-3 py-1 text-xs ${ans === true ? "bg-emerald-600 text-white" : "border border-emerald-300/25 bg-emerald-400/10 text-emerald-100"}`, children: "Pass" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: ans !== void 0, onClick: () => answerQc(i, false), className: `rounded-full px-3 py-1 text-xs ${ans === false ? "bg-red-600 text-white" : "border border-red-300/25 bg-red-400/10 text-red-100"}`, children: "Fail" })
                   ] })
                 ] })
               ] }, i);
@@ -827,34 +827,34 @@ function MasterFormulaReference({
   phase,
   stageIdx
 }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("aside", { className: "xl:sticky xl:top-24 xl:self-start", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative overflow-hidden rounded-xl border border-slate-300 bg-slate-50 p-4 text-slate-950 shadow-[0_16px_40px_-24px_rgba(245,158,11,0.65)]", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("aside", { className: "xl:sticky xl:top-24 xl:self-start", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative overflow-hidden rounded-xl border border-amber-300/20 bg-slate-950/55 p-4 text-slate-100 shadow-[0_16px_40px_-24px_rgba(245,158,11,0.65)] backdrop-blur-xl", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(OfficialStamp, { label: "REFERENCE" }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-3", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-[0.2em] text-amber-700", children: "Master formula" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-[0.2em] text-amber-300", children: "Master formula" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "mt-1 text-lg font-black leading-tight", children: batchProduct }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-0.5 text-xs text-slate-500", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-0.5 text-xs text-slate-400", children: [
           productChoice.form,
           " dosage form"
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "rounded border border-slate-300 bg-white px-2.5 py-1 font-mono text-[10px] font-bold text-slate-700", children: batchSizeLabel })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "rounded border border-amber-200/20 bg-white/5 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-300", children: batchSizeLabel })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-4 border-2 border-slate-900 bg-white p-3", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 text-[10px] font-black uppercase tracking-wider text-slate-700", children: "Ingredients" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "max-h-52 space-y-2 overflow-y-auto pr-1", children: ingredients.map((i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "grid grid-cols-[18px_1fr] gap-2 border-b border-slate-200 pb-1.5 text-xs last:border-b-0", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mt-0.5 grid h-3.5 w-3.5 place-items-center border border-slate-600", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "size-2.5 text-amber-700" }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-4 rounded-xl border border-amber-200/20 bg-slate-900/55 p-3 backdrop-blur", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 text-[10px] font-black uppercase tracking-wider text-slate-300", children: "Ingredients" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "max-h-52 space-y-2 overflow-y-auto pr-1", children: ingredients.map((i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "grid grid-cols-[18px_1fr] gap-2 border-b border-amber-200/10 pb-1.5 text-xs last:border-b-0", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mt-0.5 grid h-3.5 w-3.5 place-items-center border border-amber-200/35 bg-amber-400/10", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "size-2.5 text-amber-300" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-2", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "truncate font-semibold", children: i.name }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-slate-500", children: i.role })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-slate-400", children: i.role })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "shrink-0 text-right font-mono text-[11px] tabular-nums", children: [
             formatAmount(i.target),
             i.unit
           ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "col-start-2 mt-0.5 text-[10px] text-slate-500", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "col-start-2 mt-0.5 text-[10px] text-slate-400", children: [
           "Range ",
           formatAmount(i.min),
           "-",
@@ -864,8 +864,8 @@ function MasterFormulaReference({
       ] }, i.name)) })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 grid grid-cols-2 gap-2 text-xs", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border border-slate-300 bg-white p-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] uppercase tracking-wider text-slate-500", children: "Temp" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-amber-200/20 bg-white/5 p-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] uppercase tracking-wider text-slate-400", children: "Temp" }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-1 font-bold", children: [
           f.env.tempRange[0],
           "-",
@@ -873,8 +873,8 @@ function MasterFormulaReference({
           "C"
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border border-slate-300 bg-white p-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] uppercase tracking-wider text-slate-500", children: "Humidity" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-amber-200/20 bg-white/5 p-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] uppercase tracking-wider text-slate-400", children: "Humidity" }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-1 font-bold", children: [
           f.env.humidityRange[0],
           "-",
@@ -883,9 +883,9 @@ function MasterFormulaReference({
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 border border-slate-300 bg-white p-3", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 text-[10px] font-black uppercase tracking-wider text-slate-500", children: "Process map" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1", children: STAGES.map((stage, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `rounded px-2 py-1 text-[10px] capitalize ${phase === "process" && i === stageIdx ? "bg-amber-500 text-slate-950" : "bg-slate-100 text-slate-500"}`, children: stage }, stage)) })
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 rounded-lg border border-amber-200/20 bg-white/5 p-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400", children: "Process map" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1", children: STAGES.map((stage, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `rounded px-2 py-1 text-[10px] capitalize ${phase === "process" && i === stageIdx ? "bg-amber-500 text-slate-950" : "bg-white/5 text-slate-400"}`, children: stage }, stage)) })
     ] })
   ] }) });
 }

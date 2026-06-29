@@ -1,11 +1,11 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-Dih5gLYV.mjs";
+import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-BPfPvWlH.mjs";
+import { M as ModeAmbientLayer } from "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import { a as MODE_TIMERS, b as bumpCounterBadge, t as toastScore, c as computeScore, s as submitScore } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-CdwnHMYR.mjs";
+import { u as useAuthStore } from "./router-xkoTwkF_.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { L as Lock, K as TriangleAlert } from "../_libs/lucide-react.mjs";
+import { j as Package, K as Barcode, N as Thermometer, L as Lock, O as TriangleAlert, Q as Flag } from "../_libs/lucide-react.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
-import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__react-router.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
@@ -150,6 +150,7 @@ function WarehouseGame() {
   const [errors, setErrors] = reactExports.useState(0);
   const [placed, setPlaced] = reactExports.useState({});
   const [activeShip, setActiveShip] = reactExports.useState(null);
+  const [landedShip, setLandedShip] = reactExports.useState(null);
   const [registerOpen, setRegisterOpen] = reactExports.useState(null);
   const [registerData, setRegisterData] = reactExports.useState({
     qty: "",
@@ -178,6 +179,7 @@ function WarehouseGame() {
     setErrors(0);
     setPlaced({});
     setActiveShip(null);
+    setLandedShip(null);
     setRegisterOpen(null);
     setRegisterData({
       qty: "",
@@ -224,6 +226,8 @@ function WarehouseGame() {
         ...m,
         [ship.id]: "quarantine"
       }));
+      setLandedShip(ship.id);
+      window.setTimeout(() => setLandedShip((id) => id === ship.id ? null : id), 650);
       setActiveShip(null);
       return;
     }
@@ -265,6 +269,8 @@ function WarehouseGame() {
       ...m,
       [ship.id]: zoneOrQuarantine
     }));
+    setLandedShip(ship.id);
+    window.setTimeout(() => setLandedShip((id) => id === ship.id ? null : id), 650);
     setActiveShip(null);
   }
   function completeRegister() {
@@ -454,55 +460,86 @@ function WarehouseGame() {
       setHints((n) => n + 1);
       toast("Read each label carefully — storage requirements matter.");
     } }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "mx-auto max-w-7xl px-4 py-4", children: [
-      phase === "receiving" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "grid gap-4 lg:grid-cols-[1fr_1.3fr]", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: "Incoming shipments" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "relative mx-auto max-w-7xl overflow-hidden px-4 py-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(ModeAmbientLayer, { mode: "warehousing", intensity: "screen" }),
+      phase === "receiving" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "relative z-10 grid gap-4 lg:grid-cols-[1fr_1.3fr]", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-2xl border border-sky-300/20 bg-slate-950/55 p-4 shadow-[0_24px_80px_-48px_rgba(56,189,248,0.8)] backdrop-blur-xl", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-sky-200/80", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "size-3.5" }),
+            " Incoming manifests"
+          ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "mt-3 space-y-2", children: s.shipments.map((sh) => {
             const done = !!placed[sh.id];
             const active = activeShip === sh.id;
-            return /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { disabled: done, onClick: () => setActiveShip(sh.id), className: `w-full rounded-xl border p-3 text-left text-sm transition ${active ? "border-primary bg-primary/10" : done ? "border-primary/30 bg-muted/20 opacity-60" : "border-border/40 hover:border-primary/40"}`, children: [
+            const excursion = !!sh.tempLog?.excursion;
+            return /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.button, { disabled: done, onClick: () => setActiveShip(sh.id), initial: {
+              x: 34,
+              opacity: 0
+            }, animate: {
+              x: 0,
+              y: landedShip === sh.id ? [-18, 7, 0] : 0,
+              scale: landedShip === sh.id ? [1, 1.035, 1] : 1,
+              opacity: 1
+            }, transition: {
+              duration: landedShip === sh.id ? 0.42 : 0.35,
+              ease: "easeOut"
+            }, className: `group relative w-full overflow-hidden rounded-xl border p-3 pl-7 text-left text-sm transition ${active ? "border-sky-300/70 bg-sky-400/15 shadow-[0_18px_48px_-28px_rgba(56,189,248,0.95)]" : done ? "border-sky-300/25 bg-slate-900/35 opacity-65" : "border-sky-300/20 bg-slate-900/45 hover:-translate-y-0.5 hover:border-sky-300/50 hover:bg-sky-400/10 hover:shadow-[0_18px_44px_-30px_rgba(56,189,248,0.9)]"}`, children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute inset-y-3 left-2 flex w-2 items-center justify-center rounded-full bg-slate-950/80", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Barcode, { className: "h-12 w-4 text-sky-200/70" }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold", children: sh.drug }),
-                sh.controlled && /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "size-3 text-amber-400" })
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-50", children: sh.drug }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-2", children: [
+                  excursion && /* @__PURE__ */ jsxRuntimeExports.jsx(Thermometer, { className: "size-4 animate-pulse text-red-400" }),
+                  sh.controlled && /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "size-3.5 text-amber-300" })
+                ] })
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-[11px] text-muted-foreground", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-[11px] text-slate-400", children: [
                 "Batch ",
                 sh.batch,
                 " · exp ",
                 sh.expiry
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-[11px] text-primary", children: sh.requirement }),
-              sh.tempLog && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 rounded bg-background/40 p-1.5", children: /* @__PURE__ */ jsxRuntimeExports.jsx(TempLogChart, { log: sh.tempLog }) }),
-              done && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-1 text-[10px] text-muted-foreground", children: [
-                "→ ",
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-1 flex flex-wrap items-center gap-2", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-sky-200", children: sh.requirement }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "rotate-[-4deg] rounded border border-sky-200/35 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-sky-100/80", children: "arrived" })
+              ] }),
+              sh.tempLog && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 rounded-lg border border-sky-200/15 bg-slate-950/45 p-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx(TempLogChart, { log: sh.tempLog }) }),
+              done && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-2 text-[10px] uppercase tracking-[0.18em] text-sky-200/70", children: [
+                "Landed in ",
                 placed[sh.id]
               ] })
             ] }) }, sh.id);
           }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: !allReceived, onClick: startDispatch, className: "mt-4 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40", children: "Proceed to dispatch →" })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: "Warehouse zones" }),
-          !activeShip && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-3 text-sm text-muted-foreground", children: "Select a shipment, then choose a zone." }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-2xl border border-sky-300/20 bg-slate-950/55 p-4 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-[0.24em] text-sky-200/80", children: "Warehouse zones" }),
+          !activeShip && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-3 text-sm text-slate-400", children: "Select a manifest, then choose a zone." }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 grid gap-2 sm:grid-cols-2", children: [
-            s.zones.map((z) => /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { disabled: !activeShip, onClick: () => placeShipment(z), className: "rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm hover:border-primary/40 disabled:opacity-40", children: [
+            s.zones.map((z) => /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.button, { disabled: !activeShip, onClick: () => placeShipment(z), whileTap: activeShip ? {
+              y: [0, 8, 0],
+              scale: [1, 0.98, 1]
+            } : void 0, className: "rounded-xl border border-sky-300/20 bg-sky-400/5 p-3 text-left text-sm transition hover:border-sky-300/45 hover:bg-sky-400/10 disabled:opacity-40", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: z }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-muted-foreground", children: "Drop the selected shipment here." })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-slate-400", children: "Drop the selected shipment here." })
             ] }, z)),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { disabled: !activeShip, onClick: () => placeShipment("quarantine"), className: "rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-left text-sm hover:bg-amber-500/15 disabled:opacity-40", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "flex items-center gap-1 font-semibold text-amber-400", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "size-3.5" }),
-                " Quarantine — temperature excursion"
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.button, { disabled: !activeShip, onClick: () => placeShipment("quarantine"), whileTap: activeShip ? {
+              y: [0, 8, 0],
+              scale: [1, 0.98, 1]
+            } : void 0, className: "rounded-xl border border-amber-400/50 bg-amber-400/10 p-3 text-left text-sm shadow-[0_0_34px_-22px_rgba(251,191,36,0.9)] transition hover:bg-amber-400/15 disabled:opacity-40", style: {
+              borderImage: "repeating-linear-gradient(45deg, rgba(251,191,36,0.95) 0 10px, rgba(15,23,42,0.95) 10px 20px) 1"
+            }, children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "flex items-center gap-1 font-semibold text-amber-300", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "size-3.5 animate-pulse" }),
+                " Quarantine - temperature excursion"
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-muted-foreground", children: "Use if the shipment's temp log shows an excursion." })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-slate-400", children: "Use if the shipment's temp log shows an excursion." })
             ] })
           ] })
         ] })
       ] }),
-      phase === "dispatch" && s.dispatch[dispatchIdx] && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: [
-          "Dispatch order ",
+      phase === "dispatch" && s.dispatch[dispatchIdx] && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "relative z-10 rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-50px_rgba(56,189,248,0.85)] backdrop-blur-xl", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs uppercase tracking-[0.24em] text-sky-200/80", children: [
+          "FEFO dispatch ",
           dispatchIdx + 1,
           " / ",
           s.dispatch.length
@@ -511,16 +548,24 @@ function WarehouseGame() {
           "Pick a batch of ",
           s.dispatch[dispatchIdx].drug
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "Use FEFO — first expired, first out." }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-4 grid gap-2 sm:grid-cols-2", children: s.dispatch[dispatchIdx].batches.map((b) => /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: () => answerDispatch(b.batch), className: "rounded-xl border border-border/40 p-3 text-left text-sm hover:border-primary/40", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: b.batch }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-muted-foreground", children: [
-            "Expires ",
-            b.expiry
-          ] })
-        ] }, b.batch)) })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-slate-400", children: "Use FEFO - the earliest expiry sits at the front of the shelf." }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-5 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/35 p-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mb-3 h-2 rounded-full bg-gradient-to-r from-sky-300/50 via-slate-700 to-sky-300/30" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-3 sm:grid-cols-2 lg:grid-cols-3", children: [...s.dispatch[dispatchIdx].batches].sort((a, b) => String(a.expiry).localeCompare(String(b.expiry))).map((b, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.button, { onClick: () => answerDispatch(b.batch), whileTap: {
+            y: 8,
+            scale: 0.98
+          }, className: `relative min-h-28 rounded-lg border p-3 text-left text-sm shadow-[0_16px_36px_-28px_rgba(56,189,248,0.9)] transition hover:-translate-y-1 hover:border-sky-300/60 hover:bg-sky-400/10 ${i === 0 ? "border-sky-300/55 bg-sky-400/15" : "border-sky-300/20 bg-slate-950/55"}`, children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute right-3 top-3 rounded border border-sky-200/30 px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-sky-100/70", children: i === 0 ? "front" : `row ${i + 1}` }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "mb-3 size-7 text-sky-200/80" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: b.batch }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-slate-400", children: [
+              "Expires ",
+              b.expiry
+            ] })
+          ] }, b.batch)) })
+        ] })
       ] }),
-      phase === "expiry" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur", children: [
+      phase === "expiry" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "relative z-10 rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: "Expiry management" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "mt-1 text-lg font-bold", children: "Items approaching expiry" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "mt-3 space-y-2", children: s.expiring.map((it, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { className: "rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
@@ -539,8 +584,8 @@ function WarehouseGame() {
         ] }) }, i)) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: !allExpiryAnswered, onClick: () => setPhase("audit"), className: "mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40", children: "Continue to operations audit →" })
       ] }),
-      phase === "audit" && auditScenarios[auditIdx] && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "grid gap-4 lg:grid-cols-[0.9fr_1.1fr]", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: "rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur", children: [
+      phase === "audit" && auditScenarios[auditIdx] && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "relative z-10 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: "rounded-2xl border border-sky-300/20 bg-slate-950/55 p-5 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: "Operations audit" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "mt-1 text-lg font-bold", children: "Deviation dashboard" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-4 space-y-2", children: auditScenarios.map((item, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `rounded-xl border px-3 py-2 text-xs ${i === auditIdx ? "border-primary/50 bg-primary/10" : auditAns[i] ? "border-primary/25 bg-primary/5" : "border-border/35 bg-muted/20"}`, children: [
@@ -551,7 +596,7 @@ function WarehouseGame() {
             /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-muted-foreground", children: item.tag })
           ] }, item.id)) })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: [
             "Audit decision ",
             auditIdx + 1,
@@ -563,25 +608,31 @@ function WarehouseGame() {
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-5 grid gap-2", children: auditScenarios[auditIdx].options.map((option) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => answerAudit(option), className: "rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm transition hover:border-primary/45 hover:bg-primary/5", children: option }, option)) })
         ] })
       ] }),
-      phase === "reconcile" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: "Inventory reconciliation" }),
+      phase === "reconcile" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "relative z-10 rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.75)] backdrop-blur-xl", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-[0.24em] text-sky-200/80", children: "Printed stocktake sheet" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "mt-1 text-lg font-bold", children: "Check items needing investigation" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { className: "mt-3 w-full text-sm", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { className: "text-xs uppercase text-muted-foreground", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { className: "mt-4 w-full overflow-hidden rounded-xl border border-sky-300/20 bg-slate-900/40 text-sm", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { className: "border-b border-sky-300/20 bg-sky-400/10 text-xs uppercase text-sky-100/75", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "p-2 text-left", children: "Item" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "p-2 text-right", children: "Expected" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "p-2 text-right", children: "Actual" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "p-2 text-center", children: "Investigate?" })
           ] }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: s.reconciliation.map((r, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { className: "border-t border-border/30", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-2", children: r.item }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-2 text-right tabular-nums", children: r.expected }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-2 text-right tabular-nums", children: r.actual }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-2 text-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx("input", { type: "checkbox", checked: !!reconChecked[i], onChange: (e) => setReconChecked((m) => ({
-              ...m,
-              [i]: e.target.checked
-            })) }) })
-          ] }, i)) })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: s.reconciliation.map((r, i) => {
+            const discrepancy = Number(r.expected) !== Number(r.actual);
+            return /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { className: `border-t border-sky-300/10 ${discrepancy ? "bg-red-500/10 text-red-50" : ""}`, children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "inline-flex items-center gap-2", children: [
+                discrepancy && /* @__PURE__ */ jsxRuntimeExports.jsx(Flag, { className: "size-3.5 text-red-300" }),
+                r.item
+              ] }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-2 text-right tabular-nums", children: r.expected }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-2 text-right tabular-nums", children: r.actual }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-2 text-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx("input", { type: "checkbox", checked: !!reconChecked[i], onChange: (e) => setReconChecked((m) => ({
+                ...m,
+                [i]: e.target.checked
+              })) }) })
+            ] }, i);
+          }) })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: finishReconcile, className: "mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground", children: "Finalize and submit" })
       ] }),
@@ -623,23 +674,37 @@ function TempLogChart({
   log
 }) {
   const pts = Array.from({
-    length: 12
+    length: 18
   }, (_, i) => {
     const t = i / 11;
     const v = log.min + (log.max - log.min) * (0.5 + 0.5 * Math.sin(t * Math.PI * 2));
     return v;
   });
-  const lo = Math.min(...pts), hi = Math.max(...pts);
+  const lo = Math.min(0, ...pts), hi = Math.max(10, ...pts);
   const span = Math.max(1, hi - lo);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-end gap-0.5", children: [
-    pts.map((v, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `w-1.5 rounded-t ${v > 8 || v < 2 ? "bg-destructive" : "bg-primary"}`, style: {
-      height: `${10 + (v - lo) / span * 22}px`
-    } }, i)),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "ml-1 text-[10px] text-muted-foreground", children: [
-      log.min,
-      "–",
-      log.max,
-      "°C"
+  const yFor = (v) => 54 - (v - lo) / span * 42;
+  const points = pts.map((v, i) => `${6 + i * (188 / (pts.length - 1))},${yFor(v)}`).join(" ");
+  const redZoneY = yFor(8);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-[10px] uppercase tracking-[0.16em]", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: log.excursion ? "text-red-300" : "text-sky-200/80", children: "Temp log" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400", children: [
+        log.min,
+        "-",
+        log.max,
+        "C"
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { viewBox: "0 0 208 62", className: "h-20 w-full overflow-visible rounded-md bg-slate-950/55", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("defs", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("linearGradient", { id: "warehouseTempLine", x1: "0", x2: "1", y1: "0", y2: "0", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("stop", { offset: "0%", stopColor: "rgb(56 189 248)" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("stop", { offset: "100%", stopColor: log.excursion ? "rgb(248 113 113)" : "rgb(125 211 252)" })
+      ] }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "0", y: "0", width: "208", height: "62", rx: "8", fill: "rgba(15, 23, 42, 0.45)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: `M 0 ${redZoneY} H 208`, stroke: "rgb(248 113 113)", strokeWidth: "1.5", strokeDasharray: "4 4" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("text", { x: "166", y: Math.max(10, redZoneY - 4), className: "fill-red-300 text-[8px] font-bold", children: "8C red zone" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("polyline", { points, fill: "none", stroke: "url(#warehouseTempLine)", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round" }),
+      pts.map((v, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: 6 + i * (188 / (pts.length - 1)), cy: yFor(v), r: v > 8 || v < 2 ? 2.5 : 1.7, className: v > 8 || v < 2 ? "fill-red-400" : "fill-sky-200" }, i))
     ] })
   ] });
 }

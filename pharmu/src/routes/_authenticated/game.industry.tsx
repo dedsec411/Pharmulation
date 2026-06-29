@@ -595,28 +595,28 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "formula" && (
-          <section className="relative overflow-hidden rounded-2xl border border-slate-300 bg-slate-50 p-6 text-slate-950 shadow-[0_24px_70px_-42px_rgba(0,0,0,0.8)]">
+          <section className="relative overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-950/55 p-6 text-slate-100 shadow-[0_24px_70px_-42px_rgba(245,158,11,0.65)] backdrop-blur-xl">
             <OfficialStamp />
-            <div className="relative border-b-2 border-slate-900 pb-3">
-              <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-amber-700">Batch Manufacturing Record</p>
+            <div className="relative border-b border-amber-200/25 pb-3">
+              <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-amber-300">Batch Manufacturing Record</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
                 <div>
                   <h2 className="text-2xl font-black uppercase tracking-tight">{batchProduct}</h2>
-                  <p className="text-sm font-semibold text-slate-600">{productChoice.form} dosage form - Batch size: {batchSizeLabel}</p>
+                  <p className="text-sm font-semibold text-slate-300">{productChoice.form} dosage form - Batch size: {batchSizeLabel}</p>
                 </div>
-                <div className="rounded border border-slate-400 bg-white px-3 py-2 font-mono text-xs">
+                <div className="rounded border border-amber-200/25 bg-white/5 px-3 py-2 font-mono text-xs text-slate-200 backdrop-blur">
                   <p>BMR No. PHM-{caseData.id?.slice?.(0, 5) ?? "00001"}</p>
                   <p>Revision 01</p>
                 </div>
               </div>
             </div>
-            <div className="relative mt-4 rounded-none border-2 border-slate-900 bg-white p-4">
+            <div className="relative mt-4 rounded-xl border border-amber-200/20 bg-amber-400/5 p-4 backdrop-blur">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <label htmlFor="industry-batch-size" className="text-xs font-black uppercase tracking-wider text-amber-700">
+                  <label htmlFor="industry-batch-size" className="text-xs font-black uppercase tracking-wider text-amber-300">
                     Batch size
                   </label>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-slate-400">
                     Adjust the batch and the master formula recalculates all ingredient targets.
                   </p>
                 </div>
@@ -629,9 +629,9 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                     step={batchStep}
                     value={batchCount || ""}
                     onChange={(e) => updateBatchCount(Number(e.target.value))}
-                    className="h-10 w-36 rounded border border-slate-400 bg-slate-50 px-3 text-right font-mono text-sm tabular-nums outline-none focus:border-amber-600"
+                    className="h-10 w-36 rounded border border-amber-200/25 bg-slate-950/60 px-3 text-right font-mono text-sm tabular-nums text-slate-100 outline-none focus:border-amber-400"
                   />
-                  <span className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">
+                  <span className="rounded border border-amber-200/20 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300">
                     {batchScale.toFixed(2)}x
                   </span>
                 </div>
@@ -645,22 +645,22 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                 onChange={(e) => updateBatchCount(Number(e.target.value))}
                 className="mt-4 w-full accent-amber-600"
               />
-              <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <span>{formatBatchSize(f.batchSize, minBatchCount)}</span>
                 <span>{formatBatchSize(f.batchSize, maxBatchCount)}</span>
               </div>
             </div>
-            <ul className="relative mt-4 divide-y divide-slate-300 border-2 border-slate-900 bg-white">
+            <ul className="relative mt-4 divide-y divide-amber-200/15 rounded-xl border border-amber-200/20 bg-slate-950/35 backdrop-blur">
               {ingredients.map((i: any) => (
                 <li key={i.name} className="grid grid-cols-[26px_1fr_auto] items-center gap-3 p-3 text-sm">
-                  <span className="grid h-4 w-4 place-items-center border border-slate-700 text-[10px]">
-                    <Check className="size-3 text-amber-700" />
+                  <span className="grid h-4 w-4 place-items-center border border-amber-200/40 bg-amber-400/10 text-[10px]">
+                    <Check className="size-3 text-amber-300" />
                   </span>
                   <div className="min-w-0">
                     <p className="font-semibold">{i.name}</p>
-                    <p className="text-xs text-slate-500">{i.role}</p>
+                    <p className="text-xs text-slate-400">{i.role}</p>
                   </div>
-                  <span className="text-right font-mono tabular-nums">{formatAmount(i.target)} {i.unit} <span className="text-slate-500">({formatAmount(i.min)}-{formatAmount(i.max)})</span></span>
+                  <span className="text-right font-mono tabular-nums">{formatAmount(i.target)} {i.unit} <span className="text-slate-400">({formatAmount(i.min)}-{formatAmount(i.max)})</span></span>
                 </li>
               ))}
             </ul>
@@ -802,8 +802,8 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "qc" && (
-          <section className="overflow-hidden rounded-2xl border border-slate-300/50 bg-slate-100/90 p-6 text-slate-950 shadow-[0_20px_60px_-38px_rgba(0,0,0,0.8)] backdrop-blur">
-            <p className="text-xs font-black uppercase tracking-wider text-amber-700">Step 5 - Quality Control</p>
+          <section className="overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-950/55 p-6 text-slate-100 shadow-[0_20px_60px_-38px_rgba(245,158,11,0.65)] backdrop-blur-xl">
+            <p className="text-xs font-black uppercase tracking-wider text-amber-300">Step 5 - Quality Control</p>
             <h3 className="mt-1 text-lg font-bold">Judge each test</h3>
             <ul className="mt-3 space-y-3">
               {f.qc.map((t: any, i: number) => {
@@ -815,7 +815,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                     initial={{ opacity: 0, y: 42 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08, type: "spring", stiffness: 220, damping: 24 }}
-                    className="relative overflow-hidden rounded-none border border-slate-300 bg-white p-3 font-mono text-sm shadow-[0_14px_30px_-24px_rgba(0,0,0,0.8)] before:absolute before:inset-x-0 before:top-0 before:h-2 before:bg-[repeating-linear-gradient(90deg,#d1d5db_0_8px,transparent_8px_16px)]"
+                    className="relative overflow-hidden rounded-xl border border-amber-200/20 bg-slate-900/70 p-3 font-mono text-sm shadow-[0_14px_30px_-24px_rgba(245,158,11,0.8)] backdrop-blur before:absolute before:inset-x-0 before:top-0 before:h-2 before:bg-[repeating-linear-gradient(90deg,rgba(251,191,36,.26)_0_8px,transparent_8px_16px)]"
                   >
                     {stamped && (
                       <motion.div
@@ -832,13 +832,13 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-semibold">{t.test}</p>
-                        <p className="text-xs text-slate-500">{t.result}</p>
+                        <p className="text-xs text-slate-400">{t.result}</p>
                       </div>
                       <div className="flex gap-1">
                         <button disabled={ans !== undefined} onClick={() => answerQc(i, true)}
-                          className={`rounded-full px-3 py-1 text-xs ${ans === true ? "bg-emerald-600 text-white" : "border border-slate-300 bg-slate-50"}`}>Pass</button>
+                          className={`rounded-full px-3 py-1 text-xs ${ans === true ? "bg-emerald-600 text-white" : "border border-emerald-300/25 bg-emerald-400/10 text-emerald-100"}`}>Pass</button>
                         <button disabled={ans !== undefined} onClick={() => answerQc(i, false)}
-                          className={`rounded-full px-3 py-1 text-xs ${ans === false ? "bg-red-600 text-white" : "border border-slate-300 bg-slate-50"}`}>Fail</button>
+                          className={`rounded-full px-3 py-1 text-xs ${ans === false ? "bg-red-600 text-white" : "border border-red-300/25 bg-red-400/10 text-red-100"}`}>Fail</button>
                       </div>
                     </div>
                   </motion.li>
@@ -907,55 +907,55 @@ function InfoChip({ label, value }: any) {
 function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, batchSizeLabel, phase, stageIdx }: any) {
   return (
     <aside className="xl:sticky xl:top-24 xl:self-start">
-      <div className="relative overflow-hidden rounded-xl border border-slate-300 bg-slate-50 p-4 text-slate-950 shadow-[0_16px_40px_-24px_rgba(245,158,11,0.65)]">
+      <div className="relative overflow-hidden rounded-xl border border-amber-300/20 bg-slate-950/55 p-4 text-slate-100 shadow-[0_16px_40px_-24px_rgba(245,158,11,0.65)] backdrop-blur-xl">
         <OfficialStamp label="REFERENCE" />
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">Master formula</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">Master formula</p>
             <h3 className="mt-1 text-lg font-black leading-tight">{batchProduct}</h3>
-            <p className="mt-0.5 text-xs text-slate-500">{productChoice.form} dosage form</p>
+            <p className="mt-0.5 text-xs text-slate-400">{productChoice.form} dosage form</p>
           </div>
-          <span className="rounded border border-slate-300 bg-white px-2.5 py-1 font-mono text-[10px] font-bold text-slate-700">
+          <span className="rounded border border-amber-200/20 bg-white/5 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-300">
             {batchSizeLabel}
           </span>
         </div>
 
-        <div className="mt-4 border-2 border-slate-900 bg-white p-3">
-          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-700">Ingredients</p>
+        <div className="mt-4 rounded-xl border border-amber-200/20 bg-slate-900/55 p-3 backdrop-blur">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-300">Ingredients</p>
           <ul className="max-h-52 space-y-2 overflow-y-auto pr-1">
             {ingredients.map((i: any) => (
-              <li key={i.name} className="grid grid-cols-[18px_1fr] gap-2 border-b border-slate-200 pb-1.5 text-xs last:border-b-0">
-                <span className="mt-0.5 grid h-3.5 w-3.5 place-items-center border border-slate-600">
-                  <Check className="size-2.5 text-amber-700" />
+              <li key={i.name} className="grid grid-cols-[18px_1fr] gap-2 border-b border-amber-200/10 pb-1.5 text-xs last:border-b-0">
+                <span className="mt-0.5 grid h-3.5 w-3.5 place-items-center border border-amber-200/35 bg-amber-400/10">
+                  <Check className="size-2.5 text-amber-300" />
                 </span>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{i.name}</p>
-                    <p className="text-[10px] text-slate-500">{i.role}</p>
+                    <p className="text-[10px] text-slate-400">{i.role}</p>
                   </div>
                   <span className="shrink-0 text-right font-mono text-[11px] tabular-nums">
                     {formatAmount(i.target)}{i.unit}
                   </span>
                 </div>
-                <p className="col-start-2 mt-0.5 text-[10px] text-slate-500">Range {formatAmount(i.min)}-{formatAmount(i.max)}{i.unit}</p>
+                <p className="col-start-2 mt-0.5 text-[10px] text-slate-400">Range {formatAmount(i.min)}-{formatAmount(i.max)}{i.unit}</p>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-          <div className="border border-slate-300 bg-white p-2">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500">Temp</p>
+          <div className="rounded-lg border border-amber-200/20 bg-white/5 p-2">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Temp</p>
             <p className="mt-1 font-bold">{f.env.tempRange[0]}-{f.env.tempRange[1]}C</p>
           </div>
-          <div className="border border-slate-300 bg-white p-2">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500">Humidity</p>
+          <div className="rounded-lg border border-amber-200/20 bg-white/5 p-2">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Humidity</p>
             <p className="mt-1 font-bold">{f.env.humidityRange[0]}-{f.env.humidityRange[1]}%</p>
           </div>
         </div>
 
-        <div className="mt-3 border border-slate-300 bg-white p-3">
-          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-500">Process map</p>
+        <div className="mt-3 rounded-lg border border-amber-200/20 bg-white/5 p-3">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Process map</p>
           <div className="flex flex-wrap gap-1">
             {STAGES.map((stage, i) => (
               <span
@@ -963,7 +963,7 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
                 className={`rounded px-2 py-1 text-[10px] capitalize ${
                   phase === "process" && i === stageIdx
                     ? "bg-amber-500 text-slate-950"
-                    : "bg-slate-100 text-slate-500"
+                    : "bg-white/5 text-slate-400"
                 }`}
               >
                 {stage}

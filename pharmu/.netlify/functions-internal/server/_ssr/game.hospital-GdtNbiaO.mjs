@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-Dih5gLYV.mjs";
+import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-BPfPvWlH.mjs";
 import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-CdwnHMYR.mjs";
+import { u as useAuthStore } from "./router-xkoTwkF_.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { g as ClipboardList, D as Database, aa as Terminal, ab as Plus, H as HeartPulse, N as Trash2, K as TriangleAlert } from "../_libs/lucide-react.mjs";
+import { g as ClipboardList, D as Database, ac as Terminal, ad as Plus, H as HeartPulse, R as Trash2, O as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
 import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__react-router.mjs";
@@ -65,34 +65,34 @@ function VitalWave({
   tone = "primary"
 }) {
   const theme = tone === "red" ? {
-    wrap: "border-red-200 bg-red-50/95 shadow-[0_14px_34px_-28px_rgba(239,68,68,0.9)]",
-    label: "text-red-700",
-    value: "text-red-900",
-    track: "bg-red-100",
+    wrap: "border-red-400/35 bg-red-500/10 shadow-[0_14px_34px_-28px_rgba(239,68,68,0.9)]",
+    label: "text-red-200",
+    value: "text-red-50",
+    track: "bg-red-950/45",
     fill: "bg-red-500 shadow-[0_0_18px_rgba(239,68,68,0.7)]",
     stroke: "rgb(239 68 68)",
     glow: "rgba(239,68,68,0.65)"
   } : tone === "sky" ? {
-    wrap: "border-sky-200 bg-sky-50/95 shadow-[0_14px_34px_-28px_rgba(14,165,233,0.9)]",
-    label: "text-sky-700",
-    value: "text-sky-950",
-    track: "bg-sky-100",
+    wrap: "border-sky-300/35 bg-sky-400/10 shadow-[0_14px_34px_-28px_rgba(14,165,233,0.9)]",
+    label: "text-sky-200",
+    value: "text-sky-50",
+    track: "bg-sky-950/45",
     fill: "bg-sky-500 shadow-[0_0_18px_rgba(14,165,233,0.7)]",
     stroke: "rgb(14 165 233)",
     glow: "rgba(14,165,233,0.65)"
   } : {
-    wrap: "border-emerald-200 bg-emerald-50/95 shadow-[0_14px_34px_-28px_rgba(16,185,129,0.9)]",
-    label: "text-emerald-700",
-    value: "text-emerald-950",
-    track: "bg-emerald-100",
+    wrap: "border-emerald-300/35 bg-emerald-400/10 shadow-[0_14px_34px_-28px_rgba(16,185,129,0.9)]",
+    label: "text-emerald-200",
+    value: "text-emerald-50",
+    track: "bg-emerald-950/45",
     fill: "bg-emerald-500 shadow-[0_0_18px_rgba(16,185,129,0.7)]",
     stroke: "rgb(16 185 129)",
     glow: "rgba(16,185,129,0.65)"
   };
   const safePct = Math.max(8, Math.min(100, Number.isFinite(pct) ? pct : 72));
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `relative overflow-hidden rounded-xl border p-2.5 ${theme.wrap}`, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pointer-events-none absolute inset-0 opacity-55", style: {
-      backgroundImage: "linear-gradient(rgba(15,23,42,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.04) 1px, transparent 1px)",
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pointer-events-none absolute inset-0 opacity-45", style: {
+      backgroundImage: "linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)",
       backgroundSize: "12px 12px"
     } }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex items-center gap-3", children: [
@@ -323,49 +323,49 @@ function HospitalGame({
       toast.info(`Hint: ${caseData.mentor_tip}`);
     } }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "relative z-10 mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.3fr]", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: "relative rounded-2xl border border-slate-300/20 bg-slate-100/95 p-4 text-slate-950 shadow-[0_24px_65px_-38px_rgba(15,23,42,0.8)] backdrop-blur", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-slate-400/40 bg-slate-300 shadow-inner" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-slate-300 bg-white/90 p-4 shadow-inner", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-indigo-700", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: "relative rounded-2xl border border-indigo-300/20 bg-slate-900/55 p-4 text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-indigo-200/20 bg-slate-700/70 shadow-inner backdrop-blur" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-indigo-200/20 bg-slate-950/45 p-4 shadow-inner backdrop-blur-xl", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-indigo-200", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(ClipboardList, { className: "h-3.5 w-3.5" }),
             " Patient file"
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "mt-1 text-xl font-black", children: patient.name ?? "Clinical Patient" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "border-b border-slate-300 pb-3 text-sm text-slate-600", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "border-b border-indigo-200/15 pb-3 text-sm text-slate-300", children: [
             "Age ",
             patient.age ?? "-",
             " | ",
             patient.diagnosis ?? patient.condition ?? "Assessment pending"
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 flex gap-1 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-500", children: ["vitals", "meds", "labs", "order"].map((tab) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => setChartTab(tab), className: `rounded-t-md px-3 py-1 transition ${chartTab === tab ? "bg-indigo-600 text-white shadow-[0_8px_18px_-12px_rgba(79,70,229,0.9)]" : "bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700"}`, children: tab }, tab)) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 flex gap-1 border-b border-indigo-200/15 text-[10px] font-bold uppercase tracking-wider text-slate-400", children: ["vitals", "meds", "labs", "order"].map((tab) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => setChartTab(tab), className: `rounded-t-md px-3 py-1 transition ${chartTab === tab ? "bg-indigo-500/90 text-white shadow-[0_8px_18px_-12px_rgba(99,102,241,0.9)]" : "bg-white/5 hover:bg-indigo-400/15 hover:text-indigo-100"}`, children: tab }, tab)) }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-52 pt-3", children: [
             chartTab === "vitals" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(VitalWave, { label: "HR", value: `${hr} bpm`, pct: Math.min(100, hr), tone: hr > 100 ? "red" : "primary" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(VitalWave, { label: "BP", value: bp, pct: bpPercent(bp), tone: "sky" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(VitalWave, { label: "O2", value: `${o2}%`, pct: o2, tone: o2 < 94 ? "red" : "primary" }),
-              patient.allergies && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-black uppercase tracking-wider text-amber-700", children: "Allergies:" }),
+              patient.allergies && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-amber-300/35 bg-amber-400/10 px-3 py-2 text-sm text-amber-50", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-black uppercase tracking-wider text-amber-200", children: "Allergies:" }),
                 " ",
                 String(patient.allergies)
               ] })
             ] }),
             chartTab === "meds" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-indigo-700", children: "Current meds" }),
-              currentMeds.length > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "mt-2 space-y-2 text-sm text-slate-700", children: currentMeds.map((m, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { className: "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2", children: m }, i)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500", children: "No current medicines recorded." })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-indigo-200", children: "Current meds" }),
+              currentMeds.length > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "mt-2 space-y-2 text-sm text-slate-200", children: currentMeds.map((m, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { className: "rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2", children: m }, i)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2 text-sm text-slate-400", children: "No current medicines recorded." })
             ] }),
             chartTab === "labs" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-indigo-700", children: "Labs" }),
-              patient.labs ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 grid grid-cols-2 gap-2 text-sm", children: Object.entries(patient.labs).map(([k, v]) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-950", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("b", { className: "text-sky-700", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-indigo-200", children: "Labs" }),
+              patient.labs ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 grid grid-cols-2 gap-2 text-sm", children: Object.entries(patient.labs).map(([k, v]) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-xs text-sky-50", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("b", { className: "text-sky-200", children: [
                   k,
                   ":"
                 ] }),
                 " ",
                 String(v)
-              ] }, k)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500", children: "No labs available for this case." })
+              ] }, k)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2 text-sm text-slate-400", children: "No labs available for this case." })
             ] }),
-            chartTab === "order" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-950", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-indigo-700", children: "Physician order" }),
+            chartTab === "order" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-indigo-300/25 bg-indigo-400/10 p-3 text-sm text-indigo-50", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-indigo-200", children: "Physician order" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2", children: patient.order ?? "No physician order recorded." })
             ] })
           ] })
@@ -423,21 +423,21 @@ function HospitalGame({
             type: "spring",
             stiffness: 360,
             damping: 28
-          }, className: "relative rounded-lg border border-slate-300/70 bg-slate-50 p-3 text-slate-950 shadow-[0_14px_28px_-24px_rgba(0,0,0,0.9)] before:absolute before:inset-x-3 before:top-0 before:h-px before:bg-slate-300", children: [
+          }, className: "relative rounded-lg border border-indigo-200/20 bg-slate-950/55 p-3 text-slate-100 shadow-[0_14px_28px_-24px_rgba(79,70,229,0.9)] backdrop-blur before:absolute before:inset-x-3 before:top-0 before:h-px before:bg-indigo-200/25", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-mono text-sm font-black uppercase tracking-wide", children: o.drug }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => removeOrder(i), className: "text-slate-500 hover:text-destructive", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "size-3.5" }) })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => removeOrder(i), className: "text-slate-400 hover:text-destructive", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "size-3.5" }) })
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-2 grid grid-cols-3 gap-2 text-xs", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("input", { placeholder: "Dose (mg)", value: o.dose, onChange: (e) => updateOrder(i, {
                 dose: e.target.value
-              }), className: "rounded border border-slate-300 bg-white px-2 py-1" }),
+              }), className: "rounded border border-indigo-200/20 bg-slate-900/80 px-2 py-1 text-slate-100" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("select", { value: o.route, onChange: (e) => updateOrder(i, {
                 route: e.target.value
-              }), className: "rounded border border-slate-300 bg-white px-2 py-1", children: ROUTES.map((r) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { children: r }, r)) }),
+              }), className: "rounded border border-indigo-200/20 bg-slate-900/80 px-2 py-1 text-slate-100", children: ROUTES.map((r) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { children: r }, r)) }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("select", { value: o.frequency, onChange: (e) => updateOrder(i, {
                 frequency: e.target.value
-              }), className: "rounded border border-slate-300 bg-white px-2 py-1", children: FREQS.map((r) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { children: r }, r)) })
+              }), className: "rounded border border-indigo-200/20 bg-slate-900/80 px-2 py-1 text-slate-100", children: FREQS.map((r) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { children: r }, r)) })
             ] })
           ] }, `${o.drug}-${i}`)) }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: submit, disabled: orders.length === 0, className: "mt-3 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40", children: "Submit order" })
@@ -450,10 +450,8 @@ function HospitalGame({
 function Loading() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "grid min-h-[60vh] place-items-center text-muted-foreground", children: "Loading case..." });
 }
-const SplitErrorComponent = ({
-  error
-}) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-destructive", children: error.message });
+const SplitNotFoundComponent = () => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8", children: "Not found" });
 export {
   HospitalGame,
-  SplitErrorComponent as errorComponent
+  SplitNotFoundComponent as notFoundComponent
 };

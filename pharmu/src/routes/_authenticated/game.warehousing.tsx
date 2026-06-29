@@ -6,12 +6,13 @@ import { FeedbackScreen } from "@/components/game/FeedbackScreen";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
+import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 import { useTimer } from "@/lib/game/useTimer";
 import {
   computeScore, submitScore, MODE_TIMERS, toastScore, bumpCounterBadge,
 } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
-import { Snowflake, Lock, AlertTriangle, Package } from "lucide-react";
+import { AlertTriangle, Barcode, Flag, Lock, Package, Thermometer } from "lucide-react";
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
@@ -174,6 +175,7 @@ function WarehouseGame() {
   const [errors, setErrors] = useState(0);
   const [placed, setPlaced] = useState<Record<string, string>>({}); // shipment id -> zone or "quarantine"
   const [activeShip, setActiveShip] = useState<string | null>(null);
+  const [landedShip, setLandedShip] = useState<string | null>(null);
   const [registerOpen, setRegisterOpen] = useState<string | null>(null);
   const [registerData, setRegisterData] = useState({ qty: "", receiver: "" });
   const [contaminated, setContaminated] = useState(false);
@@ -205,7 +207,7 @@ function WarehouseGame() {
 
   useEffect(() => {
     setPhase("receiving"); setPoints(0); setErrors(0); setPlaced({});
-    setActiveShip(null); setRegisterOpen(null); setRegisterData({ qty: "", receiver: "" });
+    setActiveShip(null); setLandedShip(null); setRegisterOpen(null); setRegisterData({ qty: "", receiver: "" });
     setContaminated(false); setHints(0); setDispatchIdx(0); setDispatchAns({});
     setExpiryAns({}); setAuditIdx(0); setAuditAns({}); setReconChecked({}); setResult(null);
   }, [caseData?.id]);
@@ -238,6 +240,8 @@ function WarehouseGame() {
         });
       }
       setPlaced((m) => ({ ...m, [ship.id]: "quarantine" }));
+      setLandedShip(ship.id);
+      window.setTimeout(() => setLandedShip((id) => (id === ship.id ? null : id)), 650);
       setActiveShip(null);
       return;
     }
@@ -278,6 +282,8 @@ function WarehouseGame() {
       });
     }
     setPlaced((m) => ({ ...m, [ship.id]: zoneOrQuarantine }));
+    setLandedShip(ship.id);
+    window.setTimeout(() => setLandedShip((id) => (id === ship.id ? null : id)), 650);
     setActiveShip(null);
   }
 
@@ -441,32 +447,46 @@ function WarehouseGame() {
         onHint={() => { setHints((n) => n + 1); toast("Read each label carefully — storage requirements matter."); }}
       />
 
-      <main className="mx-auto max-w-7xl px-4 py-4">
+      <main className="relative mx-auto max-w-7xl overflow-hidden px-4 py-4">
+        <ModeAmbientLayer mode="warehousing" intensity="screen" />
         {phase === "receiving" && (
-          <section className="grid gap-4 lg:grid-cols-[1fr_1.3fr]">
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Incoming shipments</p>
+          <section className="relative z-10 grid gap-4 lg:grid-cols-[1fr_1.3fr]">
+            <div className="rounded-2xl border border-sky-300/20 bg-slate-950/55 p-4 shadow-[0_24px_80px_-48px_rgba(56,189,248,0.8)] backdrop-blur-xl">
+              <p className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-sky-200/80"><Package className="size-3.5" /> Incoming manifests</p>
               <ul className="mt-3 space-y-2">
                 {s.shipments.map((sh: any) => {
                   const done = !!placed[sh.id];
                   const active = activeShip === sh.id;
+                  const excursion = !!sh.tempLog?.excursion;
                   return (
                     <li key={sh.id}>
-                      <button disabled={done} onClick={() => setActiveShip(sh.id)}
-                        className={`w-full rounded-xl border p-3 text-left text-sm transition ${active ? "border-primary bg-primary/10" : done ? "border-primary/30 bg-muted/20 opacity-60" : "border-border/40 hover:border-primary/40"}`}>
+                      <motion.button disabled={done} onClick={() => setActiveShip(sh.id)}
+                        initial={{ x: 34, opacity: 0 }}
+                        animate={{ x: 0, y: landedShip === sh.id ? [-18, 7, 0] : 0, scale: landedShip === sh.id ? [1, 1.035, 1] : 1, opacity: 1 }}
+                        transition={{ duration: landedShip === sh.id ? 0.42 : 0.35, ease: "easeOut" }}
+                        className={`group relative w-full overflow-hidden rounded-xl border p-3 pl-7 text-left text-sm transition ${active ? "border-sky-300/70 bg-sky-400/15 shadow-[0_18px_48px_-28px_rgba(56,189,248,0.95)]" : done ? "border-sky-300/25 bg-slate-900/35 opacity-65" : "border-sky-300/20 bg-slate-900/45 hover:-translate-y-0.5 hover:border-sky-300/50 hover:bg-sky-400/10 hover:shadow-[0_18px_44px_-30px_rgba(56,189,248,0.9)]"}`}>
+                        <span className="absolute inset-y-3 left-2 flex w-2 items-center justify-center rounded-full bg-slate-950/80">
+                          <Barcode className="h-12 w-4 text-sky-200/70" />
+                        </span>
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold">{sh.drug}</span>
-                          {sh.controlled && <Lock className="size-3 text-amber-400" />}
+                          <span className="font-semibold text-slate-50">{sh.drug}</span>
+                          <span className="flex items-center gap-2">
+                            {excursion && <Thermometer className="size-4 animate-pulse text-red-400" />}
+                            {sh.controlled && <Lock className="size-3.5 text-amber-300" />}
+                          </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">Batch {sh.batch} · exp {sh.expiry}</p>
-                        <p className="mt-1 text-[11px] text-primary">{sh.requirement}</p>
+                        <p className="text-[11px] text-slate-400">Batch {sh.batch} · exp {sh.expiry}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <p className="text-[11px] text-sky-200">{sh.requirement}</p>
+                          <span className="rotate-[-4deg] rounded border border-sky-200/35 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-sky-100/80">arrived</span>
+                        </div>
                         {sh.tempLog && (
-                          <div className="mt-2 rounded bg-background/40 p-1.5">
+                          <div className="mt-3 rounded-lg border border-sky-200/15 bg-slate-950/45 p-2">
                             <TempLogChart log={sh.tempLog} />
                           </div>
                         )}
-                        {done && <p className="mt-1 text-[10px] text-muted-foreground">→ {placed[sh.id]}</p>}
-                      </button>
+                        {done && <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-sky-200/70">Landed in {placed[sh.id]}</p>}
+                      </motion.button>
                     </li>
                   );
                 })}
@@ -477,46 +497,64 @@ function WarehouseGame() {
               </button>
             </div>
 
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Warehouse zones</p>
-              {!activeShip && <p className="mt-3 text-sm text-muted-foreground">Select a shipment, then choose a zone.</p>}
+            <div className="rounded-2xl border border-sky-300/20 bg-slate-950/55 p-4 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+              <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">Warehouse zones</p>
+              {!activeShip && <p className="mt-3 text-sm text-slate-400">Select a manifest, then choose a zone.</p>}
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {s.zones.map((z: string) => (
-                  <button key={z} disabled={!activeShip} onClick={() => placeShipment(z)}
-                    className="rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm hover:border-primary/40 disabled:opacity-40">
+                  <motion.button key={z} disabled={!activeShip} onClick={() => placeShipment(z)}
+                    whileTap={activeShip ? { y: [0, 8, 0], scale: [1, 0.98, 1] } : undefined}
+                    className="rounded-xl border border-sky-300/20 bg-sky-400/5 p-3 text-left text-sm transition hover:border-sky-300/45 hover:bg-sky-400/10 disabled:opacity-40">
                     <p className="font-semibold">{z}</p>
-                    <p className="text-[11px] text-muted-foreground">Drop the selected shipment here.</p>
-                  </button>
+                    <p className="text-[11px] text-slate-400">Drop the selected shipment here.</p>
+                  </motion.button>
                 ))}
-                <button disabled={!activeShip} onClick={() => placeShipment("quarantine")}
-                  className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-left text-sm hover:bg-amber-500/15 disabled:opacity-40">
-                  <p className="flex items-center gap-1 font-semibold text-amber-400"><AlertTriangle className="size-3.5" /> Quarantine — temperature excursion</p>
-                  <p className="text-[11px] text-muted-foreground">Use if the shipment's temp log shows an excursion.</p>
-                </button>
+                <motion.button disabled={!activeShip} onClick={() => placeShipment("quarantine")}
+                  whileTap={activeShip ? { y: [0, 8, 0], scale: [1, 0.98, 1] } : undefined}
+                  className="rounded-xl border border-amber-400/50 bg-amber-400/10 p-3 text-left text-sm shadow-[0_0_34px_-22px_rgba(251,191,36,0.9)] transition hover:bg-amber-400/15 disabled:opacity-40"
+                  style={{ borderImage: "repeating-linear-gradient(45deg, rgba(251,191,36,0.95) 0 10px, rgba(15,23,42,0.95) 10px 20px) 1" }}>
+                  <p className="flex items-center gap-1 font-semibold text-amber-300"><AlertTriangle className="size-3.5 animate-pulse" /> Quarantine - temperature excursion</p>
+                  <p className="text-[11px] text-slate-400">Use if the shipment's temp log shows an excursion.</p>
+                </motion.button>
               </div>
             </div>
           </section>
         )}
 
         {phase === "dispatch" && s.dispatch[dispatchIdx] && (
-          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Dispatch order {dispatchIdx + 1} / {s.dispatch.length}</p>
+          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-50px_rgba(56,189,248,0.85)] backdrop-blur-xl">
+            <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">FEFO dispatch {dispatchIdx + 1} / {s.dispatch.length}</p>
             <h3 className="mt-1 text-lg font-bold">Pick a batch of {s.dispatch[dispatchIdx].drug}</h3>
-            <p className="text-sm text-muted-foreground">Use FEFO — first expired, first out.</p>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {s.dispatch[dispatchIdx].batches.map((b: any) => (
-                <button key={b.batch} onClick={() => answerDispatch(b.batch)}
-                  className="rounded-xl border border-border/40 p-3 text-left text-sm hover:border-primary/40">
-                  <p className="font-semibold">{b.batch}</p>
-                  <p className="text-xs text-muted-foreground">Expires {b.expiry}</p>
-                </button>
-              ))}
+            <p className="text-sm text-slate-400">Use FEFO - the earliest expiry sits at the front of the shelf.</p>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/35 p-4">
+              <div className="mb-3 h-2 rounded-full bg-gradient-to-r from-sky-300/50 via-slate-700 to-sky-300/30" />
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {[...s.dispatch[dispatchIdx].batches]
+                  .sort((a: any, b: any) => String(a.expiry).localeCompare(String(b.expiry)))
+                  .map((b: any, i: number) => (
+                    <motion.button
+                      key={b.batch}
+                      onClick={() => answerDispatch(b.batch)}
+                      whileTap={{ y: 8, scale: 0.98 }}
+                      className={`relative min-h-28 rounded-lg border p-3 text-left text-sm shadow-[0_16px_36px_-28px_rgba(56,189,248,0.9)] transition hover:-translate-y-1 hover:border-sky-300/60 hover:bg-sky-400/10 ${
+                        i === 0 ? "border-sky-300/55 bg-sky-400/15" : "border-sky-300/20 bg-slate-950/55"
+                      }`}
+                    >
+                      <span className="absolute right-3 top-3 rounded border border-sky-200/30 px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-sky-100/70">
+                        {i === 0 ? "front" : `row ${i + 1}`}
+                      </span>
+                      <Package className="mb-3 size-7 text-sky-200/80" />
+                      <p className="font-semibold">{b.batch}</p>
+                      <p className="text-xs text-slate-400">Expires {b.expiry}</p>
+                    </motion.button>
+                  ))}
+              </div>
             </div>
           </section>
         )}
 
         {phase === "expiry" && (
-          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
+          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Expiry management</p>
             <h3 className="mt-1 text-lg font-bold">Items approaching expiry</h3>
             <ul className="mt-3 space-y-2">
@@ -547,8 +585,8 @@ function WarehouseGame() {
         )}
 
         {phase === "audit" && auditScenarios[auditIdx] && (
-          <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <aside className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
+          <section className="relative z-10 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <aside className="rounded-2xl border border-sky-300/20 bg-slate-950/55 p-5 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Operations audit</p>
               <h3 className="mt-1 text-lg font-bold">Deviation dashboard</h3>
               <div className="mt-4 space-y-2">
@@ -575,7 +613,7 @@ function WarehouseGame() {
               </div>
             </aside>
 
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
+            <div className="rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">
                 Audit decision {auditIdx + 1} / {auditScenarios.length}
               </p>
@@ -597,24 +635,32 @@ function WarehouseGame() {
         )}
 
         {phase === "reconcile" && (
-          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Inventory reconciliation</p>
+          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.75)] backdrop-blur-xl">
+            <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">Printed stocktake sheet</p>
             <h3 className="mt-1 text-lg font-bold">Check items needing investigation</h3>
-            <table className="mt-3 w-full text-sm">
-              <thead className="text-xs uppercase text-muted-foreground">
+            <table className="mt-4 w-full overflow-hidden rounded-xl border border-sky-300/20 bg-slate-900/40 text-sm">
+              <thead className="border-b border-sky-300/20 bg-sky-400/10 text-xs uppercase text-sky-100/75">
                 <tr><th className="p-2 text-left">Item</th><th className="p-2 text-right">Expected</th><th className="p-2 text-right">Actual</th><th className="p-2 text-center">Investigate?</th></tr>
               </thead>
               <tbody>
-                {s.reconciliation.map((r: any, i: number) => (
-                  <tr key={i} className="border-t border-border/30">
-                    <td className="p-2">{r.item}</td>
+                {s.reconciliation.map((r: any, i: number) => {
+                  const discrepancy = Number(r.expected) !== Number(r.actual);
+                  return (
+                  <tr key={i} className={`border-t border-sky-300/10 ${discrepancy ? "bg-red-500/10 text-red-50" : ""}`}>
+                    <td className="p-2">
+                      <span className="inline-flex items-center gap-2">
+                        {discrepancy && <Flag className="size-3.5 text-red-300" />}
+                        {r.item}
+                      </span>
+                    </td>
                     <td className="p-2 text-right tabular-nums">{r.expected}</td>
                     <td className="p-2 text-right tabular-nums">{r.actual}</td>
                     <td className="p-2 text-center">
                       <input type="checkbox" checked={!!reconChecked[i]} onChange={(e) => setReconChecked((m) => ({ ...m, [i]: e.target.checked }))} />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             <button onClick={finishReconcile} className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground">
@@ -655,23 +701,37 @@ function WarehouseGame() {
 }
 
 function TempLogChart({ log }: { log: { min: number; max: number; excursion: boolean } }) {
-  // Simple sparkline of 12 points oscillating between min and max
-  const pts = Array.from({ length: 12 }, (_, i) => {
+  const pts = Array.from({ length: 18 }, (_, i) => {
     const t = i / 11;
     const v = log.min + (log.max - log.min) * (0.5 + 0.5 * Math.sin(t * Math.PI * 2));
     return v;
   });
-  const lo = Math.min(...pts), hi = Math.max(...pts);
+  const lo = Math.min(0, ...pts), hi = Math.max(10, ...pts);
   const span = Math.max(1, hi - lo);
+  const yFor = (v: number) => 54 - ((v - lo) / span) * 42;
+  const points = pts.map((v, i) => `${6 + i * (188 / (pts.length - 1))},${yFor(v)}`).join(" ");
+  const redZoneY = yFor(8);
   return (
-    <div className="flex items-end gap-0.5">
-      {pts.map((v, i) => (
-        <div key={i}
-          className={`w-1.5 rounded-t ${v > 8 || v < 2 ? "bg-destructive" : "bg-primary"}`}
-          style={{ height: `${10 + ((v - lo) / span) * 22}px` }}
-        />
-      ))}
-      <span className="ml-1 text-[10px] text-muted-foreground">{log.min}–{log.max}°C</span>
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em]">
+        <span className={log.excursion ? "text-red-300" : "text-sky-200/80"}>Temp log</span>
+        <span className="text-slate-400">{log.min}-{log.max}C</span>
+      </div>
+      <svg viewBox="0 0 208 62" className="h-20 w-full overflow-visible rounded-md bg-slate-950/55">
+        <defs>
+          <linearGradient id="warehouseTempLine" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="rgb(56 189 248)" />
+            <stop offset="100%" stopColor={log.excursion ? "rgb(248 113 113)" : "rgb(125 211 252)"} />
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="208" height="62" rx="8" fill="rgba(15, 23, 42, 0.45)" />
+        <path d={`M 0 ${redZoneY} H 208`} stroke="rgb(248 113 113)" strokeWidth="1.5" strokeDasharray="4 4" />
+        <text x="166" y={Math.max(10, redZoneY - 4)} className="fill-red-300 text-[8px] font-bold">8C red zone</text>
+        <polyline points={points} fill="none" stroke="url(#warehouseTempLine)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {pts.map((v, i) => (
+          <circle key={i} cx={6 + i * (188 / (pts.length - 1))} cy={yFor(v)} r={v > 8 || v < 2 ? 2.5 : 1.7} className={v > 8 || v < 2 ? "fill-red-400" : "fill-sky-200"} />
+        ))}
+      </svg>
     </div>
   );
 }

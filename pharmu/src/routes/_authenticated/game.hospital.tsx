@@ -66,29 +66,29 @@ function bpPercent(value: string) {
 function VitalWave({ label, value, pct, tone = "primary" }: { label: string; value: string; pct: number; tone?: "primary" | "red" | "sky" }) {
   const theme = tone === "red"
     ? {
-      wrap: "border-red-200 bg-red-50/95 shadow-[0_14px_34px_-28px_rgba(239,68,68,0.9)]",
-      label: "text-red-700",
-      value: "text-red-900",
-      track: "bg-red-100",
+      wrap: "border-red-400/35 bg-red-500/10 shadow-[0_14px_34px_-28px_rgba(239,68,68,0.9)]",
+      label: "text-red-200",
+      value: "text-red-50",
+      track: "bg-red-950/45",
       fill: "bg-red-500 shadow-[0_0_18px_rgba(239,68,68,0.7)]",
       stroke: "rgb(239 68 68)",
       glow: "rgba(239,68,68,0.65)",
     }
     : tone === "sky"
       ? {
-        wrap: "border-sky-200 bg-sky-50/95 shadow-[0_14px_34px_-28px_rgba(14,165,233,0.9)]",
-        label: "text-sky-700",
-        value: "text-sky-950",
-        track: "bg-sky-100",
+        wrap: "border-sky-300/35 bg-sky-400/10 shadow-[0_14px_34px_-28px_rgba(14,165,233,0.9)]",
+        label: "text-sky-200",
+        value: "text-sky-50",
+        track: "bg-sky-950/45",
         fill: "bg-sky-500 shadow-[0_0_18px_rgba(14,165,233,0.7)]",
         stroke: "rgb(14 165 233)",
         glow: "rgba(14,165,233,0.65)",
       }
       : {
-        wrap: "border-emerald-200 bg-emerald-50/95 shadow-[0_14px_34px_-28px_rgba(16,185,129,0.9)]",
-        label: "text-emerald-700",
-        value: "text-emerald-950",
-        track: "bg-emerald-100",
+        wrap: "border-emerald-300/35 bg-emerald-400/10 shadow-[0_14px_34px_-28px_rgba(16,185,129,0.9)]",
+        label: "text-emerald-200",
+        value: "text-emerald-50",
+        track: "bg-emerald-950/45",
         fill: "bg-emerald-500 shadow-[0_0_18px_rgba(16,185,129,0.7)]",
         stroke: "rgb(16 185 129)",
         glow: "rgba(16,185,129,0.65)",
@@ -96,8 +96,8 @@ function VitalWave({ label, value, pct, tone = "primary" }: { label: string; val
   const safePct = Math.max(8, Math.min(100, Number.isFinite(pct) ? pct : 72));
   return (
     <div className={`relative overflow-hidden rounded-xl border p-2.5 ${theme.wrap}`}>
-      <div className="pointer-events-none absolute inset-0 opacity-55"
-        style={{ backgroundImage: "linear-gradient(rgba(15,23,42,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.04) 1px, transparent 1px)", backgroundSize: "12px 12px" }} />
+      <div className="pointer-events-none absolute inset-0 opacity-45"
+        style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)", backgroundSize: "12px 12px" }} />
       <div className="relative flex items-center gap-3">
         <div className="w-10 font-mono text-[10px] font-black uppercase tracking-wider">
           <span className={theme.label}>{label}</span>
@@ -308,13 +308,13 @@ export function HospitalGame({ mode }: { mode: Mode }) {
         paused={timer.paused} togglePause={timer.togglePause} score={orders.length * 5}
         onHint={() => { setHints((n) => n + 1); toastScore(-10, "hint used"); toast.info(`Hint: ${caseData.mentor_tip}`); }} />
       <main className="relative z-10 mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.3fr]">
-        <aside className="relative rounded-2xl border border-slate-300/20 bg-slate-100/95 p-4 text-slate-950 shadow-[0_24px_65px_-38px_rgba(15,23,42,0.8)] backdrop-blur">
-          <div className="absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-slate-400/40 bg-slate-300 shadow-inner" />
-          <div className="rounded-xl border border-slate-300 bg-white/90 p-4 shadow-inner">
-          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-indigo-700"><ClipboardList className="h-3.5 w-3.5" /> Patient file</p>
+        <aside className="relative rounded-2xl border border-indigo-300/20 bg-slate-900/55 p-4 text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl">
+          <div className="absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-indigo-200/20 bg-slate-700/70 shadow-inner backdrop-blur" />
+          <div className="rounded-xl border border-indigo-200/20 bg-slate-950/45 p-4 shadow-inner backdrop-blur-xl">
+          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-indigo-200"><ClipboardList className="h-3.5 w-3.5" /> Patient file</p>
           <h2 className="mt-1 text-xl font-black">{patient.name ?? "Clinical Patient"}</h2>
-          <p className="border-b border-slate-300 pb-3 text-sm text-slate-600">Age {patient.age ?? "-"} | {patient.diagnosis ?? patient.condition ?? "Assessment pending"}</p>
-          <div className="mt-3 flex gap-1 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <p className="border-b border-indigo-200/15 pb-3 text-sm text-slate-300">Age {patient.age ?? "-"} | {patient.diagnosis ?? patient.condition ?? "Assessment pending"}</p>
+          <div className="mt-3 flex gap-1 border-b border-indigo-200/15 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             {(["vitals", "meds", "labs", "order"] as ChartTab[]).map((tab) => (
               <button
                 key={tab}
@@ -322,8 +322,8 @@ export function HospitalGame({ mode }: { mode: Mode }) {
                 onClick={() => setChartTab(tab)}
                 className={`rounded-t-md px-3 py-1 transition ${
                   chartTab === tab
-                    ? "bg-indigo-600 text-white shadow-[0_8px_18px_-12px_rgba(79,70,229,0.9)]"
-                    : "bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700"
+                    ? "bg-indigo-500/90 text-white shadow-[0_8px_18px_-12px_rgba(99,102,241,0.9)]"
+                    : "bg-white/5 hover:bg-indigo-400/15 hover:text-indigo-100"
                 }`}
               >
                 {tab}
@@ -338,8 +338,8 @@ export function HospitalGame({ mode }: { mode: Mode }) {
                 <VitalWave label="BP" value={bp} pct={bpPercent(bp)} tone="sky" />
                 <VitalWave label="O2" value={`${o2}%`} pct={o2} tone={o2 < 94 ? "red" : "primary"} />
                 {patient.allergies && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-                    <span className="text-xs font-black uppercase tracking-wider text-amber-700">Allergies:</span> {String(patient.allergies)}
+                  <div className="rounded-lg border border-amber-300/35 bg-amber-400/10 px-3 py-2 text-sm text-amber-50">
+                    <span className="text-xs font-black uppercase tracking-wider text-amber-200">Allergies:</span> {String(patient.allergies)}
                   </div>
                 )}
               </div>
@@ -347,39 +347,39 @@ export function HospitalGame({ mode }: { mode: Mode }) {
 
             {chartTab === "meds" && (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Current meds</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Current meds</p>
                 {currentMeds.length > 0 ? (
-                  <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                  <ul className="mt-2 space-y-2 text-sm text-slate-200">
                     {currentMeds.map((m, i) => (
-                      <li key={i} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">{m}</li>
+                      <li key={i} className="rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2">{m}</li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">No current medicines recorded.</p>
+                  <p className="mt-2 rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2 text-sm text-slate-400">No current medicines recorded.</p>
                 )}
               </div>
             )}
 
             {chartTab === "labs" && (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Labs</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Labs</p>
                 {patient.labs ? (
                   <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                     {Object.entries(patient.labs).map(([k, v]) => (
-                      <div key={k} className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-950">
-                        <b className="text-sky-700">{k}:</b> {String(v)}
+                      <div key={k} className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-xs text-sky-50">
+                        <b className="text-sky-200">{k}:</b> {String(v)}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">No labs available for this case.</p>
+                  <p className="mt-2 rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2 text-sm text-slate-400">No labs available for this case.</p>
                 )}
               </div>
             )}
 
             {chartTab === "order" && (
-              <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-950">
-                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Physician order</p>
+              <div className="rounded-lg border border-indigo-300/25 bg-indigo-400/10 p-3 text-sm text-indigo-50">
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Physician order</p>
                 <p className="mt-2">{patient.order ?? "No physician order recorded."}</p>
               </div>
             )}
@@ -438,23 +438,23 @@ export function HospitalGame({ mode }: { mode: Mode }) {
                     animate={{ opacity: 1, y: 0, rotateX: 0 }}
                     exit={{ opacity: 0, x: 24, scale: 0.96 }}
                     transition={{ type: "spring", stiffness: 360, damping: 28 }}
-                    className="relative rounded-lg border border-slate-300/70 bg-slate-50 p-3 text-slate-950 shadow-[0_14px_28px_-24px_rgba(0,0,0,0.9)] before:absolute before:inset-x-3 before:top-0 before:h-px before:bg-slate-300"
+                    className="relative rounded-lg border border-indigo-200/20 bg-slate-950/55 p-3 text-slate-100 shadow-[0_14px_28px_-24px_rgba(79,70,229,0.9)] backdrop-blur before:absolute before:inset-x-3 before:top-0 before:h-px before:bg-indigo-200/25"
                   >
                     <div className="flex items-center justify-between">
                       <p className="font-mono text-sm font-black uppercase tracking-wide">{o.drug}</p>
-                      <button onClick={() => removeOrder(i)} className="text-slate-500 hover:text-destructive">
+                      <button onClick={() => removeOrder(i)} className="text-slate-400 hover:text-destructive">
                         <Trash2 className="size-3.5" />
                       </button>
                     </div>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                       <input placeholder="Dose (mg)" value={o.dose} onChange={(e) => updateOrder(i, { dose: e.target.value })}
-                        className="rounded border border-slate-300 bg-white px-2 py-1" />
+                        className="rounded border border-indigo-200/20 bg-slate-900/80 px-2 py-1 text-slate-100" />
                       <select value={o.route} onChange={(e) => updateOrder(i, { route: e.target.value })}
-                        className="rounded border border-slate-300 bg-white px-2 py-1">
+                        className="rounded border border-indigo-200/20 bg-slate-900/80 px-2 py-1 text-slate-100">
                         {ROUTES.map((r) => <option key={r}>{r}</option>)}
                       </select>
                       <select value={o.frequency} onChange={(e) => updateOrder(i, { frequency: e.target.value })}
-                        className="rounded border border-slate-300 bg-white px-2 py-1">
+                        className="rounded border border-indigo-200/20 bg-slate-900/80 px-2 py-1 text-slate-100">
                         {FREQS.map((r) => <option key={r}>{r}</option>)}
                       </select>
                     </div>
