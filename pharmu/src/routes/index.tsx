@@ -62,32 +62,32 @@ export default function Landing() {
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       {/* HERO */}
-      <section className="relative flex min-h-[92vh] flex-col items-center justify-center px-6 text-center">
+      <section className="relative flex min-h-[100svh] flex-col items-center justify-center px-4 py-10 text-center sm:min-h-[92vh] sm:px-6 sm:py-0">
         <PillBackground />
         <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-          className="relative z-10 max-w-4xl"
+          className="relative z-10 w-full max-w-4xl"
         >
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs font-medium text-primary">
+          <div className="mb-3 inline-flex max-w-[92vw] items-center gap-2 rounded-full glass px-3 py-1.5 text-[10px] font-medium text-primary sm:mb-6 sm:px-4 sm:text-xs">
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             Built by pharmacists, for pharmacists
           </div>
-          <h1 className="relative z-10 mx-auto -mt-10 -mb-28 flex justify-center md:-mb-36">
-            <LogoVideo className="aspect-video w-[min(98vw,860px)]" />
+          <h1 className="relative z-10 mx-auto -mt-2 -mb-8 flex justify-center sm:-mt-10 sm:-mb-28 md:-mb-36">
+            <LogoVideo className="aspect-video w-[min(116vw,420px)] sm:w-[min(98vw,860px)]" />
           </h1>
-          <div className="hero-copy-layer relative z-30 mx-auto max-w-3xl">
+          <div className="hero-copy-layer relative z-30 mx-auto max-w-3xl pt-2 sm:pt-0">
             <div className="hero-dust-field" aria-hidden="true" />
-            <p className="relative z-10 mt-0 text-xl font-medium text-foreground/90 md:text-2xl">
+            <p className="relative z-10 mx-auto mt-0 max-w-[19rem] text-[1.05rem] font-medium leading-snug text-foreground/90 sm:max-w-none sm:text-xl md:text-2xl">
               Train Like a Real Pharmacist. <span className="text-primary">Anywhere.</span> Anytime.
             </p>
-            <p className="relative z-10 mx-auto mt-4 max-w-2xl text-muted-foreground">
+            <p className="relative z-10 mx-auto mt-3 max-w-[21rem] text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:max-w-2xl sm:text-base">
               Four immersive training modes. 500+ drug entries. Real prescriptions, real patients, real consequences - without the risk.
             </p>
-            <div className="relative z-10 mt-10 flex flex-wrap justify-center gap-3">
-              <Link to="/login" className="rounded-full bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03]">
+            <div className="relative z-10 mt-7 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:flex-wrap">
+              <Link to="/login" className="w-44 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03] sm:w-auto sm:px-8 sm:py-3.5 sm:text-base">
                 Start Training
               </Link>
-              <Link to="/leaderboard" className="rounded-full border border-border glass px-8 py-3.5 text-base font-semibold text-foreground hover:border-primary/50 transition">
+              <Link to="/leaderboard" className="w-44 rounded-full border border-border glass px-6 py-3 text-sm font-semibold text-foreground transition hover:border-primary/50 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base">
                 View Leaderboard
               </Link>
             </div>

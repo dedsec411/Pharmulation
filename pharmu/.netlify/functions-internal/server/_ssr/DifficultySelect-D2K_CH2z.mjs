@@ -1,5 +1,5 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { B as Button, u as useAuthStore } from "./router-xkoTwkF_.mjs";
+import { B as Button, u as useAuthStore } from "./router-Arwy4pBH.mjs";
 import { M as ModeAmbientLayer } from "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import { e as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { f as fetchRandomCase, M as MODE_LABEL, D as DIFFICULTY_LABEL, d as DIFFICULTY_RULES } from "./shared-DDCPKmqL.mjs";

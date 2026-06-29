@@ -1,7 +1,7 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { N as Navbar } from "./Navbar-D574fTqt.mjs";
-import { u as useAuthStore } from "./router-xkoTwkF_.mjs";
+import { N as Navbar } from "./Navbar-Dk9x4FX1.mjs";
+import { u as useAuthStore } from "./router-Arwy4pBH.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { t as tierFor, x as xpProgress } from "./levels-7qe6_GyK.mjs";
 import { j as jspdf_node_minExports } from "../_libs/jspdf.mjs";

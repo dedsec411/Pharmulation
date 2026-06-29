@@ -1,7 +1,7 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
-import { u as useAuthStore } from "./router-xkoTwkF_.mjs";
+import { u as useAuthStore } from "./router-Arwy4pBH.mjs";
 import { t as tierFor } from "./levels-7qe6_GyK.mjs";
 import { M as MODE_LABEL } from "./shared-DDCPKmqL.mjs";
 import { B as BackButton } from "./BackButton-DOnk_vvq.mjs";

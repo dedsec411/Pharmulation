@@ -36,7 +36,7 @@ import "../_libs/supabase__functions-js.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/motion-dom.mjs";
 import "../_libs/motion-utils.mjs";
-const appCss = "/assets/styles-CtczZhcY.css";
+const appCss = "/assets/styles-CXYxnZ7u.css";
 function reportLovableError(error, context = {}) {
   if (typeof window === "undefined") return;
   window.__lovableEvents?.captureException?.(
@@ -611,7 +611,7 @@ const Route$g = createFileRoute("/login")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$f, "component")
 });
-const $$splitComponentImporter$e = () => import("./leaderboard-Bmt27NcY.mjs");
+const $$splitComponentImporter$e = () => import("./leaderboard-EsCBrrx1.mjs");
 const Route$f = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [{
@@ -739,7 +739,7 @@ const testimonials = [
 ];
 function Landing() {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "relative min-h-screen overflow-x-hidden", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "relative flex min-h-[92vh] flex-col items-center justify-center px-6 text-center", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "relative flex min-h-[100svh] flex-col items-center justify-center px-4 py-10 text-center sm:min-h-[92vh] sm:px-6 sm:py-0", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(PillBackground, {}),
       /* @__PURE__ */ jsxRuntimeExports.jsxs(
         motion.div,
@@ -747,24 +747,24 @@ function Landing() {
           initial: { opacity: 0, y: 20 },
           animate: { opacity: 1, y: 0 },
           transition: { duration: 0.6 },
-          className: "relative z-10 max-w-4xl",
+          className: "relative z-10 w-full max-w-4xl",
           children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-6 inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs font-medium text-primary", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-3 inline-flex max-w-[92vw] items-center gap-2 rounded-full glass px-3 py-1.5 text-[10px] font-medium text-primary sm:mb-6 sm:px-4 sm:text-xs", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "h-1.5 w-1.5 rounded-full bg-primary animate-pulse" }),
               "Built by pharmacists, for pharmacists"
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "relative z-10 mx-auto -mt-10 -mb-28 flex justify-center md:-mb-36", children: /* @__PURE__ */ jsxRuntimeExports.jsx(LogoVideo, { className: "aspect-video w-[min(98vw,860px)]" }) }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "hero-copy-layer relative z-30 mx-auto max-w-3xl", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "relative z-10 mx-auto -mt-2 -mb-8 flex justify-center sm:-mt-10 sm:-mb-28 md:-mb-36", children: /* @__PURE__ */ jsxRuntimeExports.jsx(LogoVideo, { className: "aspect-video w-[min(116vw,420px)] sm:w-[min(98vw,860px)]" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "hero-copy-layer relative z-30 mx-auto max-w-3xl pt-2 sm:pt-0", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "hero-dust-field", "aria-hidden": "true" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "relative z-10 mt-0 text-xl font-medium text-foreground/90 md:text-2xl", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "relative z-10 mx-auto mt-0 max-w-[19rem] text-[1.05rem] font-medium leading-snug text-foreground/90 sm:max-w-none sm:text-xl md:text-2xl", children: [
                 "Train Like a Real Pharmacist. ",
                 /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-primary", children: "Anywhere." }),
                 " Anytime."
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "relative z-10 mx-auto mt-4 max-w-2xl text-muted-foreground", children: "Four immersive training modes. 500+ drug entries. Real prescriptions, real patients, real consequences - without the risk." }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative z-10 mt-10 flex flex-wrap justify-center gap-3", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/login", className: "rounded-full bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03]", children: "Start Training" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/leaderboard", className: "rounded-full border border-border glass px-8 py-3.5 text-base font-semibold text-foreground hover:border-primary/50 transition", children: "View Leaderboard" })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "relative z-10 mx-auto mt-3 max-w-[21rem] text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:max-w-2xl sm:text-base", children: "Four immersive training modes. 500+ drug entries. Real prescriptions, real patients, real consequences - without the risk." }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative z-10 mt-7 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:flex-wrap", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/login", className: "w-44 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03] sm:w-auto sm:px-8 sm:py-3.5 sm:text-base", children: "Start Training" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/leaderboard", className: "w-44 rounded-full border border-border glass px-6 py-3 text-sm font-semibold text-foreground transition hover:border-primary/50 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base", children: "View Leaderboard" })
               ] })
             ] })
           ]
@@ -845,7 +845,7 @@ function Landing() {
     ] }) })
   ] });
 }
-const $$splitComponentImporter$c = () => import("./settings-KZDNx2Kh.mjs");
+const $$splitComponentImporter$c = () => import("./settings-Bhg42Ulq.mjs");
 const Route$c = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [{
@@ -854,7 +854,7 @@ const Route$c = createFileRoute("/_authenticated/settings")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$c, "component")
 });
-const $$splitComponentImporter$b = () => import("./profile-D_cEbDAF.mjs");
+const $$splitComponentImporter$b = () => import("./profile-BoQJbUGS.mjs");
 const Route$b = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [{
@@ -865,7 +865,7 @@ const Route$b = createFileRoute("/_authenticated/profile")({
 });
 const $$splitNotFoundComponentImporter$8 = () => import("./modes-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$8 = () => import("./modes-CqlNFt5g.mjs");
-const $$splitComponentImporter$a = () => import("./modes-DcerHzoF.mjs");
+const $$splitComponentImporter$a = () => import("./modes-BOS49isZ.mjs");
 const Route$a = createFileRoute("/_authenticated/modes")({
   head: () => ({
     meta: [{
@@ -876,7 +876,7 @@ const Route$a = createFileRoute("/_authenticated/modes")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$8, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$8, "notFoundComponent")
 });
-const $$splitComponentImporter$9 = () => import("./drugs-DrIAx0mk.mjs");
+const $$splitComponentImporter$9 = () => import("./drugs-C7H_EWdl.mjs");
 const Route$9 = createFileRoute("/_authenticated/drugs")({
   head: () => ({
     meta: [{
@@ -887,7 +887,7 @@ const Route$9 = createFileRoute("/_authenticated/drugs")({
 });
 const $$splitNotFoundComponentImporter$7 = () => import("./dashboard-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$7 = () => import("./dashboard-CqlNFt5g.mjs");
-const $$splitComponentImporter$8 = () => import("./dashboard-DgZgN2SU.mjs");
+const $$splitComponentImporter$8 = () => import("./dashboard-n8llW8pJ.mjs");
 const Route$8 = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [{
@@ -898,7 +898,7 @@ const Route$8 = createFileRoute("/_authenticated/dashboard")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$7, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$7, "notFoundComponent")
 });
-const $$splitComponentImporter$7 = () => import("./admin-TRLNomsL.mjs");
+const $$splitComponentImporter$7 = () => import("./admin-DMDnT5iq.mjs");
 const Route$7 = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [{
@@ -909,7 +909,7 @@ const Route$7 = createFileRoute("/_authenticated/admin")({
 });
 const $$splitNotFoundComponentImporter$6 = () => import("./game.warehousing-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$6 = () => import("./game.warehousing-CqlNFt5g.mjs");
-const $$splitComponentImporter$6 = () => import("./game.warehousing-CkY_WeN8.mjs");
+const $$splitComponentImporter$6 = () => import("./game.warehousing-B1m2ppwh.mjs");
 const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
   head: () => ({
     meta: [{
@@ -922,7 +922,7 @@ const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
 });
 const $$splitNotFoundComponentImporter$5 = () => import("./game.rx-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$5 = () => import("./game.rx-CqlNFt5g.mjs");
-const $$splitComponentImporter$5 = () => import("./game.rx-9j3NU5l3.mjs");
+const $$splitComponentImporter$5 = () => import("./game.rx-DpPeMyRw.mjs");
 const Route$5 = createFileRoute("/_authenticated/game/rx")({
   head: () => ({
     meta: [{
@@ -935,7 +935,7 @@ const Route$5 = createFileRoute("/_authenticated/game/rx")({
 });
 const $$splitNotFoundComponentImporter$4 = () => import("./game.otc-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$4 = () => import("./game.otc-CqlNFt5g.mjs");
-const $$splitComponentImporter$4 = () => import("./game.otc-CRA7_zcu.mjs");
+const $$splitComponentImporter$4 = () => import("./game.otc-Biao9IqU.mjs");
 const Route$4 = createFileRoute("/_authenticated/game/otc")({
   head: () => ({
     meta: [{
@@ -948,7 +948,7 @@ const Route$4 = createFileRoute("/_authenticated/game/otc")({
 });
 const $$splitNotFoundComponentImporter$3 = () => import("./game.industry-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$3 = () => import("./game.industry-CqlNFt5g.mjs");
-const $$splitComponentImporter$3 = () => import("./game.industry-D8lLN2Y5.mjs");
+const $$splitComponentImporter$3 = () => import("./game.industry-C092osv1.mjs");
 const Route$3 = createFileRoute("/_authenticated/game/industry")({
   head: () => ({
     meta: [{
@@ -994,9 +994,9 @@ const Button = reactExports.forwardRef(
   }
 );
 Button.displayName = "Button";
-const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-GdtNbiaO.mjs");
-const $$splitErrorComponentImporter$2 = () => import("./game.hospital-DYIw-EZh.mjs");
-const $$splitComponentImporter$2 = () => import("./game.hospital-DwIluSvU.mjs");
+const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-DNIC-aPT.mjs");
+const $$splitErrorComponentImporter$2 = () => import("./game.hospital-De49j6Fh.mjs");
+const $$splitComponentImporter$2 = () => import("./game.hospital-Cv_F9Uws.mjs");
 const Route$2 = createFileRoute("/_authenticated/game/hospital")({
   head: () => ({
     meta: [{
@@ -1009,7 +1009,7 @@ const Route$2 = createFileRoute("/_authenticated/game/hospital")({
 });
 const $$splitNotFoundComponentImporter$1 = () => import("./game.emergency-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$1 = () => import("./game.emergency-CqlNFt5g.mjs");
-const $$splitComponentImporter$1 = () => import("./game.emergency-Dx2vTqsx.mjs");
+const $$splitComponentImporter$1 = () => import("./game.emergency-CIYvqRCI.mjs");
 const Route$1 = createFileRoute("/_authenticated/game/emergency")({
   head: () => ({
     meta: [{
@@ -1022,7 +1022,7 @@ const Route$1 = createFileRoute("/_authenticated/game/emergency")({
 });
 const $$splitNotFoundComponentImporter = () => import("./game.community-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter = () => import("./game.community-CqlNFt5g.mjs");
-const $$splitComponentImporter = () => import("./game.community--8n-0pwP.mjs");
+const $$splitComponentImporter = () => import("./game.community-CJkLEgUU.mjs");
 const Route = createFileRoute("/_authenticated/game/community")({
   head: () => ({
     meta: [{
