@@ -1,8 +1,8 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { N as Navbar } from "./Navbar-Dk9x4FX1.mjs";
-import { u as useAuthStore } from "./router-Arwy4pBH.mjs";
+import { N as Navbar } from "./Navbar-CYUOBZOZ.mjs";
+import { u as useAuthStore } from "./router-2sXgeX9i.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { M as MODE_LABEL } from "./shared-DDCPKmqL.mjs";
 import { M as ModeAmbientLayer } from "./ModeAmbientLayer-B2Acv9Tx.mjs";
@@ -493,25 +493,59 @@ function Dashboard() {
           y: 0
         }, transition: {
           delay: 0.06
-        }, whileHover: DASHBOARD_CARD_HOVER, whileTap: {
+        }, whileHover: {
+          y: -6,
+          scale: 1.012,
+          boxShadow: "0 26px 70px -36px oklch(0.74 0.14 180 / 0.95)"
+        }, whileTap: {
           scale: 0.99
-        }, className: "glass-card p-6 transition duration-300 hover:border-primary/40", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "font-bold mb-3 flex items-center gap-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Trophy, { className: "h-4 w-4 text-primary" }),
-            " Top this week"
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("ol", { className: "space-y-2.5 text-sm", children: [
-            topPlayers.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("li", { className: "text-muted-foreground text-xs", children: "Be the first on the board." }),
-            topPlayers.map((p, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "flex items-center gap-3", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `h-6 w-6 grid place-items-center rounded-full text-xs font-bold ${i === 0 ? "bg-primary text-primary-foreground" : "bg-white/10"}`, children: i + 1 }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "flex-1 truncate", children: p.full_name ?? "Anonymous" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-muted-foreground text-xs", children: [
-                p.xp,
-                " XP"
+        }, className: "group relative overflow-hidden rounded-2xl border border-primary/25 bg-slate-950/55 p-5 shadow-[0_24px_80px_-54px_oklch(0.74_0.14_180/0.85)] backdrop-blur-xl transition duration-300 hover:border-primary/45", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pointer-events-none absolute inset-0 opacity-70", style: {
+            background: "linear-gradient(90deg, transparent 0%, oklch(0.74 0.14 180 / 0.12) 50%, transparent 100%)",
+            animation: "ekg-scroll 5.5s linear infinite",
+            backgroundSize: "220% 100%"
+          } }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.055)_1px,transparent_1px)] bg-[length:100%_9px] opacity-25" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/12 blur-3xl transition duration-300 group-hover:bg-primary/18" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative mb-4 flex items-start justify-between gap-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-primary", children: "Hospital rankings board" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "mt-1 flex items-center gap-2 text-lg font-black", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Trophy, { className: "h-5 w-5 text-primary drop-shadow-[0_0_12px_oklch(0.74_0.14_180/0.75)]" }),
+                "Top this week"
               ] })
-            ] }, p.user_id))
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-primary", children: "live" })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/leaderboard", className: "mt-4 block text-center text-xs text-primary hover:underline", children: "View full leaderboard >" })
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("ol", { className: "relative space-y-2.5 text-sm", children: [
+            topPlayers.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("li", { className: "rounded-xl border border-primary/20 bg-primary/5 p-4 text-center text-xs text-muted-foreground", children: "Be the first on the board." }),
+            topPlayers.map((p, i) => {
+              const podium = i === 0 ? "border-primary/50 bg-primary/15 text-primary shadow-[0_0_26px_-14px_oklch(0.74_0.14_180/0.9)]" : i === 1 ? "border-sky-300/35 bg-sky-300/10 text-sky-200" : i === 2 ? "border-amber-300/35 bg-amber-300/10 text-amber-200" : "border-white/10 bg-white/[0.045] text-muted-foreground";
+              return /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.li, { initial: {
+                opacity: 0,
+                x: 18
+              }, animate: {
+                opacity: 1,
+                x: 0
+              }, transition: {
+                delay: 0.08 + i * 0.045
+              }, className: "relative flex items-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 transition hover:border-primary/35 hover:bg-primary/7", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `grid h-8 w-8 shrink-0 place-items-center rounded-lg border font-mono text-xs font-black ${podium}`, children: i + 1 }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "truncate font-semibold text-foreground", children: p.full_name ?? "Anonymous" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-mono text-[10px] uppercase tracking-wider text-muted-foreground", children: "pharmacist rank" })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 font-mono text-xs font-black tabular-nums text-primary shadow-inner", children: [
+                  p.xp,
+                  " XP"
+                ] })
+              ] }, p.user_id);
+            })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: "/leaderboard", className: "relative mt-4 flex items-center justify-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-4 py-2 text-center text-xs font-bold text-primary transition hover:border-primary/45 hover:bg-primary/15", children: [
+            "View full leaderboard ",
+            /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5" })
+          ] })
         ] })
       ] })
     ] })

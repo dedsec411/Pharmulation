@@ -6,7 +6,7 @@
 
 /*
  * PharmaVerse Design System
- * Deep navy base, teal accent, glassmorphism surfaces.
+ * Deep navy/medical green base, teal accent, glassmorphism surfaces.
  */
 
 @theme inline {
@@ -59,24 +59,24 @@
 :root {
   --radius: 1rem;
 
-  /* Deep navy bg #0A1628 */
-  --background: oklch(0.18 0.04 250);
+  /* Hospital board navy with a dark health-green shade */
+  --background: oklch(0.13 0.05 190);
   --foreground: oklch(0.97 0.01 240);
 
-  --card: oklch(0.22 0.04 250);
+  --card: oklch(0.17 0.055 185);
   --card-foreground: oklch(0.97 0.01 240);
 
-  --popover: oklch(0.22 0.04 250);
+  --popover: oklch(0.17 0.055 185);
   --popover-foreground: oklch(0.97 0.01 240);
 
   /* Teal #00BFA5 */
   --primary: oklch(0.74 0.14 180);
   --primary-foreground: oklch(0.15 0.03 250);
 
-  --secondary: oklch(0.28 0.04 250);
+  --secondary: oklch(0.21 0.06 180);
   --secondary-foreground: oklch(0.97 0.01 240);
 
-  --muted: oklch(0.28 0.03 250);
+  --muted: oklch(0.205 0.045 185);
   --muted-foreground: oklch(0.72 0.02 240);
 
   --accent: oklch(0.74 0.14 180);
@@ -93,22 +93,22 @@
   --success: oklch(0.72 0.16 165);
   --success-foreground: oklch(0.15 0.03 250);
 
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 12%);
+  --border: oklch(0.74 0.14 180 / 18%);
+  --input: oklch(0.74 0.14 180 / 18%);
   --ring: oklch(0.74 0.14 180);
 
-  --sidebar: oklch(0.2 0.04 250);
+  --sidebar: oklch(0.15 0.055 190);
   --sidebar-foreground: oklch(0.97 0.01 240);
   --sidebar-primary: oklch(0.74 0.14 180);
   --sidebar-primary-foreground: oklch(0.15 0.03 250);
-  --sidebar-accent: oklch(0.28 0.04 250);
+  --sidebar-accent: oklch(0.21 0.06 180);
   --sidebar-accent-foreground: oklch(0.97 0.01 240);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(0.74 0.14 180 / 16%);
   --sidebar-ring: oklch(0.74 0.14 180);
 }
 
 .dark {
-  --background: oklch(0.18 0.04 250);
+  --background: oklch(0.13 0.05 190);
   --foreground: oklch(0.97 0.01 240);
 }
 
@@ -126,23 +126,34 @@
 
   body {
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.74 0.14 180 / 0.18), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 100% 100%, oklch(0.55 0.18 280 / 0.12), transparent 60%);
+      radial-gradient(ellipse 78% 48% at 50% -12%, oklch(0.68 0.16 155 / 0.19), transparent 62%),
+      radial-gradient(ellipse 65% 52% at 100% 0%, oklch(0.74 0.14 180 / 0.1), transparent 62%),
+      radial-gradient(ellipse 70% 58% at 0% 95%, oklch(0.46 0.13 150 / 0.14), transparent 68%),
+      linear-gradient(180deg, oklch(0.16 0.06 185) 0%, oklch(0.125 0.05 195) 50%, oklch(0.095 0.04 220) 100%);
     background-attachment: fixed;
   }
 }
 
 @utility glass {
-  background: oklch(1 0 0 / 0.06);
+  background:
+    linear-gradient(180deg, oklch(0.19 0.065 175 / 0.74), oklch(0.12 0.048 205 / 0.8));
   backdrop-filter: blur(16px);
-  border: 1px solid oklch(1 0 0 / 0.12);
+  border: 1px solid oklch(0.68 0.16 155 / 0.2);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.055),
+    0 18px 55px -42px oklch(0.68 0.16 155 / 0.74);
 }
 
 @utility glass-card {
-  background: oklch(1 0 0 / 0.05);
+  background:
+    linear-gradient(180deg, oklch(0.19 0.065 175 / 0.84), oklch(0.12 0.048 205 / 0.9));
   backdrop-filter: blur(20px);
-  border: 1px solid oklch(1 0 0 / 0.1);
+  border: 1px solid oklch(0.68 0.16 155 / 0.22);
   border-radius: 1rem;
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.055),
+    inset 0 -36px 70px -60px oklch(0.68 0.16 155 / 0.3),
+    0 24px 80px -56px oklch(0.68 0.16 155 / 0.84);
 }
 
 @utility glow {

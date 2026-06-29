@@ -1,5 +1,3 @@
-import { jsPDF } from "jspdf";
-
 export function cpdHoursFromCases(totalCases: number) {
   return Math.floor(totalCases / 10);
 }
@@ -10,12 +8,13 @@ export function nextCpdMilestone(hours: number) {
   return CPD_MILESTONES.find((m) => m > hours) ?? null;
 }
 
-export function generateCertificatePdf(opts: {
+export async function generateCertificatePdf(opts: {
   fullName: string;
   hours: number;
   issuedAt: Date;
   certId: string;
 }) {
+  const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();

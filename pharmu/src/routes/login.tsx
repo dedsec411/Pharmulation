@@ -7,7 +7,7 @@ import { lovable } from "@/integrations/lovable";
 import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in — PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Sign in - Pharmulation" }] }),
   component: LoginPage,
 });
 
@@ -43,7 +43,7 @@ function LoginPage() {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="glass-card w-full max-w-md p-8"
       >
-        <Link to="/" className="text-2xl font-extrabold text-gradient-teal">PharmaVerse</Link>
+        <Link to="/" className="text-2xl font-extrabold text-gradient-teal">Pharmulation</Link>
         <h1 className="mt-6 text-2xl font-bold">Welcome back</h1>
         <p className="mt-1 text-sm text-muted-foreground">Pick up where you left off.</p>
 
@@ -62,7 +62,7 @@ function LoginPage() {
           <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)}
             placeholder="Password" className="w-full rounded-xl glass px-4 py-3 outline-none focus:border-primary" />
           <button disabled={loading} className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:scale-[1.02] transition disabled:opacity-60">
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 

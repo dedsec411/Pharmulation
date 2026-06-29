@@ -1,7 +1,7 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-D2K_CH2z.mjs";
+import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader, M as ModeTheme } from "./DifficultySelect-C7yvlkC6.mjs";
 import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-Arwy4pBH.mjs";
+import { u as useAuthStore } from "./router-2sXgeX9i.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { g as ClipboardList, D as Database, ac as Terminal, ad as Plus, H as HeartPulse, R as Trash2, O as TriangleAlert } from "../_libs/lucide-react.mjs";
@@ -124,9 +124,52 @@ function listFromJson(value) {
     return value.split(/[,;\n]/).map((item) => item.trim()).filter(Boolean);
   }
   if (value && typeof value === "object") {
-    return Object.values(value).map((item) => String(item)).filter(Boolean);
+    return Object.values(value).flatMap((item) => Array.isArray(item) ? item : [item]).map((item) => String(item ?? "").trim()).filter((item) => item.length > 0 && !/^(none|null|undefined|n\/a)$/i.test(item));
   }
   return [];
+}
+function firstText(...values) {
+  return values.find((value) => typeof value === "string" && value.trim().length > 0);
+}
+function buildClinicalChart(caseData, patient) {
+  const correctOrders = caseData?.correct_answer_json?.drugs ?? [];
+  const diagnosis = firstText(patient.diagnosis, patient.condition, caseData?.title, "Clinical review") ?? "Clinical review";
+  const diagnosisLower = diagnosis.toLowerCase();
+  const currentMeds = listFromJson(patient.current_meds ?? patient.currentMeds ?? patient.medications ?? patient.home_meds);
+  const generatedMeds = currentMeds.length > 0 ? currentMeds : diagnosisLower.includes("pneumonia") || diagnosisLower.includes("cap") ? ["Paracetamol 500 mg PO PRN fever", "Salbutamol inhaler PRN wheeze", "No chronic medicines documented"] : diagnosisLower.includes("diabetes") ? ["Metformin 500 mg PO twice daily", "Atorvastatin 20 mg PO at night"] : diagnosisLower.includes("hypertension") || diagnosisLower.includes("cardiac") ? ["Amlodipine 5 mg PO once daily", "Aspirin 75 mg PO once daily"] : ["Medication history pending reconciliation", "No high-risk home medicine documented"];
+  const defaultLabs = diagnosisLower.includes("pneumonia") || diagnosisLower.includes("cap") ? {
+    WBC: "13.8 x10^9/L",
+    CRP: "68 mg/L",
+    "S. Creatinine": patient?.labs?.Cr ?? patient?.labs?.creatinine ?? 78,
+    eGFR: patient?.labs?.eGFR ?? 92,
+    ALT: "24 U/L",
+    Potassium: "4.2 mmol/L"
+  } : diagnosisLower.includes("renal") || diagnosisLower.includes("kidney") ? {
+    "S. Creatinine": patient?.labs?.Cr ?? patient?.labs?.creatinine ?? 142,
+    eGFR: patient?.labs?.eGFR ?? 48,
+    Urea: "12 mmol/L",
+    Potassium: "4.9 mmol/L",
+    Sodium: "136 mmol/L",
+    Hb: "11.2 g/dL"
+  } : {
+    WBC: "8.4 x10^9/L",
+    "S. Creatinine": patient?.labs?.Cr ?? patient?.labs?.creatinine ?? 82,
+    eGFR: patient?.labs?.eGFR ?? 88,
+    ALT: "28 U/L",
+    Potassium: "4.1 mmol/L",
+    Sodium: "139 mmol/L"
+  };
+  const labs = {
+    ...defaultLabs,
+    ...patient.labs ?? {}
+  };
+  const orderSummary = correctOrders.length > 0 ? correctOrders.map((o) => [o.drug, o.dose ? `${o.dose} mg` : "", o.route, o.frequency].filter(Boolean).join(" ")).join("; ") : "Start evidence-based therapy after formulary review";
+  const physicianOrder = firstText(patient.order, patient.physician_order, patient.physicianOrder, caseData?.correct_answer_json?.order) ?? `${diagnosis}: review allergies, renal function, and initiate appropriate treatment. Suggested order target: ${orderSummary}.`;
+  return {
+    currentMeds: generatedMeds,
+    labs,
+    physicianOrder
+  };
 }
 function HospitalGame({
   mode
@@ -308,7 +351,8 @@ function HospitalGame({
     })), errors: errPanel.errors, onNext: next });
   }
   const patient = caseData.patient_info_json ?? {};
-  const currentMeds = listFromJson(patient.current_meds);
+  const clinicalChart = buildClinicalChart(caseData, patient);
+  const currentMeds = clinicalChart.currentMeds;
   const vitals = patient.vitals ?? {};
   const hr = toFiniteNumber(vitals.hr ?? vitals.heartRate ?? vitals.pulse, 82);
   const bp = String(vitals.bp ?? vitals.BP ?? "124/78");
@@ -349,24 +393,31 @@ function HospitalGame({
                 String(patient.allergies)
               ] })
             ] }),
-            chartTab === "meds" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-indigo-200", children: "Current meds" }),
-              currentMeds.length > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "mt-2 space-y-2 text-sm text-slate-200", children: currentMeds.map((m, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { className: "rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2", children: m }, i)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2 text-sm text-slate-400", children: "No current medicines recorded." })
+            chartTab === "meds" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-emerald-300/25 bg-emerald-400/10 p-3", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-3", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-emerald-200", children: "Medication reconciliation" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "rounded-full border border-emerald-300/25 bg-emerald-300/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-100", children: "Auto-filled" })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "mt-3 space-y-2 text-sm text-slate-100", children: currentMeds.map((m, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "flex items-start gap-2 rounded-lg border border-emerald-300/20 bg-slate-950/45 px-3 py-2", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mt-1 h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.75)]" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: m })
+              ] }, i)) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 rounded-lg border border-indigo-300/20 bg-indigo-400/10 px-3 py-2 text-xs text-indigo-50", children: "Check allergies, renal function, and interaction risk before building the medication order." })
             ] }),
             chartTab === "labs" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-indigo-200", children: "Labs" }),
-              patient.labs ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 grid grid-cols-2 gap-2 text-sm", children: Object.entries(patient.labs).map(([k, v]) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-xs text-sky-50", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 grid grid-cols-2 gap-2 text-sm", children: Object.entries(clinicalChart.labs).map(([k, v]) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-xs text-sky-50", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("b", { className: "text-sky-200", children: [
                   k,
                   ":"
                 ] }),
                 " ",
                 String(v)
-              ] }, k)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2 text-sm text-slate-400", children: "No labs available for this case." })
+              ] }, k)) })
             ] }),
             chartTab === "order" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-indigo-300/25 bg-indigo-400/10 p-3 text-sm text-indigo-50", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-indigo-200", children: "Physician order" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2", children: patient.order ?? "No physician order recorded." })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2", children: clinicalChart.physicianOrder })
             ] })
           ] })
         ] })
@@ -388,6 +439,10 @@ function HospitalGame({
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-emerald-300", children: ">" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("input", { value: search, onChange: (e) => setSearch(e.target.value), placeholder: "search formulary...", className: "w-full bg-transparent text-sm text-emerald-100 outline-none placeholder:text-emerald-100/35" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "h-4 w-2 animate-pulse bg-emerald-300" })
+          ] }),
+          !search && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 rounded-lg border border-emerald-300/20 bg-emerald-400/10 p-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] uppercase tracking-wider text-emerald-200", children: "Case-linked formulary queue" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 flex flex-wrap gap-2", children: (caseData.correct_answer_json?.drugs ?? []).slice(0, 4).map((o) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: () => setSearch(o.drug), className: "rounded-full border border-emerald-300/25 bg-slate-950/60 px-3 py-1 text-xs text-emerald-100 transition hover:border-emerald-200/60 hover:bg-emerald-400/15", children: o.drug }, o.drug)) })
           ] }),
           search && /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "mt-2 max-h-48 overflow-y-auto rounded-lg border border-indigo-300/20 bg-slate-950/80", children: filtered.map((d) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: () => addOrder(d), className: "flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-indigo-500/15 hover:text-white", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
@@ -450,10 +505,8 @@ function HospitalGame({
 function Loading() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "grid min-h-[60vh] place-items-center text-muted-foreground", children: "Loading case..." });
 }
-const SplitErrorComponent = ({
-  error
-}) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-destructive", children: error.message });
+const SplitComponent = () => /* @__PURE__ */ jsxRuntimeExports.jsx(ModeTheme, { mode: "hospital", children: /* @__PURE__ */ jsxRuntimeExports.jsx(HospitalGame, { mode: "hospital" }) });
 export {
   HospitalGame,
-  SplitErrorComponent as errorComponent
+  SplitComponent as component
 };

@@ -6,10 +6,31 @@ import { r as require$$1 } from "./fast-png.mjs";
 import { r as require$$4 } from "./html2canvas.mjs";
 import { r as requirePurify_cjs } from "./dompurify.mjs";
 import { r as requireLib } from "./canvg.mjs";
-var jspdf_node_min = { exports: {} };
+function _mergeNamespaces(n, m) {
+  for (var i = 0; i < m.length; i++) {
+    const e = m[i];
+    if (typeof e !== "string" && !Array.isArray(e)) {
+      for (const k in e) {
+        if (k !== "default" && !(k in n)) {
+          const d = Object.getOwnPropertyDescriptor(e, k);
+          if (d) {
+            Object.defineProperty(n, k, d.get ? d : {
+              enumerable: true,
+              get: function() {
+                return e[k];
+              }
+            });
+          }
+        }
+      }
+    }
+  }
+  return Object.freeze(n);
+}
+var jspdf_node_min$1 = { exports: {} };
 var hasRequiredJspdf_node_min;
 function requireJspdf_node_min() {
-  if (hasRequiredJspdf_node_min) return jspdf_node_min.exports;
+  if (hasRequiredJspdf_node_min) return jspdf_node_min$1.exports;
   hasRequiredJspdf_node_min = 1;
   (function(module, exports) {
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7300,10 +7321,13 @@ function requireJspdf_node_min() {
         return "" + r2;
       }, e2;
     })(), exports.AcroForm = yt, exports.AcroFormAppearance = vt, exports.AcroFormButton = lt, exports.AcroFormCheckBox = pt, exports.AcroFormChoiceField = ot, exports.AcroFormComboBox = ct, exports.AcroFormEditBox = ut, exports.AcroFormListBox = st, exports.AcroFormPasswordField = mt, exports.AcroFormPushButton = ht, exports.AcroFormRadioButton = ft, exports.AcroFormTextField = gt, exports.GState = P, exports.ShadingPattern = F, exports.TilingPattern = I, exports.default = C, exports.jsPDF = C;
-  })(jspdf_node_min, jspdf_node_min.exports);
-  return jspdf_node_min.exports;
+  })(jspdf_node_min$1, jspdf_node_min$1.exports);
+  return jspdf_node_min$1.exports;
 }
 var jspdf_node_minExports = requireJspdf_node_min();
+const jspdf_node_min = /* @__PURE__ */ _mergeNamespaces({
+  __proto__: null
+}, [jspdf_node_minExports]);
 export {
-  jspdf_node_minExports as j
+  jspdf_node_min as j
 };

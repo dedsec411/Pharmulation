@@ -1,5 +1,5 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { B as Button, u as useAuthStore } from "./router-Arwy4pBH.mjs";
+import { B as Button, u as useAuthStore } from "./router-2sXgeX9i.mjs";
 import { M as ModeAmbientLayer } from "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import { e as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { f as fetchRandomCase, M as MODE_LABEL, D as DIFFICULTY_LABEL, d as DIFFICULTY_RULES } from "./shared-DDCPKmqL.mjs";
@@ -100,6 +100,11 @@ function formatTime(seconds) {
   const s = seconds % 60;
   return m > 0 ? `${m}:${s.toString().padStart(2, "0")}` : `${s}s`;
 }
+function buildEcgPoints(pct, baseline, points) {
+  const strength = Math.max(0, Math.min(1, pct / 100));
+  const easedStrength = strength <= 0 ? 0 : Math.pow(strength, 0.85);
+  return points.map(([x, y]) => `${x},${baseline + (y - baseline) * easedStrength}`).join(" ");
+}
 const GameHeader = ({
   score,
   streak = 0,
@@ -115,7 +120,36 @@ const GameHeader = ({
   const [showExitConfirm, setShowExitConfirm] = reactExports.useState(false);
   const state = getTimerState(pct);
   const timerIsTicking = remaining > 0 && !paused;
-  const heartRate = Math.round(62 + (100 - pct) * 0.58);
+  const desktopWave = buildEcgPoints(pct, 24, [
+    [0, 24],
+    [18, 24],
+    [25, 24],
+    [31, 14],
+    [38, 32],
+    [45, 24],
+    [58, 24],
+    [64, 24],
+    [70, 7],
+    [77, 38],
+    [84, 24],
+    [103, 24],
+    [110, 18],
+    [117, 28],
+    [124, 24],
+    [150, 24]
+  ]);
+  const mobileWave = buildEcgPoints(pct, 16, [
+    [0, 16],
+    [15, 16],
+    [22, 8],
+    [28, 22],
+    [34, 16],
+    [48, 16],
+    [54, 5],
+    [60, 24],
+    [66, 16],
+    [86, 16]
+  ]);
   function handleExit() {
     if (!onExit) return;
     if (timerIsTicking) {
@@ -164,16 +198,13 @@ const GameHeader = ({
                 /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "vital-monitor-scan pointer-events-none absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-white/12 to-transparent" }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex items-center justify-between gap-4", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-[82px]", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(Activity, { className: "h-3.5 w-3.5" }),
-                      " ECG"
-                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Activity, { className: "h-3.5 w-3.5" }) }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `mt-0.5 font-mono text-xl font-black tabular-nums ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`, children: formatTime(remaining) })
                   ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 150 44", className: "h-11 flex-1", preserveAspectRatio: "none", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "polyline",
                     {
-                      points: "0,24 18,24 25,24 31,14 38,32 45,24 58,24 64,24 70,7 77,38 84,24 103,24 110,18 117,28 124,24 150,24",
+                      points: desktopWave,
                       fill: "none",
                       stroke: state.color,
                       strokeWidth: "2.8",
@@ -182,11 +213,7 @@ const GameHeader = ({
                       className: "vital-ecg-line",
                       style: { filter: `drop-shadow(0 0 5px ${state.glowColor})` }
                     }
-                  ) }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-right font-mono", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground", children: "HR" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-lg font-black tabular-nums", style: { color: state.color }, children: heartRate })
-                  ] })
+                  ) })
                 ] }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative mt-1 h-1.5 overflow-hidden rounded-full bg-white/10", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
                   "div",
@@ -209,7 +236,7 @@ const GameHeader = ({
               className: "relative flex h-12 w-24 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/30 md:hidden",
               style: { filter: `drop-shadow(0 0 8px ${state.glowColor})` },
               children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 86 28", className: "absolute inset-x-1 top-1 h-7 opacity-80", preserveAspectRatio: "none", children: /* @__PURE__ */ jsxRuntimeExports.jsx("polyline", { points: "0,16 15,16 22,8 28,22 34,16 48,16 54,5 60,24 66,16 86,16", fill: "none", stroke: state.color, strokeWidth: "2.2", strokeLinecap: "round", strokeLinejoin: "round", className: "vital-ecg-line" }) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 86 28", className: "absolute inset-x-1 top-1 h-7 opacity-80", preserveAspectRatio: "none", children: /* @__PURE__ */ jsxRuntimeExports.jsx("polyline", { points: mobileWave, fill: "none", stroke: state.color, strokeWidth: "2.2", strokeLinecap: "round", strokeLinejoin: "round", className: "vital-ecg-line" }) }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `relative mt-4 font-mono text-xs font-black tabular-nums ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`, children: formatTime(remaining) })
               ]
             }

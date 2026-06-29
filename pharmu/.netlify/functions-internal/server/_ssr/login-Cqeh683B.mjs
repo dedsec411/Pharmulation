@@ -67,7 +67,7 @@ function LoginPage() {
       opacity: 1,
       y: 0
     }, className: "glass-card w-full max-w-md p-8", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/", className: "text-2xl font-extrabold text-gradient-teal", children: "PharmaVerse" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/", className: "text-2xl font-extrabold text-gradient-teal", children: "Pharmulation" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "mt-6 text-2xl font-bold", children: "Welcome back" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-sm text-muted-foreground", children: "Pick up where you left off." }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: handleGoogle, className: "mt-6 w-full rounded-full border border-border glass py-3 font-medium hover:border-primary/50 transition flex items-center justify-center gap-2", children: [
@@ -82,7 +82,7 @@ function LoginPage() {
       /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleLogin, className: "space-y-3", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("input", { required: true, type: "email", value: email, onChange: (e) => setEmail(e.target.value), placeholder: "Email", className: "w-full rounded-xl glass px-4 py-3 outline-none focus:border-primary" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("input", { required: true, type: "password", value: password, onChange: (e) => setPassword(e.target.value), placeholder: "Password", className: "w-full rounded-xl glass px-4 py-3 outline-none focus:border-primary" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: loading, className: "w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:scale-[1.02] transition disabled:opacity-60", children: loading ? "Signing in…" : "Sign in" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: loading, className: "w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:scale-[1.02] transition disabled:opacity-60", children: loading ? "Signing in..." : "Sign in" })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-6 text-center text-sm text-muted-foreground", children: [
         "New here? ",

@@ -1,10 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { N as Navbar } from "./Navbar-Dk9x4FX1.mjs";
-import { u as useAuthStore } from "./router-Arwy4pBH.mjs";
+import { N as Navbar } from "./Navbar-CYUOBZOZ.mjs";
+import { u as useAuthStore } from "./router-2sXgeX9i.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { t as tierFor, x as xpProgress } from "./levels-7qe6_GyK.mjs";
-import { j as jspdf_node_minExports } from "../_libs/jspdf.mjs";
 import { M as MODE_LABEL } from "./shared-DDCPKmqL.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { B as BackButton } from "./BackButton-DOnk_vvq.mjs";
@@ -42,22 +41,6 @@ import "tslib";
 import "../_libs/supabase__functions-js.mjs";
 import "../_libs/motion-dom.mjs";
 import "../_libs/motion-utils.mjs";
-import "fs";
-import "path";
-import "../_libs/fflate.mjs";
-import "../_libs/fast-png.mjs";
-import "../_libs/iobuffer.mjs";
-import "../_libs/pako.mjs";
-import "../_libs/html2canvas.mjs";
-import "../_libs/dompurify.mjs";
-import "../_libs/canvg.mjs";
-import "../_libs/core-js.mjs";
-import "../_libs/babel__runtime.mjs";
-import "../_libs/raf.mjs";
-import "../_libs/performance-now.mjs";
-import "../_libs/rgbcolor.mjs";
-import "../_libs/svg-pathdata.mjs";
-import "../_libs/stackblur-canvas.mjs";
 function cpdHoursFromCases(totalCases) {
   return Math.floor(totalCases / 10);
 }
@@ -65,8 +48,11 @@ const CPD_MILESTONES = [10, 25, 50, 75, 100];
 function nextCpdMilestone(hours) {
   return CPD_MILESTONES.find((m) => m > hours) ?? null;
 }
-function generateCertificatePdf(opts) {
-  const doc = new jspdf_node_minExports.jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+async function generateCertificatePdf(opts) {
+  const { jsPDF } = await import("../_libs/jspdf.mjs").then(function(n) {
+    return n.j;
+  });
+  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
   doc.setFillColor(10, 22, 40);
@@ -132,6 +118,7 @@ function ProfilePage() {
   } = useAuthStore();
   const userId = profile?.user_id;
   const [tab, setTab] = reactExports.useState("overview");
+  const [downloadingCertId, setDownloadingCertId] = reactExports.useState(null);
   const {
     data: scores = []
   } = useQuery({
@@ -197,7 +184,7 @@ function ProfilePage() {
     if (!userId) return;
     const existing = certs.find((c) => c.hours_earned === hours);
     if (existing) {
-      downloadCert(profile.full_name || "Pharmacist", hours, new Date(existing.issued_at), existing.id);
+      await downloadCert(profile.full_name || "Pharmacist", hours, new Date(existing.issued_at), existing.id);
       return;
     }
     const {
@@ -213,16 +200,21 @@ function ProfilePage() {
     }
     toast.success(`🎓 You've earned a ${hours} hour CPD Certificate!`);
     refetchCerts();
-    downloadCert(profile.full_name || "Pharmacist", hours, new Date(data.issued_at), data.id);
+    await downloadCert(profile.full_name || "Pharmacist", hours, new Date(data.issued_at), data.id);
   }
-  function downloadCert(name, hours, issuedAt, certId) {
-    const doc = generateCertificatePdf({
-      fullName: name,
-      hours,
-      issuedAt,
-      certId
-    });
-    doc.save(`pharmaverse-cpd-${hours}h.pdf`);
+  async function downloadCert(name, hours, issuedAt, certId) {
+    setDownloadingCertId(certId);
+    try {
+      const doc = await generateCertificatePdf({
+        fullName: name,
+        hours,
+        issuedAt,
+        certId
+      });
+      doc.save(`pharmaverse-cpd-${hours}h.pdf`);
+    } finally {
+      setDownloadingCertId(null);
+    }
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(Navbar, {}),
@@ -387,7 +379,7 @@ function ProfilePage() {
               c.id.slice(0, 8)
             ] })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: () => downloadCert(profile.full_name || "Pharmacist", c.hours_earned, new Date(c.issued_at), c.id), className: "rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground inline-flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { disabled: downloadingCertId === c.id, onClick: () => downloadCert(profile.full_name || "Pharmacist", c.hours_earned, new Date(c.issued_at), c.id), className: "rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground inline-flex items-center gap-2", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Download, { className: "h-4 w-4" }),
             " PDF"
           ] })

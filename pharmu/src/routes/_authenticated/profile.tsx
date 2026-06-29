@@ -21,6 +21,7 @@ function ProfilePage() {
   const { profile } = useAuthStore();
   const userId = profile?.user_id;
   const [tab, setTab] = useState<"overview" | "badges" | "history" | "certificates">("overview");
+  const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
 
   const { data: scores = [] } = useQuery({
     queryKey: ["my-scores", userId],
@@ -74,19 +75,24 @@ function ProfilePage() {
   async function claimCertificate(hours: number) {
     if (!userId) return;
     const existing = certs.find((c: any) => c.hours_earned === hours);
-    if (existing) { downloadCert(profile!.full_name || "Pharmacist", hours, new Date(existing.issued_at), existing.id); return; }
+    if (existing) { await downloadCert(profile!.full_name || "Pharmacist", hours, new Date(existing.issued_at), existing.id); return; }
     const { data, error } = await supabase.from("cpd_certificates").insert({
       user_id: userId, hours_earned: hours,
     }).select("id, issued_at").single();
     if (error) { toast.error(error.message); return; }
     toast.success(`🎓 You've earned a ${hours} hour CPD Certificate!`);
     refetchCerts();
-    downloadCert(profile!.full_name || "Pharmacist", hours, new Date(data.issued_at), data.id);
+    await downloadCert(profile!.full_name || "Pharmacist", hours, new Date(data.issued_at), data.id);
   }
 
-  function downloadCert(name: string, hours: number, issuedAt: Date, certId: string) {
-    const doc = generateCertificatePdf({ fullName: name, hours, issuedAt, certId });
-    doc.save(`pharmaverse-cpd-${hours}h.pdf`);
+  async function downloadCert(name: string, hours: number, issuedAt: Date, certId: string) {
+    setDownloadingCertId(certId);
+    try {
+      const doc = await generateCertificatePdf({ fullName: name, hours, issuedAt, certId });
+      doc.save(`pharmaverse-cpd-${hours}h.pdf`);
+    } finally {
+      setDownloadingCertId(null);
+    }
   }
 
   return (
@@ -252,7 +258,7 @@ function ProfilePage() {
                   <div className="font-bold">{c.hours_earned} CPD Credit Hours</div>
                   <div className="text-xs text-muted-foreground">Issued {new Date(c.issued_at).toLocaleDateString()} · ID {c.id.slice(0, 8)}</div>
                 </div>
-                <button onClick={() => downloadCert(profile.full_name || "Pharmacist", c.hours_earned, new Date(c.issued_at), c.id)}
+                <button disabled={downloadingCertId === c.id} onClick={() => downloadCert(profile.full_name || "Pharmacist", c.hours_earned, new Date(c.issued_at), c.id)}
                   className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground inline-flex items-center gap-2">
                   <Download className="h-4 w-4" /> PDF
                 </button>

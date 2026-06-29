@@ -36,7 +36,7 @@ import "../_libs/supabase__functions-js.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/motion-dom.mjs";
 import "../_libs/motion-utils.mjs";
-const appCss = "/assets/styles-CXYxnZ7u.css";
+const appCss = "/assets/styles-CT5DJBzt.css";
 function reportLovableError(error, context = {}) {
   if (typeof window === "undefined") return;
   window.__lovableEvents?.captureException?.(
@@ -602,16 +602,16 @@ const Route$h = createFileRoute("/signup")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$g, "component")
 });
-const $$splitComponentImporter$f = () => import("./login-Ck1Ha5_W.mjs");
+const $$splitComponentImporter$f = () => import("./login-Cqeh683B.mjs");
 const Route$g = createFileRoute("/login")({
   head: () => ({
     meta: [{
-      title: "Sign in — PharmaVerse"
+      title: "Sign in - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$f, "component")
 });
-const $$splitComponentImporter$e = () => import("./leaderboard-EsCBrrx1.mjs");
+const $$splitComponentImporter$e = () => import("./leaderboard-BhpXaSyi.mjs");
 const Route$f = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [{
@@ -845,7 +845,7 @@ function Landing() {
     ] }) })
   ] });
 }
-const $$splitComponentImporter$c = () => import("./settings-Bhg42Ulq.mjs");
+const $$splitComponentImporter$c = () => import("./settings-BkHVWVz9.mjs");
 const Route$c = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [{
@@ -854,7 +854,7 @@ const Route$c = createFileRoute("/_authenticated/settings")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$c, "component")
 });
-const $$splitComponentImporter$b = () => import("./profile-BoQJbUGS.mjs");
+const $$splitComponentImporter$b = () => import("./profile-DFrsQOUX.mjs");
 const Route$b = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [{
@@ -865,7 +865,7 @@ const Route$b = createFileRoute("/_authenticated/profile")({
 });
 const $$splitNotFoundComponentImporter$8 = () => import("./modes-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$8 = () => import("./modes-CqlNFt5g.mjs");
-const $$splitComponentImporter$a = () => import("./modes-BOS49isZ.mjs");
+const $$splitComponentImporter$a = () => import("./modes-BK2Xs_ML.mjs");
 const Route$a = createFileRoute("/_authenticated/modes")({
   head: () => ({
     meta: [{
@@ -876,7 +876,7 @@ const Route$a = createFileRoute("/_authenticated/modes")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$8, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$8, "notFoundComponent")
 });
-const $$splitComponentImporter$9 = () => import("./drugs-C7H_EWdl.mjs");
+const $$splitComponentImporter$9 = () => import("./drugs-D99bePri.mjs");
 const Route$9 = createFileRoute("/_authenticated/drugs")({
   head: () => ({
     meta: [{
@@ -887,7 +887,7 @@ const Route$9 = createFileRoute("/_authenticated/drugs")({
 });
 const $$splitNotFoundComponentImporter$7 = () => import("./dashboard-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$7 = () => import("./dashboard-CqlNFt5g.mjs");
-const $$splitComponentImporter$8 = () => import("./dashboard-n8llW8pJ.mjs");
+const $$splitComponentImporter$8 = () => import("./dashboard-C9swiJQ4.mjs");
 const Route$8 = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [{
@@ -898,7 +898,7 @@ const Route$8 = createFileRoute("/_authenticated/dashboard")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$7, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$7, "notFoundComponent")
 });
-const $$splitComponentImporter$7 = () => import("./admin-DMDnT5iq.mjs");
+const $$splitComponentImporter$7 = () => import("./admin-CBaGW5E2.mjs");
 const Route$7 = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [{
@@ -909,7 +909,7 @@ const Route$7 = createFileRoute("/_authenticated/admin")({
 });
 const $$splitNotFoundComponentImporter$6 = () => import("./game.warehousing-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$6 = () => import("./game.warehousing-CqlNFt5g.mjs");
-const $$splitComponentImporter$6 = () => import("./game.warehousing-B1m2ppwh.mjs");
+const $$splitComponentImporter$6 = () => import("./game.warehousing-DMej7bWc.mjs");
 const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
   head: () => ({
     meta: [{
@@ -922,7 +922,7 @@ const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
 });
 const $$splitNotFoundComponentImporter$5 = () => import("./game.rx-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$5 = () => import("./game.rx-CqlNFt5g.mjs");
-const $$splitComponentImporter$5 = () => import("./game.rx-DpPeMyRw.mjs");
+const $$splitComponentImporter$5 = () => import("./game.rx-d_OXgU-Z.mjs");
 const Route$5 = createFileRoute("/_authenticated/game/rx")({
   head: () => ({
     meta: [{
@@ -935,7 +935,7 @@ const Route$5 = createFileRoute("/_authenticated/game/rx")({
 });
 const $$splitNotFoundComponentImporter$4 = () => import("./game.otc-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$4 = () => import("./game.otc-CqlNFt5g.mjs");
-const $$splitComponentImporter$4 = () => import("./game.otc-Biao9IqU.mjs");
+const $$splitComponentImporter$4 = () => import("./game.otc-DPiKtfAP.mjs");
 const Route$4 = createFileRoute("/_authenticated/game/otc")({
   head: () => ({
     meta: [{
@@ -948,7 +948,7 @@ const Route$4 = createFileRoute("/_authenticated/game/otc")({
 });
 const $$splitNotFoundComponentImporter$3 = () => import("./game.industry-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$3 = () => import("./game.industry-CqlNFt5g.mjs");
-const $$splitComponentImporter$3 = () => import("./game.industry-C092osv1.mjs");
+const $$splitComponentImporter$3 = () => import("./game.industry-ByxgeSgL.mjs");
 const Route$3 = createFileRoute("/_authenticated/game/industry")({
   head: () => ({
     meta: [{
@@ -994,9 +994,9 @@ const Button = reactExports.forwardRef(
   }
 );
 Button.displayName = "Button";
-const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-DNIC-aPT.mjs");
-const $$splitErrorComponentImporter$2 = () => import("./game.hospital-De49j6Fh.mjs");
-const $$splitComponentImporter$2 = () => import("./game.hospital-Cv_F9Uws.mjs");
+const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-BVv1V42c.mjs");
+const $$splitErrorComponentImporter$2 = () => import("./game.hospital-Bzm-iElT.mjs");
+const $$splitComponentImporter$2 = () => import("./game.hospital-Bxg_zqze.mjs");
 const Route$2 = createFileRoute("/_authenticated/game/hospital")({
   head: () => ({
     meta: [{
@@ -1009,7 +1009,7 @@ const Route$2 = createFileRoute("/_authenticated/game/hospital")({
 });
 const $$splitNotFoundComponentImporter$1 = () => import("./game.emergency-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$1 = () => import("./game.emergency-CqlNFt5g.mjs");
-const $$splitComponentImporter$1 = () => import("./game.emergency-CIYvqRCI.mjs");
+const $$splitComponentImporter$1 = () => import("./game.emergency-Db1ep0qY.mjs");
 const Route$1 = createFileRoute("/_authenticated/game/emergency")({
   head: () => ({
     meta: [{
@@ -1022,7 +1022,7 @@ const Route$1 = createFileRoute("/_authenticated/game/emergency")({
 });
 const $$splitNotFoundComponentImporter = () => import("./game.community-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter = () => import("./game.community-CqlNFt5g.mjs");
-const $$splitComponentImporter = () => import("./game.community-CJkLEgUU.mjs");
+const $$splitComponentImporter = () => import("./game.community-82A1ACL3.mjs");
 const Route = createFileRoute("/_authenticated/game/community")({
   head: () => ({
     meta: [{

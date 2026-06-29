@@ -1,9 +1,9 @@
+import { j as jsxRuntimeExports } from "../_libs/react.mjs";
+import { i as iu, P as Pu, s as su } from "../_libs/seroval.mjs";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { H as H3Event, t as toResponse } from "../_libs/h3-v2.mjs";
 import { y as defineHandlerCallback, z as resolveManifestAssetLink, u as resolveManifestCssLink, k as rootRouteId, A as getNormalizedURL, C as getOrigin, D as normalizeSsrResponse, E as attachRouterServerSsrUtils, F as createSerializationAdapter, G as createRawStreamRPCPlugin, i as invariant, g as isNotFound, m as isRedirect, H as isResolvedRedirect, I as replaceSsrResponse, J as mergeHeaders, K as executeRewriteInput, L as stripSsrResponseBody, M as defaultSerovalPlugins, N as makeSerovalPlugin, s as getScriptPreloadAttrs, O as getStylesheetHref, P as isSsrResponse } from "../_libs/tanstack__router-core.mjs";
-import { i as iu, P as Pu, s as su } from "../_libs/seroval.mjs";
 import { c as createMemoryHistory } from "../_libs/tanstack__history.mjs";
-import { j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { r as renderRouterToStream, R as RouterProvider } from "../_libs/tanstack__react-router.mjs";
 import "../_libs/rou3.mjs";
 import "../_libs/srvx.mjs";
@@ -81,7 +81,7 @@ function getResponse() {
 }
 var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 async function getStartManifest(matchedRoutes) {
-  const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-BknUKJzJ.mjs");
+  const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-CyMYBlYN.mjs");
   const startManifest = tsrStartManifest();
   let routes = startManifest.routes;
   routes[rootRouteId];
@@ -263,6 +263,29 @@ async function getFailureResponse(opts, ctx) {
     status: 403
   });
 }
+function dedupeSerializationAdapters(deduped, serializationAdapters) {
+  for (let i = 0, len = serializationAdapters.length; i < len; i++) {
+    const current = serializationAdapters[i];
+    if (!deduped.has(current)) {
+      deduped.add(current);
+      if (current.extends) dedupeSerializationAdapters(deduped, current.extends);
+    }
+  }
+}
+var createStart = (getOptions) => {
+  return {
+    getOptions: async () => {
+      const options = await getOptions();
+      if (options.serializationAdapters) {
+        const deduped = /* @__PURE__ */ new Set();
+        dedupeSerializationAdapters(deduped, options.serializationAdapters);
+        options.serializationAdapters = Array.from(deduped);
+      }
+      return options;
+    },
+    createMiddleware
+  };
+};
 function getDefaultSerovalPlugins() {
   return [...getStartOptions()?.serializationAdapters?.map(makeSerovalPlugin) ?? [], ...defaultSerovalPlugins];
 }
@@ -1158,9 +1181,9 @@ var getBaseManifest = getProdBaseManifest;
 var createEarlyHintsForRequest = createEarlyHintsCollector;
 async function loadEntries() {
   const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-    import("./router-Arwy4pBH.mjs").then((n) => n.r),
-    import("./start-hkBjyG3r.mjs"),
-    import("./empty-plugin-adapters-BFgPZ6_d.mjs")
+    import("./router-2sXgeX9i.mjs").then((n) => n.r),
+    import("./start-C9Pons0J.mjs"),
+    Promise.resolve().then(() => emptyPluginAdapters)
   ]);
   return {
     routerEntry,
@@ -1288,10 +1311,10 @@ function createStartHandler(cbOrOptions) {
       const entries = await getEntries();
       const hasStartInstance = !!entries.startEntry.startInstance;
       const startOptions = await entries.startEntry.startInstance?.getOptions() || {};
-      const { hasPluginAdapters, pluginSerializationAdapters } = entries.pluginAdapters;
+      const { hasPluginAdapters: hasPluginAdapters2, pluginSerializationAdapters: pluginSerializationAdapters2 } = entries.pluginAdapters;
       const serializationAdapters = [
         ...startOptions.serializationAdapters || [],
-        ...hasPluginAdapters ? pluginSerializationAdapters : [],
+        ...hasPluginAdapters2 ? pluginSerializationAdapters2 : [],
         ServerFunctionSerializationAdapter
       ];
       const requestStartOptions = {
@@ -1504,7 +1527,15 @@ const server = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   createServerEntry,
   default: server_default
 }, Symbol.toStringTag, { value: "Module" }));
+var pluginSerializationAdapters = [];
+var hasPluginAdapters = false;
+const emptyPluginAdapters = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  hasPluginAdapters,
+  pluginSerializationAdapters
+}, Symbol.toStringTag, { value: "Module" }));
 export {
+  createStart as a,
   createMiddleware as c,
   server as s
 };

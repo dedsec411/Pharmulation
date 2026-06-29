@@ -1,7 +1,7 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-D2K_CH2z.mjs";
+import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-C7yvlkC6.mjs";
 import { a as MODE_TIMERS, c as computeScore, s as submitScore, t as toastScore, b as bumpCounterBadge, e as awardBadge } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-Arwy4pBH.mjs";
+import { u as useAuthStore } from "./router-2sXgeX9i.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { P as Pill, a8 as CupSoda, a9 as PackageCheck, v as Sparkles, N as Thermometer, aa as Droplets, V as Check, i as FlaskConical, ab as Cog } from "../_libs/lucide-react.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
@@ -89,6 +89,231 @@ function formatBatchSize(template, count) {
 function displayWeight(value, unit = "g") {
   const decimals = Math.abs(value) < 10 && !Number.isInteger(value) ? 2 : 1;
   return `${value.toFixed(decimals)} ${unit}`;
+}
+function ingredient(name, role, target, unit = "g", tolerance = 0.03) {
+  return {
+    name,
+    role,
+    target,
+    min: Math.round(target * (1 - tolerance) * 100) / 100,
+    max: Math.round(target * (1 + tolerance) * 100) / 100,
+    unit
+  };
+}
+function option(prompt, options, correct) {
+  return {
+    prompt,
+    options,
+    correct
+  };
+}
+function drying(target, min, max, unit = "C") {
+  return {
+    target,
+    min,
+    max,
+    unit
+  };
+}
+function tabletFormula(type) {
+  const coated = /film|enteric/i.test(type);
+  const enteric = /enteric/i.test(type);
+  const chewable = /chewable/i.test(type);
+  const api = chewable ? "Paracetamol DC granules" : enteric ? "Diclofenac sodium" : "Ibuprofen";
+  const coatRole = enteric ? "Enteric polymer coat" : "Film coat";
+  const coat = enteric ? "Methacrylic acid copolymer" : "HPMC coating premix";
+  return {
+    batchSize: "20,000 tablets",
+    ingredients: [ingredient(api, "Active", chewable ? 1e4 : enteric ? 1500 : 4e3, "g", 0.02), ingredient(chewable ? "Mannitol" : "Microcrystalline cellulose", chewable ? "Chewable filler" : "Filler", chewable ? 18e3 : 12e3), ingredient(chewable ? "Aspartame" : "Croscarmellose sodium", chewable ? "Sweetener" : "Disintegrant", chewable ? 300 : 1500, "g", 0.04), ingredient("Magnesium stearate", "Lubricant", 400, "g", 0.05), ...coated ? [ingredient(coat, coatRole, enteric ? 900 : 650, "g", 0.04)] : []],
+    distractors: ["Sodium benzoate", "Carbomer 940", "Gelatin shells", "Sorbitol solution"],
+    env: {
+      tempRange: [20, 25],
+      humidityRange: enteric ? [30, 45] : [35, 55]
+    },
+    stageLabels: {
+      mixing: "blend",
+      granulation: chewable ? "dry granulation" : "granulation",
+      drying: "drying",
+      compression: "compression",
+      coating: coated ? "coating" : "dedusting",
+      packaging: "blister packing"
+    },
+    process: {
+      mixing: option("Choose the correct blend time.", ["5 min tumble", "20 min bin blend", "90 min high shear", "No blending required"], 1),
+      granulation: option("Choose the right granulation method.", chewable ? ["Wet granulation", "Dry compaction", "Aqueous coating", "Direct filling"] : ["Dry compaction only", "Wet granulation with binder endpoint", "Shell filling", "Emulsification"], chewable ? 1 : 1),
+      drying: drying(enteric ? 42 : 50, enteric ? 38 : 45, enteric ? 46 : 55),
+      compression: option("Set the compression target.", ["Soft tablets, no hardness check", "Hardness and weight variation in range", "Fill into bottles without compression", "Heat until clear"], 1),
+      coating: option("Pick the final surface process.", coated ? [enteric ? "Sugar coat" : "Enteric coat", enteric ? "Enteric polymer coat to target weight gain" : "HPMC film coat to uniform coverage", "Nozzle off, tumble only", "Sterile filtration"] : ["Apply enteric coat", "Dedust and metal-detect cores", "Add syrup flavor", "Fill into capsules"], 1),
+      packaging: option("Select packaging control.", ["Unsealed bulk tray", "Blister with leak test and line clearance", "Amber syrup bottle", "Aluminum tube crimp"], 1)
+    },
+    qc: [{
+      test: "Average weight",
+      result: "Within +/- 3.2%",
+      shouldPass: true
+    }, {
+      test: "Content uniformity",
+      result: "AV 9.4",
+      shouldPass: true
+    }, {
+      test: coated ? "Coating integrity" : "Disintegration",
+      result: enteric ? "No rupture in acid stage" : coated ? "Uniform, no picking" : "9 minutes",
+      shouldPass: true
+    }, {
+      test: "Friability",
+      result: chewable ? "1.3%" : "0.42%",
+      shouldPass: !chewable
+    }],
+    release: !chewable
+  };
+}
+function syrupFormula(type) {
+  const sugarFree = /sugar-free/i.test(type);
+  const pediatric = /pediatric/i.test(type);
+  const antitussive = /antitussive/i.test(type);
+  return {
+    batchSize: "1,000 L",
+    ingredients: [ingredient(antitussive ? "Dextromethorphan HBr" : pediatric ? "Paracetamol" : "Chlorpheniramine maleate", "Active", antitussive ? 1.5 : pediatric ? 24 : 0.4, "kg", 0.025), ingredient(sugarFree ? "Sorbitol 70%" : "Sucrose", sugarFree ? "Sugar-free vehicle" : "Syrup base", sugarFree ? 420 : 650, "kg", 0.03), ingredient("Purified water", "Vehicle", sugarFree ? 560 : 320, "L", 0.02), ingredient("Sodium benzoate", "Preservative", 1, "kg", 0.05), ingredient(pediatric ? "Orange flavor" : "Raspberry flavor", "Flavor", 2.5, "kg", 0.08)],
+    distractors: ["Magnesium stearate", "Croscarmellose sodium", "Gelatin shell", "White soft paraffin"],
+    env: {
+      tempRange: [18, 25],
+      humidityRange: [35, 65]
+    },
+    stageLabels: {
+      mixing: "solution mixing",
+      granulation: "dissolution",
+      drying: "heat hold",
+      compression: "filtration",
+      coating: "flavoring",
+      packaging: "bottle filling"
+    },
+    process: {
+      mixing: option("Choose the correct mixing sequence.", ["Add flavor first, no water", "Dissolve preservative/API before final volume", "Compress the blend", "Dry granulate vehicle"], 1),
+      granulation: option("How should the syrup base be prepared?", ["Dissolve sweetener under controlled agitation", "Fill powder into shells", "Apply enteric polymer", "Mill dry API only"], 0),
+      drying: drying(sugarFree ? 35 : 65, sugarFree ? 30 : 60, sugarFree ? 40 : 70),
+      compression: option("Choose the clarification step.", ["No filtration", "Filter through approved polishing filter", "Tablet compression", "Hot crimp sealing"], 1),
+      coating: option("When should flavor/color be added?", ["Before API assay", "After cooling and before final volume check", "During tablet compression", "After bottle capping"], 1),
+      packaging: option("Select fill control.", ["Random fill without volume check", "Calibrated bottle fill with torque check", "Blister leak test", "Tube crimp only"], 1)
+    },
+    qc: [{
+      test: "Assay",
+      result: antitussive ? "98.8%" : "101.2%",
+      shouldPass: true
+    }, {
+      test: "pH",
+      result: sugarFree ? "6.2" : "4.8",
+      shouldPass: true
+    }, {
+      test: "Viscosity",
+      result: sugarFree ? "Below target by 18%" : "Within range",
+      shouldPass: !sugarFree
+    }, {
+      test: "Fill volume",
+      result: "100.4 mL average",
+      shouldPass: true
+    }],
+    release: !sugarFree
+  };
+}
+function capsuleFormula(type) {
+  const soft = /soft/i.test(type);
+  const delayed = /delayed/i.test(type);
+  return {
+    batchSize: "30,000 capsules",
+    ingredients: soft ? [ingredient("Vitamin D3 oil concentrate", "Active fill", 3.2, "kg", 0.025), ingredient("Medium-chain triglycerides", "Oil vehicle", 42, "kg", 0.03), ingredient("Gelatin mass", "Soft shell", 24, "kg", 0.04), ingredient("Glycerin", "Plasticizer", 8, "kg", 0.04)] : [ingredient(delayed ? "Omeprazole pellets" : "Amoxicillin trihydrate", "Active", delayed ? 6 : 15e3, delayed ? "kg" : "g", 0.02), ingredient("Lactose monohydrate", "Diluent", delayed ? 9 : 9e3, delayed ? "kg" : "g", 0.03), ingredient("Colloidal silicon dioxide", "Glidant", delayed ? 0.45 : 450, delayed ? "kg" : "g", 0.05), ingredient("Empty hard gelatin capsules", "Capsule shell", 3e4, "caps", 0.01)],
+    distractors: ["Sucrose syrup", "HPMC film coat", "Carbomer gel base", "Sodium benzoate"],
+    env: {
+      tempRange: soft ? [20, 24] : [18, 25],
+      humidityRange: delayed ? [25, 40] : [30, 50]
+    },
+    stageLabels: {
+      mixing: soft ? "fill mixing" : "powder blending",
+      granulation: delayed ? "pellet handling" : "sieving",
+      drying: soft ? "shell drying" : "moisture check",
+      compression: "capsule filling",
+      coating: delayed ? "seal coating" : "polishing",
+      packaging: "bottle packing"
+    },
+    process: {
+      mixing: option("Choose blend/fill preparation.", soft ? ["Heat oil to smoke point", "Mix fill under gentle controlled heat", "Compress into tablets", "Add aqueous syrup"] : ["Blend until uniform with glidant", "Skip blending", "Wet granulate gelatin shells", "Boil to syrup"], 0),
+      granulation: option("Choose the pre-fill handling.", delayed ? ["Crush enteric pellets", "Handle pellets gently without damaging coat", "Dissolve pellets in water", "Sugar coat shells"] : ["Sieve powder blend", "Apply topical base", "Bottle liquid", "Ignore flow"], delayed ? 1 : 0),
+      drying: drying(soft ? 22 : 35, soft ? 20 : 30, soft ? 25 : 40),
+      compression: option("Choose filling control.", ["Volumetric capsule filling with weight checks", "Tablet compression", "No fill-weight checks", "Tube crimp"], 0),
+      coating: option("Choose post-fill finish.", delayed ? ["Aggressive polishing that abrades coat", "Seal coat integrity preserved", "Sugar syrup coating", "No shell check"] : ["Capsule polishing and metal detection", "Enteric tablet coating", "Syrup filtration", "Cream homogenization"], 0),
+      packaging: option("Select package.", ["Moisture-protective bottle with desiccant", "Open tray", "Clear beaker", "Loose paper wrap"], 0)
+    },
+    qc: [{
+      test: "Fill weight variation",
+      result: "Within +/- 4%",
+      shouldPass: true
+    }, {
+      test: "Blend uniformity",
+      result: "RSD 3.1%",
+      shouldPass: true
+    }, {
+      test: delayed ? "Acid resistance" : "Disintegration",
+      result: delayed ? "Fails at 90 min acid stage" : "14 minutes",
+      shouldPass: !delayed
+    }, {
+      test: "Appearance",
+      result: soft ? "No leaks" : "Clean locked shells",
+      shouldPass: true
+    }],
+    release: !delayed
+  };
+}
+function semiSolidFormula(type) {
+  const gel = /gel/i.test(type);
+  const ointment = /ointment/i.test(type);
+  const lotion = /lotion/i.test(type);
+  return {
+    batchSize: lotion ? "800 L" : "500 kg",
+    ingredients: [ingredient(gel ? "Diclofenac diethylamine" : ointment ? "Mupirocin" : lotion ? "Calamine" : "Clotrimazole", "Active", gel ? 5.8 : ointment ? 10 : lotion ? 80 : 5, gel || ointment ? "kg" : "kg", 0.025), ingredient(gel ? "Carbomer 940" : ointment ? "White soft paraffin" : lotion ? "Zinc oxide dispersion" : "Emulsifying wax", gel ? "Gelling agent" : ointment ? "Oleaginous base" : lotion ? "Suspending phase" : "Emulsifier", gel ? 4 : ointment ? 360 : lotion ? 65 : 45, gel ? "kg" : "kg", 0.04), ingredient(gel ? "Triethanolamine" : ointment ? "Liquid paraffin" : lotion ? "Purified water" : "Purified water", gel ? "Neutralizer" : ointment ? "Levigation agent" : "Aqueous phase", gel ? 3 : ointment ? 120 : lotion ? 620 : 390, gel ? "kg" : lotion ? "L" : "kg", 0.04), ingredient("Phenoxyethanol", "Preservative", lotion ? 4 : 2.5, "kg", 0.06)],
+    distractors: ["Empty gelatin capsules", "Magnesium stearate", "Croscarmellose sodium", "Enteric polymer"],
+    env: {
+      tempRange: [18, 24],
+      humidityRange: [35, 60]
+    },
+    stageLabels: {
+      mixing: gel ? "hydration" : ointment ? "levigation" : "emulsification",
+      granulation: "homogenization",
+      drying: lotion ? "cooling" : "deaeration",
+      compression: "viscosity set",
+      coating: "microbial hold",
+      packaging: ointment ? "tube filling" : "container filling"
+    },
+    process: {
+      mixing: option("Choose base preparation.", gel ? ["Disperse carbomer and allow hydration", "Compress dry powder", "Fill capsules", "Boil to syrup"] : ointment ? ["Levigation into ointment base", "Wet granulation", "Enteric coating", "Bottle as syrup"] : ["Prepare oil/water phases and emulsify", "Skip emulsifier", "Compress tablets", "Dry fill shells"], 0),
+      granulation: option("Choose homogenization control.", ["High-shear homogenize to smooth texture", "No mixing after API addition", "Blister pack immediately", "Add tablet lubricant"], 0),
+      drying: drying(lotion ? 28 : 25, lotion ? 24 : 22, lotion ? 32 : 28),
+      compression: option("Choose in-process control.", ["Check viscosity/pH before fill", "Check tablet hardness", "Check capsule lock only", "Ignore air pockets"], 0),
+      coating: option("Choose contamination control.", ["Open hold for 24 hours", "Closed vessel microbial hold with bioburden control", "Sugar coat", "Add desiccant only"], 1),
+      packaging: option("Select filling control.", [ointment ? "Aluminum tube fill and crimp check" : "Jar/bottle fill with net content check", "Open beaker storage", "Blister leak test", "Loose capsule count"], 0)
+    },
+    qc: [{
+      test: "Assay",
+      result: "99.1%",
+      shouldPass: true
+    }, {
+      test: gel ? "Viscosity" : "Consistency",
+      result: gel ? "Within target" : ointment ? "Uniform spread" : "Phase separation seen",
+      shouldPass: !lotion
+    }, {
+      test: "Microbial limit",
+      result: "Within limit",
+      shouldPass: true
+    }, {
+      test: "Net content",
+      result: "Within +/- 2%",
+      shouldPass: true
+    }],
+    release: !lotion
+  };
+}
+function buildIndustryFormula(choice) {
+  if (choice.form === "Syrup") return syrupFormula(choice.type);
+  if (choice.form === "Capsule") return capsuleFormula(choice.type);
+  if (choice.form === "Semi-solid") return semiSolidFormula(choice.type);
+  return tabletFormula(choice.type);
 }
 function IndustryAmbient() {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pointer-events-none fixed inset-0 z-0 overflow-hidden", "aria-hidden": "true", children: [
@@ -256,7 +481,7 @@ function IndustryRun({
     loading,
     next
   } = useCaseLoader("industry", difficulty);
-  const f = caseData?.formula_json;
+  const f = reactExports.useMemo(() => buildIndustryFormula(productChoice), [productChoice.form, productChoice.type]);
   const batchProduct = productChoice.type;
   const [phase, setPhase] = reactExports.useState("formula");
   const baseBatchCount = reactExports.useMemo(() => parseBatchCount(f?.batchSize), [f?.batchSize]);
@@ -313,7 +538,7 @@ function IndustryRun({
       }
     }
     setDryTemp(f?.process?.drying?.min ?? 50);
-  }, [caseData?.id]);
+  }, [caseData?.id, f]);
   const rawIngredients = f?.ingredients ?? [];
   const batchScale = baseBatchCount > 0 && batchCount > 0 ? batchCount / baseBatchCount : 1;
   const batchSizeLabel = formatBatchSize(f?.batchSize, batchCount || baseBatchCount || 1);
@@ -380,7 +605,7 @@ function IndustryRun({
         wrongChoice: active,
         correctChoice: ingredients.map((i) => i.name).join(", "),
         whyWrong: `${active} is not in the master formula for ${batchProduct}. Using it would change the dosage form's properties or contaminate the batch.`,
-        whatToKnow: "Binders hold ingredients together, fillers add bulk, disintegrants help tablets break apart, lubricants prevent sticking. Always cross-check against the master formula.",
+        whatToKnow: "Every dosage form has its own excipient logic. Tablets need compression aids, syrups need vehicles and preservatives, capsules need fill/shell controls, and semi-solids need bases and microbial controls.",
         hint: "Re-open the master formula and verify each ingredient against the list."
       });
     } else {
@@ -473,8 +698,8 @@ function IndustryRun({
         errorType: `Wrong ${stage} process choice`,
         wrongChoice: `Incorrect option for ${stage}`,
         correctChoice: `See master formula for ${stage} spec`,
-        whyWrong: `That ${stage} choice is wrong for this product. Wet granulation can't be used for moisture-sensitive APIs; enteric coating requires polymer-based coats, not sugar.`,
-        whatToKnow: `Each manufacturing stage has product-specific constraints. ${stage} parameters are in the master formula - re-check before answering.`,
+        whyWrong: `That ${f.stageLabels?.[stage] ?? stage} choice is wrong for this ${productChoice.form.toLowerCase()} product. The selected dosage form needs its own process controls.`,
+        whatToKnow: `Each manufacturing stage has product-specific constraints. ${f.stageLabels?.[stage] ?? stage} parameters are in the master formula - re-check before answering.`,
         hint: "Cross-reference the product's properties with the stage requirements."
       });
     }
@@ -739,11 +964,11 @@ function IndustryRun({
               const done = stageResults[s] !== void 0;
               const active2 = i === stageIdx;
               return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `rounded-full px-3 py-1 text-xs capitalize ${active2 ? "bg-primary text-primary-foreground" : done ? stageResults[s] ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"}`, children: s }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `rounded-full px-3 py-1 text-xs capitalize ${active2 ? "bg-primary text-primary-foreground" : done ? stageResults[s] ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"}`, children: f.stageLabels?.[s] ?? s }),
                 i < STAGES.length - 1 && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-muted-foreground", children: ">" })
               ] }, s);
             }) }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur", children: /* @__PURE__ */ jsxRuntimeExports.jsx(StagePicker, { stage: STAGES[stageIdx], spec: f.process[STAGES[stageIdx]], dryTemp, setDryTemp, onAnswer: (ok) => chooseStage(STAGES[stageIdx], ok) }) })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur", children: /* @__PURE__ */ jsxRuntimeExports.jsx(StagePicker, { stage: STAGES[stageIdx], label: f.stageLabels?.[STAGES[stageIdx]] ?? STAGES[stageIdx], spec: f.process[STAGES[stageIdx]], dryTemp, setDryTemp, onAnswer: (ok) => chooseStage(STAGES[stageIdx], ok) }) })
           ] }),
           phase === "qc" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-950/55 p-6 text-slate-100 shadow-[0_20px_60px_-38px_rgba(245,158,11,0.65)] backdrop-blur-xl", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-black uppercase tracking-wider text-amber-300", children: "Step 5 - Quality Control" }),
@@ -885,22 +1110,31 @@ function MasterFormulaReference({
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 rounded-lg border border-amber-200/20 bg-white/5 p-3", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400", children: "Process map" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1", children: STAGES.map((stage, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `rounded px-2 py-1 text-[10px] capitalize ${phase === "process" && i === stageIdx ? "bg-amber-500 text-slate-950" : "bg-white/5 text-slate-400"}`, children: stage }, stage)) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1", children: STAGES.map((stage, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `rounded px-2 py-1 text-[10px] capitalize ${phase === "process" && i === stageIdx ? "bg-amber-500 text-slate-950" : "bg-white/5 text-slate-400"}`, children: f.stageLabels?.[stage] ?? stage }, stage)) })
     ] })
   ] }) });
 }
 function StagePicker({
   stage,
+  label,
   spec,
   dryTemp,
   setDryTemp,
   onAnswer
 }) {
+  const stageLabel = label ?? stage;
   if (stage === "drying") {
     const ok = dryTemp >= spec.min && dryTemp <= spec.max;
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: "Step 4 - Drying" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "mt-1 text-lg font-bold", children: "Set drying temperature" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: [
+        "Step 4 - ",
+        stageLabel
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("h4", { className: "mt-1 text-lg font-bold", children: [
+        "Set ",
+        String(stageLabel).toLowerCase(),
+        " parameter"
+      ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-sm text-muted-foreground", children: [
         "Target: ",
         spec.target,
@@ -923,7 +1157,7 @@ function StagePicker({
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs uppercase tracking-wider text-muted-foreground capitalize", children: [
       "Step - ",
-      stage
+      stageLabel
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "mt-1 text-lg font-bold", children: spec.prompt }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 grid gap-2 sm:grid-cols-2", children: spec.options.map((o, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => onAnswer(i === spec.correct), className: "rounded-xl border border-border/40 p-3 text-left text-sm hover:border-primary/40", children: o }, i)) })

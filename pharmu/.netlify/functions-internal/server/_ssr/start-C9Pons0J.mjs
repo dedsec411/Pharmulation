@@ -1,8 +1,8 @@
-import { c as createMiddleware } from "./server-C5oRyaP8.mjs";
+import { a as createStart, c as createMiddleware } from "./vendor-tanstack-L5kZknSh.mjs";
 import { r as renderErrorPage } from "./index.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
-import "../_libs/seroval.mjs";
 import "../_libs/react.mjs";
+import "../_libs/seroval.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -29,29 +29,6 @@ import "../_libs/iceberg-js.mjs";
 import "../_libs/supabase__auth-js.mjs";
 import "tslib";
 import "../_libs/supabase__functions-js.mjs";
-function dedupeSerializationAdapters(deduped, serializationAdapters) {
-  for (let i = 0, len = serializationAdapters.length; i < len; i++) {
-    const current = serializationAdapters[i];
-    if (!deduped.has(current)) {
-      deduped.add(current);
-      if (current.extends) dedupeSerializationAdapters(deduped, current.extends);
-    }
-  }
-}
-var createStart = (getOptions) => {
-  return {
-    getOptions: async () => {
-      const options = await getOptions();
-      if (options.serializationAdapters) {
-        const deduped = /* @__PURE__ */ new Set();
-        dedupeSerializationAdapters(deduped, options.serializationAdapters);
-        options.serializationAdapters = Array.from(deduped);
-      }
-      return options;
-    },
-    createMiddleware
-  };
-};
 const attachSupabaseAuth = createMiddleware({ type: "function" }).client(
   async ({ next }) => {
     const { data } = await supabase.auth.getSession();

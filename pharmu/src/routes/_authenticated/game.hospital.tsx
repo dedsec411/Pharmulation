@@ -142,9 +142,71 @@ function listFromJson(value: unknown): string[] {
     return value.split(/[,;\n]/).map((item) => item.trim()).filter(Boolean);
   }
   if (value && typeof value === "object") {
-    return Object.values(value).map((item) => String(item)).filter(Boolean);
+    return Object.values(value)
+      .flatMap((item) => Array.isArray(item) ? item : [item])
+      .map((item) => String(item ?? "").trim())
+      .filter((item) => item.length > 0 && !/^(none|null|undefined|n\/a)$/i.test(item));
   }
   return [];
+}
+
+function firstText(...values: unknown[]) {
+  return values.find((value) => typeof value === "string" && value.trim().length > 0) as string | undefined;
+}
+
+function buildClinicalChart(caseData: any, patient: any) {
+  const correctOrders: any[] = caseData?.correct_answer_json?.drugs ?? [];
+  const diagnosis = firstText(patient.diagnosis, patient.condition, caseData?.title, "Clinical review") ?? "Clinical review";
+  const diagnosisLower = diagnosis.toLowerCase();
+  const currentMeds = listFromJson(patient.current_meds ?? patient.currentMeds ?? patient.medications ?? patient.home_meds);
+
+  const generatedMeds = currentMeds.length > 0
+    ? currentMeds
+    : diagnosisLower.includes("pneumonia") || diagnosisLower.includes("cap")
+      ? ["Paracetamol 500 mg PO PRN fever", "Salbutamol inhaler PRN wheeze", "No chronic medicines documented"]
+      : diagnosisLower.includes("diabetes")
+        ? ["Metformin 500 mg PO twice daily", "Atorvastatin 20 mg PO at night"]
+        : diagnosisLower.includes("hypertension") || diagnosisLower.includes("cardiac")
+          ? ["Amlodipine 5 mg PO once daily", "Aspirin 75 mg PO once daily"]
+          : ["Medication history pending reconciliation", "No high-risk home medicine documented"];
+
+  const defaultLabs: Record<string, string | number> = diagnosisLower.includes("pneumonia") || diagnosisLower.includes("cap")
+    ? {
+      WBC: "13.8 x10^9/L",
+      CRP: "68 mg/L",
+      "S. Creatinine": patient?.labs?.Cr ?? patient?.labs?.creatinine ?? 78,
+      eGFR: patient?.labs?.eGFR ?? 92,
+      ALT: "24 U/L",
+      Potassium: "4.2 mmol/L",
+    }
+    : diagnosisLower.includes("renal") || diagnosisLower.includes("kidney")
+      ? {
+        "S. Creatinine": patient?.labs?.Cr ?? patient?.labs?.creatinine ?? 142,
+        eGFR: patient?.labs?.eGFR ?? 48,
+        Urea: "12 mmol/L",
+        Potassium: "4.9 mmol/L",
+        Sodium: "136 mmol/L",
+        Hb: "11.2 g/dL",
+      }
+      : {
+        WBC: "8.4 x10^9/L",
+        "S. Creatinine": patient?.labs?.Cr ?? patient?.labs?.creatinine ?? 82,
+        eGFR: patient?.labs?.eGFR ?? 88,
+        ALT: "28 U/L",
+        Potassium: "4.1 mmol/L",
+        Sodium: "139 mmol/L",
+      };
+
+  const labs = { ...defaultLabs, ...(patient.labs ?? {}) };
+  const orderSummary = correctOrders.length > 0
+    ? correctOrders
+      .map((o) => [o.drug, o.dose ? `${o.dose} mg` : "", o.route, o.frequency].filter(Boolean).join(" "))
+      .join("; ")
+    : "Start evidence-based therapy after formulary review";
+  const physicianOrder = firstText(patient.order, patient.physician_order, patient.physicianOrder, caseData?.correct_answer_json?.order)
+    ?? `${diagnosis}: review allergies, renal function, and initiate appropriate treatment. Suggested order target: ${orderSummary}.`;
+
+  return { currentMeds: generatedMeds, labs, physicianOrder };
 }
 
 export function HospitalGame({ mode }: { mode: Mode }) {
@@ -294,7 +356,8 @@ export function HospitalGame({ mode }: { mode: Mode }) {
   }
 
   const patient = caseData.patient_info_json ?? {};
-  const currentMeds = listFromJson(patient.current_meds);
+  const clinicalChart = buildClinicalChart(caseData, patient);
+  const currentMeds = clinicalChart.currentMeds;
   const vitals = patient.vitals ?? {};
   const hr = toFiniteNumber(vitals.hr ?? vitals.heartRate ?? vitals.pulse, 82);
   const bp = String(vitals.bp ?? vitals.BP ?? "124/78");
@@ -346,41 +409,42 @@ export function HospitalGame({ mode }: { mode: Mode }) {
             )}
 
             {chartTab === "meds" && (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Current meds</p>
-                {currentMeds.length > 0 ? (
-                  <ul className="mt-2 space-y-2 text-sm text-slate-200">
-                    {currentMeds.map((m, i) => (
-                      <li key={i} className="rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2">{m}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-2 rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2 text-sm text-slate-400">No current medicines recorded.</p>
-                )}
+              <div className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-200">Medication reconciliation</p>
+                  <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-100">Auto-filled</span>
+                </div>
+                <ul className="mt-3 space-y-2 text-sm text-slate-100">
+                  {currentMeds.map((m, i) => (
+                    <li key={i} className="flex items-start gap-2 rounded-lg border border-emerald-300/20 bg-slate-950/45 px-3 py-2">
+                      <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.75)]" />
+                      <span>{m}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-3 rounded-lg border border-indigo-300/20 bg-indigo-400/10 px-3 py-2 text-xs text-indigo-50">
+                  Check allergies, renal function, and interaction risk before building the medication order.
+                </div>
               </div>
             )}
 
             {chartTab === "labs" && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Labs</p>
-                {patient.labs ? (
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                    {Object.entries(patient.labs).map(([k, v]) => (
-                      <div key={k} className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-xs text-sky-50">
-                        <b className="text-sky-200">{k}:</b> {String(v)}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-2 rounded-lg border border-indigo-200/15 bg-white/5 px-3 py-2 text-sm text-slate-400">No labs available for this case.</p>
-                )}
+                <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                  {Object.entries(clinicalChart.labs).map(([k, v]) => (
+                    <div key={k} className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-xs text-sky-50">
+                      <b className="text-sky-200">{k}:</b> {String(v)}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             {chartTab === "order" && (
               <div className="rounded-lg border border-indigo-300/25 bg-indigo-400/10 p-3 text-sm text-indigo-50">
                 <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Physician order</p>
-                <p className="mt-2">{patient.order ?? "No physician order recorded."}</p>
+                <p className="mt-2">{clinicalChart.physicianOrder}</p>
               </div>
             )}
           </div>
@@ -407,6 +471,23 @@ export function HospitalGame({ mode }: { mode: Mode }) {
               />
               <span className="h-4 w-2 animate-pulse bg-emerald-300" />
             </div>
+            {!search && (
+              <div className="mt-3 rounded-lg border border-emerald-300/20 bg-emerald-400/10 p-3">
+                <p className="text-[10px] uppercase tracking-wider text-emerald-200">Case-linked formulary queue</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(caseData.correct_answer_json?.drugs ?? []).slice(0, 4).map((o: any) => (
+                    <button
+                      key={o.drug}
+                      type="button"
+                      onClick={() => setSearch(o.drug)}
+                      className="rounded-full border border-emerald-300/25 bg-slate-950/60 px-3 py-1 text-xs text-emerald-100 transition hover:border-emerald-200/60 hover:bg-emerald-400/15"
+                    >
+                      {o.drug}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {search && (
               <ul className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-indigo-300/20 bg-slate-950/80">
                 {filtered.map((d) => (
