@@ -1,7 +1,7 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-C7yvlkC6.mjs";
+import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CH3yyotH.mjs";
 import { a as MODE_TIMERS, c as computeScore, s as submitScore, t as toastScore, b as bumpCounterBadge, e as awardBadge } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-2sXgeX9i.mjs";
+import { u as useAuthStore } from "./router-BsXYMHWD.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { P as Pill, a8 as CupSoda, a9 as PackageCheck, v as Sparkles, N as Thermometer, aa as Droplets, V as Check, i as FlaskConical, ab as Cog } from "../_libs/lucide-react.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
@@ -85,6 +85,22 @@ function formatBatchSize(template, count) {
     return template.replace(/[\d,]+(\.\d+)?/, formatted);
   }
   return `${formatted} ${template}`.trim();
+}
+function seededHash(value) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+function stableShuffle(items, seed) {
+  return items.map((item, index) => ({
+    item,
+    key: seededHash(`${seed}:${index}:${JSON.stringify(item)}`)
+  })).sort((a, b) => a.key - b.key).map(({
+    item
+  }) => item);
 }
 function displayWeight(value, unit = "g") {
   const decimals = Math.abs(value) < 10 && !Number.isInteger(value) ? 2 : 1;
@@ -553,7 +569,7 @@ function IndustryRun({
   })), [rawIngredients, batchScale]);
   const distractors = f?.distractors ?? [];
   const allWeighingItems = reactExports.useMemo(() => {
-    const items = [...ingredients.map((i) => ({
+    const items = [...rawIngredients.map((i) => ({
       name: i.name,
       role: i.role,
       isReal: true
@@ -562,8 +578,8 @@ function IndustryRun({
       role: "Distractor",
       isReal: false
     }))];
-    return items.sort(() => Math.random() - 0.5);
-  }, [caseData?.id, ingredients, distractors]);
+    return stableShuffle(items, `${caseData?.id ?? "industry"}:${productChoice.form}:${productChoice.type}`);
+  }, [caseData?.id, productChoice.form, productChoice.type, rawIngredients, distractors]);
   const activeIngredient = active ? ingredients.find((i) => i.name === active) : null;
   const weighingMax = activeIngredient ? Math.max(Number(activeIngredient.max) * 1.6, Number(activeIngredient.target) * 2, 10) : 500;
   const weighingStep = activeIngredient?.unit?.toLowerCase?.().includes("kg") ? 0.01 : 0.5;

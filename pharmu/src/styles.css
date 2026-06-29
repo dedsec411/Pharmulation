@@ -122,15 +122,36 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
+    min-height: 100vh;
+    overscroll-behavior-y: none;
     background-image:
       radial-gradient(ellipse 78% 48% at 50% -12%, oklch(0.68 0.16 155 / 0.19), transparent 62%),
       radial-gradient(ellipse 65% 52% at 100% 0%, oklch(0.74 0.14 180 / 0.1), transparent 62%),
       radial-gradient(ellipse 70% 58% at 0% 95%, oklch(0.46 0.13 150 / 0.14), transparent 68%),
       linear-gradient(180deg, oklch(0.16 0.06 185) 0%, oklch(0.125 0.05 195) 50%, oklch(0.095 0.04 220) 100%);
     background-attachment: fixed;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (max-width: 768px), (pointer: coarse) {
+    body {
+      background-attachment: scroll;
+    }
   }
 }
 
@@ -154,6 +175,7 @@
     inset 0 1px 0 oklch(1 0 0 / 0.055),
     inset 0 -36px 70px -60px oklch(0.68 0.16 155 / 0.3),
     0 24px 80px -56px oklch(0.68 0.16 155 / 0.84);
+  animation: soft-open 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 @utility glow {
@@ -171,6 +193,23 @@
 @keyframes float-pill {
   0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
   50% { transform: translateY(-30px) rotate(180deg); opacity: 0.7; }
+}
+
+@keyframes soft-open {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.soft-open {
+  animation: soft-open 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 @utility floating-pill {
@@ -192,10 +231,12 @@
 .vital-ecg-line {
   stroke-dasharray: 48 48;
   animation: vital-ecg-dash 1.35s linear infinite;
+  will-change: stroke-dashoffset;
 }
 
 .vital-monitor-scan {
   animation: vital-monitor-scan 2.2s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes hero-dust-fall {
@@ -231,6 +272,7 @@
   filter: drop-shadow(0 0 8px oklch(0.74 0.14 180 / 0.45));
   mask-image: linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
   animation: hero-dust-fall 7s linear infinite;
+  will-change: background-position;
 }
 
 
@@ -338,18 +380,24 @@ body.mode-emergency {
   opacity: 0.18;
   filter: blur(0.5px);
   animation: ambient-float 14s ease-in-out infinite;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 .ambient-cross {
   position: absolute;
   font-size: 24px;
   opacity: 0.22;
   animation: ambient-float 16s ease-in-out infinite;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 .ambient-petal {
   position: absolute;
   font-size: 20px;
   opacity: 0.28;
   animation: ambient-drift 18s linear infinite;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 .ambient-box {
   position: absolute;
@@ -358,13 +406,24 @@ body.mode-emergency {
   border-radius: 3px;
   opacity: 0.30;
   animation: ambient-float 18s ease-in-out infinite;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
-.ekg-scroll { animation: ekg-scroll-kf 6s linear infinite; }
+.ekg-scroll {
+  animation: ekg-scroll-kf 6s linear infinite;
+  backface-visibility: hidden;
+  will-change: transform;
+}
 .dna-rotate {
   animation: dna-spin 18s linear infinite;
   transform-style: preserve-3d;
+  will-change: transform;
 }
-.conveyor-scroll { animation: conveyor-kf 1.6s linear infinite; }
+.conveyor-scroll {
+  animation: conveyor-kf 1.6s linear infinite;
+  backface-visibility: hidden;
+  will-change: transform;
+}
 .emergency-edge-pulse {
   animation: emergency-pulse-kf 2.4s ease-in-out infinite;
 }
@@ -373,7 +432,12 @@ body.mode-emergency {
   background: #EF4444;
   box-shadow: 0 0 24px 4px rgba(239,68,68,0.7);
 }
-.gear-spin { animation: gear-spin-kf 22s linear infinite; transform-origin: 50% 50%; }
+.gear-spin {
+  animation: gear-spin-kf 22s linear infinite;
+  backface-visibility: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
 
 @keyframes score-correct-flash {
   0% { box-shadow: 0 0 0 rgba(34,197,94,0), inset 0 0 0 rgba(34,197,94,0); }
@@ -411,4 +475,15 @@ body.mode-emergency {
   background: radial-gradient(circle, rgba(249,168,212,0.55) 0%, transparent 65%);
   filter: blur(8px);
   animation: bokeh-float 12s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }

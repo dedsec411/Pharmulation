@@ -1,8 +1,8 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-C7yvlkC6.mjs";
+import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CH3yyotH.mjs";
 import { S as SimulatedPrescription } from "./SimulatedPrescription-BtzF8rKo.mjs";
 import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-2sXgeX9i.mjs";
+import { u as useAuthStore } from "./router-BsXYMHWD.mjs";
 import "../_libs/sonner.mjs";
 import { I as User } from "../_libs/lucide-react.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";

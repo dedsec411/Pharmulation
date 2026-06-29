@@ -1,8 +1,8 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { N as Navbar } from "./Navbar-CYUOBZOZ.mjs";
-import { u as useAuthStore } from "./router-2sXgeX9i.mjs";
+import { N as Navbar } from "./Navbar-Cr9atqma.mjs";
+import { u as useAuthStore } from "./router-BsXYMHWD.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { M as MODE_LABEL } from "./shared-DDCPKmqL.mjs";
 import { M as ModeAmbientLayer } from "./ModeAmbientLayer-B2Acv9Tx.mjs";

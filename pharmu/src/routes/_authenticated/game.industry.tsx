@@ -94,6 +94,22 @@ function formatBatchSize(template: unknown, count: number) {
   return `${formatted} ${template}`.trim();
 }
 
+function seededHash(value: string) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function stableShuffle<T>(items: T[], seed: string) {
+  return items
+    .map((item, index) => ({ item, key: seededHash(`${seed}:${index}:${JSON.stringify(item)}`) }))
+    .sort((a, b) => a.key - b.key)
+    .map(({ item }) => item);
+}
+
 function displayWeight(value: number, unit = "g") {
   const decimals = Math.abs(value) < 10 && !Number.isInteger(value) ? 2 : 1;
   return `${value.toFixed(decimals)} ${unit}`;
@@ -537,11 +553,11 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   const distractors = f?.distractors ?? [];
   const allWeighingItems = useMemo(() => {
     const items = [
-      ...ingredients.map((i: any) => ({ name: i.name, role: i.role, isReal: true })),
+      ...rawIngredients.map((i: any) => ({ name: i.name, role: i.role, isReal: true })),
       ...distractors.map((n: string) => ({ name: n, role: "Distractor", isReal: false })),
     ];
-    return items.sort(() => Math.random() - 0.5);
-  }, [caseData?.id, ingredients, distractors]);
+    return stableShuffle(items, `${caseData?.id ?? "industry"}:${productChoice.form}:${productChoice.type}`);
+  }, [caseData?.id, productChoice.form, productChoice.type, rawIngredients, distractors]);
   const activeIngredient = active ? ingredients.find((i: any) => i.name === active) : null;
   const weighingMax = activeIngredient
     ? Math.max(Number(activeIngredient.max) * 1.6, Number(activeIngredient.target) * 2, 10)
