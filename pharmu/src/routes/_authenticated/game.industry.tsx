@@ -10,7 +10,7 @@ import {
   computeScore, submitScore, MODE_TIMERS, toastScore, awardBadge, bumpCounterBadge,
 } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
-import { Check, X as XIcon, Thermometer, Droplets, FlaskConical, Pill, CupSoda, PackageCheck, Sparkles } from "lucide-react";
+import { Check, X as XIcon, Thermometer, Droplets, FlaskConical, Pill, CupSoda, PackageCheck, Sparkles, Cog, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
@@ -87,6 +87,88 @@ function formatBatchSize(template: unknown, count: number) {
 function displayWeight(value: number, unit = "g") {
   const decimals = Math.abs(value) < 10 && !Number.isInteger(value) ? 2 : 1;
   return `${value.toFixed(decimals)} ${unit}`;
+}
+
+function IndustryAmbient() {
+  return (
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <Cog className="gear-spin absolute -right-16 top-24 h-44 w-44 text-amber-300/10" strokeWidth={1.2} />
+      <Cog className="gear-spin absolute right-20 top-44 h-24 w-24 text-amber-200/10" strokeWidth={1.3} style={{ animationDirection: "reverse", animationDuration: "16s" }} />
+      <div className="absolute inset-x-0 bottom-0 h-20 border-t border-amber-300/10 bg-black/20">
+        <div className="conveyor-scroll h-full opacity-35"
+          style={{ backgroundImage: "repeating-linear-gradient(90deg, transparent 0 28px, rgba(251,191,36,0.22) 28px 32px), linear-gradient(180deg, transparent, rgba(251,191,36,0.08))" }} />
+      </div>
+    </div>
+  );
+}
+
+function BatchFlash({ decision }: { decision: "release" | "reject" | null }) {
+  if (!decision) return null;
+  const isRelease = decision === "release";
+  return (
+    <motion.div
+      key={decision}
+      initial={{ opacity: 0.85 }}
+      animate={{ opacity: 0 }}
+      transition={{ duration: 0.9, ease: "easeOut" }}
+      className={`pointer-events-none fixed inset-0 z-[80] ${isRelease ? "bg-emerald-400" : "bg-red-500"}`}
+    />
+  );
+}
+
+function OfficialStamp({ label = "GMP CONTROLLED" }: { label?: string }) {
+  return (
+    <div className="pointer-events-none absolute right-6 top-24 rotate-[-12deg] rounded-md border-4 border-amber-500/20 px-5 py-2 text-center font-mono text-xl font-black uppercase tracking-[0.26em] text-amber-600/20">
+      {label}
+    </div>
+  );
+}
+
+function BalanceScale({ value, max, min, target, unit, ok }: { value: number; max: number; min?: number; target?: number; unit?: string; ok: boolean }) {
+  const pct = Math.max(0, Math.min(100, max > 0 ? (value / max) * 100 : 0));
+  const angle = -54 + pct * 1.08;
+  return (
+    <div className={`rounded-2xl border p-4 ${ok ? "border-emerald-300/40 bg-emerald-950/20" : "border-red-400/45 bg-red-950/20"}`}>
+      <div className="relative mx-auto h-36 max-w-xs rounded-t-full border border-white/10 bg-black/45 shadow-inner">
+        <div className="absolute inset-4 rounded-t-full border-t border-x border-white/10" />
+        <div className="absolute bottom-4 left-1/2 h-24 w-1 origin-bottom rounded-full bg-current transition-transform duration-150"
+          style={{ transform: `translateX(-50%) rotate(${angle}deg)`, color: ok ? "rgb(16 185 129)" : "rgb(239 68 68)", boxShadow: `0 0 18px ${ok ? "rgba(16,185,129,.65)" : "rgba(239,68,68,.65)"}` }} />
+        <div className="absolute bottom-3 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border border-white/20 bg-slate-900" />
+        <div className="absolute bottom-3 left-5 text-[10px] font-bold text-muted-foreground">0</div>
+        <div className="absolute bottom-3 right-5 text-[10px] font-bold text-muted-foreground">{displayWeight(max, unit)}</div>
+        {min !== undefined && target !== undefined && (
+          <div className="absolute inset-x-8 bottom-9 h-1 rounded-full bg-white/10">
+            <div className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full bg-emerald-400/80"
+              style={{ left: `${Math.max(0, (min / max) * 100)}%`, width: `${Math.max(4, ((target - min) / max) * 200)}%` }} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function IndustrialGauge({ icon: Icon, label, value, unit, range }: any) {
+  const min = Number(range?.[0] ?? 0);
+  const max = Number(range?.[1] ?? 100);
+  const gaugeMin = Math.min(0, min - (max - min));
+  const gaugeMax = max + (max - min);
+  const pct = Math.max(0, Math.min(1, (value - gaugeMin) / (gaugeMax - gaugeMin || 1)));
+  const angle = -130 + pct * 260;
+  const ok = value >= min && value <= max;
+  return (
+    <div className={`relative overflow-hidden rounded-2xl border p-3 text-xs ${ok ? "border-emerald-400/35 bg-emerald-500/5" : "border-red-400/45 bg-red-500/10"}`}>
+      <div className="flex items-center gap-1.5 text-muted-foreground"><Icon className="size-3.5" /> {label}</div>
+      <div className="relative mx-auto mt-2 h-24 w-28">
+        <div className="absolute inset-x-0 top-0 h-24 rounded-t-full border border-white/15 bg-black/35 shadow-inner" />
+        <div className="absolute right-2 top-8 h-8 w-8 rounded-full border border-red-400/30 bg-red-500/10" />
+        <div className="absolute bottom-2 left-1/2 h-16 w-1 origin-bottom rounded-full bg-amber-300 transition-transform"
+          style={{ transform: `translateX(-50%) rotate(${angle}deg)`, boxShadow: "0 0 12px rgba(251,191,36,0.65)" }} />
+        <div className="absolute bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-slate-200" />
+      </div>
+      <div className={`mt-1 text-center font-mono text-lg font-black tabular-nums ${ok ? "text-emerald-300" : "text-red-300"}`}>{value}{unit}</div>
+      <div className="text-center text-[10px] text-muted-foreground">Safe {min}-{max}{unit}</div>
+    </div>
+  );
 }
 
 function IndustryGame() {
@@ -203,6 +285,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
 
   // qc
   const [qcAnswers, setQcAnswers] = useState<Record<number, boolean>>({});
+  const [releaseFlash, setReleaseFlash] = useState<"release" | "reject" | null>(null);
 
   const timer = useTimer(LIMIT, () => phase !== "done" && finish(true));
   const errPanel = useErrorPanel({
@@ -216,7 +299,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
     setPhase("formula"); setPoints(0); setErrors(0); setQcErrors(0); setContaminated(false);
     setHints(0); setWeighed({}); setActive(null); setSlider(0);
     setEnvFixed(false); setStageIdx(0); setStageResults({} as any); setQcAnswers({});
-    setResult(null);
+    setResult(null); setReleaseFlash(null);
     setBatchCount(parseBatchCount(f?.batchSize));
     if (f?.env) {
       // randomize: 60% chance OK, 40% chance out of range
@@ -259,6 +342,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
     ? Math.max(Number(activeIngredient.max) * 1.6, Number(activeIngredient.target) * 2, 10)
     : 500;
   const weighingStep = activeIngredient?.unit?.toLowerCase?.().includes("kg") ? 0.01 : 0.5;
+  const activeWeightOk = activeIngredient ? slider >= activeIngredient.min && slider <= activeIngredient.max : false;
 
   if (loading || !caseData || !f) {
     return (
@@ -414,6 +498,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   const allQcAnswered = f.qc.every((_: any, i: number) => qcAnswers[i] !== undefined);
 
   async function releaseDecision(release: boolean) {
+    setReleaseFlash(release ? "release" : "reject");
     const correct = release === f.release;
     let delta = correct ? 30 : -50;
     if (contaminated) delta -= 30;
@@ -487,6 +572,8 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   return (
     <>
       {difficultyModal}
+      <IndustryAmbient />
+      <BatchFlash decision={releaseFlash} />
       <GameHeader
         title={`Batch - ${batchProduct}`}
         remaining={timer.remaining} pct={timer.pct}
@@ -496,29 +583,40 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         onHint={() => { setHints((n) => n + 1); toast(`Stage ${stageIdx + 1}: ${STAGES[stageIdx]} - read the formula carefully.`); }}
       />
 
-      <main className="mx-auto max-w-7xl px-4 py-4">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-4">
         {/* Env gauges always visible after formula */}
         {phase !== "formula" && (
           <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Gauge icon={Thermometer} label="Temp" value={temp} unit=" deg C" range={f.env.tempRange} />
-            <Gauge icon={Droplets} label="Humidity" value={humidity} unit="%" range={f.env.humidityRange} />
+            <IndustrialGauge icon={Thermometer} label="Temp" value={temp} unit=" deg C" range={f.env.tempRange} />
+            <IndustrialGauge icon={Droplets} label="Humidity" value={humidity} unit="%" range={f.env.humidityRange} />
             <InfoChip label="Batch" value={batchSizeLabel} />
             <InfoChip label="Errors" value={String(errors)} />
           </div>
         )}
 
         {phase === "formula" && (
-          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Step 1 - Master Formula</p>
-            <h2 className="mt-1 text-2xl font-bold">{batchProduct}</h2>
-            <p className="text-sm text-muted-foreground">{productChoice.form} dosage form - Batch size: {batchSizeLabel}</p>
-            <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+          <section className="relative overflow-hidden rounded-2xl border border-slate-300 bg-slate-50 p-6 text-slate-950 shadow-[0_24px_70px_-42px_rgba(0,0,0,0.8)]">
+            <OfficialStamp />
+            <div className="relative border-b-2 border-slate-900 pb-3">
+              <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-amber-700">Batch Manufacturing Record</p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+                <div>
+                  <h2 className="text-2xl font-black uppercase tracking-tight">{batchProduct}</h2>
+                  <p className="text-sm font-semibold text-slate-600">{productChoice.form} dosage form - Batch size: {batchSizeLabel}</p>
+                </div>
+                <div className="rounded border border-slate-400 bg-white px-3 py-2 font-mono text-xs">
+                  <p>BMR No. PHM-{caseData.id?.slice?.(0, 5) ?? "00001"}</p>
+                  <p>Revision 01</p>
+                </div>
+              </div>
+            </div>
+            <div className="relative mt-4 rounded-none border-2 border-slate-900 bg-white p-4">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <label htmlFor="industry-batch-size" className="text-xs font-bold uppercase tracking-wider text-primary">
+                  <label htmlFor="industry-batch-size" className="text-xs font-black uppercase tracking-wider text-amber-700">
                     Batch size
                   </label>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-slate-500">
                     Adjust the batch and the master formula recalculates all ingredient targets.
                   </p>
                 </div>
@@ -531,9 +629,9 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                     step={batchStep}
                     value={batchCount || ""}
                     onChange={(e) => updateBatchCount(Number(e.target.value))}
-                    className="h-10 w-36 rounded-xl border border-border/50 bg-background/70 px-3 text-right font-mono text-sm tabular-nums outline-none focus:border-primary"
+                    className="h-10 w-36 rounded border border-slate-400 bg-slate-50 px-3 text-right font-mono text-sm tabular-nums outline-none focus:border-amber-600"
                   />
-                  <span className="rounded-full bg-background/60 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                  <span className="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">
                     {batchScale.toFixed(2)}x
                   </span>
                 </div>
@@ -545,26 +643,29 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                 step={batchStep}
                 value={batchCount || baseBatchCount || minBatchCount}
                 onChange={(e) => updateBatchCount(Number(e.target.value))}
-                className="mt-4 w-full"
+                className="mt-4 w-full accent-amber-600"
               />
-              <div className="mt-2 flex justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 <span>{formatBatchSize(f.batchSize, minBatchCount)}</span>
                 <span>{formatBatchSize(f.batchSize, maxBatchCount)}</span>
               </div>
             </div>
-            <ul className="mt-4 divide-y divide-border/30 rounded-xl border border-border/30">
+            <ul className="relative mt-4 divide-y divide-slate-300 border-2 border-slate-900 bg-white">
               {ingredients.map((i: any) => (
-                <li key={i.name} className="flex items-center justify-between p-3 text-sm">
-                  <div>
+                <li key={i.name} className="grid grid-cols-[26px_1fr_auto] items-center gap-3 p-3 text-sm">
+                  <span className="grid h-4 w-4 place-items-center border border-slate-700 text-[10px]">
+                    <Check className="size-3 text-amber-700" />
+                  </span>
+                  <div className="min-w-0">
                     <p className="font-semibold">{i.name}</p>
-                    <p className="text-xs text-muted-foreground">{i.role}</p>
+                    <p className="text-xs text-slate-500">{i.role}</p>
                   </div>
-                  <span className="tabular-nums">{formatAmount(i.target)} {i.unit} <span className="text-muted-foreground">({formatAmount(i.min)}-{formatAmount(i.max)})</span></span>
+                  <span className="text-right font-mono tabular-nums">{formatAmount(i.target)} {i.unit} <span className="text-slate-500">({formatAmount(i.min)}-{formatAmount(i.max)})</span></span>
                 </li>
               ))}
             </ul>
-            <button onClick={acknowledgeFormula} className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground">
-              Acknowledge formula
+            <button onClick={acknowledgeFormula} className="relative mt-5 rounded-full bg-amber-500 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_0_28px_-12px_rgba(245,158,11,0.9)] hover:bg-amber-400">
+              Acknowledge BMR
             </button>
           </section>
         )}
@@ -603,7 +704,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
+            <div className="rounded-2xl border border-amber-300/25 bg-card/60 p-5 shadow-[0_18px_55px_-38px_rgba(245,158,11,0.8)] backdrop-blur">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Weighing station</p>
               {!active ? (
                 <p className="mt-4 text-sm text-muted-foreground">Select an ingredient from the inventory.</p>
@@ -616,9 +717,17 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                       Target {displayWeight(activeIngredient.target, activeIngredient.unit)} - Range {displayWeight(activeIngredient.min, activeIngredient.unit)}-{displayWeight(activeIngredient.max, activeIngredient.unit)}
                     </p>
                   )}
+                  <BalanceScale
+                    value={slider}
+                    max={weighingMax}
+                    min={activeIngredient?.min}
+                    target={activeIngredient?.target}
+                    unit={activeIngredient?.unit}
+                    ok={activeWeightOk}
+                  />
                   <input type="range" min={0} max={weighingMax} step={weighingStep} value={slider}
-                    onChange={(e) => setSlider(Number(e.target.value))} className="w-full" />
-                  <button onClick={confirmWeigh} className="w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground">
+                    onChange={(e) => setSlider(Number(e.target.value))} className={`w-full ${activeWeightOk ? "accent-emerald-500" : "accent-red-500"}`} />
+                  <button onClick={confirmWeigh} className={`w-full rounded-full py-2 text-sm font-semibold text-white ${activeWeightOk ? "bg-emerald-600 hover:bg-emerald-500" : "bg-red-600 hover:bg-red-500"}`}>
                     Confirm weight
                   </button>
                 </div>
@@ -693,45 +802,76 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "qc" && (
-          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Step 5 - Quality Control</p>
+          <section className="overflow-hidden rounded-2xl border border-slate-300/50 bg-slate-100/90 p-6 text-slate-950 shadow-[0_20px_60px_-38px_rgba(0,0,0,0.8)] backdrop-blur">
+            <p className="text-xs font-black uppercase tracking-wider text-amber-700">Step 5 - Quality Control</p>
             <h3 className="mt-1 text-lg font-bold">Judge each test</h3>
-            <ul className="mt-3 space-y-2">
+            <ul className="mt-3 space-y-3">
               {f.qc.map((t: any, i: number) => {
                 const ans = qcAnswers[i];
+                const stamped = ans !== undefined;
                 return (
-                  <li key={i} className="rounded-xl border border-border/30 bg-muted/30 p-3 text-sm">
+                  <motion.li
+                    key={i}
+                    initial={{ opacity: 0, y: 42 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08, type: "spring", stiffness: 220, damping: 24 }}
+                    className="relative overflow-hidden rounded-none border border-slate-300 bg-white p-3 font-mono text-sm shadow-[0_14px_30px_-24px_rgba(0,0,0,0.8)] before:absolute before:inset-x-0 before:top-0 before:h-2 before:bg-[repeating-linear-gradient(90deg,#d1d5db_0_8px,transparent_8px_16px)]"
+                  >
+                    {stamped && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 1.8, rotate: ans ? -8 : 8 }}
+                        animate={{ opacity: 1, scale: 1, rotate: ans ? -8 : 8 }}
+                        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+                        className={`absolute right-4 top-5 rounded border-4 px-3 py-1 text-lg font-black uppercase tracking-widest ${
+                          ans ? "border-emerald-600/70 text-emerald-700/80" : "border-red-600/70 text-red-700/80"
+                        }`}
+                      >
+                        {ans ? "PASS" : "FAIL"}
+                      </motion.div>
+                    )}
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-semibold">{t.test}</p>
-                        <p className="text-xs text-muted-foreground">{t.result}</p>
+                        <p className="text-xs text-slate-500">{t.result}</p>
                       </div>
                       <div className="flex gap-1">
                         <button disabled={ans !== undefined} onClick={() => answerQc(i, true)}
-                          className={`rounded-full px-3 py-1 text-xs ${ans === true ? "bg-primary text-primary-foreground" : "border border-border/40"}`}>Pass</button>
+                          className={`rounded-full px-3 py-1 text-xs ${ans === true ? "bg-emerald-600 text-white" : "border border-slate-300 bg-slate-50"}`}>Pass</button>
                         <button disabled={ans !== undefined} onClick={() => answerQc(i, false)}
-                          className={`rounded-full px-3 py-1 text-xs ${ans === false ? "bg-destructive text-destructive-foreground" : "border border-border/40"}`}>Fail</button>
+                          className={`rounded-full px-3 py-1 text-xs ${ans === false ? "bg-red-600 text-white" : "border border-slate-300 bg-slate-50"}`}>Fail</button>
                       </div>
                     </div>
-                  </li>
+                  </motion.li>
                 );
               })}
             </ul>
             <button disabled={!allQcAnswered} onClick={() => setPhase("release")}
-              className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+              className="mt-4 rounded-full bg-amber-500 px-6 py-2 text-sm font-black text-slate-950 disabled:opacity-40">
               Continue to batch decision &gt;
             </button>
           </section>
         )}
 
         {phase === "release" && (
-          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 text-center backdrop-blur">
-            <FlaskConical className="mx-auto size-10 text-primary" />
-            <h3 className="mt-2 text-xl font-bold">Final batch decision</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Based on your QC results, what's your call?</p>
-            <div className="mt-4 flex justify-center gap-3">
-              <button onClick={() => releaseDecision(true)} className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground">Release batch</button>
-              <button onClick={() => releaseDecision(false)} className="rounded-full bg-destructive px-6 py-2 text-sm font-semibold text-destructive-foreground">Reject batch</button>
+          <section className="relative overflow-hidden rounded-3xl border border-amber-300/30 bg-black/55 p-8 text-center shadow-[0_24px_80px_-42px_rgba(245,158,11,0.9)] backdrop-blur">
+            <div className="pointer-events-none absolute inset-0 opacity-30"
+              style={{ backgroundImage: "linear-gradient(rgba(251,191,36,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(251,191,36,0.08) 1px, transparent 1px)", backgroundSize: "22px 22px" }} />
+            <FlaskConical className="relative mx-auto size-12 text-amber-300" />
+            <h3 className="relative mt-3 text-2xl font-black uppercase tracking-wide">Final batch decision</h3>
+            <p className="relative mt-1 text-sm text-muted-foreground">Based on QC results and production records, authorize the batch.</p>
+            <div className="relative mt-6 grid gap-4 sm:grid-cols-2">
+              <button
+                onClick={() => releaseDecision(true)}
+                className="rounded-2xl border border-emerald-300/50 bg-emerald-500 px-8 py-6 font-mono text-3xl font-black uppercase tracking-[0.18em] text-emerald-950 shadow-[0_0_44px_-12px_rgba(16,185,129,0.95)] transition hover:scale-[1.02] hover:bg-emerald-400"
+              >
+                Release
+              </button>
+              <button
+                onClick={() => releaseDecision(false)}
+                className="rounded-2xl border border-red-300/50 bg-red-600 px-8 py-6 font-mono text-3xl font-black uppercase tracking-[0.18em] text-red-50 shadow-[0_0_44px_-12px_rgba(239,68,68,0.95)] transition hover:scale-[1.02] hover:bg-red-500"
+              >
+                Reject
+              </button>
             </div>
           </section>
         )}
@@ -767,59 +907,63 @@ function InfoChip({ label, value }: any) {
 function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, batchSizeLabel, phase, stageIdx }: any) {
   return (
     <aside className="xl:sticky xl:top-24 xl:self-start">
-      <div className="rounded-2xl border border-primary/25 bg-card/80 p-4 shadow-[0_16px_40px_-24px_oklch(0.78_0.16_75/0.65)] backdrop-blur">
+      <div className="relative overflow-hidden rounded-xl border border-slate-300 bg-slate-50 p-4 text-slate-950 shadow-[0_16px_40px_-24px_rgba(245,158,11,0.65)]">
+        <OfficialStamp label="REFERENCE" />
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Master formula</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">Master formula</p>
             <h3 className="mt-1 text-lg font-black leading-tight">{batchProduct}</h3>
-            <p className="mt-0.5 text-xs text-muted-foreground">{productChoice.form} dosage form</p>
+            <p className="mt-0.5 text-xs text-slate-500">{productChoice.form} dosage form</p>
           </div>
-          <span className="rounded-full bg-primary/15 px-2.5 py-1 text-[10px] font-bold text-primary">
+          <span className="rounded border border-slate-300 bg-white px-2.5 py-1 font-mono text-[10px] font-bold text-slate-700">
             {batchSizeLabel}
           </span>
         </div>
 
-        <div className="mt-4 rounded-xl border border-border/35 bg-background/35 p-3">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Ingredients</p>
+        <div className="mt-4 border-2 border-slate-900 bg-white p-3">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-700">Ingredients</p>
           <ul className="max-h-52 space-y-2 overflow-y-auto pr-1">
             {ingredients.map((i: any) => (
-              <li key={i.name} className="rounded-lg bg-muted/25 px-2 py-1.5 text-xs">
+              <li key={i.name} className="grid grid-cols-[18px_1fr] gap-2 border-b border-slate-200 pb-1.5 text-xs last:border-b-0">
+                <span className="mt-0.5 grid h-3.5 w-3.5 place-items-center border border-slate-600">
+                  <Check className="size-2.5 text-amber-700" />
+                </span>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{i.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{i.role}</p>
+                    <p className="text-[10px] text-slate-500">{i.role}</p>
                   </div>
                   <span className="shrink-0 text-right font-mono text-[11px] tabular-nums">
                     {formatAmount(i.target)}{i.unit}
                   </span>
                 </div>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">Range {formatAmount(i.min)}-{formatAmount(i.max)}{i.unit}</p>
+                <p className="col-start-2 mt-0.5 text-[10px] text-slate-500">Range {formatAmount(i.min)}-{formatAmount(i.max)}{i.unit}</p>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-          <div className="rounded-xl border border-border/35 bg-background/35 p-2">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Temp</p>
+          <div className="border border-slate-300 bg-white p-2">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Temp</p>
             <p className="mt-1 font-bold">{f.env.tempRange[0]}-{f.env.tempRange[1]}C</p>
           </div>
-          <div className="rounded-xl border border-border/35 bg-background/35 p-2">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Humidity</p>
+          <div className="border border-slate-300 bg-white p-2">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Humidity</p>
             <p className="mt-1 font-bold">{f.env.humidityRange[0]}-{f.env.humidityRange[1]}%</p>
           </div>
         </div>
 
-        <div className="mt-3 rounded-xl border border-border/35 bg-background/35 p-3">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Process map</p>
+        <div className="mt-3 border border-slate-300 bg-white p-3">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-500">Process map</p>
           <div className="flex flex-wrap gap-1">
             {STAGES.map((stage, i) => (
               <span
                 key={stage}
-                className={`rounded-full px-2 py-1 text-[10px] capitalize ${
+                className={`rounded px-2 py-1 text-[10px] capitalize ${
                   phase === "process" && i === stageIdx
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted/60 text-muted-foreground"
+                    ? "bg-amber-500 text-slate-950"
+                    : "bg-slate-100 text-slate-500"
                 }`}
               >
                 {stage}
