@@ -3,6 +3,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
+import { PharmacistChat } from "@/components/PharmacistChat";
 import {
   BookOpen,
   Bot,
@@ -185,7 +186,8 @@ export function TutorialBot() {
   const { profile, setProfile } = useAuthStore();
   const guide = useMemo(() => guideForPath(pathname), [pathname]);
   const [step, setStep] = useState(0);
-  const [open, setOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -204,7 +206,7 @@ export function TutorialBot() {
 
     const timer = window.setTimeout(() => {
       setStep(0);
-      setOpen(true);
+      setTutorialOpen(true);
     }, 900);
 
     return () => window.clearTimeout(timer);
@@ -231,14 +233,14 @@ export function TutorialBot() {
   async function markDone() {
     localStorage.setItem(storageKey(guide.key), "done");
     await completeFirstRunIfNeeded();
-    setOpen(false);
+    setTutorialOpen(false);
     setStep(0);
   }
 
   async function skipAll() {
     Object.keys(GUIDES).forEach((key) => localStorage.setItem(storageKey(key), "done"));
     await completeFirstRunIfNeeded();
-    setOpen(false);
+    setTutorialOpen(false);
     setStep(0);
   }
 
@@ -246,9 +248,9 @@ export function TutorialBot() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => setChatOpen((open) => !open)}
         className="group fixed bottom-5 left-5 z-50 grid size-16 place-items-center rounded-2xl border border-primary/35 bg-card/80 text-primary shadow-[0_18px_45px_-18px_oklch(0.74_0.14_180/0.9)] backdrop-blur-xl transition hover:-translate-y-1 hover:bg-primary/15"
-        aria-label="Open tutorial bot"
+        aria-label="Open pharmacist chat"
       >
         <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full border border-background bg-primary text-[9px] font-black text-primary-foreground shadow-lg">
           Hi
@@ -260,8 +262,10 @@ export function TutorialBot() {
         />
       </button>
 
+      <PharmacistChat open={chatOpen} onClose={() => setChatOpen(false)} />
+
       <AnimatePresence>
-        {open && (
+        {tutorialOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -299,7 +303,7 @@ export function TutorialBot() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setOpen(false)}
+                    onClick={() => setTutorialOpen(false)}
                     className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
                     aria-label="Close tutorial"
                   >

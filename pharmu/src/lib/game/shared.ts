@@ -131,10 +131,11 @@ export async function submitScore(args: {
 }) {
   const accuracy = args.totalDrugs > 0 ? args.correctDrugs / args.totalDrugs : 1;
   const xpGain = Math.round(args.score / 2);
+  const caseId = args.caseId?.startsWith("generated:") ? null : args.caseId;
 
   const { error: scoreErr } = await supabase.from("scores").insert({
     user_id: args.userId,
-    case_id: args.caseId,
+    case_id: caseId,
     mode: args.mode,
     score: args.score,
     time_taken: args.timeTaken,

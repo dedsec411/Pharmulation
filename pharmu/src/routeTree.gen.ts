@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedModesRouteImport } from './routes/_authenticated/modes'
@@ -50,6 +51,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/modes': typeof AuthenticatedModesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
   '/game/emergency': typeof AuthenticatedGameEmergencyRoute
   '/game/hospital': typeof AuthenticatedGameHospitalRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/modes': typeof AuthenticatedModesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
   '/game/emergency': typeof AuthenticatedGameEmergencyRoute
   '/game/hospital': typeof AuthenticatedGameHospitalRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/_authenticated/modes': typeof AuthenticatedModesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/game/community': typeof AuthenticatedGameCommunityRoute
   '/_authenticated/game/emergency': typeof AuthenticatedGameEmergencyRoute
   '/_authenticated/game/hospital': typeof AuthenticatedGameHospitalRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/modes'
     | '/profile'
     | '/settings'
+    | '/auth/callback'
     | '/game/community'
     | '/game/emergency'
     | '/game/hospital'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/modes'
     | '/profile'
     | '/settings'
+    | '/auth/callback'
     | '/game/community'
     | '/game/emergency'
     | '/game/hospital'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/_authenticated/modes'
     | '/_authenticated/profile'
     | '/_authenticated/settings'
+    | '/auth/callback'
     | '/_authenticated/game/community'
     | '/_authenticated/game/emergency'
     | '/_authenticated/game/hospital'
@@ -249,6 +261,7 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings': {
@@ -423,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

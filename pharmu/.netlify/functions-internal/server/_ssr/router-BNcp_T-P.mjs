@@ -1,17 +1,19 @@
 import { b as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { Q as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
 import { c as createRouter, a as createRootRouteWithContext, u as useRouter, L as Link, O as Outlet, H as HeadContent, S as Scripts, b as createFileRoute, l as lazyRouteComponent, d as useRouterState } from "../_libs/tanstack__react-router.mjs";
-import { Q as redirect } from "../_libs/tanstack__router-core.mjs";
+import { S as redirect } from "../_libs/tanstack__router-core.mjs";
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { T as Toaster$1 } from "../_libs/sonner.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
+import { c as createServerFn, a as createSsrRpc } from "./vendor-tanstack-B1LzCUcS.mjs";
 import { S as Slot } from "../_libs/radix-ui__react-slot.mjs";
 import { c as cva } from "../_libs/class-variance-authority.mjs";
 import { c as clsx } from "../_libs/clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { A as AnimatePresence, m as motion } from "../_libs/framer-motion.mjs";
-import { X, C as ChevronLeft, a as CircleCheck, b as ChevronRight, G as GraduationCap, D as Database, T as Trophy, c as TrendingUp, P as Pill, B as Boxes, S as Siren, F as Factory, d as Star, e as Stethoscope, f as BookOpen, g as ClipboardList, h as CircleQuestionMark, H as HeartPulse, i as FlaskConical, j as Package, k as Syringe, l as Bot } from "../_libs/lucide-react.mjs";
+import { X, C as ChevronLeft, a as CircleCheck, b as ChevronRight, G as GraduationCap, D as Database, T as Trophy, c as TrendingUp, P as Pill, B as Boxes, S as Siren, F as Factory, d as Star, e as Stethoscope, f as BookOpen, g as ClipboardList, h as CircleQuestionMark, H as HeartPulse, i as FlaskConical, j as Package, k as Syringe, l as Bot, m as Send } from "../_libs/lucide-react.mjs";
 import { c as create } from "../_libs/zustand.mjs";
+import { o as objectType, l as literalType, a as arrayType, s as stringType, u as unionType, n as numberType, e as enumType } from "../_libs/zod.mjs";
 import "../_libs/react-dom.mjs";
 import "util";
 import "crypto";
@@ -33,10 +35,14 @@ import "../_libs/iceberg-js.mjs";
 import "../_libs/supabase__auth-js.mjs";
 import "tslib";
 import "../_libs/supabase__functions-js.mjs";
+import "node:async_hooks";
+import "../_libs/h3-v2.mjs";
+import "../_libs/rou3.mjs";
+import "../_libs/srvx.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/motion-dom.mjs";
 import "../_libs/motion-utils.mjs";
-const appCss = "/assets/styles-BpoRV3ZJ.css";
+const appCss = "/assets/styles-DCKFMN1M.css";
 function reportLovableError(error, context = {}) {
   if (typeof window === "undefined") return;
   window.__lovableEvents?.captureException?.(
@@ -80,6 +86,190 @@ const useAuthStore = create((set) => ({
   setLoading: (loading) => set({ loading }),
   reset: () => set({ user: null, session: null, profile: null, loading: false })
 }));
+const ChatMessageSchema = objectType({
+  role: enumType(["user", "assistant"]),
+  content: stringType().min(1).max(2e3)
+});
+const PatientInfoSchema = objectType({
+  name: stringType().optional().nullable(),
+  age: unionType([stringType(), numberType()]).optional().nullable(),
+  symptoms: stringType().optional().nullable(),
+  allergies: stringType().optional().nullable(),
+  current_meds: stringType().optional().nullable()
+}).optional();
+const sendChatMessage = createServerFn({
+  method: "POST"
+}).validator(objectType({
+  messages: arrayType(ChatMessageSchema).min(1).max(30),
+  context: literalType("patient"),
+  patientInfo: PatientInfoSchema
+})).handler(createSsrRpc("6998d5bda3c8f203fdc10234018043ebcfba19eaea0dab1a9b324f1a8d498e87"));
+const useActiveCaseStore = create((set) => ({
+  caseData: null,
+  setActiveCase: (caseData) => set({ caseData })
+}));
+const MAX_EXCHANGES = 15;
+const PRACTICE_PATIENT = {
+  name: "Ayesha Khan",
+  age: 32,
+  symptoms: "blocked nose, sore throat, dry cough, and feeling tired for the last 2 days",
+  allergies: "penicillin caused a rash once",
+  current_meds: "metformin 500 mg twice daily and occasional paracetamol"
+};
+function PharmacistChat({ open, onClose }) {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const activeCase = useActiveCaseStore((state) => state.caseData);
+  const [messages, setMessages] = reactExports.useState([]);
+  const [input, setInput] = reactExports.useState("");
+  const [waiting, setWaiting] = reactExports.useState(false);
+  const endRef = reactExports.useRef(null);
+  const isGame = pathname.includes("/game/");
+  const patientInfo = reactExports.useMemo(() => extractPatientInfo(activeCase), [activeCase]);
+  const conversationKey = `${pathname}:${activeCase?.id ?? "practice"}`;
+  const context = "patient";
+  const title = patientInfo.name || "Patient";
+  const subtitle = isGame && activeCase ? "Case patient" : "Practice patient";
+  const exchangeCount = messages.filter((message) => message.role === "user").length;
+  const limitReached = exchangeCount >= MAX_EXCHANGES;
+  reactExports.useEffect(() => {
+    if (!open) {
+      setMessages([]);
+      setInput("");
+      setWaiting(false);
+    }
+  }, [open]);
+  reactExports.useEffect(() => {
+    setMessages([]);
+    setInput("");
+    setWaiting(false);
+  }, [conversationKey]);
+  reactExports.useEffect(() => {
+    if (!open) return;
+    setMessages((current) => current.length ? current : [{ role: "assistant", content: openingLine(patientInfo) }]);
+  }, [open, conversationKey, patientInfo]);
+  reactExports.useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, waiting, open]);
+  async function submit(event) {
+    event?.preventDefault();
+    const content = input.trim();
+    if (!content || waiting || limitReached) return;
+    const nextMessages = [...messages, { role: "user", content }];
+    setMessages(nextMessages);
+    setInput("");
+    setWaiting(true);
+    try {
+      const result = await sendChatMessage({
+        data: {
+          messages: messagesForApi(nextMessages),
+          context,
+          patientInfo
+        }
+      });
+      setMessages((current) => [...current, { role: "assistant", content: result.reply }]);
+    } catch {
+      setMessages((current) => [...current, { role: "assistant", content: "Sorry, I could not respond right now." }]);
+    } finally {
+      setWaiting(false);
+    }
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: open && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    motion.section,
+    {
+      initial: { opacity: 0, y: 26, scale: 0.96 },
+      animate: { opacity: 1, y: 0, scale: 1 },
+      exit: { opacity: 0, y: 18, scale: 0.97 },
+      transition: { duration: 0.2 },
+      className: "glass-card fixed bottom-24 left-5 z-[60] flex h-[min(620px,calc(100vh-8rem))] w-[min(420px,calc(100vw-2.5rem))] flex-col overflow-hidden border-primary/35 bg-background/90 shadow-[0_24px_70px_-26px_oklch(0.74_0.14_180/0.95)]",
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "flex items-center justify-between gap-3 border-b border-border/40 bg-primary/10 p-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-[0.24em] text-primary", children: "Patient chat" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "mt-1 text-lg font-black leading-none", children: title }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-xs text-muted-foreground", children: subtitle })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              type: "button",
+              onClick: onClose,
+              className: "rounded-full border border-border/50 p-2 text-muted-foreground transition hover:border-primary/50 hover:text-primary",
+              "aria-label": "Close chat",
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "size-4" })
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 space-y-3 overflow-y-auto p-4", children: [
+          messages.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-2xl border border-border/35 bg-card/45 p-4 text-sm text-muted-foreground", children: "Ask the patient focused questions about symptoms, allergies, current medicines, red flags, and expectations." }),
+          messages.map((message, index) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `flex ${message.role === "user" ? "justify-end" : "justify-start"}`, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "div",
+            {
+              className: `max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${message.role === "user" ? "bg-primary text-primary-foreground shadow-[0_12px_30px_-18px_oklch(0.74_0.14_180/0.95)]" : "glass-card border-border/40 bg-card/65 text-foreground"}`,
+              children: message.content
+            }
+          ) }, `${message.role}-${index}`)),
+          waiting && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-start", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "glass-card flex items-center gap-1.5 border-border/40 bg-card/65 px-4 py-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "size-2 animate-pulse rounded-full bg-primary" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "size-2 animate-pulse rounded-full bg-primary [animation-delay:120ms]" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "size-2 animate-pulse rounded-full bg-primary [animation-delay:240ms]" })
+          ] }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { ref: endRef })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: submit, className: "border-t border-border/40 bg-background/70 p-3", children: [
+          limitReached && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary", children: "Conversation limit reached, refresh to start a new chat" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                value: input,
+                onChange: (event) => setInput(event.target.value),
+                disabled: waiting || limitReached,
+                placeholder: "Ask the patient...",
+                className: "min-w-0 flex-1 rounded-full border border-border/45 bg-card/70 px-4 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/70 focus:ring-2 focus:ring-primary/20 disabled:opacity-55"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "submit",
+                disabled: waiting || limitReached || !input.trim(),
+                className: "grid size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_-16px_oklch(0.74_0.14_180/0.95)] transition hover:brightness-110 disabled:opacity-45",
+                "aria-label": "Send message",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Send, { className: "size-4" })
+              }
+            )
+          ] })
+        ] })
+      ]
+    }
+  ) });
+}
+function extractPatientInfo(caseData) {
+  if (!caseData) return PRACTICE_PATIENT;
+  const patient = caseData?.patient_info_json ?? {};
+  const symptoms = patient.symptoms ?? patient.complaint ?? patient.presenting_complaint ?? patient.diagnosis ?? caseData?.title ?? "";
+  const meds = patient.current_meds ?? patient.currentMeds ?? patient.medications ?? patient.home_meds ?? "";
+  return {
+    name: patient.name ?? caseData?.electronic_prescription_json?.patient ?? "Patient",
+    age: patient.age ?? "",
+    symptoms: stringifyInfo(symptoms),
+    allergies: stringifyInfo(patient.allergies ?? patient.allergy ?? "none"),
+    current_meds: stringifyInfo(meds || "none")
+  };
+}
+function openingLine(patientInfo) {
+  const symptomText = patientInfo.symptoms || "a problem I wanted to ask about";
+  return `Hi, I wanted to ask about ${symptomText}. Can you help me?`;
+}
+function messagesForApi(messages) {
+  const firstQuestionIndex = messages.findIndex((message) => message.role === "user");
+  return firstQuestionIndex === -1 ? messages : messages.slice(firstQuestionIndex);
+}
+function stringifyInfo(value) {
+  if (Array.isArray(value)) return value.map(String).join(", ");
+  if (value && typeof value === "object") return Object.values(value).map(String).join(", ");
+  return String(value ?? "");
+}
 const STORAGE_PREFIX = "pharmulation_tutorial_";
 const FIRST_RUN_KEY = "pharmulation_tutorial_first_run_done";
 const DOCTOR_IMAGE = "/doctor-mentor.png";
@@ -227,7 +417,8 @@ function TutorialBot() {
   const { profile, setProfile } = useAuthStore();
   const guide = reactExports.useMemo(() => guideForPath(pathname), [pathname]);
   const [step, setStep] = reactExports.useState(0);
-  const [open, setOpen] = reactExports.useState(false);
+  const [tutorialOpen, setTutorialOpen] = reactExports.useState(false);
+  const [chatOpen, setChatOpen] = reactExports.useState(false);
   const [ready, setReady] = reactExports.useState(false);
   reactExports.useEffect(() => {
     setReady(true);
@@ -242,7 +433,7 @@ function TutorialBot() {
     if (alreadyRan) return;
     const timer = window.setTimeout(() => {
       setStep(0);
-      setOpen(true);
+      setTutorialOpen(true);
     }, 900);
     return () => window.clearTimeout(timer);
   }, [pathname, profile, ready]);
@@ -259,13 +450,13 @@ function TutorialBot() {
   async function markDone() {
     localStorage.setItem(storageKey(guide.key), "done");
     await completeFirstRunIfNeeded();
-    setOpen(false);
+    setTutorialOpen(false);
     setStep(0);
   }
   async function skipAll() {
     Object.keys(GUIDES).forEach((key) => localStorage.setItem(storageKey(key), "done"));
     await completeFirstRunIfNeeded();
-    setOpen(false);
+    setTutorialOpen(false);
     setStep(0);
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
@@ -273,9 +464,9 @@ function TutorialBot() {
       "button",
       {
         type: "button",
-        onClick: () => setOpen(true),
+        onClick: () => setChatOpen((open) => !open),
         className: "group fixed bottom-5 left-5 z-50 grid size-16 place-items-center rounded-2xl border border-primary/35 bg-card/80 text-primary shadow-[0_18px_45px_-18px_oklch(0.74_0.14_180/0.9)] backdrop-blur-xl transition hover:-translate-y-1 hover:bg-primary/15",
-        "aria-label": "Open tutorial bot",
+        "aria-label": "Open pharmacist chat",
         children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute -right-1 -top-1 grid size-5 place-items-center rounded-full border border-background bg-primary text-[9px] font-black text-primary-foreground shadow-lg", children: "Hi" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -289,7 +480,8 @@ function TutorialBot() {
         ]
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: open && /* @__PURE__ */ jsxRuntimeExports.jsx(
+    /* @__PURE__ */ jsxRuntimeExports.jsx(PharmacistChat, { open: chatOpen, onClose: () => setChatOpen(false) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: tutorialOpen && /* @__PURE__ */ jsxRuntimeExports.jsx(
       motion.div,
       {
         initial: { opacity: 0 },
@@ -334,7 +526,7 @@ function TutorialBot() {
                     "button",
                     {
                       type: "button",
-                      onClick: () => setOpen(false),
+                      onClick: () => setTutorialOpen(false),
                       className: "rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground",
                       "aria-label": "Close tutorial",
                       children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "size-4" })
@@ -611,7 +803,7 @@ const Route$g = createFileRoute("/login")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$f, "component")
 });
-const $$splitComponentImporter$e = () => import("./leaderboard-B5Z8wQTl.mjs");
+const $$splitComponentImporter$e = () => import("./leaderboard-b4s8bzrD.mjs");
 const Route$f = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [{
@@ -845,7 +1037,7 @@ function Landing() {
     ] }) })
   ] });
 }
-const $$splitComponentImporter$c = () => import("./settings-B4koqWQl.mjs");
+const $$splitComponentImporter$c = () => import("./settings-CjKAWtT6.mjs");
 const Route$c = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [{
@@ -854,7 +1046,7 @@ const Route$c = createFileRoute("/_authenticated/settings")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$c, "component")
 });
-const $$splitComponentImporter$b = () => import("./profile-CI-JWe6G.mjs");
+const $$splitComponentImporter$b = () => import("./profile-CkcMeZpa.mjs");
 const Route$b = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [{
@@ -865,7 +1057,7 @@ const Route$b = createFileRoute("/_authenticated/profile")({
 });
 const $$splitNotFoundComponentImporter$8 = () => import("./modes-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$8 = () => import("./modes-CqlNFt5g.mjs");
-const $$splitComponentImporter$a = () => import("./modes-CoUR8-WM.mjs");
+const $$splitComponentImporter$a = () => import("./modes-B3lfRRsR.mjs");
 const Route$a = createFileRoute("/_authenticated/modes")({
   head: () => ({
     meta: [{
@@ -876,7 +1068,7 @@ const Route$a = createFileRoute("/_authenticated/modes")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$8, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$8, "notFoundComponent")
 });
-const $$splitComponentImporter$9 = () => import("./drugs-N0kHgW_s.mjs");
+const $$splitComponentImporter$9 = () => import("./drugs-BEUWCDOy.mjs");
 const Route$9 = createFileRoute("/_authenticated/drugs")({
   head: () => ({
     meta: [{
@@ -887,7 +1079,7 @@ const Route$9 = createFileRoute("/_authenticated/drugs")({
 });
 const $$splitNotFoundComponentImporter$7 = () => import("./dashboard-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$7 = () => import("./dashboard-CqlNFt5g.mjs");
-const $$splitComponentImporter$8 = () => import("./dashboard-C88LK4hQ.mjs");
+const $$splitComponentImporter$8 = () => import("./dashboard-Cb49-JP4.mjs");
 const Route$8 = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [{
@@ -898,7 +1090,7 @@ const Route$8 = createFileRoute("/_authenticated/dashboard")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$7, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$7, "notFoundComponent")
 });
-const $$splitComponentImporter$7 = () => import("./admin-CGzCTzvI.mjs");
+const $$splitComponentImporter$7 = () => import("./admin-jkNDZ0TR.mjs");
 const Route$7 = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [{
@@ -909,7 +1101,7 @@ const Route$7 = createFileRoute("/_authenticated/admin")({
 });
 const $$splitNotFoundComponentImporter$6 = () => import("./game.warehousing-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$6 = () => import("./game.warehousing-CqlNFt5g.mjs");
-const $$splitComponentImporter$6 = () => import("./game.warehousing-BOPpFcIb.mjs");
+const $$splitComponentImporter$6 = () => import("./game.warehousing-C79GJ9Mz.mjs");
 const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
   head: () => ({
     meta: [{
@@ -922,7 +1114,7 @@ const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
 });
 const $$splitNotFoundComponentImporter$5 = () => import("./game.rx-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$5 = () => import("./game.rx-CqlNFt5g.mjs");
-const $$splitComponentImporter$5 = () => import("./game.rx-CMXT7Ux-.mjs");
+const $$splitComponentImporter$5 = () => import("./game.rx-unMonWn8.mjs");
 const Route$5 = createFileRoute("/_authenticated/game/rx")({
   head: () => ({
     meta: [{
@@ -935,7 +1127,7 @@ const Route$5 = createFileRoute("/_authenticated/game/rx")({
 });
 const $$splitNotFoundComponentImporter$4 = () => import("./game.otc-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$4 = () => import("./game.otc-CqlNFt5g.mjs");
-const $$splitComponentImporter$4 = () => import("./game.otc-eO1LJWbs.mjs");
+const $$splitComponentImporter$4 = () => import("./game.otc-4UBETWIO.mjs");
 const Route$4 = createFileRoute("/_authenticated/game/otc")({
   head: () => ({
     meta: [{
@@ -948,7 +1140,7 @@ const Route$4 = createFileRoute("/_authenticated/game/otc")({
 });
 const $$splitNotFoundComponentImporter$3 = () => import("./game.industry-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$3 = () => import("./game.industry-CqlNFt5g.mjs");
-const $$splitComponentImporter$3 = () => import("./game.industry-CUB_cqL6.mjs");
+const $$splitComponentImporter$3 = () => import("./game.industry-BPMeZsvx.mjs");
 const Route$3 = createFileRoute("/_authenticated/game/industry")({
   head: () => ({
     meta: [{
@@ -994,9 +1186,9 @@ const Button = reactExports.forwardRef(
   }
 );
 Button.displayName = "Button";
-const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-CuV5VBNJ.mjs");
-const $$splitErrorComponentImporter$2 = () => import("./game.hospital-C-am25Ej.mjs");
-const $$splitComponentImporter$2 = () => import("./game.hospital-CjVGGW6Z.mjs");
+const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-Cmhp0p5e.mjs");
+const $$splitErrorComponentImporter$2 = () => import("./game.hospital-DozpVz1k.mjs");
+const $$splitComponentImporter$2 = () => import("./game.hospital-hL0zZnby.mjs");
 const Route$2 = createFileRoute("/_authenticated/game/hospital")({
   head: () => ({
     meta: [{
@@ -1009,7 +1201,7 @@ const Route$2 = createFileRoute("/_authenticated/game/hospital")({
 });
 const $$splitNotFoundComponentImporter$1 = () => import("./game.emergency-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$1 = () => import("./game.emergency-CqlNFt5g.mjs");
-const $$splitComponentImporter$1 = () => import("./game.emergency-n-N2ExpU.mjs");
+const $$splitComponentImporter$1 = () => import("./game.emergency-CG7z2y-H.mjs");
 const Route$1 = createFileRoute("/_authenticated/game/emergency")({
   head: () => ({
     meta: [{
@@ -1022,7 +1214,7 @@ const Route$1 = createFileRoute("/_authenticated/game/emergency")({
 });
 const $$splitNotFoundComponentImporter = () => import("./game.community-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter = () => import("./game.community-CqlNFt5g.mjs");
-const $$splitComponentImporter = () => import("./game.community-CyRqdmDv.mjs");
+const $$splitComponentImporter = () => import("./game.community-DDf_Aza_.mjs");
 const Route = createFileRoute("/_authenticated/game/community")({
   head: () => ({
     meta: [{
@@ -1163,6 +1355,7 @@ const router = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
 export {
   Button as B,
   LogoVideo as L,
+  useActiveCaseStore as a,
   router as r,
   useAuthStore as u
 };

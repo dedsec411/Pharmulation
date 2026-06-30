@@ -1,17 +1,16 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader, M as ModeTheme } from "./DifficultySelect-CqN3cz11.mjs";
-import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-C9rvXUiM.mjs";
-import { u as useAuthStore } from "./router-eOdVVwBj.mjs";
+import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-EgUqRVpw.mjs";
+import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-JKtrmWmg.mjs";
+import { u as useAuthStore } from "./router-BNcp_T-P.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { g as ClipboardList, D as Database, ad as Terminal, ae as Plus, H as HeartPulse, W as Trash2, O as TriangleAlert } from "../_libs/lucide-react.mjs";
+import "../_libs/seroval.mjs";
+import { g as ClipboardList, D as Database, ac as Terminal, ad as Plus, H as HeartPulse, Y as Trash2, Q as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
-import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__react-router.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
-import "../_libs/seroval.mjs";
 import "../_libs/seroval-plugins.mjs";
 import "node:stream/web";
 import "node:stream";
@@ -23,12 +22,18 @@ import "stream";
 import "../_libs/isbot.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
+import "./vendor-tanstack-B1LzCUcS.mjs";
+import "node:async_hooks";
+import "../_libs/h3-v2.mjs";
+import "../_libs/rou3.mjs";
+import "../_libs/srvx.mjs";
 import "../_libs/radix-ui__react-slot.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/class-variance-authority.mjs";
 import "../_libs/clsx.mjs";
 import "../_libs/tailwind-merge.mjs";
 import "../_libs/zustand.mjs";
+import "../_libs/zod.mjs";
 import "../_libs/supabase__supabase-js.mjs";
 import "../_libs/supabase__postgrest-js.mjs";
 import "../_libs/supabase__realtime-js.mjs";
@@ -505,8 +510,10 @@ function HospitalGame({
 function Loading() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "grid min-h-[60vh] place-items-center text-muted-foreground", children: "Loading case..." });
 }
-const SplitComponent = () => /* @__PURE__ */ jsxRuntimeExports.jsx(ModeTheme, { mode: "hospital", children: /* @__PURE__ */ jsxRuntimeExports.jsx(HospitalGame, { mode: "hospital" }) });
+const SplitErrorComponent = ({
+  error
+}) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-destructive", children: error.message });
 export {
   HospitalGame,
-  SplitComponent as component
+  SplitErrorComponent as errorComponent
 };

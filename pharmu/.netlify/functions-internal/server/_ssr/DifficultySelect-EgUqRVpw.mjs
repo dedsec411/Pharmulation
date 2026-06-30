@@ -1,80 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { B as Button, u as useAuthStore } from "./router-eOdVVwBj.mjs";
-import { M as ModeAmbientLayer } from "./ModeAmbientLayer-B2Acv9Tx.mjs";
+import { u as useAuthStore, a as useActiveCaseStore, B as Button } from "./router-BNcp_T-P.mjs";
 import { e as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { f as fetchRandomCase, M as MODE_LABEL, D as DIFFICULTY_LABEL, d as DIFFICULTY_RULES } from "./shared-C9rvXUiM.mjs";
+import { f as fetchRandomCase, M as MODE_LABEL, D as DIFFICULTY_LABEL, d as DIFFICULTY_RULES } from "./shared-JKtrmWmg.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
-import { T as Trophy, a as CircleCheck, Z as CircleX, _ as CircleAlert, $ as RotateCw, a0 as House, R as ArrowLeft, A as Activity, a1 as Play, a2 as Pause, a3 as Zap, h as CircleQuestionMark, O as TriangleAlert, a4 as Gauge, a5 as ShieldAlert, a6 as Moon, a7 as Sun, v as Sparkles, a8 as MessageCircle } from "../_libs/lucide-react.mjs";
-const MODE_ACCENTS = {
-  rx: "oklch(0.62 0.19 240)",
-  // blue
-  otc: "oklch(0.72 0.16 165)",
-  // emerald
-  community: "oklch(0.74 0.14 180)",
-  // teal (shared Rx+OTC)
-  hospital: "oklch(0.60 0.20 270)",
-  // indigo
-  oncology: "oklch(0.62 0.22 300)",
-  // violet-purple
-  cosmetic: "oklch(0.68 0.22 340)",
-  // pink
-  cosmetics: "oklch(0.68 0.22 340)",
-  // pink (alias — route uses "cosmetics")
-  emergency: "oklch(0.65 0.22 25)",
-  // red
-  industry: "oklch(0.78 0.16 75)",
-  // amber
-  warehousing: "oklch(0.60 0.18 220)"
-  // sky-blue
-};
-function ModeTheme({ mode, children }) {
-  reactExports.useEffect(() => {
-    const accent = MODE_ACCENTS[mode] ?? MODE_ACCENTS.rx;
-    document.documentElement.style.setProperty("--mode-accent", accent);
-    document.body.classList.add("mode-themed", `mode-${mode}`);
-    return () => {
-      document.documentElement.style.removeProperty("--mode-accent");
-      document.body.classList.remove("mode-themed", `mode-${mode}`);
-    };
-  }, [mode]);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative min-h-screen overflow-hidden", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(ModeAmbientLayer, { mode, intensity: "screen" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative z-10", children })
-  ] });
-}
-function ThemeToggleButton() {
-  const [theme, setTheme] = reactExports.useState("dark");
-  reactExports.useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved) {
-      setTheme(saved);
-      document.documentElement.classList.toggle("dark", saved === "dark");
-    } else {
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
-  function toggleTheme() {
-    const next = theme === "light" ? "dark" : "light";
-    setTheme(next);
-    localStorage.setItem("theme", next);
-    document.documentElement.classList.toggle("dark", next === "dark");
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    Button,
-    {
-      variant: "ghost",
-      size: "icon",
-      onClick: toggleTheme,
-      className: "text-muted-foreground hover:text-foreground rounded-lg",
-      title: theme === "light" ? "Switch to dark mode" : "Switch to light mode",
-      children: [
-        theme === "light" ? /* @__PURE__ */ jsxRuntimeExports.jsx(Moon, { className: "h-5 w-5 transition-transform duration-200" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Sun, { className: "h-5 w-5 transition-transform duration-200" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "sr-only", children: "Toggle Theme" })
-      ]
-    }
-  );
-}
+import { T as Trophy, a as CircleCheck, _ as CircleX, $ as CircleAlert, a0 as RotateCw, a1 as House, V as ArrowLeft, A as Activity, a2 as Zap, a3 as Play, a4 as Pause, z as Lightbulb, Q as TriangleAlert, a5 as Gauge, a6 as ShieldAlert, w as Sparkles, a7 as MessageCircle } from "../_libs/lucide-react.mjs";
 function getTimerState(pct) {
   if (pct > 50) return {
     color: "oklch(0.74 0.14 180)",
@@ -138,18 +68,6 @@ const GameHeader = ({
     [124, 24],
     [150, 24]
   ]);
-  const mobileWave = buildEcgPoints(pct, 16, [
-    [0, 16],
-    [15, 16],
-    [22, 8],
-    [28, 22],
-    [34, 16],
-    [48, 16],
-    [54, 5],
-    [60, 24],
-    [66, 16],
-    [86, 16]
-  ]);
   function handleExit() {
     if (!onExit) return;
     if (timerIsTicking) {
@@ -163,15 +81,15 @@ const GameHeader = ({
     onExit?.();
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3 min-w-0", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mx-auto grid max-w-7xl gap-2 px-3 py-2 sm:px-4 md:h-16 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center md:gap-3 md:py-0", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex min-w-0 items-center gap-2", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "button",
             {
               type: "button",
               onClick: handleExit,
-              className: "\n              group inline-flex shrink-0 items-center gap-2\n              rounded-xl border border-white/15 bg-white/[0.07]\n              px-4 py-2 text-sm font-semibold text-foreground/90\n              shadow-[0_8px_30px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]\n              backdrop-blur-2xl transition-all duration-150\n              hover:border-white/25 hover:bg-white/[0.12] hover:text-foreground\n            ",
+              className: "\n              group inline-flex shrink-0 items-center gap-2\n              rounded-xl border border-white/15 bg-white/[0.07]\n              px-3 py-2 text-xs font-semibold text-foreground/90\n              shadow-[0_8px_30px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]\n              backdrop-blur-2xl transition-all duration-150\n              hover:border-white/25 hover:bg-white/[0.12] hover:text-foreground\n              sm:px-4 sm:text-sm\n            ",
               "aria-label": "Back",
               children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-4 w-4 transition-transform duration-150 group-hover:-translate-x-0.5" }),
@@ -179,105 +97,96 @@ const GameHeader = ({
               ]
             }
           ),
-          title && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-sm truncate hidden sm:block", children: title })
+          title && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden truncate text-sm font-bold sm:block", children: title })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "div",
-            {
-              className: "relative hidden min-w-[310px] overflow-hidden rounded-2xl border border-white/10 bg-black/30 px-4 py-2 shadow-inner backdrop-blur-xl md:block",
-              style: { boxShadow: `inset 0 0 26px oklch(0 0 0 / 0.35), 0 0 24px -14px ${state.glowColor}` },
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "div",
-                  {
-                    className: "pointer-events-none absolute inset-0 opacity-35",
-                    style: { backgroundImage: "linear-gradient(oklch(1 0 0 / 0.045) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.035) 1px, transparent 1px)", backgroundSize: "14px 14px" }
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "vital-monitor-scan pointer-events-none absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-white/12 to-transparent" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex items-center justify-between gap-4", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-[82px]", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Activity, { className: "h-3.5 w-3.5" }) }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `mt-0.5 font-mono text-xl font-black tabular-nums ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`, children: formatTime(remaining) })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 150 44", className: "h-11 flex-1", preserveAspectRatio: "none", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "polyline",
-                    {
-                      points: desktopWave,
-                      fill: "none",
-                      stroke: state.color,
-                      strokeWidth: "2.8",
-                      strokeLinecap: "round",
-                      strokeLinejoin: "round",
-                      className: "vital-ecg-line",
-                      style: { filter: `drop-shadow(0 0 5px ${state.glowColor})` }
-                    }
-                  ) })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "order-3 flex min-w-0 justify-center md:order-none", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            className: "relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-white/10 bg-black/30 px-3 py-2 shadow-inner backdrop-blur-xl md:min-w-[310px] md:max-w-none md:px-4",
+            style: { boxShadow: `inset 0 0 26px oklch(0 0 0 / 0.35), 0 0 24px -14px ${state.glowColor}` },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "div",
+                {
+                  className: "pointer-events-none absolute inset-0 opacity-35",
+                  style: { backgroundImage: "linear-gradient(oklch(1 0 0 / 0.045) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.035) 1px, transparent 1px)", backgroundSize: "14px 14px" }
+                }
+              ),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "vital-monitor-scan pointer-events-none absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-white/12 to-transparent" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex items-center justify-between gap-3 md:gap-4", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-[64px] md:min-w-[82px]", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Activity, { className: "h-3.5 w-3.5" }) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `mt-0.5 font-mono text-lg font-black tabular-nums md:text-xl ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`, children: formatTime(remaining) })
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative mt-1 h-1.5 overflow-hidden rounded-full bg-white/10", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "div",
+                /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 150 44", className: "h-9 flex-1 md:h-11", preserveAspectRatio: "none", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "polyline",
                   {
-                    className: "h-full rounded-full",
-                    style: {
-                      width: `${pct}%`,
-                      background: `linear-gradient(90deg, ${state.color}, oklch(0.92 0.06 190))`,
-                      boxShadow: `0 0 8px ${state.glowColor}`,
-                      transition: "width 0.9s linear, background 0.4s ease"
-                    }
+                    points: desktopWave,
+                    fill: "none",
+                    stroke: state.color,
+                    strokeWidth: "2.8",
+                    strokeLinecap: "round",
+                    strokeLinejoin: "round",
+                    className: "vital-ecg-line",
+                    style: { filter: `drop-shadow(0 0 5px ${state.glowColor})` }
                   }
                 ) })
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "div",
-            {
-              className: "relative flex h-12 w-24 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/30 md:hidden",
-              style: { filter: `drop-shadow(0 0 8px ${state.glowColor})` },
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 86 28", className: "absolute inset-x-1 top-1 h-7 opacity-80", preserveAspectRatio: "none", children: /* @__PURE__ */ jsxRuntimeExports.jsx("polyline", { points: mobileWave, fill: "none", stroke: state.color, strokeWidth: "2.2", strokeLinecap: "round", strokeLinejoin: "round", className: "vital-ecg-line" }) }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `relative mt-4 font-mono text-xs font-black tabular-nums ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`, children: formatTime(remaining) })
-              ]
-            }
-          ),
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative mt-1 h-1.5 overflow-hidden rounded-full bg-white/10", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "div",
+                {
+                  className: "h-full rounded-full",
+                  style: {
+                    width: `${pct}%`,
+                    background: `linear-gradient(90deg, ${state.color}, oklch(0.92 0.06 190))`,
+                    boxShadow: `0 0 8px ${state.glowColor}`,
+                    transition: "width 0.9s linear, background 0.4s ease"
+                  }
+                }
+              ) })
+            ]
+          }
+        ) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-end gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center rounded-lg border border-border/40 bg-muted/60 px-2.5 py-1.5 text-sm font-medium sm:px-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Trophy, { className: "mr-1.5 h-4 w-4 shrink-0 text-amber-500" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold tabular-nums", children: score })
+          ] }),
+          streak > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "hidden items-center rounded-lg border border-border/40 bg-muted/60 px-3 py-1.5 text-sm font-medium sm:flex", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Zap, { className: "mr-1.5 h-4 w-4 shrink-0 fill-orange-500 text-orange-500 animate-pulse" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold tabular-nums", children: streak })
+          ] }),
           !hidePause && /* @__PURE__ */ jsxRuntimeExports.jsx(
             Button,
             {
               variant: "ghost",
               size: "icon",
               onClick: togglePause,
-              className: "text-muted-foreground hover:text-foreground shrink-0",
+              className: "shrink-0 text-muted-foreground hover:text-foreground",
               title: paused ? "Resume" : "Pause",
               children: paused ? /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "h-4 w-4 fill-current" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Pause, { className: "h-4 w-4" })
             }
           )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 shrink-0", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center bg-muted/60 px-3 py-1.5 rounded-lg border border-border/40 text-sm font-medium", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Trophy, { className: "h-4 w-4 text-amber-500 mr-1.5 shrink-0" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold tabular-nums", children: score })
-          ] }),
-          streak > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center bg-muted/60 px-3 py-1.5 rounded-lg border border-border/40 text-sm font-medium", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Zap, { className: "h-4 w-4 text-orange-500 fill-orange-500 animate-pulse mr-1.5 shrink-0" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold tabular-nums", children: streak })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border-l border-border/60 pl-2 flex items-center gap-1", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeToggleButton, {}),
-            onHint && /* @__PURE__ */ jsxRuntimeExports.jsx(
-              Button,
-              {
-                variant: "ghost",
-                size: "icon",
-                onClick: onHint,
-                className: "text-muted-foreground hover:text-foreground",
-                title: "Hint (-10 pts)",
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(CircleQuestionMark, { className: "h-5 w-5" })
-              }
-            )
-          ] })
         ] })
       ] }),
+      onHint && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "border-t border-border/35 bg-card/35", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-2 sm:px-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex min-w-0 items-center gap-2 text-xs sm:text-sm", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "grid size-7 shrink-0 place-items-center rounded-full bg-primary/12 text-primary", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Lightbulb, { className: "size-3.5" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold leading-tight text-foreground", children: "Need a hint?" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "hidden truncate text-muted-foreground sm:block", children: "Use one hint when you are stuck. It costs 10 points." })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: onHint,
+            className: "shrink-0 rounded-full border border-primary/35 bg-primary/12 px-3 py-1.5 text-xs font-bold text-primary transition hover:border-primary/60 hover:bg-primary/18 sm:px-4 sm:text-sm",
+            children: "Use hint -10"
+          }
+        )
+      ] }) }),
       pct <= 25 && /* @__PURE__ */ jsxRuntimeExports.jsx(
         "div",
         {
@@ -446,6 +355,8 @@ function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanation, drug
   ) });
 }
 function useCaseLoader(mode, difficulty) {
+  const { profile } = useAuthStore();
+  const setActiveCase = useActiveCaseStore((state) => state.setActiveCase);
   const [caseData, setCaseData] = reactExports.useState(null);
   const [loading, setLoading] = reactExports.useState(!!difficulty);
   const [reloadKey, setReloadKey] = reactExports.useState(0);
@@ -456,14 +367,242 @@ function useCaseLoader(mode, difficulty) {
       return;
     }
     setLoading(true);
-    const c = await fetchRandomCase(mode, difficulty);
+    const c = await fetchTemplateCase(mode, difficulty, profile?.user_id, profile?.level) ?? await fetchRandomCase(mode, difficulty);
     setCaseData(c);
+    setActiveCase(c);
     setLoading(false);
-  }, [mode, difficulty]);
+  }, [mode, difficulty, profile?.user_id, profile?.level, setActiveCase]);
   reactExports.useEffect(() => {
     load();
   }, [load, reloadKey]);
+  reactExports.useEffect(() => () => setActiveCase(null), [setActiveCase]);
   return { caseData, loading, next: () => setReloadKey((k) => k + 1) };
+}
+async function fetchTemplateCase(mode, selectedDifficulty, userId, playerLevel = 1) {
+  const difficulties = weightedDifficulties(selectedDifficulty, playerLevel);
+  const { data: templates, error } = await supabase.from("case_templates").select("*").eq("mode", mode).in("difficulty", difficulties);
+  if (error) {
+    console.warn("case template fetch failed", error);
+    return null;
+  }
+  if (!templates?.length) return null;
+  const seenSeeds = await fetchSeenSeeds(userId, mode);
+  const shuffled = shuffle(templates);
+  for (const template of shuffled) {
+    const generated = await generateCaseFromTemplate(template, seenSeeds, userId);
+    if (generated) return generated;
+  }
+  return null;
+}
+async function fetchSeenSeeds(userId, mode) {
+  if (!userId) return /* @__PURE__ */ new Set();
+  const { data } = await supabase.from("user_seen_cases").select("template_id, generated_seed").eq("user_id", userId).eq("mode", mode).not("generated_seed", "is", null).order("last_seen_at", { ascending: false }).limit(10);
+  return new Set((data ?? []).map((row) => `${row.template_id}:${row.generated_seed}`));
+}
+async function generateCaseFromTemplate(template, seenSeeds, userId) {
+  const rules = template.variation_rules ?? {};
+  const patients = Array.isArray(rules.patient_pool) ? rules.patient_pool : [];
+  const drugIds = Array.isArray(rules.drug_pool) ? rules.drug_pool.map(String).filter(Boolean) : [];
+  if (!patients.length || !drugIds.length) return null;
+  const { data: poolDrugs } = await supabase.from("drugs").select("*").in("id", drugIds);
+  const drugs = poolDrugs ?? [];
+  if (!drugs.length) return null;
+  const { data: allDrugData } = await supabase.from("drugs").select("*");
+  const allDrugs = allDrugData ?? [];
+  for (let attempt = 0; attempt < 18; attempt += 1) {
+    const patient2 = randomItem(patients);
+    const correctDrug2 = chooseCorrectDrug(drugs, patient2, rules);
+    if (!correctDrug2) continue;
+    const seed2 = buildSeed(patient2, correctDrug2);
+    if (seenSeeds.has(`${template.id}:${seed2}`)) continue;
+    const generated2 = buildGeneratedCase(template, patient2, correctDrug2, allDrugs, seed2);
+    await rememberGeneratedCase(userId, template, seed2);
+    return generated2;
+  }
+  const patient = randomItem(patients);
+  const correctDrug = chooseCorrectDrug(drugs, patient, rules) ?? randomItem(drugs);
+  const seed = buildSeed(patient, correctDrug);
+  const generated = buildGeneratedCase(template, patient, correctDrug, allDrugs, seed);
+  await rememberGeneratedCase(userId, template, seed);
+  return generated;
+}
+function buildGeneratedCase(template, patientRule, correctDrug, allDrugs, seed) {
+  const base = structuredCloneSafe(template.base_scenario ?? {});
+  const age = randomAge(patientRule?.age_range);
+  const patient = {
+    name: patientRule?.name ?? "Training Patient",
+    age,
+    gender: patientRule?.gender ?? "unspecified",
+    allergies: normalizeAllergies(patientRule).join(", ") || "none",
+    ...base.patient_info_json ?? {}
+  };
+  const dose = randomDose(template.variation_rules?.dose_range);
+  const distractors = pickDistractors(correctDrug, allDrugs, 3).map((drug) => drug.name);
+  const drugOptions = shuffle([correctDrug.name, ...distractors]);
+  const label = labelForDrug(correctDrug, dose);
+  const correctAnswer = buildCorrectAnswer(template.mode, base.correct_answer_json ?? {}, correctDrug, drugOptions, label, dose);
+  const rxItems = base.electronic_prescription_json?.items?.length ? base.electronic_prescription_json.items : [{ drug: correctDrug.name, strength: dose ? `${dose}` : correctDrug.dosage ?? "", sig: `${label.frequency}, ${label.timing}, ${label.duration}` }];
+  return interpolateObject({
+    id: `generated:${template.id}:${seed}`,
+    mode: template.mode,
+    difficulty: template.difficulty,
+    title: base.title ?? template.template_name ?? "Generated case",
+    prescription_image_url: base.prescription_image_url ?? null,
+    electronic_prescription_json: {
+      ...base.electronic_prescription_json ?? {},
+      patient: patient.name,
+      items: rxItems
+    },
+    drugs_required: [correctDrug.name],
+    patient_info_json: patient,
+    correct_answer_json: correctAnswer,
+    explanation: base.explanation ?? `Use ${correctDrug.name} when it matches the indication and patient-specific safety checks.`,
+    mentor_tip: base.mentor_tip ?? "Check allergies, indication, and dose before deciding.",
+    created_at: (/* @__PURE__ */ new Date()).toISOString(),
+    is_generated: true,
+    template_id: template.id,
+    generated_seed: seed
+  }, {
+    patient: patient.name,
+    age: String(age),
+    drug: correctDrug.name,
+    dose: dose ?? correctDrug.dosage ?? ""
+  });
+}
+function buildCorrectAnswer(mode, baseAnswer, correctDrug, drugOptions, label, dose) {
+  if (mode === "otc") {
+    return {
+      ...baseAnswer,
+      correct_drug: correctDrug.name,
+      drug_options: drugOptions,
+      correct_dose: baseAnswer.correct_dose ?? dose ?? correctDrug.dosage ?? "Use as directed",
+      dose_options: baseAnswer.dose_options ?? [dose || "Use as directed", "Double dose every hour", "Once weekly"],
+      correct_advice: baseAnswer.correct_advice ?? "Use the recommended dose and seek help if symptoms worsen.",
+      advice_options: baseAnswer.advice_options ?? [
+        "Use the recommended dose and seek help if symptoms worsen.",
+        "Take extra doses if pain continues.",
+        "Ignore allergy history."
+      ],
+      correct_quantity: baseAnswer.correct_quantity ?? 1
+    };
+  }
+  if (mode === "hospital" || mode === "emergency") {
+    return {
+      ...baseAnswer,
+      drugs: [
+        {
+          drug: correctDrug.name,
+          dose: dose.replace(/[^0-9.]/g, "") || "",
+          route: baseAnswer.route ?? "oral",
+          frequency: label.frequency
+        }
+      ],
+      remove: baseAnswer.remove ?? []
+    };
+  }
+  return {
+    ...baseAnswer,
+    labels: {
+      ...baseAnswer.labels ?? {},
+      [correctDrug.name]: label
+    }
+  };
+}
+function chooseCorrectDrug(drugs, patient, rules) {
+  const allergies = normalizeAllergies(patient);
+  const variants = Array.isArray(rules.allergy_variants) ? rules.allergy_variants : [];
+  let candidates = [...drugs];
+  for (const variant of variants) {
+    const allergy = String(variant?.allergy ?? "").toLowerCase();
+    if (!allergy || !allergies.some((item) => item.toLowerCase().includes(allergy))) continue;
+    const avoidNames = new Set((variant.avoid_names ?? []).map((item) => String(item).toLowerCase()));
+    const preferNames = new Set((variant.prefer_names ?? []).map((item) => String(item).toLowerCase()));
+    const preferred = candidates.filter((drug) => preferNames.has(drug.name.toLowerCase()));
+    candidates = (preferred.length ? preferred : candidates).filter((drug) => !avoidNames.has(drug.name.toLowerCase()));
+  }
+  return candidates.length ? randomItem(candidates) : null;
+}
+function pickDistractors(correctDrug, allDrugs, count) {
+  const sameCategory = allDrugs.filter(
+    (drug) => drug.id !== correctDrug.id && (drug.category === correctDrug.category || drug.drug_class === correctDrug.drug_class)
+  );
+  return shuffle(sameCategory).slice(0, count);
+}
+function weightedDifficulties(selected, level) {
+  if (level >= 8) return uniqueDifficulties([selected, "medium", "hard", "easy"]);
+  if (level >= 4) return uniqueDifficulties([selected, "easy", "medium"]);
+  return uniqueDifficulties([selected, "easy"]);
+}
+function uniqueDifficulties(values) {
+  return [...new Set(values)];
+}
+function randomItem(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+function shuffle(items) {
+  return [...items].sort(() => Math.random() - 0.5);
+}
+function randomAge(range) {
+  if (!Array.isArray(range) || range.length < 2) return 35;
+  const min = Number(range[0]);
+  const max = Number(range[1]);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return 35;
+  return Math.round(min + Math.random() * (max - min));
+}
+function randomDose(range) {
+  if (!range || typeof range !== "object") return "";
+  const min = Number(range.min);
+  const max = Number(range.max);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return "";
+  const step = max > 100 ? 50 : 5;
+  const raw = min + Math.random() * (max - min);
+  const rounded = Math.max(min, Math.round(raw / step) * step);
+  return `${rounded} ${range.unit ?? "mg"}`;
+}
+function normalizeAllergies(patient) {
+  const raw = patient?.allergies ?? patient?.allergy ?? [];
+  if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
+  if (typeof raw === "string" && raw && raw.toLowerCase() !== "none") return [raw];
+  return [];
+}
+function labelForDrug(drug, dose) {
+  const text = `${drug.dosage ?? ""} ${dose}`.toLowerCase();
+  return {
+    frequency: text.includes("three") || text.includes("tid") ? "three times daily" : text.includes("twice") || text.includes("bid") ? "twice daily" : "once daily",
+    timing: text.includes("food") ? "with food" : "morning",
+    duration: drug.category?.toLowerCase().includes("antibiotic") || drug.drug_class?.toLowerCase().includes("antibiotic") ? "7 days" : "ongoing"
+  };
+}
+function buildSeed(patient, drug) {
+  return `${String(patient?.name ?? "patient").toLowerCase().replace(/[^a-z0-9]+/g, "-")}:${drug.id}`;
+}
+async function rememberGeneratedCase(userId, template, seed) {
+  if (!userId) return;
+  const { data: existing } = await supabase.from("user_seen_cases").select("id").eq("user_id", userId).eq("template_id", template.id).eq("generated_seed", seed).maybeSingle();
+  if (existing?.id) {
+    await supabase.from("user_seen_cases").update({ last_seen_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("id", existing.id);
+    return;
+  }
+  await supabase.from("user_seen_cases").insert({
+    user_id: userId,
+    mode: template.mode,
+    template_id: template.id,
+    generated_seed: seed,
+    last_seen_at: (/* @__PURE__ */ new Date()).toISOString()
+  });
+}
+function structuredCloneSafe(value) {
+  return JSON.parse(JSON.stringify(value ?? {}));
+}
+function interpolateObject(value, vars) {
+  if (typeof value === "string") {
+    return value.replace(/\{(\w+)\}/g, (_, key) => vars[key] ?? `{${key}}`);
+  }
+  if (Array.isArray(value)) return value.map((item) => interpolateObject(item, vars));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, interpolateObject(item, vars)]));
+  }
+  return value;
 }
 function useTimer(seconds, onTimeout) {
   const [remaining, setRemaining] = reactExports.useState(seconds);
@@ -802,7 +941,6 @@ function DifficultySelectModal({
 export {
   FeedbackScreen as F,
   GameHeader as G,
-  ModeTheme as M,
   useDifficultyChoice as a,
   useCaseLoader as b,
   useTimer as c,

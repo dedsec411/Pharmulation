@@ -43,6 +43,8 @@ export type Database = {
       }
       cases: {
         Row: {
+          compound_data: Json | null
+          compound_type: string | null
           correct_answer_json: Json | null
           created_at: string
           difficulty: Database["public"]["Enums"]["case_difficulty"]
@@ -55,10 +57,13 @@ export type Database = {
           mode: Database["public"]["Enums"]["case_mode"]
           patient_info_json: Json | null
           prescription_image_url: string | null
+          requires_compounding: boolean
           shipment_json: Json | null
           title: string | null
         }
         Insert: {
+          compound_data?: Json | null
+          compound_type?: string | null
           correct_answer_json?: Json | null
           created_at?: string
           difficulty?: Database["public"]["Enums"]["case_difficulty"]
@@ -71,10 +76,13 @@ export type Database = {
           mode: Database["public"]["Enums"]["case_mode"]
           patient_info_json?: Json | null
           prescription_image_url?: string | null
+          requires_compounding?: boolean
           shipment_json?: Json | null
           title?: string | null
         }
         Update: {
+          compound_data?: Json | null
+          compound_type?: string | null
           correct_answer_json?: Json | null
           created_at?: string
           difficulty?: Database["public"]["Enums"]["case_difficulty"]
@@ -87,8 +95,39 @@ export type Database = {
           mode?: Database["public"]["Enums"]["case_mode"]
           patient_info_json?: Json | null
           prescription_image_url?: string | null
+          requires_compounding?: boolean
           shipment_json?: Json | null
           title?: string | null
+        }
+        Relationships: []
+      }
+      case_templates: {
+        Row: {
+          base_scenario: Json
+          created_at: string
+          difficulty: Database["public"]["Enums"]["case_difficulty"]
+          id: string
+          mode: Database["public"]["Enums"]["case_mode"]
+          template_name: string | null
+          variation_rules: Json
+        }
+        Insert: {
+          base_scenario: Json
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["case_difficulty"]
+          id?: string
+          mode: Database["public"]["Enums"]["case_mode"]
+          template_name?: string | null
+          variation_rules: Json
+        }
+        Update: {
+          base_scenario?: Json
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["case_difficulty"]
+          id?: string
+          mode?: Database["public"]["Enums"]["case_mode"]
+          template_name?: string | null
+          variation_rules?: Json
         }
         Relationships: []
       }
@@ -343,6 +382,51 @@ export type Database = {
             columns: ["badge_id"]
             isOneToOne: false
             referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_seen_cases: {
+        Row: {
+          case_id: string | null
+          generated_seed: string | null
+          id: string
+          last_seen_at: string
+          mode: Database["public"]["Enums"]["case_mode"]
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          case_id?: string | null
+          generated_seed?: string | null
+          id?: string
+          last_seen_at?: string
+          mode: Database["public"]["Enums"]["case_mode"]
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          case_id?: string | null
+          generated_seed?: string | null
+          id?: string
+          last_seen_at?: string
+          mode?: Database["public"]["Enums"]["case_mode"]
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_seen_cases_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_seen_cases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "case_templates"
             referencedColumns: ["id"]
           },
         ]

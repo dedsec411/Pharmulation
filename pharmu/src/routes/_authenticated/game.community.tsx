@@ -389,7 +389,11 @@ function CommunityRun({ activeMode }: { activeMode: "rx" | "otc" }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // RX GAME
 // ═══════════════════════════════════════════════════════════════════════════════
-type RxPhase = "collect" | "info" | "label" | "done";
+type RxPhase = "collect" | "compound" | "info" | "label" | "done";
+type CompoundSubmission =
+  | { type: "topical"; base: string; grams: number }
+  | { type: "iv_sterile"; diluent: string; volume: number }
+  | { type: "antibiotic_dilution"; volume: number; stability: string };
 
 function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LIMIT: number }) {
   const { profile } = useAuthStore();
@@ -402,6 +406,9 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
   const [infoRead, setInfoRead]         = useState(0);
   const [correctLabels, setCorrectLabels] = useState(0);
   const [wrongLabels, setWrongLabels]   = useState(0);
+  const [compoundCorrect, setCompoundCorrect] = useState(0);
+  const [compoundWrong, setCompoundWrong] = useState(0);
+  const [compoundCompleted, setCompoundCompleted] = useState(false);
   const [hints, setHints]               = useState(0);
   const [showClean, setShowClean]       = useState(false);
   const [category, setCategory]         = useState("");
@@ -427,7 +434,8 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
 
   useEffect(() => {
     setPhase("collect"); setCollected([]); setWrong(0); setCorrect(0);
-    setInfoRead(0); setCorrectLabels(0); setWrongLabels(0); setHints(0);
+    setInfoRead(0); setCorrectLabels(0); setWrongLabels(0);
+    setCompoundCorrect(0); setCompoundWrong(0); setCompoundCompleted(false); setHints(0);
     setCategory(""); setBrandDrug(null); setSelectedBrands({});
     setShowClean(false); setInfoIdx(0); setLabelIdx(0); setLabelAnswers({});
     setResult(null);
@@ -446,6 +454,18 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     })),
     [catalogDrugs],
   );
+  const compoundTriggerDrug = String(caseData?.correct_answer_json?.compound_trigger_drug ?? "").trim();
+  const hasCompoundTrigger = !!caseData?.requires_compounding && !!compoundTriggerDrug;
+
+  function matchesCompoundTrigger(name: string) {
+    return hasCompoundTrigger && normalizeText(name) === normalizeText(compoundTriggerDrug);
+  }
+
+  function maybeStartCompound(name: string) {
+    if (matchesCompoundTrigger(name) && !compoundCompleted) {
+      setPhase("compound");
+    }
+  }
 
   function openBrandSelection(drug: any) {
     const name = drug.name;
@@ -471,6 +491,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     if (brand) setSelectedBrands((m) => ({ ...m, [name]: brand }));
     setCorrect((n) => n + 1);
     toastScore(20, brand ? `${name} - ${brand}` : name);
+    maybeStartCompound(name);
   }
 
   function removeDrug(name: string) {
@@ -490,6 +511,10 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
   function confirmCollection() {
     if (required.some((r) => !collected.includes(r))) {
       toast.warning("Some required drugs still missing"); return;
+    }
+    if (hasCompoundTrigger && !compoundCompleted && collected.some(matchesCompoundTrigger)) {
+      setPhase("compound");
+      return;
     }
     setPhase("info");
   }
@@ -530,18 +555,104 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     else finish(false);
   }
 
+  function recordCompoundAnswer(ok: boolean, error: {
+    errorType: string;
+    wrongChoice: string;
+    correctChoice: string;
+    whyWrong: string;
+    whatToKnow: string;
+  }) {
+    if (ok) {
+      setCompoundCorrect((n) => n + 1);
+      toastScore(25, "compound OK");
+    } else {
+      setCompoundWrong((n) => n + 1);
+      toastScore(-15, "compound error");
+      errPanel.logError(error);
+    }
+  }
+
+  function submitCompound(submission: CompoundSubmission) {
+    const data = caseData?.compound_data ?? {};
+    const type = caseData?.compound_type;
+    if (submission.type === "topical") {
+      const baseOk = normalizeText(submission.base) === normalizeText(data.correct_base);
+      const gramsOk = withinTolerance(submission.grams, Number(data.correct_drug_grams), 0.05);
+      recordCompoundAnswer(baseOk, {
+        errorType: "Wrong compounding base",
+        wrongChoice: submission.base || "No base selected",
+        correctChoice: String(data.correct_base ?? "Correct base"),
+        whyWrong: "The selected base may not suit the prescribed topical dosage form, drug compatibility, or patient use site.",
+        whatToKnow: "Topical compounding starts with the correct vehicle. Lotion, cream, gel, and ointment bases change spreadability, absorption, and stability.",
+      });
+      recordCompoundAnswer(gramsOk, {
+        errorType: "Wrong topical compound calculation",
+        wrongChoice: `${submission.grams || 0} g`,
+        correctChoice: `${data.correct_drug_grams} g`,
+        whyWrong: "The active ingredient amount must match the target percent and final batch size. Too much or too little changes dose delivered to the skin.",
+        whatToKnow: "Use: (target percent / 100) x total grams = grams of active drug needed.",
+      });
+    } else if (submission.type === "iv_sterile") {
+      const diluentOk = normalizeText(submission.diluent) === normalizeText(data.correct_diluent);
+      const volumeOk = withinTolerance(submission.volume, Number(data.correct_volume_ml), 0.05);
+      recordCompoundAnswer(diluentOk, {
+        errorType: "Wrong sterile IV diluent",
+        wrongChoice: submission.diluent || "No diluent selected",
+        correctChoice: String(data.correct_diluent ?? "Correct diluent"),
+        whyWrong: "The wrong diluent can cause incompatibility, precipitation, instability, or unsafe administration.",
+        whatToKnow: "Sterile IV preparation requires correct diluent, aseptic technique, concentration check, and route-specific labeling.",
+      });
+      recordCompoundAnswer(volumeOk, {
+        errorType: "Wrong sterile IV volume calculation",
+        wrongChoice: `${submission.volume || 0} mL`,
+        correctChoice: `${data.correct_volume_ml} mL`,
+        whyWrong: "The drawn stock volume must deliver the exact target dose. A wrong volume creates an underdose or overdose.",
+        whatToKnow: "Use: target dose / stock concentration = volume needed.",
+      });
+    } else if (submission.type === "antibiotic_dilution") {
+      const volumeOk = withinTolerance(submission.volume, Number(data.correct_volume_ml), 0.05);
+      const stabilityOk = normalizeText(submission.stability) === normalizeText(String(data.correct_stability_days));
+      recordCompoundAnswer(volumeOk, {
+        errorType: "Wrong antibiotic reconstitution volume",
+        wrongChoice: `${submission.volume || 0} mL`,
+        correctChoice: `${data.correct_volume_ml} mL`,
+        whyWrong: "The reconstitution volume determines final concentration. Wrong concentration can break dilution instructions and dosing accuracy.",
+        whatToKnow: "Check vial strength, final volume, target concentration, diluent compatibility, and infusion labeling.",
+      });
+      recordCompoundAnswer(stabilityOk, {
+        errorType: "Wrong antibiotic stability",
+        wrongChoice: `${submission.stability || "No answer"} days`,
+        correctChoice: `${data.correct_stability_days} days`,
+        whyWrong: "Using a reconstituted antibiotic beyond its stability window can reduce potency or increase contamination risk.",
+        whatToKnow: "Always label beyond-use dating after reconstitution and storage conditions.",
+      });
+    } else {
+      errPanel.logError({
+        errorType: "Unknown compounding type",
+        wrongChoice: String(type ?? "missing"),
+        correctChoice: "topical, iv_sterile, or antibiotic_dilution",
+        whyWrong: "This case is marked for compounding but does not define a supported compounding workflow.",
+        whatToKnow: "Compounding cases need a compound_type and compound_data object before they can be safely simulated.",
+      });
+    }
+    setCompoundCompleted(true);
+    setPhase("info");
+  }
+
   async function finish(timedOut: boolean) {
     const score = computeScore({
       difficulty: caseData?.difficulty,
-      correctDrugs: correct, wrongDrugs: wrong, infoRead,
-      correctLabels, wrongLabels, hintsUsed: hints,
+      correctDrugs: correct, wrongDrugs: wrong + compoundWrong, infoRead,
+      correctLabels: correctLabels + compoundCorrect,
+      wrongLabels,
+      hintsUsed: hints,
       pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
     });
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "rx",
-      score, timeTaken: timer.taken, errors: wrong + wrongLabels,
-      correctDrugs: correct, totalDrugs: required.length,
+      score, timeTaken: timer.taken, errors: wrong + wrongLabels + compoundWrong,
+      correctDrugs: correct + compoundCorrect, totalDrugs: required.length + compoundCorrect + compoundWrong,
       errorsDetail: errPanel.errors,
     });
     setResult({ score, xpGain });
@@ -561,6 +672,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
           { label: "Drug info read",  delta: infoRead * 15 },
           { label: "Correct labels",  delta: correctLabels * 25 },
           { label: "Wrong labels",    delta: -wrongLabels * 10 },
+          { label: "Compounding",      delta: compoundCorrect * 25 - compoundWrong * 15 },
           { label: "Hints used",      delta: -hints * 10 },
         ]}
         onNext={next}
@@ -574,7 +686,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
         title={caseData.title ?? "Community Pharmacy"}
         remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause}
-        score={correct * 20 - wrong * 15 + infoRead * 15 + correctLabels * 25 - wrongLabels * 10}
+        score={correct * 20 - wrong * 15 + infoRead * 15 + correctLabels * 25 - wrongLabels * 10 + compoundCorrect * 25 - compoundWrong * 15}
         onExit={onExit}
         onHint={() => { setHints((n) => n + 1); toastScore(-10, "hint"); setShowClean(true); }}
       />
@@ -814,6 +926,10 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
         )}
       </AnimatePresence>
 
+      {phase === "compound" && (
+        <CompoundStep caseData={caseData} onSubmit={submitCompound} />
+      )}
+
       {phase === "info" && (
         <DrugInfoStep
           drug={correctDrugs[infoIdx]} allDrugs={catalogDrugs}
@@ -842,6 +958,282 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
 // ═══════════════════════════════════════════════════════════════════════════════
 // OTC GAME
 // ═══════════════════════════════════════════════════════════════════════════════
+function normalizeText(value: unknown) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9.]+/g, " ")
+    .trim();
+}
+
+function withinTolerance(value: number, expected: number, tolerance = 0.05) {
+  if (!Number.isFinite(value) || !Number.isFinite(expected)) return false;
+  const allowance = Math.max(Math.abs(expected) * tolerance, 0.01);
+  return Math.abs(value - expected) <= allowance;
+}
+
+function compoundNumber(value: unknown) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatCompoundValue(value: unknown, suffix = "") {
+  if (value === null || value === undefined || value === "") return "-";
+  return `${value}${suffix}`;
+}
+
+function compoundOptions(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item)) : [];
+}
+
+function CompoundStep({
+  caseData,
+  onSubmit,
+}: {
+  caseData: any;
+  onSubmit: (submission: CompoundSubmission) => void;
+}) {
+  const data = caseData?.compound_data ?? {};
+  const type = String(caseData?.compound_type ?? "");
+  const [base, setBase] = useState("");
+  const [grams, setGrams] = useState("");
+  const [diluent, setDiluent] = useState("");
+  const [volume, setVolume] = useState("");
+  const [stability, setStability] = useState("");
+
+  const typeLabel =
+    type === "topical" ? "Topical compounding" :
+    type === "iv_sterile" ? "Sterile IV preparation" :
+    type === "antibiotic_dilution" ? "Antibiotic reconstitution" :
+    "Compounding";
+
+  function submit() {
+    if (type === "topical") {
+      onSubmit({ type: "topical", base, grams: compoundNumber(grams) });
+    } else if (type === "iv_sterile") {
+      onSubmit({ type: "iv_sterile", diluent, volume: compoundNumber(volume) });
+    } else {
+      onSubmit({ type: "antibiotic_dilution", volume: compoundNumber(volume), stability });
+    }
+  }
+
+  return (
+    <main className="relative mx-auto max-w-4xl px-4 py-6">
+      <CommunityFloatingPills className="opacity-25" />
+      <motion.section
+        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        className="relative z-10 overflow-hidden rounded-3xl border border-primary/35 bg-gradient-to-br from-card/80 via-background/85 to-emerald-950/55 p-5 shadow-[0_28px_80px_-45px_oklch(0.74_0.14_180/0.9)] backdrop-blur-xl"
+      >
+        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-white/25" />
+        <div className="mb-5 rounded-2xl border border-primary/25 bg-primary/10 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-primary">{typeLabel}</p>
+          <h2 className="mt-2 text-2xl font-black">This strength is not commercially available.</h2>
+          <p className="mt-1 text-sm text-muted-foreground">You'll need to compound it before moving to patient information and labeling.</p>
+        </div>
+
+        {type === "topical" && (
+          <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+            <CompoundFacts
+              rows={[
+                ["Target strength", formatCompoundValue(data.target_percent, "%")],
+                ["Final quantity", formatCompoundValue(data.total_grams, " g")],
+                ["Formula hint", "(target % / 100) x total grams = drug needed"],
+              ]}
+            />
+            <CompoundAnswerPanel
+              title="Prepare topical base"
+              optionsLabel="Select base"
+              options={compoundOptions(data.base_options)}
+              selected={base}
+              onSelect={setBase}
+              inputLabel="Active drug needed (g)"
+              inputValue={grams}
+              onInput={setGrams}
+              inputPlaceholder="e.g. 2.5"
+              onSubmit={submit}
+            />
+          </div>
+        )}
+
+        {type === "iv_sterile" && (
+          <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+            <CompoundFacts
+              rows={[
+                ["Target dose", formatCompoundValue(data.target_dose_mg, " mg")],
+                ["Stock concentration", formatCompoundValue(data.stock_concentration_mg_per_ml, " mg/mL")],
+                ["Formula hint", "target dose / concentration = volume needed"],
+              ]}
+            />
+            <CompoundAnswerPanel
+              title="Build sterile IV order"
+              optionsLabel="Select diluent"
+              options={compoundOptions(data.diluent_options)}
+              selected={diluent}
+              onSelect={setDiluent}
+              inputLabel="Volume to draw (mL)"
+              inputValue={volume}
+              onInput={setVolume}
+              inputPlaceholder="e.g. 10"
+              onSubmit={submit}
+            />
+          </div>
+        )}
+
+        {type === "antibiotic_dilution" && (
+          <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+            <CompoundFacts
+              rows={[
+                ["Vial strength", formatCompoundValue(data.vial_total_mg, " mg")],
+                ["Target concentration", formatCompoundValue(data.target_concentration, " mg/mL")],
+                ["Check", "Choose the reconstitution volume, then label stability"],
+              ]}
+            />
+            <div className="rounded-2xl border border-border/35 bg-card/55 p-4 backdrop-blur">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-primary">Reconstitute vial</p>
+              <CompoundOptionGrid
+                label="Volume option"
+                options={compoundOptions(data.volume_options)}
+                selected={volume}
+                onSelect={setVolume}
+                suffix=" mL"
+              />
+              <div className="mt-4">
+                <CompoundOptionGrid
+                  label="Stable after reconstitution"
+                  options={compoundOptions(data.stability_options)}
+                  selected={stability}
+                  onSelect={setStability}
+                  suffix=" days"
+                />
+              </div>
+              <button
+                onClick={submit}
+                className="mt-5 w-full rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-[0_18px_45px_-24px_oklch(0.74_0.14_180/0.95)] transition hover:brightness-110"
+              >
+                Complete compound
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!["topical", "iv_sterile", "antibiotic_dilution"].includes(type) && (
+          <div className="rounded-2xl border border-destructive/35 bg-destructive/10 p-4">
+            <p className="font-semibold text-destructive">This compounding case is missing a supported compound type.</p>
+            <button onClick={submit} className="mt-4 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+              Continue
+            </button>
+          </div>
+        )}
+      </motion.section>
+    </main>
+  );
+}
+
+function CompoundFacts({ rows }: { rows: Array<[string, string]> }) {
+  return (
+    <div className="rounded-2xl border border-border/35 bg-card/45 p-4 backdrop-blur">
+      <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-muted-foreground">Compound data</p>
+      <div className="space-y-2">
+        {rows.map(([label, value]) => (
+          <div key={label} className="rounded-xl border border-border/30 bg-background/35 p-3">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+            <p className="mt-1 text-sm font-semibold">{value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CompoundAnswerPanel({
+  title,
+  optionsLabel,
+  options,
+  selected,
+  onSelect,
+  inputLabel,
+  inputValue,
+  onInput,
+  inputPlaceholder,
+  onSubmit,
+}: {
+  title: string;
+  optionsLabel: string;
+  options: string[];
+  selected: string;
+  onSelect: (value: string) => void;
+  inputLabel: string;
+  inputValue: string;
+  onInput: (value: string) => void;
+  inputPlaceholder: string;
+  onSubmit: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/35 bg-card/55 p-4 backdrop-blur">
+      <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-primary">{title}</p>
+      <CompoundOptionGrid label={optionsLabel} options={options} selected={selected} onSelect={onSelect} />
+      <label className="mt-4 block">
+        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{inputLabel}</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          value={inputValue}
+          onChange={(event) => onInput(event.target.value)}
+          placeholder={inputPlaceholder}
+          className="mt-2 w-full rounded-xl border border-border/45 bg-background/50 px-4 py-3 font-mono text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
+        />
+      </label>
+      <button
+        onClick={onSubmit}
+        className="mt-5 w-full rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-[0_18px_45px_-24px_oklch(0.74_0.14_180/0.95)] transition hover:brightness-110"
+      >
+        Complete compound
+      </button>
+    </div>
+  );
+}
+
+function CompoundOptionGrid({
+  label,
+  options,
+  selected,
+  onSelect,
+  suffix = "",
+}: {
+  label: string;
+  options: string[];
+  selected: string;
+  onSelect: (value: string) => void;
+  suffix?: string;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onSelect(option)}
+            className={`rounded-xl border px-3 py-3 text-left text-sm font-semibold transition ${
+              selected === option
+                ? "border-primary/70 bg-primary/15 text-primary shadow-[0_14px_34px_-24px_oklch(0.74_0.14_180/0.9)]"
+                : "border-border/40 bg-background/35 hover:border-primary/50 hover:bg-primary/10"
+            }`}
+          >
+            {option}{suffix}
+          </button>
+        ))}
+        {options.length === 0 && (
+          <div className="rounded-xl border border-dashed border-border/45 p-3 text-sm text-muted-foreground">
+            No options configured for this case.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 type OtcStep = "questions" | "drug" | "dose" | "quantity" | "advice" | "done";
 
 function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LIMIT: number }) {

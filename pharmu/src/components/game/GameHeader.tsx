@@ -1,8 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Activity, Trophy, Zap, ArrowLeft, HelpCircle, Pause, Play, AlertTriangle } from "lucide-react";
+import { Activity, Trophy, Zap, ArrowLeft, Pause, Play, AlertTriangle, Lightbulb } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ThemeToggleButton } from "./ModeTheme";
 
 interface GameHeaderProps {
   score: number;
@@ -76,10 +75,6 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
     [0, 24], [18, 24], [25, 24], [31, 14], [38, 32], [45, 24], [58, 24], [64, 24],
     [70, 7], [77, 38], [84, 24], [103, 24], [110, 18], [117, 28], [124, 24], [150, 24],
   ]);
-  const mobileWave = buildEcgPoints(pct, 16, [
-    [0, 16], [15, 16], [22, 8], [28, 22], [34, 16], [48, 16], [54, 5], [60, 24], [66, 16], [86, 16],
-  ]);
-
   function handleExit() {
     if (!onExit) return;
     if (timerIsTicking) {
@@ -96,21 +91,20 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
   return (
     <>
-    <header className="w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
-
-        {/* LEFT - exit + title */}
-        <div className="flex items-center gap-3 min-w-0">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <div className="mx-auto grid max-w-7xl gap-2 px-3 py-2 sm:px-4 md:h-16 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center md:gap-3 md:py-0">
+        <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
             onClick={handleExit}
             className="
               group inline-flex shrink-0 items-center gap-2
               rounded-xl border border-white/15 bg-white/[0.07]
-              px-4 py-2 text-sm font-semibold text-foreground/90
+              px-3 py-2 text-xs font-semibold text-foreground/90
               shadow-[0_8px_30px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]
               backdrop-blur-2xl transition-all duration-150
               hover:border-white/25 hover:bg-white/[0.12] hover:text-foreground
+              sm:px-4 sm:text-sm
             "
             aria-label="Back"
           >
@@ -118,29 +112,28 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <span>Back</span>
           </button>
           {title && (
-            <span className="font-bold text-sm truncate hidden sm:block">{title}</span>
+            <span className="hidden truncate text-sm font-bold sm:block">{title}</span>
           )}
         </div>
 
-        {/* CENTER - TIMER */}
-        <div className="flex items-center gap-3">
+        <div className="order-3 flex min-w-0 justify-center md:order-none">
           <div
-            className="relative hidden min-w-[310px] overflow-hidden rounded-2xl border border-white/10 bg-black/30 px-4 py-2 shadow-inner backdrop-blur-xl md:block"
+            className="relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-white/10 bg-black/30 px-3 py-2 shadow-inner backdrop-blur-xl md:min-w-[310px] md:max-w-none md:px-4"
             style={{ boxShadow: `inset 0 0 26px oklch(0 0 0 / 0.35), 0 0 24px -14px ${state.glowColor}` }}
           >
             <div className="pointer-events-none absolute inset-0 opacity-35"
               style={{ backgroundImage: "linear-gradient(oklch(1 0 0 / 0.045) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.035) 1px, transparent 1px)", backgroundSize: "14px 14px" }} />
             <div className="vital-monitor-scan pointer-events-none absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-white/12 to-transparent" />
-            <div className="relative flex items-center justify-between gap-4">
-              <div className="min-w-[82px]">
+            <div className="relative flex items-center justify-between gap-3 md:gap-4">
+              <div className="min-w-[64px] md:min-w-[82px]">
                 <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground">
                   <Activity className="h-3.5 w-3.5" />
                 </div>
-                <div className={`mt-0.5 font-mono text-xl font-black tabular-nums ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`}>
+                <div className={`mt-0.5 font-mono text-lg font-black tabular-nums md:text-xl ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`}>
                   {formatTime(remaining)}
                 </div>
               </div>
-              <svg viewBox="0 0 150 44" className="h-11 flex-1" preserveAspectRatio="none">
+              <svg viewBox="0 0 150 44" className="h-9 flex-1 md:h-11" preserveAspectRatio="none">
                 <polyline
                   points={desktopWave}
                   fill="none"
@@ -165,26 +158,26 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
               />
             </div>
           </div>
+        </div>
 
-          <div
-            className="relative flex h-12 w-24 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/30 md:hidden"
-            style={{ filter: `drop-shadow(0 0 8px ${state.glowColor})` }}
-          >
-            <svg viewBox="0 0 86 28" className="absolute inset-x-1 top-1 h-7 opacity-80" preserveAspectRatio="none">
-              <polyline points={mobileWave} fill="none" stroke={state.color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="vital-ecg-line" />
-            </svg>
-            <span className={`relative mt-4 font-mono text-xs font-black tabular-nums ${state.textColor} ${state.pulse ? "animate-pulse" : ""}`}>
-              {formatTime(remaining)}
-            </span>
+        <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center rounded-lg border border-border/40 bg-muted/60 px-2.5 py-1.5 text-sm font-medium sm:px-3">
+            <Trophy className="mr-1.5 h-4 w-4 shrink-0 text-amber-500" />
+            <span className="font-bold tabular-nums">{score}</span>
           </div>
 
+          {streak > 0 && (
+            <div className="hidden items-center rounded-lg border border-border/40 bg-muted/60 px-3 py-1.5 text-sm font-medium sm:flex">
+              <Zap className="mr-1.5 h-4 w-4 shrink-0 fill-orange-500 text-orange-500 animate-pulse" />
+              <span className="font-bold tabular-nums">{streak}</span>
+            </div>
+          )}
 
-          {/* Pause/play */}
           {!hidePause && (
             <Button
               variant="ghost" size="icon"
               onClick={togglePause}
-              className="text-muted-foreground hover:text-foreground shrink-0"
+              className="shrink-0 text-muted-foreground hover:text-foreground"
               title={paused ? "Resume" : "Pause"}
             >
               {paused
@@ -194,36 +187,30 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             </Button>
           )}
         </div>
+      </div>
 
-        {/* RIGHT - score, streak, hint, theme */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center bg-muted/60 px-3 py-1.5 rounded-lg border border-border/40 text-sm font-medium">
-            <Trophy className="h-4 w-4 text-amber-500 mr-1.5 shrink-0" />
-            <span className="font-bold tabular-nums">{score}</span>
-          </div>
-
-          {streak > 0 && (
-            <div className="flex items-center bg-muted/60 px-3 py-1.5 rounded-lg border border-border/40 text-sm font-medium">
-              <Zap className="h-4 w-4 text-orange-500 fill-orange-500 animate-pulse mr-1.5 shrink-0" />
-              <span className="font-bold tabular-nums">{streak}</span>
+      {onHint && (
+        <div className="border-t border-border/35 bg-card/35">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-2 sm:px-4">
+            <div className="flex min-w-0 items-center gap-2 text-xs sm:text-sm">
+              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/12 text-primary">
+                <Lightbulb className="size-3.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-semibold leading-tight text-foreground">Need a hint?</p>
+                <p className="hidden truncate text-muted-foreground sm:block">Use one hint when you are stuck. It costs 10 points.</p>
+              </div>
             </div>
-          )}
-
-          <div className="border-l border-border/60 pl-2 flex items-center gap-1">
-            <ThemeToggleButton />
-            {onHint && (
-              <Button
-                variant="ghost" size="icon"
-                onClick={onHint}
-                className="text-muted-foreground hover:text-foreground"
-                title="Hint (-10 pts)"
-              >
-                <HelpCircle className="h-5 w-5" />
-              </Button>
-            )}
+            <button
+              type="button"
+              onClick={onHint}
+              className="shrink-0 rounded-full border border-primary/35 bg-primary/12 px-3 py-1.5 text-xs font-bold text-primary transition hover:border-primary/60 hover:bg-primary/18 sm:px-4 sm:text-sm"
+            >
+              Use hint -10
+            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Mobile danger strip */}
       {pct <= 25 && (
