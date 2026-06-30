@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CH3yyotH.mjs";
-import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-BsXYMHWD.mjs";
+import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader, M as ModeTheme } from "./DifficultySelect-CqN3cz11.mjs";
+import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-C9rvXUiM.mjs";
+import { u as useAuthStore } from "./router-eOdVVwBj.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { g as ClipboardList, D as Database, ac as Terminal, ad as Plus, H as HeartPulse, R as Trash2, O as TriangleAlert } from "../_libs/lucide-react.mjs";
+import { g as ClipboardList, D as Database, ad as Terminal, ae as Plus, H as HeartPulse, W as Trash2, O as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
 import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__react-router.mjs";
@@ -505,8 +505,8 @@ function HospitalGame({
 function Loading() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "grid min-h-[60vh] place-items-center text-muted-foreground", children: "Loading case..." });
 }
-const SplitNotFoundComponent = () => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8", children: "Not found" });
+const SplitComponent = () => /* @__PURE__ */ jsxRuntimeExports.jsx(ModeTheme, { mode: "hospital", children: /* @__PURE__ */ jsxRuntimeExports.jsx(HospitalGame, { mode: "hospital" }) });
 export {
   HospitalGame,
-  SplitNotFoundComponent as notFoundComponent
+  SplitComponent as component
 };

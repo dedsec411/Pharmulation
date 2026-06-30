@@ -1,0 +1,10 @@
+1. 4x freq in rx
+2. duration slider in rx
+3. otc ky questions behtar
+4. Alternatives in rx cases
+5. rx cases main meds ky brands,remove all option (Done)
+6. fixed stock for a day
+7. Quantity slider in otc
+8. risky situation in industry
+9. mixing grate industry (Done)
+10. proceed option in weighing (Done)

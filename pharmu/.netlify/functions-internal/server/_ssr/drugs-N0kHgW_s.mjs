@@ -1,10 +1,11 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { a as useQueryClient, u as useQuery, b as useMutation } from "../_libs/tanstack__react-query.mjs";
-import { N as Navbar } from "./Navbar-Cr9atqma.mjs";
+import { N as Navbar } from "./Navbar-CJmKI4Du.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
-import { u as useAuthStore } from "./router-BsXYMHWD.mjs";
+import { u as useAuthStore } from "./router-eOdVVwBj.mjs";
+import { p as prepareDrugCatalog } from "./drug-catalog-DKPW6qki.mjs";
+import { t as toast } from "../_libs/sonner.mjs";
 import { B as BackButton } from "./BackButton-DOnk_vvq.mjs";
-import "../_libs/sonner.mjs";
 import { t as Search, u as Heart, f as BookOpen, X, v as Sparkles } from "../_libs/lucide-react.mjs";
 import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
 import "../_libs/tanstack__query-core.mjs";
@@ -56,6 +57,7 @@ function DrugsPage() {
     queryKey: ["drugs"],
     queryFn: async () => (await supabase.from("drugs").select("*").order("name")).data ?? []
   });
+  const catalogDrugs = reactExports.useMemo(() => prepareDrugCatalog(drugs), [drugs]);
   const {
     data: bookmarks = []
   } = useQuery({
@@ -72,6 +74,10 @@ function DrugsPage() {
   const toggleBookmark = useMutation({
     mutationFn: async (drug) => {
       if (!userId) return;
+      if (drug.id.startsWith("catalog-")) {
+        toast.info("Training catalog medicines can be studied from the card, but are not bookmarkable yet.");
+        return;
+      }
       if (bookmarks.includes(drug.id)) {
         await supabase.from("drug_bookmarks").delete().eq("user_id", userId).eq("drug_id", drug.id);
       } else {
@@ -85,13 +91,13 @@ function DrugsPage() {
       queryKey: ["bookmarks", userId]
     })
   });
-  const categories = reactExports.useMemo(() => Array.from(new Set(drugs.map((d) => d.category).filter(Boolean))), [drugs]);
-  const classes = reactExports.useMemo(() => Array.from(new Set(drugs.map((d) => d.drug_class).filter(Boolean))), [drugs]);
-  const list = drugs.filter((d) => {
+  const categories = reactExports.useMemo(() => Array.from(new Set(catalogDrugs.map((d) => d.category).filter(Boolean))), [catalogDrugs]);
+  const classes = reactExports.useMemo(() => Array.from(new Set(catalogDrugs.map((d) => d.drug_class).filter(Boolean))), [catalogDrugs]);
+  const list = catalogDrugs.filter((d) => {
     const term = q.toLowerCase();
     return (!term || d.name.toLowerCase().includes(term) || d.generic_name?.toLowerCase().includes(term)) && (!category || d.category === category) && (!drugClass || d.drug_class === drugClass);
   });
-  const studyDrugs = drugs.filter((d) => bookmarks.includes(d.id));
+  const studyDrugs = catalogDrugs.filter((d) => bookmarks.includes(d.id));
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(Navbar, {}),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "mx-auto max-w-6xl px-6 py-8", children: [
@@ -100,7 +106,7 @@ function DrugsPage() {
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-3xl font-bold", children: "Drug Database" }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-muted-foreground text-sm", children: [
-            drugs.length,
+            catalogDrugs.length,
             " drugs indexed · ",
             bookmarks.length,
             " bookmarked"
@@ -157,7 +163,7 @@ function DrugsPage() {
         /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => toggleBookmark.mutate(d), className: "mt-3 text-xs text-rose-400 hover:underline", children: "Remove" })
       ] }, d.id)) }) }),
       tab === "flashcards" && /* @__PURE__ */ jsxRuntimeExports.jsx(Flashcards, { drugs: studyDrugs }),
-      tab === "quiz" && /* @__PURE__ */ jsxRuntimeExports.jsx(Quiz, { drugs: studyDrugs, pool: drugs })
+      tab === "quiz" && /* @__PURE__ */ jsxRuntimeExports.jsx(Quiz, { drugs: studyDrugs, pool: catalogDrugs })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: selected && /* @__PURE__ */ jsxRuntimeExports.jsx(motion.div, { initial: {
       opacity: 0

@@ -126,13 +126,11 @@ async function bumpCounterBadge(userId, key, threshold, badge) {
 function toastScore(delta, label) {
   if (delta >= 0) {
     toast.success(`+${delta} ${label}`, {
-      className: "score-toast-correct",
-      description: "Vitals stable"
+      className: "score-toast-correct"
     });
   } else {
     toast.error(`${delta} ${label}`, {
-      className: "score-toast-wrong",
-      description: "Vital alert"
+      className: "score-toast-wrong"
     });
   }
 }

@@ -1,8 +1,8 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CH3yyotH.mjs";
+import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CqN3cz11.mjs";
 import { S as SimulatedPrescription } from "./SimulatedPrescription-BtzF8rKo.mjs";
-import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-BsXYMHWD.mjs";
+import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-C9rvXUiM.mjs";
+import { u as useAuthStore } from "./router-eOdVVwBj.mjs";
 import "../_libs/sonner.mjs";
 import { I as User } from "../_libs/lucide-react.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
@@ -61,6 +61,7 @@ function OtcGame() {
   const [correct, setCorrect] = reactExports.useState(0);
   const [wrong, setWrong] = reactExports.useState(0);
   const [hints, setHints] = reactExports.useState(0);
+  const [quantity, setQuantity] = reactExports.useState(1);
   const [result, setResult] = reactExports.useState(null);
   const timer = useTimer(LIMIT, () => step !== "done" && finish(true));
   const errPanel = useErrorPanel({
@@ -75,6 +76,7 @@ function OtcGame() {
     setCorrect(0);
     setWrong(0);
     setHints(0);
+    setQuantity(1);
     setResult(null);
   }, [caseData?.id]);
   if (loading || !caseData) return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
@@ -136,6 +138,25 @@ function OtcGame() {
         whatToKnow: "OTC dosing depends on age, weight, renal/hepatic function, and product strength. Always check the pack labelling."
       });
     }
+    setQuantity(getCorrectQuantity(ans));
+    setStep("quantity");
+  }
+  function submitQuantity(qty) {
+    const expected = getCorrectQuantity(ans);
+    if (qty === expected) {
+      setCorrect((n) => n + 1);
+      toastScore(10, "correct quantity");
+    } else {
+      setWrong((n) => n + 1);
+      toastScore(-5, "quantity off");
+      errPanel.logError({
+        errorType: "Wrong OTC quantity",
+        wrongChoice: `${qty} pack${qty === 1 ? "" : "s"}`,
+        correctChoice: `${expected} pack${expected === 1 ? "" : "s"}`,
+        whyWrong: "The quantity should match the recommended OTC course without oversupplying or leaving the patient short.",
+        whatToKnow: "OTC quantity should follow dose, duration, pack size, safety limits, and referral advice."
+      });
+    }
     setStep("advice");
   }
   async function pickAdvice(opt) {
@@ -179,7 +200,7 @@ function OtcGame() {
       timeTaken: timer.taken,
       errors: wrong + wl,
       correctDrugs: correct,
-      totalDrugs: questions.length + 3,
+      totalDrugs: questions.length + 4,
       errorsDetail: errPanel.errors
     });
     setResult({
@@ -192,7 +213,7 @@ function OtcGame() {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(FeedbackScreen, { score: result.score, xpGain: result.xpGain, timeTaken: timer.taken, mentorTip: caseData.mentor_tip, explanation: caseData.explanation, drugs: [{
       name: ans.correct_drug,
       correct: true,
-      info: ans.correct_dose
+      info: `${ans.correct_dose} · Qty ${quantity}`
     }], errors: errPanel.errors, onNext: next });
   }
   const currentScore = correct * 20 - wrong * 15;
@@ -243,10 +264,44 @@ function OtcGame() {
         ] }),
         step === "drug" && /* @__PURE__ */ jsxRuntimeExports.jsx(Picker, { title: "Recommend a medication", options: ans.drug_options ?? [], onPick: pickDrug }),
         step === "dose" && /* @__PURE__ */ jsxRuntimeExports.jsx(Picker, { title: "Choose correct dose", options: ans.dose_options ?? [], onPick: pickDose }),
+        step === "quantity" && /* @__PURE__ */ jsxRuntimeExports.jsx(QuantitySlider, { value: quantity, max: getQuantityMax(ans), onChange: setQuantity, onSubmit: submitQuantity }),
         step === "advice" && /* @__PURE__ */ jsxRuntimeExports.jsx(Picker, { title: "Counsel the patient", options: ans.advice_options ?? [], onPick: pickAdvice })
       ] }, `${step}-${qi}`) })
     ] }),
     errPanel.panel
+  ] });
+}
+function getCorrectQuantity(ans) {
+  const raw = ans.correct_quantity ?? ans.quantity ?? ans.recommended_quantity ?? ans.pack_quantity ?? 1;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 1;
+}
+function getQuantityMax(ans) {
+  return Math.max(5, getCorrectQuantity(ans) + 2);
+}
+function QuantitySlider({
+  value,
+  max,
+  onChange,
+  onSubmit
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-primary", children: "Select quantity" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-end justify-between gap-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "Dispense quantity" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 font-mono text-4xl font-black tabular-nums text-primary", children: value })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary", children: value === 1 ? "1 pack" : `${value} packs` })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("input", { type: "range", min: 1, max, step: 1, value, onChange: (e) => onChange(Number(e.target.value)), className: "mt-5 w-full accent-primary" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-2 flex justify-between font-mono text-[10px] text-muted-foreground", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "1" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: max })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => onSubmit(value), className: "mt-4 w-full rounded-full bg-primary px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-primary-foreground shadow-[0_0_32px_-14px_oklch(0.74_0.14_180/0.9)] transition hover:-translate-y-0.5 hover:bg-primary/90", children: "Confirm quantity" })
+    ] })
   ] });
 }
 function Picker({

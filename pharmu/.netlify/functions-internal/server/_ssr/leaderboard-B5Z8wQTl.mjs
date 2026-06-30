@@ -1,9 +1,9 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
-import { u as useAuthStore } from "./router-BsXYMHWD.mjs";
+import { u as useAuthStore } from "./router-eOdVVwBj.mjs";
 import { t as tierFor } from "./levels-7qe6_GyK.mjs";
-import { M as MODE_LABEL } from "./shared-DDCPKmqL.mjs";
+import { M as MODE_LABEL } from "./shared-C9rvXUiM.mjs";
 import { B as BackButton } from "./BackButton-DOnk_vvq.mjs";
 import "../_libs/sonner.mjs";
 import { M as MonitorDot, T as Trophy, A as Activity, m as Crown, U as UserRound } from "../_libs/lucide-react.mjs";

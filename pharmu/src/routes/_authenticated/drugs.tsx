@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
+import { prepareDrugCatalog } from "@/lib/drug-catalog";
 import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
 
@@ -42,6 +43,7 @@ function DrugsPage() {
     queryFn: async () =>
       (((await supabase.from("drugs").select("*").order("name")).data) ?? []) as Drug[],
   });
+  const catalogDrugs = useMemo(() => prepareDrugCatalog(drugs) as Drug[], [drugs]);
 
   const { data: bookmarks = [] } = useQuery({
     queryKey: ["bookmarks", userId],
@@ -57,6 +59,10 @@ function DrugsPage() {
   const toggleBookmark = useMutation({
     mutationFn: async (drug: Drug) => {
       if (!userId) return;
+      if (drug.id.startsWith("catalog-")) {
+        toast.info("Training catalog medicines can be studied from the card, but are not bookmarkable yet.");
+        return;
+      }
       if (bookmarks.includes(drug.id)) {
         await supabase.from("drug_bookmarks").delete()
           .eq("user_id", userId).eq("drug_id", drug.id);
@@ -68,15 +74,15 @@ function DrugsPage() {
   });
 
   const categories = useMemo(
-    () => Array.from(new Set(drugs.map((d) => d.category).filter(Boolean))) as string[],
-    [drugs],
+    () => Array.from(new Set(catalogDrugs.map((d) => d.category).filter(Boolean))) as string[],
+    [catalogDrugs],
   );
   const classes = useMemo(
-    () => Array.from(new Set(drugs.map((d) => d.drug_class).filter(Boolean))) as string[],
-    [drugs],
+    () => Array.from(new Set(catalogDrugs.map((d) => d.drug_class).filter(Boolean))) as string[],
+    [catalogDrugs],
   );
 
-  const list = drugs.filter((d) => {
+  const list = catalogDrugs.filter((d) => {
     const term = q.toLowerCase();
     return (
       (!term || d.name.toLowerCase().includes(term) || d.generic_name?.toLowerCase().includes(term)) &&
@@ -85,7 +91,7 @@ function DrugsPage() {
     );
   });
 
-  const studyDrugs = drugs.filter((d) => bookmarks.includes(d.id));
+  const studyDrugs = catalogDrugs.filter((d) => bookmarks.includes(d.id));
 
   return (
     <>
@@ -96,7 +102,7 @@ function DrugsPage() {
         <div className="flex items-end justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-3xl font-bold">Drug Database</h1>
-            <p className="text-muted-foreground text-sm">{drugs.length} drugs indexed · {bookmarks.length} bookmarked</p>
+            <p className="text-muted-foreground text-sm">{catalogDrugs.length} drugs indexed · {bookmarks.length} bookmarked</p>
           </div>
           <div className="flex gap-1 glass rounded-full p-1 text-sm">
             {(["all", "study", "flashcards", "quiz"] as const).map((t) => (
@@ -183,7 +189,7 @@ function DrugsPage() {
         )}
 
         {tab === "flashcards" && <Flashcards drugs={studyDrugs} />}
-        {tab === "quiz" && <Quiz drugs={studyDrugs} pool={drugs} />}
+        {tab === "quiz" && <Quiz drugs={studyDrugs} pool={catalogDrugs} />}
       </main>
 
       <AnimatePresence>

@@ -963,7 +963,11 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                 ))}
               </div>
               <button disabled={!allWeighed} onClick={() => setPhase("env")}
-                className="mt-3 w-full rounded-full border border-border/40 py-2 text-sm font-semibold disabled:opacity-40">
+                className={`mt-3 w-full rounded-full border px-5 py-3 text-sm font-black uppercase tracking-[0.12em] transition ${
+                  allWeighed
+                    ? "border-amber-200/60 bg-amber-400 text-slate-950 shadow-[0_0_34px_-10px_rgba(251,191,36,0.95)] hover:-translate-y-0.5 hover:bg-amber-300 hover:shadow-[0_0_44px_-8px_rgba(251,191,36,1)]"
+                    : "border-border/40 bg-muted/20 text-muted-foreground opacity-45"
+                }`}>
                 Proceed to environmental check &gt;
               </button>
             </div>
@@ -1126,7 +1130,28 @@ function InfoChip({ label, value }: any) {
   );
 }
 
+function getMixingProfile(productChoice: ProductChoice) {
+  const type = productChoice.type.toLowerCase();
+  if (productChoice.form === "Tablet") {
+    if (type.includes("chewable")) return { speed: "14 rpm", time: "18 min", grade: "Low shear", note: "Protect chewable granule texture" };
+    if (type.includes("enteric")) return { speed: "16 rpm", time: "22 min", grade: "Medium shear", note: "Keep enteric API blend uniform" };
+    return { speed: "20 rpm", time: "20 min", grade: "Medium shear", note: "Uniform powder blend before compression" };
+  }
+  if (productChoice.form === "Syrup") {
+    if (type.includes("sugar-free")) return { speed: "180 rpm", time: "30 min", grade: "Controlled vortex", note: "Avoid foam while dissolving vehicle" };
+    return { speed: "220 rpm", time: "25 min", grade: "Solution mix", note: "Dissolve API before final volume" };
+  }
+  if (productChoice.form === "Capsule") {
+    if (type.includes("soft")) return { speed: "90 rpm", time: "15 min", grade: "Gentle heat mix", note: "Keep oil fill clear and bubble-free" };
+    return { speed: "18 rpm", time: "25 min", grade: "Low shear", note: "Protect flow and fill-weight uniformity" };
+  }
+  if (type.includes("gel")) return { speed: "320 rpm", time: "35 min", grade: "Hydration mix", note: "Fully hydrate polymer before neutralizing" };
+  if (type.includes("ointment")) return { speed: "70 rpm", time: "28 min", grade: "Levigation", note: "Smooth base without trapped air" };
+  return { speed: "260 rpm", time: "30 min", grade: "Homogenization", note: "Stable emulsion before filling" };
+}
+
 function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, batchSizeLabel, phase, stageIdx }: any) {
+  const mixingProfile = getMixingProfile(productChoice);
   return (
     <aside className="xl:sticky xl:top-24 xl:self-start">
       <div className="relative overflow-hidden rounded-xl border border-amber-300/20 bg-slate-950/55 p-4 text-slate-100 shadow-[0_16px_40px_-24px_rgba(245,158,11,0.65)] backdrop-blur-xl">
@@ -1191,6 +1216,25 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
                 {f.stageLabels?.[stage] ?? stage}
               </span>
             ))}
+          </div>
+          <div className="mt-3 rounded-lg border border-amber-200/15 bg-slate-950/35 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[10px] font-black uppercase tracking-wider text-amber-300">Mixing rate</p>
+              <span className="rounded-full border border-amber-300/25 bg-amber-400/10 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-200">
+                {mixingProfile.grade}
+              </span>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="rounded-md bg-white/5 p-2">
+                <p className="text-[9px] uppercase tracking-wider text-slate-500">Speed</p>
+                <p className="mt-0.5 font-mono text-sm font-bold text-slate-100">{mixingProfile.speed}</p>
+              </div>
+              <div className="rounded-md bg-white/5 p-2">
+                <p className="text-[9px] uppercase tracking-wider text-slate-500">Time</p>
+                <p className="mt-0.5 font-mono text-sm font-bold text-slate-100">{mixingProfile.time}</p>
+              </div>
+            </div>
+            <p className="mt-2 text-[10px] leading-relaxed text-slate-400">{mixingProfile.note}</p>
           </div>
         </div>
       </div>

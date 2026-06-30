@@ -198,12 +198,10 @@ export function toastScore(delta: number, label: string) {
   if (delta >= 0) {
     toast.success(`+${delta} ${label}`, {
       className: "score-toast-correct",
-      description: "Vitals stable",
     });
   } else {
     toast.error(`${delta} ${label}`, {
       className: "score-toast-wrong",
-      description: "Vital alert",
     });
   }
 }

@@ -1,11 +1,12 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CH3yyotH.mjs";
-import { a as MODE_TIMERS, t as toastScore, c as computeScore, s as submitScore } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-BsXYMHWD.mjs";
+import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CqN3cz11.mjs";
+import { a as MODE_TIMERS, t as toastScore, c as computeScore, s as submitScore } from "./shared-C9rvXUiM.mjs";
+import { u as useAuthStore } from "./router-eOdVVwBj.mjs";
+import { p as prepareDrugCatalog, R as RX_DRUG_CATEGORIES, g as getBrandsForDrug } from "./drug-catalog-DKPW6qki.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { w as FileText, R as Trash2, V as Check, X } from "../_libs/lucide-react.mjs";
-import { m as motion } from "../_libs/framer-motion.mjs";
+import { w as FileText, R as ArrowLeft, P as Pill, V as Tags, W as Trash2, X, Y as Check } from "../_libs/lucide-react.mjs";
+import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
 import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__react-router.mjs";
 import "../_libs/tanstack__router-core.mjs";
@@ -40,7 +41,6 @@ import "tslib";
 import "../_libs/supabase__functions-js.mjs";
 import "../_libs/motion-dom.mjs";
 import "../_libs/motion-utils.mjs";
-const CATEGORIES = ["All", "Antibiotic", "Cardiovascular", "OTC Analgesic", "Antidiabetic", "Oncology", "GI", "Respiratory"];
 const LIMIT = MODE_TIMERS.rx;
 function RxGame() {
   const onExit = useGameExit("/modes");
@@ -65,8 +65,10 @@ function RxGame() {
   const [wrongLabels, setWrongLabels] = reactExports.useState(0);
   const [hints, setHints] = reactExports.useState(0);
   const [showHint, setShowHint] = reactExports.useState(false);
-  const [category, setCategory] = reactExports.useState("All");
+  const [category, setCategory] = reactExports.useState("");
   const [drugs, setDrugs] = reactExports.useState([]);
+  const [brandDrug, setBrandDrug] = reactExports.useState(null);
+  const [selectedBrands, setSelectedBrands] = reactExports.useState({});
   const [infoIdx, setInfoIdx] = reactExports.useState(0);
   const [labelIdx, setLabelIdx] = reactExports.useState(0);
   const [labelAnswers, setLabelAnswers] = reactExports.useState({});
@@ -93,35 +95,62 @@ function RxGame() {
     setWrongLabels(0);
     setHints(0);
     setShowHint(false);
+    setCategory("");
+    setBrandDrug(null);
+    setSelectedBrands({});
     setInfoIdx(0);
     setLabelIdx(0);
     setLabelAnswers({});
     setResult(null);
   }, [caseData?.id]);
   const required = caseData?.drugs_required ?? [];
-  const filtered = reactExports.useMemo(() => drugs.filter((d) => category === "All" || d.category === category), [drugs, category]);
-  function addDrug(name) {
+  const catalogDrugs = reactExports.useMemo(() => prepareDrugCatalog(drugs), [drugs]);
+  const filtered = reactExports.useMemo(() => catalogDrugs.filter((d) => d.category === category), [catalogDrugs, category]);
+  const categoryStats = reactExports.useMemo(() => RX_DRUG_CATEGORIES.map((name) => ({
+    name,
+    count: catalogDrugs.filter((d) => d.category === name).length
+  })), [catalogDrugs]);
+  function openBrandSelection(drug) {
+    const name = drug.name;
     if (collected.includes(name)) return;
-    setCollected((c) => [...c, name]);
-    if (required.includes(name)) {
-      setCorrect((n) => n + 1);
-      toastScore(20, name);
-    } else {
+    if (!required.includes(name)) {
       setWrong((n) => n + 1);
       toastScore(-15, `wrong: ${name}`);
-      const d = drugs.find((x) => x.name === name);
       errPanel.logError({
         errorType: "Wrong drug selected",
         wrongChoice: name,
         correctChoice: required.join(", "),
-        whyWrong: `${name} is not indicated for this prescription. ${d?.indications?.length ? `It is used for ${d.indications.join(", ")}.` : ""} This Rx calls for a different drug.`,
+        whyWrong: `${name} is not indicated for this prescription. ${drug?.indications?.length ? `It is used for ${drug.indications.join(", ")}.` : ""} This Rx calls for a different drug.`,
         whatToKnow: "Always match the drug to the diagnosed condition. Check the drug class and indication before dispensing.",
         hint: `Think about the class of drug that treats the condition in this prescription.`
       });
+      return;
     }
+    setBrandDrug(drug);
+  }
+  function addDrug(name, brand) {
+    if (collected.includes(name)) return;
+    setCollected((c) => [...c, name]);
+    if (brand) setSelectedBrands((m) => ({
+      ...m,
+      [name]: brand
+    }));
+    setCorrect((n) => n + 1);
+    toastScore(20, brand ? `${name} - ${brand}` : name);
   }
   function removeDrug(name) {
     setCollected((c) => c.filter((x) => x !== name));
+    setSelectedBrands((m) => {
+      const nextBrands = {
+        ...m
+      };
+      delete nextBrands[name];
+      return nextBrands;
+    });
+  }
+  function selectBrand(drug, brand) {
+    addDrug(drug.name, brand);
+    setBrandDrug(null);
   }
   function confirmCollection() {
     if (required.some((r) => !collected.includes(r))) {
@@ -289,24 +318,95 @@ function RxGame() {
         ] })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1.5 rounded-xl border border-border/40 bg-card/50 p-2 backdrop-blur", children: CATEGORIES.map((c) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => setCategory(c), className: `rounded-full px-3 py-1 text-xs ${category === c ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`, children: c }, c)) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 gap-2 sm:grid-cols-3", children: filtered.map((d) => /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.button, { whileTap: {
-          scale: 0.95
-        }, onClick: () => addDrug(d.name), className: "rounded-xl border border-border/40 bg-card/60 p-3 text-left hover:border-primary/40 hover:bg-primary/5", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold", children: d.name }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground", children: d.category })
-        ] }, d.id)) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-border/40 bg-card/50 p-4 backdrop-blur", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-3 flex items-center justify-between gap-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-wider text-muted-foreground", children: "Medicine categories" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: category ? `Viewing ${category}` : "Pick a category first, then choose the medicine brand." })
+            ] }),
+            category && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: () => setCategory(""), className: "inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-primary", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "size-3.5" }),
+              "Categories"
+            ] })
+          ] }),
+          !category ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-3 sm:grid-cols-2", children: categoryStats.map((c) => /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.button, { whileHover: {
+            y: -3
+          }, whileTap: {
+            scale: 0.97
+          }, onClick: () => setCategory(c.name), className: "group rounded-2xl border border-border/40 bg-card/60 p-4 text-left transition hover:border-primary/50 hover:bg-primary/5 hover:shadow-[0_18px_46px_-34px_oklch(0.74_0.14_180/0.9)]", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-4 flex items-start justify-between gap-3", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "grid size-10 place-items-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary/15", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Pill, { className: "size-5" }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "rounded-full border border-border/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground", children: [
+                c.count,
+                " meds"
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-base font-bold", children: c.name }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-xs text-muted-foreground", children: "Open shelf and select a dispensing brand" })
+          ] }, c.name)) }) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-2 sm:grid-cols-3", children: [
+            filtered.map((d) => /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.button, { whileTap: {
+              scale: 0.95
+            }, onClick: () => openBrandSelection(d), className: "rounded-xl border border-border/40 bg-card/60 p-3 text-left transition hover:border-primary/40 hover:bg-primary/5", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold", children: d.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground", children: d.generic_name ?? d.category }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-primary", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Tags, { className: "size-3" }),
+                "choose brand"
+              ] })
+            ] }, d.id)),
+            filtered.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "col-span-full rounded-xl border border-dashed border-border/50 p-8 text-center text-sm text-muted-foreground", children: "No medicines found in this category." })
+          ] })
+        ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-border/40 bg-card/50 p-3 backdrop-blur", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 text-xs uppercase tracking-wider text-muted-foreground", children: "Dispensing tray" }),
           collected.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "py-4 text-center text-sm text-muted-foreground", children: "Tap drugs to add" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "space-y-1.5", children: collected.map((c) => /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "flex items-center justify-between rounded-lg border border-border/30 bg-muted/30 px-3 py-2 text-sm", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: c }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold", children: c }),
+              selectedBrands[c] && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "ml-2 text-xs text-primary", children: selectedBrands[c] })
+            ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => removeDrug(c), className: "text-muted-foreground hover:text-destructive", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "size-3.5" }) })
           ] }, c)) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: confirmCollection, disabled: collected.length === 0, className: "mt-3 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40", children: "Confirm collection" })
         ] })
       ] })
     ] }),
-    phase === "info" && /* @__PURE__ */ jsxRuntimeExports.jsx(DrugInfoStep, { drug: required_for_steps[infoIdx], allDrugs: drugs, onRead: markInfo, onSkip: advanceInfo, count: `${infoIdx + 1} / ${required_for_steps.length}` }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: brandDrug && /* @__PURE__ */ jsxRuntimeExports.jsx(motion.div, { className: "fixed inset-0 z-50 grid place-items-center bg-background/70 p-4 backdrop-blur-md", initial: {
+      opacity: 0
+    }, animate: {
+      opacity: 1
+    }, exit: {
+      opacity: 0
+    }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.div, { initial: {
+      opacity: 0,
+      y: 18,
+      scale: 0.97
+    }, animate: {
+      opacity: 1,
+      y: 0,
+      scale: 1
+    }, exit: {
+      opacity: 0,
+      y: 12,
+      scale: 0.98
+    }, className: "glass-card w-full max-w-xl p-5", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-4 flex items-start justify-between gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs uppercase tracking-[0.25em] text-primary", children: "Select brand" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "mt-1 text-2xl font-bold", children: brandDrug.name }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: brandDrug.generic_name ?? brandDrug.category })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => setBrandDrug(null), className: "rounded-full border border-border/50 p-2 text-muted-foreground transition hover:border-primary/50 hover:text-primary", "aria-label": "Close brand selector", children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "size-4" }) })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-2 sm:grid-cols-2", children: getBrandsForDrug(brandDrug).map((brand) => /* @__PURE__ */ jsxRuntimeExports.jsxs(motion.button, { whileHover: {
+        y: -2
+      }, whileTap: {
+        scale: 0.97
+      }, onClick: () => selectBrand(brandDrug, brand), className: "rounded-xl border border-border/40 bg-card/60 p-4 text-left transition hover:border-primary/50 hover:bg-primary/5", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: brand }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-xs text-muted-foreground", children: "Dispense this brand" })
+      ] }, brand)) })
+    ] }) }) }),
+    phase === "info" && /* @__PURE__ */ jsxRuntimeExports.jsx(DrugInfoStep, { drug: required_for_steps[infoIdx], allDrugs: catalogDrugs, onRead: markInfo, onSkip: advanceInfo, count: `${infoIdx + 1} / ${required_for_steps.length}` }),
     phase === "label" && /* @__PURE__ */ jsxRuntimeExports.jsx(LabelStep, { drug: required_for_steps[labelIdx], previous: labelAnswers[required_for_steps[labelIdx]], count: `${labelIdx + 1} / ${required_for_steps.length}`, onSubmit: (a) => submitLabel(required_for_steps[labelIdx], a) }),
     errPanel.panel
   ] });

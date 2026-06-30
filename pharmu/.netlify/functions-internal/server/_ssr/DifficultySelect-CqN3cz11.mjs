@@ -1,11 +1,11 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { B as Button, u as useAuthStore } from "./router-BsXYMHWD.mjs";
+import { B as Button, u as useAuthStore } from "./router-eOdVVwBj.mjs";
 import { M as ModeAmbientLayer } from "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import { e as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { f as fetchRandomCase, M as MODE_LABEL, D as DIFFICULTY_LABEL, d as DIFFICULTY_RULES } from "./shared-DDCPKmqL.mjs";
+import { f as fetchRandomCase, M as MODE_LABEL, D as DIFFICULTY_LABEL, d as DIFFICULTY_RULES } from "./shared-C9rvXUiM.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
-import { T as Trophy, a as CircleCheck, Y as CircleX, Z as CircleAlert, _ as RotateCw, $ as House, W as ArrowLeft, A as Activity, a0 as Play, a1 as Pause, a2 as Zap, h as CircleQuestionMark, O as TriangleAlert, a3 as Gauge, a4 as ShieldAlert, a5 as Moon, a6 as Sun, v as Sparkles, a7 as MessageCircle } from "../_libs/lucide-react.mjs";
+import { T as Trophy, a as CircleCheck, Z as CircleX, _ as CircleAlert, $ as RotateCw, a0 as House, R as ArrowLeft, A as Activity, a1 as Play, a2 as Pause, a3 as Zap, h as CircleQuestionMark, O as TriangleAlert, a4 as Gauge, a5 as ShieldAlert, a6 as Moon, a7 as Sun, v as Sparkles, a8 as MessageCircle } from "../_libs/lucide-react.mjs";
 const MODE_ACCENTS = {
   rx: "oklch(0.62 0.19 240)",
   // blue

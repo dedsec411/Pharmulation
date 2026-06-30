@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/game/otc")({
 });
 
 const LIMIT = MODE_TIMERS.otc;
-type Step = "questions" | "drug" | "dose" | "advice" | "done";
+type Step = "questions" | "drug" | "dose" | "quantity" | "advice" | "done";
 
 function OtcGame() {
   const onExit = useGameExit("/modes");
@@ -34,6 +34,7 @@ function OtcGame() {
   const [correct, setCorrect] = useState(0);
   const [wrong, setWrong] = useState(0);
   const [hints, setHints] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const [result, setResult] = useState<any>(null);
 
   const timer = useTimer(LIMIT, () => step !== "done" && finish(true));
@@ -45,7 +46,7 @@ function OtcGame() {
   });
 
   useEffect(() => {
-    setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setResult(null);
+    setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setQuantity(1); setResult(null);
   }, [caseData?.id]);
 
   if (loading || !caseData) return <>{difficultyModal}<Loading /></>;
@@ -96,6 +97,22 @@ function OtcGame() {
         whatToKnow: "OTC dosing depends on age, weight, renal/hepatic function, and product strength. Always check the pack labelling.",
       });
     }
+    setQuantity(getCorrectQuantity(ans));
+    setStep("quantity");
+  }
+  function submitQuantity(qty: number) {
+    const expected = getCorrectQuantity(ans);
+    if (qty === expected) { setCorrect((n) => n + 1); toastScore(10, "correct quantity"); }
+    else {
+      setWrong((n) => n + 1); toastScore(-5, "quantity off");
+      errPanel.logError({
+        errorType: "Wrong OTC quantity",
+        wrongChoice: `${qty} pack${qty === 1 ? "" : "s"}`,
+        correctChoice: `${expected} pack${expected === 1 ? "" : "s"}`,
+        whyWrong: "The quantity should match the recommended OTC course without oversupplying or leaving the patient short.",
+        whatToKnow: "OTC quantity should follow dose, duration, pack size, safety limits, and referral advice.",
+      });
+    }
     setStep("advice");
   }
   async function pickAdvice(opt: string) {
@@ -124,7 +141,7 @@ function OtcGame() {
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "otc",
       score, timeTaken: timer.taken, errors: wrong + wl,
-      correctDrugs: correct, totalDrugs: questions.length + 3,
+      correctDrugs: correct, totalDrugs: questions.length + 4,
       errorsDetail: errPanel.errors,
     });
     setResult({ score, xpGain });
@@ -136,7 +153,7 @@ function OtcGame() {
       <FeedbackScreen
         score={result.score} xpGain={result.xpGain} timeTaken={timer.taken}
         mentorTip={caseData.mentor_tip} explanation={caseData.explanation}
-        drugs={[{ name: ans.correct_drug, correct: true, info: ans.correct_dose }]}
+        drugs={[{ name: ans.correct_drug, correct: true, info: `${ans.correct_dose} · Qty ${quantity}` }]}
         errors={errPanel.errors}
         onNext={next}
       />
@@ -194,6 +211,9 @@ function OtcGame() {
             {step === "dose" && (
               <Picker title="Choose correct dose" options={ans.dose_options ?? []} onPick={pickDose} />
             )}
+            {step === "quantity" && (
+              <QuantitySlider value={quantity} max={getQuantityMax(ans)} onChange={setQuantity} onSubmit={submitQuantity} />
+            )}
             {step === "advice" && (
               <Picker title="Counsel the patient" options={ans.advice_options ?? []} onPick={pickAdvice} />
             )}
@@ -202,6 +222,64 @@ function OtcGame() {
       </main>
       {errPanel.panel}
     </>
+  );
+}
+
+function getCorrectQuantity(ans: any) {
+  const raw = ans.correct_quantity ?? ans.quantity ?? ans.recommended_quantity ?? ans.pack_quantity ?? 1;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 1;
+}
+
+function getQuantityMax(ans: any) {
+  return Math.max(5, getCorrectQuantity(ans) + 2);
+}
+
+function QuantitySlider({
+  value,
+  max,
+  onChange,
+  onSubmit,
+}: {
+  value: number;
+  max: number;
+  onChange: (value: number) => void;
+  onSubmit: (value: number) => void;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wider text-primary">Select quantity</p>
+      <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Dispense quantity</p>
+            <p className="mt-1 font-mono text-4xl font-black tabular-nums text-primary">{value}</p>
+          </div>
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">
+            {value === 1 ? "1 pack" : `${value} packs`}
+          </span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={max}
+          step={1}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="mt-5 w-full accent-primary"
+        />
+        <div className="mt-2 flex justify-between font-mono text-[10px] text-muted-foreground">
+          <span>1</span>
+          <span>{max}</span>
+        </div>
+        <button
+          onClick={() => onSubmit(value)}
+          className="mt-4 w-full rounded-full bg-primary px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-primary-foreground shadow-[0_0_32px_-14px_oklch(0.74_0.14_180/0.9)] transition hover:-translate-y-0.5 hover:bg-primary/90"
+        >
+          Confirm quantity
+        </button>
+      </div>
+    </div>
   );
 }
 

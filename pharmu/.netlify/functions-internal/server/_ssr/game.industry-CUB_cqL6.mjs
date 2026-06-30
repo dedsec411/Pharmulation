@@ -1,9 +1,9 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CH3yyotH.mjs";
-import { a as MODE_TIMERS, c as computeScore, s as submitScore, t as toastScore, b as bumpCounterBadge, e as awardBadge } from "./shared-DDCPKmqL.mjs";
-import { u as useAuthStore } from "./router-BsXYMHWD.mjs";
+import { M as ModeTheme, u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CqN3cz11.mjs";
+import { a as MODE_TIMERS, c as computeScore, s as submitScore, t as toastScore, b as bumpCounterBadge, e as awardBadge } from "./shared-C9rvXUiM.mjs";
+import { u as useAuthStore } from "./router-eOdVVwBj.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { P as Pill, a8 as CupSoda, a9 as PackageCheck, v as Sparkles, N as Thermometer, aa as Droplets, V as Check, i as FlaskConical, ab as Cog } from "../_libs/lucide-react.mjs";
+import { P as Pill, a9 as CupSoda, aa as PackageCheck, v as Sparkles, N as Thermometer, ab as Droplets, Y as Check, i as FlaskConical, ac as Cog } from "../_libs/lucide-react.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
 import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__react-router.mjs";
@@ -951,7 +951,7 @@ function IndustryRun({
                   displayWeight(w.weight, ingredients.find((i) => i.name === w.name)?.unit)
                 ] }, w.name))
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: !allWeighed, onClick: () => setPhase("env"), className: "mt-3 w-full rounded-full border border-border/40 py-2 text-sm font-semibold disabled:opacity-40", children: "Proceed to environmental check >" })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: !allWeighed, onClick: () => setPhase("env"), className: `mt-3 w-full rounded-full border px-5 py-3 text-sm font-black uppercase tracking-[0.12em] transition ${allWeighed ? "border-amber-200/60 bg-amber-400 text-slate-950 shadow-[0_0_34px_-10px_rgba(251,191,36,0.95)] hover:-translate-y-0.5 hover:bg-amber-300 hover:shadow-[0_0_44px_-8px_rgba(251,191,36,1)]" : "border-border/40 bg-muted/20 text-muted-foreground opacity-45"}`, children: "Proceed to environmental check >" })
             ] })
           ] }),
           phase === "env" && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur", children: [
@@ -1059,6 +1059,75 @@ function InfoChip({
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-1 text-sm font-semibold", children: value })
   ] });
 }
+function getMixingProfile(productChoice) {
+  const type = productChoice.type.toLowerCase();
+  if (productChoice.form === "Tablet") {
+    if (type.includes("chewable")) return {
+      speed: "14 rpm",
+      time: "18 min",
+      grade: "Low shear",
+      note: "Protect chewable granule texture"
+    };
+    if (type.includes("enteric")) return {
+      speed: "16 rpm",
+      time: "22 min",
+      grade: "Medium shear",
+      note: "Keep enteric API blend uniform"
+    };
+    return {
+      speed: "20 rpm",
+      time: "20 min",
+      grade: "Medium shear",
+      note: "Uniform powder blend before compression"
+    };
+  }
+  if (productChoice.form === "Syrup") {
+    if (type.includes("sugar-free")) return {
+      speed: "180 rpm",
+      time: "30 min",
+      grade: "Controlled vortex",
+      note: "Avoid foam while dissolving vehicle"
+    };
+    return {
+      speed: "220 rpm",
+      time: "25 min",
+      grade: "Solution mix",
+      note: "Dissolve API before final volume"
+    };
+  }
+  if (productChoice.form === "Capsule") {
+    if (type.includes("soft")) return {
+      speed: "90 rpm",
+      time: "15 min",
+      grade: "Gentle heat mix",
+      note: "Keep oil fill clear and bubble-free"
+    };
+    return {
+      speed: "18 rpm",
+      time: "25 min",
+      grade: "Low shear",
+      note: "Protect flow and fill-weight uniformity"
+    };
+  }
+  if (type.includes("gel")) return {
+    speed: "320 rpm",
+    time: "35 min",
+    grade: "Hydration mix",
+    note: "Fully hydrate polymer before neutralizing"
+  };
+  if (type.includes("ointment")) return {
+    speed: "70 rpm",
+    time: "28 min",
+    grade: "Levigation",
+    note: "Smooth base without trapped air"
+  };
+  return {
+    speed: "260 rpm",
+    time: "30 min",
+    grade: "Homogenization",
+    note: "Stable emulsion before filling"
+  };
+}
 function MasterFormulaReference({
   f,
   batchProduct,
@@ -1068,6 +1137,7 @@ function MasterFormulaReference({
   phase,
   stageIdx
 }) {
+  const mixingProfile = getMixingProfile(productChoice);
   return /* @__PURE__ */ jsxRuntimeExports.jsx("aside", { className: "xl:sticky xl:top-24 xl:self-start", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative overflow-hidden rounded-xl border border-amber-300/20 bg-slate-950/55 p-4 text-slate-100 shadow-[0_16px_40px_-24px_rgba(245,158,11,0.65)] backdrop-blur-xl", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(OfficialStamp, { label: "REFERENCE" }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-3", children: [
@@ -1126,7 +1196,24 @@ function MasterFormulaReference({
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 rounded-lg border border-amber-200/20 bg-white/5 p-3", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400", children: "Process map" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1", children: STAGES.map((stage, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `rounded px-2 py-1 text-[10px] capitalize ${phase === "process" && i === stageIdx ? "bg-amber-500 text-slate-950" : "bg-white/5 text-slate-400"}`, children: f.stageLabels?.[stage] ?? stage }, stage)) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1", children: STAGES.map((stage, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `rounded px-2 py-1 text-[10px] capitalize ${phase === "process" && i === stageIdx ? "bg-amber-500 text-slate-950" : "bg-white/5 text-slate-400"}`, children: f.stageLabels?.[stage] ?? stage }, stage)) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 rounded-lg border border-amber-200/15 bg-slate-950/35 p-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-wider text-amber-300", children: "Mixing rate" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "rounded-full border border-amber-300/25 bg-amber-400/10 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-200", children: mixingProfile.grade })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-2 grid grid-cols-2 gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-md bg-white/5 p-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[9px] uppercase tracking-wider text-slate-500", children: "Speed" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-0.5 font-mono text-sm font-bold text-slate-100", children: mixingProfile.speed })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-md bg-white/5 p-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[9px] uppercase tracking-wider text-slate-500", children: "Time" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-0.5 font-mono text-sm font-bold text-slate-100", children: mixingProfile.time })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-2 text-[10px] leading-relaxed text-slate-400", children: mixingProfile.note })
+      ] })
     ] })
   ] }) });
 }

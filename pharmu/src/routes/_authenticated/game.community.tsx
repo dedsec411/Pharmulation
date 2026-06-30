@@ -11,13 +11,14 @@ import { useTimer } from "@/lib/game/useTimer";
 import { computeScore, submitScore, toastScore } from "@/lib/game/shared";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useAuthStore } from "@/lib/auth-store";
+import { RX_DRUG_CATEGORIES, getBrandsForDrug, prepareDrugCatalog } from "@/lib/drug-catalog";
 import { supabase } from "@/integrations/supabase/client";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { toast } from "sonner";
 
 import {
-  FileText, Pill, Check, X as XIcon,
-  Trash2, User, ShoppingBag, ClipboardList,
+  ArrowLeft, FileText, Pill, Check, X as XIcon,
+  Tags, Trash2, User, ShoppingBag, ClipboardList,
 } from "lucide-react";
 
 // ─── Route ───────────────────────────────────────────────────────────────────
@@ -33,7 +34,6 @@ export const Route = createFileRoute("/_authenticated/game/community")({
 });
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const DRUG_CATEGORIES = ["All", "Antibiotic", "Cardiovascular", "OTC Analgesic", "Antidiabetic", "GI", "Respiratory"];
 const LIMIT_RX  = 180;
 const LIMIT_OTC = 120;
 const FREQS     = ["once daily", "twice daily", "three times daily", "as needed"];
@@ -404,8 +404,10 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
   const [wrongLabels, setWrongLabels]   = useState(0);
   const [hints, setHints]               = useState(0);
   const [showClean, setShowClean]       = useState(false);
-  const [category, setCategory]         = useState("All");
+  const [category, setCategory]         = useState("");
   const [drugs, setDrugs]               = useState<any[]>([]);
+  const [brandDrug, setBrandDrug]       = useState<any | null>(null);
+  const [selectedBrands, setSelectedBrands] = useState<Record<string, string>>({});
   const [infoIdx, setInfoIdx]           = useState(0);
   const [labelIdx, setLabelIdx]         = useState(0);
   const [labelAnswers, setLabelAnswers] = useState<Record<string, any>>({});
@@ -426,33 +428,63 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
   useEffect(() => {
     setPhase("collect"); setCollected([]); setWrong(0); setCorrect(0);
     setInfoRead(0); setCorrectLabels(0); setWrongLabels(0); setHints(0);
+    setCategory(""); setBrandDrug(null); setSelectedBrands({});
     setShowClean(false); setInfoIdx(0); setLabelIdx(0); setLabelAnswers({});
     setResult(null);
   }, [caseData?.id]);
 
   const required: string[] = caseData?.drugs_required ?? [];
+  const catalogDrugs = useMemo(() => prepareDrugCatalog(drugs), [drugs]);
   const filtered = useMemo(
-    () => drugs.filter((d) => category === "All" || d.category === category),
-    [drugs, category]
+    () => catalogDrugs.filter((d) => d.category === category),
+    [catalogDrugs, category]
+  );
+  const categoryStats = useMemo(
+    () => RX_DRUG_CATEGORIES.map((name) => ({
+      name,
+      count: catalogDrugs.filter((d) => d.category === name).length,
+    })),
+    [catalogDrugs],
   );
 
-  function addDrug(name: string) {
+  function openBrandSelection(drug: any) {
+    const name = drug.name;
     if (collected.includes(name)) return;
-    setCollected((c) => [...c, name]);
-    if (required.includes(name)) {
-      setCorrect((n) => n + 1); toastScore(20, name);
-    } else {
+    if (!required.includes(name)) {
       setWrong((n) => n + 1); toastScore(-15, `wrong: ${name}`);
-      const d = drugs.find((x) => x.name === name);
       errPanel.logError({
         errorType: "Wrong drug selected",
         wrongChoice: name,
         correctChoice: required.join(", "),
-        whyWrong: `${name} is not indicated for this prescription.${d?.indications?.length ? ` It is used for ${d.indications.join(", ")}.` : ""} This Rx calls for a different drug.`,
+        whyWrong: `${name} is not indicated for this prescription.${drug?.indications?.length ? ` It is used for ${drug.indications.join(", ")}.` : ""} This Rx calls for a different drug.`,
         whatToKnow: "Always match the drug to the diagnosed condition. Check the drug class and indication before dispensing.",
         hint: "Think about the class of drug that treats the condition in this prescription.",
       });
+      return;
     }
+    setBrandDrug(drug);
+  }
+
+  function addDrug(name: string, brand?: string) {
+    if (collected.includes(name)) return;
+    setCollected((c) => [...c, name]);
+    if (brand) setSelectedBrands((m) => ({ ...m, [name]: brand }));
+    setCorrect((n) => n + 1);
+    toastScore(20, brand ? `${name} - ${brand}` : name);
+  }
+
+  function removeDrug(name: string) {
+    setCollected((x) => x.filter((n) => n !== name));
+    setSelectedBrands((m) => {
+      const nextBrands = { ...m };
+      delete nextBrands[name];
+      return nextBrands;
+    });
+  }
+
+  function selectBrand(drug: any, brand: string) {
+    addDrug(drug.name, brand);
+    setBrandDrug(null);
   }
 
   function confirmCollection() {
@@ -629,8 +661,11 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                       transition={{ type: "spring", stiffness: 520, damping: 24 }}
                       className="flex items-center justify-between rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm shadow-[0_10px_22px_-18px_oklch(0.74_0.14_180/0.9)]"
                     >
-                      <span>{c}</span>
-                      <button onClick={() => setCollected((x) => x.filter((n) => n !== c))} className="text-muted-foreground hover:text-destructive">
+                      <span>
+                        <span className="font-semibold">{c}</span>
+                        {selectedBrands[c] && <span className="ml-2 text-xs text-primary">{selectedBrands[c]}</span>}
+                      </span>
+                      <button onClick={() => removeDrug(c)} className="text-muted-foreground hover:text-destructive">
                         <Trash2 className="size-3.5" />
                       </button>
                     </motion.li>
@@ -644,52 +679,144 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
               </button>
             </motion.div>
 
-            <div className="flex flex-wrap gap-1.5 rounded-xl border border-border/40 bg-card/50 p-2 backdrop-blur">
-              {DRUG_CATEGORIES.map((c) => (
-                <button key={c} onClick={() => setCategory(c)}
-                  className={`rounded-full px-3 py-1 text-xs transition ${category === c ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
-                  {c}
-                </button>
-              ))}
-            </div>
             <div className="rounded-2xl border border-border/35 bg-card/35 p-3 shadow-inner backdrop-blur">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Drug shelf</p>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{filtered.length} items</span>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                    {category ? `${category} shelf` : "Medicine categories"}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {category ? "Pick a medicine, then choose its brand." : "Select a category to open the shelf."}
+                  </p>
+                </div>
+                {category ? (
+                  <button
+                    onClick={() => setCategory("")}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+                  >
+                    <ArrowLeft className="size-3.5" />
+                    Categories
+                  </button>
+                ) : (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                    {categoryStats.length} groups
+                  </span>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {filtered.map((d, i) => {
-                const isCollected = collected.includes(d.name);
-                return (
-                <motion.button
-                  key={d.id}
-                  initial={{ opacity: 0, x: 42 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: Math.min(i * 0.025, 0.35), type: "spring", stiffness: 260, damping: 24 }}
-                  whileHover={{ y: -6, scale: 1.025, boxShadow: "0 18px 38px -20px oklch(0.74 0.14 180 / 0.95)" }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => addDrug(d.name)}
-                  className={`rounded-xl border p-3 text-left transition ${
-                    isCollected
-                      ? "border-primary/45 bg-primary/10 text-foreground"
-                      : "border-border/40 bg-card/70 hover:border-primary/70 hover:bg-primary/10 hover:text-foreground"
-                  }`}
-                >
-                  <p className="text-sm font-semibold">{d.name}</p>
-                  <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{d.category}</p>
-                </motion.button>
-              );
-              })}
-              </div>
+              {!category ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {categoryStats.map((c) => (
+                    <motion.button
+                      key={c.name}
+                      whileHover={{ y: -4, boxShadow: "0 20px 44px -24px oklch(0.74 0.14 180 / 0.85)" }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setCategory(c.name)}
+                      className="group rounded-2xl border border-border/40 bg-card/70 p-4 text-left transition hover:border-primary/60 hover:bg-primary/10"
+                    >
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <span className="grid size-10 place-items-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary/15">
+                          <Pill className="size-5" />
+                        </span>
+                        <span className="rounded-full border border-border/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          {c.count} meds
+                        </span>
+                      </div>
+                      <p className="text-base font-bold">{c.name}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Open shelf and select a dispensing brand</p>
+                    </motion.button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {filtered.map((d, i) => {
+                    const isCollected = collected.includes(d.name);
+                    return (
+                      <motion.button
+                        key={d.id}
+                        initial={{ opacity: 0, x: 42 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: Math.min(i * 0.025, 0.35), type: "spring", stiffness: 260, damping: 24 }}
+                        whileHover={{ y: -6, scale: 1.025, boxShadow: "0 18px 38px -20px oklch(0.74 0.14 180 / 0.95)" }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => openBrandSelection(d)}
+                        className={`rounded-xl border p-3 text-left transition ${
+                          isCollected
+                            ? "border-primary/45 bg-primary/10 text-foreground"
+                            : "border-border/40 bg-card/70 hover:border-primary/70 hover:bg-primary/10 hover:text-foreground"
+                        }`}
+                      >
+                        <p className="text-sm font-semibold">{d.name}</p>
+                        <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{d.generic_name ?? d.category}</p>
+                        <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                          <Tags className="size-3" />
+                          choose brand
+                        </p>
+                      </motion.button>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <div className="col-span-full rounded-xl border border-dashed border-border/50 p-8 text-center text-sm text-muted-foreground">
+                      No medicines found in this category.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>
         </main>
       )}
 
+      <AnimatePresence>
+        {brandDrug && (
+          <motion.div
+            className="fixed inset-0 z-50 grid place-items-center bg-background/70 p-4 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 18, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              className="glass-card w-full max-w-xl p-5"
+            >
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-primary">Select brand</p>
+                  <h2 className="mt-1 text-2xl font-bold">{brandDrug.name}</h2>
+                  <p className="text-sm text-muted-foreground">{brandDrug.generic_name ?? brandDrug.category}</p>
+                </div>
+                <button
+                  onClick={() => setBrandDrug(null)}
+                  className="rounded-full border border-border/50 p-2 text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+                  aria-label="Close brand selector"
+                >
+                  <XIcon className="size-4" />
+                </button>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {getBrandsForDrug(brandDrug).map((brand) => (
+                  <motion.button
+                    key={brand}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => selectBrand(brandDrug, brand)}
+                    className="rounded-xl border border-border/40 bg-card/60 p-4 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                  >
+                    <p className="font-semibold">{brand}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Dispense this brand</p>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {phase === "info" && (
         <DrugInfoStep
-          drug={correctDrugs[infoIdx]} allDrugs={drugs}
+          drug={correctDrugs[infoIdx]} allDrugs={catalogDrugs}
           onRead={markInfo}
           onSkip={() => {
             if (infoIdx + 1 < correctDrugs.length) setInfoIdx((i) => i + 1);
@@ -715,7 +842,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
 // ═══════════════════════════════════════════════════════════════════════════════
 // OTC GAME
 // ═══════════════════════════════════════════════════════════════════════════════
-type OtcStep = "questions" | "drug" | "dose" | "advice" | "done";
+type OtcStep = "questions" | "drug" | "dose" | "quantity" | "advice" | "done";
 
 function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LIMIT: number }) {
   const { profile } = useAuthStore();
@@ -726,6 +853,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
   const [correct, setCorrect] = useState(0);
   const [wrong, setWrong]   = useState(0);
   const [hints, setHints]   = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const [result, setResult] = useState<any>(null);
 
   const timer   = useTimer(LIMIT, () => step !== "done" && finish(true));
@@ -737,7 +865,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
   });
 
   useEffect(() => {
-    setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setResult(null);
+    setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setQuantity(1); setResult(null);
   }, [caseData?.id]);
 
   const ans: any       = caseData?.correct_answer_json ?? {};
@@ -785,6 +913,23 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
         whatToKnow: "OTC dosing depends on age, weight, renal/hepatic function, and product strength.",
       });
     }
+    setQuantity(getOtcCorrectQuantity(ans));
+    setStep("quantity");
+  }
+
+  function submitQuantity(qty: number) {
+    const expected = getOtcCorrectQuantity(ans);
+    if (qty === expected) { setCorrect((n) => n + 1); toastScore(10, "correct quantity"); }
+    else {
+      setWrong((n) => n + 1); toastScore(-5, "quantity off");
+      errPanel.logError({
+        errorType: "Wrong OTC quantity",
+        wrongChoice: `${qty} pack${qty === 1 ? "" : "s"}`,
+        correctChoice: `${expected} pack${expected === 1 ? "" : "s"}`,
+        whyWrong: "The quantity should match the recommended OTC course without oversupplying or leaving the patient short.",
+        whatToKnow: "OTC quantity should follow dose, duration, pack size, safety limits, and referral advice.",
+      });
+    }
     setStep("advice");
   }
 
@@ -813,7 +958,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "otc",
       score, timeTaken: timer.taken, errors: wrong + wl,
-      correctDrugs: correct, totalDrugs: questions.length + 3,
+      correctDrugs: correct, totalDrugs: questions.length + 4,
       errorsDetail: errPanel.errors,
     });
     setResult({ score, xpGain });
@@ -825,7 +970,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
       <FeedbackScreen
         score={result.score} xpGain={result.xpGain} timeTaken={timer.taken}
         mentorTip={caseData.mentor_tip} explanation={caseData.explanation}
-        drugs={[{ name: ans.correct_drug, correct: true, info: ans.correct_dose }]}
+        drugs={[{ name: ans.correct_drug, correct: true, info: `${ans.correct_dose} · Qty ${quantity}` }]}
         errors={errPanel.errors}
         onNext={next}
       />
@@ -904,6 +1049,9 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
 
             {step === "drug"   && <OtcPicker title="Recommend a medication" options={ans.drug_options ?? []} onPick={pickDrug} />}
             {step === "dose"   && <OtcPicker title="Choose correct dose"    options={ans.dose_options ?? []} onPick={pickDose} />}
+            {step === "quantity" && (
+              <OtcQuantitySlider value={quantity} max={getOtcQuantityMax(ans)} onChange={setQuantity} onSubmit={submitQuantity} />
+            )}
             {step === "advice" && <OtcPicker title="Counsel the patient"    options={ans.advice_options ?? []} onPick={pickAdvice} />}
           </motion.div>
         </section>
@@ -914,6 +1062,64 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
 }
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
+function getOtcCorrectQuantity(ans: any) {
+  const raw = ans.correct_quantity ?? ans.quantity ?? ans.recommended_quantity ?? ans.pack_quantity ?? 1;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 1;
+}
+
+function getOtcQuantityMax(ans: any) {
+  return Math.max(5, getOtcCorrectQuantity(ans) + 2);
+}
+
+function OtcQuantitySlider({
+  value,
+  max,
+  onChange,
+  onSubmit,
+}: {
+  value: number;
+  max: number;
+  onChange: (value: number) => void;
+  onSubmit: (value: number) => void;
+}) {
+  return (
+    <div>
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">Select quantity</p>
+      <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Dispense quantity</p>
+            <p className="mt-1 font-mono text-4xl font-black tabular-nums text-primary">{value}</p>
+          </div>
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">
+            {value === 1 ? "1 pack" : `${value} packs`}
+          </span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={max}
+          step={1}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="mt-5 w-full accent-primary"
+        />
+        <div className="mt-2 flex justify-between font-mono text-[10px] text-muted-foreground">
+          <span>1</span>
+          <span>{max}</span>
+        </div>
+        <button
+          onClick={() => onSubmit(value)}
+          className="mt-4 w-full rounded-full bg-primary px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-primary-foreground shadow-[0_0_32px_-14px_oklch(0.74_0.14_180/0.9)] transition hover:-translate-y-0.5 hover:bg-primary/90"
+        >
+          Confirm quantity
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function OtcPicker({ title, options, onPick }: { title: string; options: string[]; onPick: (s: string) => void }) {
   return (
     <>

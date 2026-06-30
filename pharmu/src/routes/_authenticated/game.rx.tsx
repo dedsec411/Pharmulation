@@ -9,8 +9,9 @@ import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
 import { computeScore, submitScore, MODE_TIMERS, toastScore } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
+import { RX_DRUG_CATEGORIES, getBrandsForDrug, prepareDrugCatalog } from "@/lib/drug-catalog";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, X as XIcon, Trash2, FileText } from "lucide-react";
+import { ArrowLeft, Check, FileText, Pill, Tags, Trash2, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
@@ -22,8 +23,6 @@ export const Route = createFileRoute("/_authenticated/game/rx")({
   errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
   notFoundComponent: () => <div className="p-8">Not found</div>,
 });
-
-const CATEGORIES = ["All", "Antibiotic", "Cardiovascular", "OTC Analgesic", "Antidiabetic", "Oncology", "GI", "Respiratory"];
 
 type Phase = "collect" | "info" | "label" | "done";
 const LIMIT = MODE_TIMERS.rx;
@@ -42,8 +41,10 @@ function RxGame() {
   const [wrongLabels, setWrongLabels] = useState(0);
   const [hints, setHints] = useState(0);
   const [showHint, setShowHint] = useState(false);
-  const [category, setCategory] = useState("All");
+  const [category, setCategory] = useState("");
   const [drugs, setDrugs] = useState<any[]>([]);
+  const [brandDrug, setBrandDrug] = useState<any | null>(null);
+  const [selectedBrands, setSelectedBrands] = useState<Record<string, string>>({});
   const [infoIdx, setInfoIdx] = useState(0);
   const [labelIdx, setLabelIdx] = useState(0);
   const [labelAnswers, setLabelAnswers] = useState<Record<string, any>>({});
@@ -65,34 +66,60 @@ function RxGame() {
     setPhase("collect");
     setCollected([]); setWrong(0); setCorrect(0); setInfoRead(0);
     setCorrectLabels(0); setWrongLabels(0); setHints(0); setShowHint(false);
+    setCategory(""); setBrandDrug(null); setSelectedBrands({});
     setInfoIdx(0); setLabelIdx(0); setLabelAnswers({}); setResult(null);
   }, [caseData?.id]);
 
   const required: string[] = caseData?.drugs_required ?? [];
+  const catalogDrugs = useMemo(() => prepareDrugCatalog(drugs), [drugs]);
   const filtered = useMemo(
-    () => drugs.filter((d) => category === "All" || d.category === category),
-    [drugs, category]
+    () => catalogDrugs.filter((d) => d.category === category),
+    [catalogDrugs, category]
+  );
+  const categoryStats = useMemo(
+    () => RX_DRUG_CATEGORIES.map((name) => ({
+      name,
+      count: catalogDrugs.filter((d) => d.category === name).length,
+    })),
+    [catalogDrugs],
   );
 
-  function addDrug(name: string) {
+  function openBrandSelection(drug: any) {
+    const name = drug.name;
     if (collected.includes(name)) return;
-    setCollected((c) => [...c, name]);
-    if (required.includes(name)) { setCorrect((n) => n + 1); toastScore(20, name); }
-    else {
+    if (!required.includes(name)) {
       setWrong((n) => n + 1); toastScore(-15, `wrong: ${name}`);
-      const d = drugs.find((x) => x.name === name);
       errPanel.logError({
         errorType: "Wrong drug selected",
         wrongChoice: name,
         correctChoice: required.join(", "),
-        whyWrong: `${name} is not indicated for this prescription. ${d?.indications?.length ? `It is used for ${d.indications.join(", ")}.` : ""} This Rx calls for a different drug.`,
+        whyWrong: `${name} is not indicated for this prescription. ${drug?.indications?.length ? `It is used for ${drug.indications.join(", ")}.` : ""} This Rx calls for a different drug.`,
         whatToKnow: "Always match the drug to the diagnosed condition. Check the drug class and indication before dispensing.",
         hint: `Think about the class of drug that treats the condition in this prescription.`,
       });
+      return;
     }
+    setBrandDrug(drug);
+  }
+
+  function addDrug(name: string, brand?: string) {
+    if (collected.includes(name)) return;
+    setCollected((c) => [...c, name]);
+    if (brand) setSelectedBrands((m) => ({ ...m, [name]: brand }));
+    setCorrect((n) => n + 1);
+    toastScore(20, brand ? `${name} - ${brand}` : name);
   }
   function removeDrug(name: string) {
     setCollected((c) => c.filter((x) => x !== name));
+    setSelectedBrands((m) => {
+      const nextBrands = { ...m };
+      delete nextBrands[name];
+      return nextBrands;
+    });
+  }
+  function selectBrand(drug: any, brand: string) {
+    addDrug(drug.name, brand);
+    setBrandDrug(null);
   }
   function confirmCollection() {
     if (required.some((r) => !collected.includes(r))) {
@@ -237,25 +264,72 @@ function RxGame() {
 
           {/* Shelf + Tray */}
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-1.5 rounded-xl border border-border/40 bg-card/50 p-2 backdrop-blur">
-              {CATEGORIES.map((c) => (
-                <button key={c} onClick={() => setCategory(c)}
-                  className={`rounded-full px-3 py-1 text-xs ${category === c ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
-                  {c}
-                </button>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {filtered.map((d) => (
-                <motion.button
-                  key={d.id} whileTap={{ scale: 0.95 }}
-                  onClick={() => addDrug(d.name)}
-                  className="rounded-xl border border-border/40 bg-card/60 p-3 text-left hover:border-primary/40 hover:bg-primary/5"
-                >
-                  <p className="text-sm font-semibold">{d.name}</p>
-                  <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{d.category}</p>
-                </motion.button>
-              ))}
+            <div className="rounded-xl border border-border/40 bg-card/50 p-4 backdrop-blur">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Medicine categories</p>
+                  <p className="text-sm text-muted-foreground">
+                    {category ? `Viewing ${category}` : "Pick a category first, then choose the medicine brand."}
+                  </p>
+                </div>
+                {category && (
+                  <button
+                    onClick={() => setCategory("")}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+                  >
+                    <ArrowLeft className="size-3.5" />
+                    Categories
+                  </button>
+                )}
+              </div>
+
+              {!category ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {categoryStats.map((c) => (
+                    <motion.button
+                      key={c.name}
+                      whileHover={{ y: -3 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setCategory(c.name)}
+                      className="group rounded-2xl border border-border/40 bg-card/60 p-4 text-left transition hover:border-primary/50 hover:bg-primary/5 hover:shadow-[0_18px_46px_-34px_oklch(0.74_0.14_180/0.9)]"
+                    >
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <span className="grid size-10 place-items-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary/15">
+                          <Pill className="size-5" />
+                        </span>
+                        <span className="rounded-full border border-border/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          {c.count} meds
+                        </span>
+                      </div>
+                      <p className="text-base font-bold">{c.name}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Open shelf and select a dispensing brand</p>
+                    </motion.button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {filtered.map((d) => (
+                    <motion.button
+                      key={d.id}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => openBrandSelection(d)}
+                      className="rounded-xl border border-border/40 bg-card/60 p-3 text-left transition hover:border-primary/40 hover:bg-primary/5"
+                    >
+                      <p className="text-sm font-semibold">{d.name}</p>
+                      <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{d.generic_name ?? d.category}</p>
+                      <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                        <Tags className="size-3" />
+                        choose brand
+                      </p>
+                    </motion.button>
+                  ))}
+                  {filtered.length === 0 && (
+                    <div className="col-span-full rounded-xl border border-dashed border-border/50 p-8 text-center text-sm text-muted-foreground">
+                      No medicines found in this category.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="rounded-xl border border-border/40 bg-card/50 p-3 backdrop-blur">
               <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Dispensing tray</p>
@@ -265,7 +339,10 @@ function RxGame() {
                 <ul className="space-y-1.5">
                   {collected.map((c) => (
                     <li key={c} className="flex items-center justify-between rounded-lg border border-border/30 bg-muted/30 px-3 py-2 text-sm">
-                      <span>{c}</span>
+                      <span>
+                        <span className="font-semibold">{c}</span>
+                        {selectedBrands[c] && <span className="ml-2 text-xs text-primary">{selectedBrands[c]}</span>}
+                      </span>
                       <button onClick={() => removeDrug(c)} className="text-muted-foreground hover:text-destructive">
                         <Trash2 className="size-3.5" />
                       </button>
@@ -285,10 +362,57 @@ function RxGame() {
         </main>
       )}
 
+      <AnimatePresence>
+        {brandDrug && (
+          <motion.div
+            className="fixed inset-0 z-50 grid place-items-center bg-background/70 p-4 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 18, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              className="glass-card w-full max-w-xl p-5"
+            >
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-primary">Select brand</p>
+                  <h2 className="mt-1 text-2xl font-bold">{brandDrug.name}</h2>
+                  <p className="text-sm text-muted-foreground">{brandDrug.generic_name ?? brandDrug.category}</p>
+                </div>
+                <button
+                  onClick={() => setBrandDrug(null)}
+                  className="rounded-full border border-border/50 p-2 text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+                  aria-label="Close brand selector"
+                >
+                  <XIcon className="size-4" />
+                </button>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {getBrandsForDrug(brandDrug).map((brand) => (
+                  <motion.button
+                    key={brand}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => selectBrand(brandDrug, brand)}
+                    className="rounded-xl border border-border/40 bg-card/60 p-4 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                  >
+                    <p className="font-semibold">{brand}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Dispense this brand</p>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {phase === "info" && (
         <DrugInfoStep
           drug={required_for_steps[infoIdx]}
-          allDrugs={drugs}
+          allDrugs={catalogDrugs}
           onRead={markInfo}
           onSkip={advanceInfo}
           count={`${infoIdx + 1} / ${required_for_steps.length}`}
