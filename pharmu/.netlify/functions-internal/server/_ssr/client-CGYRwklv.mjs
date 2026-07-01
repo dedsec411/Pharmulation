@@ -1,7 +1,7 @@
 import { c as createClient } from "../_libs/supabase__supabase-js.mjs";
 function createSupabaseClient() {
-  const SUPABASE_URL = "https://ogxbvpnpqbwjmdyhrabr.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_K2Vo8K1QS0IiS4a0m2Ccyg_AccUjF00";
+  const SUPABASE_URL = "https://hpzjxzmqgrcpbizxucbp.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_wJWwryy4tRK-GOt9EgJQhQ_CX82_vKm";
   return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       storage: typeof window !== "undefined" ? localStorage : void 0,

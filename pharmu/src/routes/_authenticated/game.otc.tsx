@@ -13,6 +13,13 @@ import { User } from "lucide-react";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
+import {
+  OtcScenarioPanel,
+  formatOtcCorrectChoice,
+  getOtcCorrectChoices,
+  getOtcPatientResponse,
+  type OtcDialogueTurn,
+} from "@/components/game/OtcScenarioPanel";
 
 export const Route = createFileRoute("/_authenticated/game/otc")({
   head: () => ({ meta: [{ title: "OTC Consultation — PharmaVerse" }] }),
@@ -36,6 +43,7 @@ function OtcGame() {
   const [hints, setHints] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [result, setResult] = useState<any>(null);
+  const [dialogueLog, setDialogueLog] = useState<OtcDialogueTurn[]>([]);
 
   const timer = useTimer(LIMIT, () => step !== "done" && finish(true));
   const errPanel = useErrorPanel({
@@ -46,7 +54,7 @@ function OtcGame() {
   });
 
   useEffect(() => {
-    setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setQuantity(1); setResult(null);
+    setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setQuantity(1); setResult(null); setDialogueLog([]);
   }, [caseData?.id]);
 
   if (loading || !caseData) return <>{difficultyModal}<Loading /></>;
@@ -55,15 +63,18 @@ function OtcGame() {
 
   function pickQuestion(i: number) {
     const q = questions[qi];
+    const selectedQuestion = q.choices?.[i] ?? "";
+    const patientResponse = getOtcPatientResponse(q, i);
+    setDialogueLog((log) => [...log, { pharmacist: selectedQuestion, patient: patientResponse, correct: i === q.correct }]);
     if (i === q.correct) { setCorrect((n) => n + 1); toastScore(20, "good question"); }
     else {
       setWrong((n) => n + 1); toastScore(-15, "wrong path");
       errPanel.logError({
         errorType: "Irrelevant follow-up question",
-        wrongChoice: q.choices?.[i] ?? "",
+        wrongChoice: selectedQuestion,
         correctChoice: q.choices?.[q.correct],
-        whyWrong: "That question doesn't help narrow down the diagnosis here and wastes the consultation.",
-        whatToKnow: "Priority OTC questions establish duration, severity, associated symptoms, current medications, and red flag signs.",
+        whyWrong: "That question does not uncover the key OTC safety information for this scenario.",
+        whatToKnow: "Priority OTC questions establish who the medicine is for, symptoms, duration, prior treatment, allergies, medical conditions, and current medicines.",
         hint: "Ask about onset, severity, or red-flag features first.",
       });
     }
@@ -71,13 +82,14 @@ function OtcGame() {
     else setStep("drug");
   }
   function pickDrug(opt: string) {
-    if (opt === ans.correct_drug) { setCorrect((n) => n + 1); toastScore(20, "correct drug"); }
+    const correctChoices = getOtcCorrectChoices(ans);
+    if (correctChoices.includes(opt)) { setCorrect((n) => n + 1); toastScore(20, "correct drug"); }
     else {
       setWrong((n) => n + 1); toastScore(-15, "wrong drug");
       errPanel.logError({
         errorType: "Wrong OTC recommendation",
         wrongChoice: opt,
-        correctChoice: ans.correct_drug,
+        correctChoice: formatOtcCorrectChoice(ans),
         whyWrong: `${opt} is not appropriate for this patient given their presenting symptoms, history, or contraindications.`,
         whatToKnow: "Match OTC product to symptom + screen for red flags, pregnancy, allergies, and current meds before recommending.",
         hint: "Consider this patient's specific risk factors and symptom pattern.",
@@ -193,7 +205,7 @@ function OtcGame() {
             className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
             {step === "questions" && questions[qi] && (
               <>
-                <p className="rounded-lg bg-primary/10 p-3 text-sm italic text-primary">"{qi === 0 ? ans.complaint : questions[qi].q}"</p>
+                <OtcScenarioPanel ans={ans} caseData={caseData} dialogueLog={dialogueLog} />
                 <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ask</p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   {questions[qi].choices.map((c: string, i: number) => (

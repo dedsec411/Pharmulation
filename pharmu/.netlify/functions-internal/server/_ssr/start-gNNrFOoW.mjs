@@ -1,6 +1,6 @@
-import { d as createStart, b as createMiddleware } from "./vendor-tanstack-TJDJ1jS7.mjs";
+import { d as createStart, b as createMiddleware } from "./vendor-tanstack-MYXmXOno.mjs";
 import { r as renderErrorPage } from "./index.mjs";
-import { s as supabase } from "./client-Bd0g9e26.mjs";
+import { s as supabase } from "./client-CGYRwklv.mjs";
 import "../_libs/react.mjs";
 import "../_libs/seroval.mjs";
 import "node:async_hooks";

@@ -14,6 +14,13 @@ import { useAuthStore } from "@/lib/auth-store";
 import { RX_DRUG_CATEGORIES, getBrandsForDrug, prepareDrugCatalog } from "@/lib/drug-catalog";
 import { supabase } from "@/integrations/supabase/client";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
+import {
+  OtcScenarioPanel,
+  formatOtcCorrectChoice,
+  getOtcCorrectChoices,
+  getOtcPatientResponse,
+  type OtcDialogueTurn,
+} from "@/components/game/OtcScenarioPanel";
 import { toast } from "sonner";
 
 import {
@@ -1247,6 +1254,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
   const [hints, setHints]   = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [result, setResult] = useState<any>(null);
+  const [dialogueLog, setDialogueLog] = useState<OtcDialogueTurn[]>([]);
 
   const timer   = useTimer(LIMIT, () => step !== "done" && finish(true));
   const errPanel = useErrorPanel({
@@ -1257,7 +1265,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
   });
 
   useEffect(() => {
-    setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setQuantity(1); setResult(null);
+    setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setQuantity(1); setResult(null); setDialogueLog([]);
   }, [caseData?.id]);
 
   const ans: any       = caseData?.correct_answer_json ?? {};
@@ -1265,15 +1273,18 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
 
   function pickQuestion(i: number) {
     const q = questions[qi];
+    const selectedQuestion = q.choices?.[i] ?? "";
+    const patientResponse = getOtcPatientResponse(q, i);
+    setDialogueLog((log) => [...log, { pharmacist: selectedQuestion, patient: patientResponse, correct: i === q.correct }]);
     if (i === q.correct) { setCorrect((n) => n + 1); toastScore(20, "good question"); }
     else {
       setWrong((n) => n + 1); toastScore(-15, "wrong path");
       errPanel.logError({
         errorType: "Irrelevant follow-up question",
-        wrongChoice: q.choices?.[i] ?? "",
+        wrongChoice: selectedQuestion,
         correctChoice: q.choices?.[q.correct],
-        whyWrong: "That question doesn't help narrow down the diagnosis here.",
-        whatToKnow: "Priority OTC questions establish duration, severity, symptoms, current medications, and red flag signs.",
+        whyWrong: "That question does not uncover the key OTC safety information for this scenario.",
+        whatToKnow: "Priority OTC questions establish who the medicine is for, symptoms, duration, prior treatment, allergies, medical conditions, and current medicines.",
       });
     }
     if (qi + 1 < questions.length) setQi((x) => x + 1);
@@ -1281,12 +1292,13 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
   }
 
   function pickDrug(opt: string) {
-    if (opt === ans.correct_drug) { setCorrect((n) => n + 1); toastScore(20, "correct drug"); }
+    const correctChoices = getOtcCorrectChoices(ans);
+    if (correctChoices.includes(opt)) { setCorrect((n) => n + 1); toastScore(20, "correct drug"); }
     else {
       setWrong((n) => n + 1); toastScore(-15, "wrong drug");
       errPanel.logError({
         errorType: "Wrong OTC recommendation",
-        wrongChoice: opt, correctChoice: ans.correct_drug,
+        wrongChoice: opt, correctChoice: formatOtcCorrectChoice(ans),
         whyWrong: `${opt} is not appropriate for this patient given their symptoms or contraindications.`,
         whatToKnow: "Match OTC product to symptom + screen for red flags, pregnancy, allergies, and current meds.",
       });
@@ -1418,15 +1430,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
 
             {step === "questions" && questions[qi] && (
               <>
-                <div className="rounded-lg bg-primary/10 p-3 mb-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Pill className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">Patient says</span>
-                  </div>
-                  <p className="text-sm italic text-foreground/90">
-                    "{qi === 0 ? ans.complaint : questions[qi].q}"
-                  </p>
-                </div>
+                <OtcScenarioPanel ans={ans} caseData={caseData} dialogueLog={dialogueLog} />
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Your follow-up question</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {questions[qi].choices.map((c: string, i: number) => (

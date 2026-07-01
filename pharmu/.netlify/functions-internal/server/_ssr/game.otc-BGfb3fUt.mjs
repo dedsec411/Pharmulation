@@ -1,9 +1,9 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-m2ZcCu3f.mjs";
-import { S as SimulatedPrescription } from "./SimulatedPrescription-BtzF8rKo.mjs";
+import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-zAP6lzEJ.mjs";
+import { S as SimulatedPrescription, O as OtcScenarioPanel, g as getOtcPatientResponse, a as getOtcCorrectChoices, f as formatOtcCorrectChoice } from "./OtcScenarioPanel-_OFqqHU1.mjs";
 import { M as ModeTheme } from "./ModeTheme-Dcsp8zjD.mjs";
-import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-JKtrmWmg.mjs";
-import { u as useAuthStore } from "./router-kIoM_65U.mjs";
+import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-CP2LLHvv.mjs";
+import { u as useAuthStore } from "./router-Dzpdnv47.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/seroval.mjs";
 import { J as User } from "../_libs/lucide-react.mjs";
@@ -21,7 +21,7 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
-import "./client-Bd0g9e26.mjs";
+import "./client-CGYRwklv.mjs";
 import "../_libs/supabase__supabase-js.mjs";
 import "../_libs/supabase__postgrest-js.mjs";
 import "../_libs/supabase__realtime-js.mjs";
@@ -34,7 +34,7 @@ import "../_libs/supabase__functions-js.mjs";
 import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
-import "./vendor-tanstack-TJDJ1jS7.mjs";
+import "./vendor-tanstack-MYXmXOno.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -70,6 +70,7 @@ function OtcGame() {
   const [hints, setHints] = reactExports.useState(0);
   const [quantity, setQuantity] = reactExports.useState(1);
   const [result, setResult] = reactExports.useState(null);
+  const [dialogueLog, setDialogueLog] = reactExports.useState([]);
   const timer = useTimer(LIMIT, () => step !== "done" && finish(true));
   const errPanel = useErrorPanel({
     mode: "otc",
@@ -85,6 +86,7 @@ function OtcGame() {
     setHints(0);
     setQuantity(1);
     setResult(null);
+    setDialogueLog([]);
   }, [caseData?.id]);
   if (loading || !caseData) return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     difficultyModal,
@@ -94,6 +96,13 @@ function OtcGame() {
   const questions = ans.questions ?? [];
   function pickQuestion(i) {
     const q = questions[qi];
+    const selectedQuestion = q.choices?.[i] ?? "";
+    const patientResponse = getOtcPatientResponse(q, i);
+    setDialogueLog((log) => [...log, {
+      pharmacist: selectedQuestion,
+      patient: patientResponse,
+      correct: i === q.correct
+    }]);
     if (i === q.correct) {
       setCorrect((n) => n + 1);
       toastScore(20, "good question");
@@ -102,10 +111,10 @@ function OtcGame() {
       toastScore(-15, "wrong path");
       errPanel.logError({
         errorType: "Irrelevant follow-up question",
-        wrongChoice: q.choices?.[i] ?? "",
+        wrongChoice: selectedQuestion,
         correctChoice: q.choices?.[q.correct],
-        whyWrong: "That question doesn't help narrow down the diagnosis here and wastes the consultation.",
-        whatToKnow: "Priority OTC questions establish duration, severity, associated symptoms, current medications, and red flag signs.",
+        whyWrong: "That question does not uncover the key OTC safety information for this scenario.",
+        whatToKnow: "Priority OTC questions establish who the medicine is for, symptoms, duration, prior treatment, allergies, medical conditions, and current medicines.",
         hint: "Ask about onset, severity, or red-flag features first."
       });
     }
@@ -113,7 +122,8 @@ function OtcGame() {
     else setStep("drug");
   }
   function pickDrug(opt) {
-    if (opt === ans.correct_drug) {
+    const correctChoices = getOtcCorrectChoices(ans);
+    if (correctChoices.includes(opt)) {
       setCorrect((n) => n + 1);
       toastScore(20, "correct drug");
     } else {
@@ -122,7 +132,7 @@ function OtcGame() {
       errPanel.logError({
         errorType: "Wrong OTC recommendation",
         wrongChoice: opt,
-        correctChoice: ans.correct_drug,
+        correctChoice: formatOtcCorrectChoice(ans),
         whyWrong: `${opt} is not appropriate for this patient given their presenting symptoms, history, or contraindications.`,
         whatToKnow: "Match OTC product to symptom + screen for red flags, pregnancy, allergies, and current meds before recommending.",
         hint: "Consider this patient's specific risk factors and symptom pattern."
@@ -261,11 +271,7 @@ function OtcGame() {
         y: 0
       }, className: "rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur", children: [
         step === "questions" && questions[qi] && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "rounded-lg bg-primary/10 p-3 text-sm italic text-primary", children: [
-            '"',
-            qi === 0 ? ans.complaint : questions[qi].q,
-            '"'
-          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(OtcScenarioPanel, { ans, caseData, dialogueLog }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground", children: "Ask" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 grid gap-2 sm:grid-cols-2", children: questions[qi].choices.map((c, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => pickQuestion(i), className: "rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm hover:border-primary/40 hover:bg-primary/5", children: c }, i)) })
         ] }),

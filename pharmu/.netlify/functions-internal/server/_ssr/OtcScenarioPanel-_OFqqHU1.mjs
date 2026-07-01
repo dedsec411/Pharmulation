@@ -1,5 +1,6 @@
 import { j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
+import { e as Stethoscope, a7 as MessageCircle } from "../_libs/lucide-react.mjs";
 const DEFAULT_VITALS = {
   bp: "118/76",
   pulse: "82",
@@ -188,6 +189,70 @@ function SimulatedPrescription({
     "template-prescription"
   );
 }
+function getOtcPatientResponse(question, choiceIndex) {
+  const isCorrect = choiceIndex === question?.correct;
+  if (isCorrect) {
+    return question?.patient_response ?? question?.response ?? question?.answer ?? question?.q ?? "Okay.";
+  }
+  return question?.wrong_response ?? "I am not sure that answers what I came in for.";
+}
+function getOtcCorrectChoices(ans) {
+  const values = [
+    ans?.correct_drug,
+    ...Array.isArray(ans?.correct_drugs) ? ans.correct_drugs : []
+  ];
+  return values.map(String).filter(Boolean);
+}
+function formatOtcCorrectChoice(ans) {
+  const choices = getOtcCorrectChoices(ans);
+  return choices.length ? choices.join(" or ") : String(ans?.correct_drug ?? "");
+}
+function OtcScenarioPanel({
+  ans,
+  caseData,
+  dialogueLog
+}) {
+  const patient = caseData?.patient_info_json ?? {};
+  const setting = ans?.scenario_setting ?? "A patient visits a community pharmacy requesting OTC advice.";
+  const openingLine = ans?.opening_patient_line ?? ans?.complaint ?? patient.symptoms ?? caseData?.title ?? "I need some advice.";
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-4 overflow-hidden rounded-2xl border border-primary/25 bg-primary/10 shadow-[0_0_34px_-22px_oklch(0.74_0.14_180/0.9)] backdrop-blur", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-3 border-b border-primary/20 bg-background/35 px-4 py-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "grid size-8 place-items-center rounded-full border border-primary/30 bg-primary/15", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Stethoscope, { className: "size-4 text-primary" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-black uppercase tracking-[0.22em] text-primary", children: "Case Scenario" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-muted-foreground", children: setting })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary sm:inline-flex", children: "OTC dialogue" })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3 p-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(DialogueLine, { speaker: "Patient", text: openingLine }),
+      dialogueLog.map((turn, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(DialogueLine, { speaker: "Pharmacist", text: turn.pharmacist, tone: turn.correct ? "pharmacist" : "warning" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(DialogueLine, { speaker: "Patient", text: turn.patient })
+      ] }, `${turn.pharmacist}-${index}`))
+    ] })
+  ] });
+}
+function DialogueLine({
+  speaker,
+  text,
+  tone = "patient"
+}) {
+  const toneClass = tone === "pharmacist" ? "border-cyan-300/25 bg-cyan-300/10 text-cyan-50" : tone === "warning" ? "border-destructive/30 bg-destructive/10 text-destructive-foreground" : "border-primary/20 bg-background/45 text-foreground";
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `rounded-xl border px-3 py-2 ${toneClass}`, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-1 flex items-center gap-2", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(MessageCircle, { className: "size-3 text-primary" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-bold uppercase tracking-wider text-muted-foreground", children: speaker })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm leading-relaxed", children: text })
+  ] });
+}
 export {
-  SimulatedPrescription as S
+  OtcScenarioPanel as O,
+  SimulatedPrescription as S,
+  getOtcCorrectChoices as a,
+  formatOtcCorrectChoice as f,
+  getOtcPatientResponse as g
 };

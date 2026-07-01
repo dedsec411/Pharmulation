@@ -1,4 +1,4 @@
-import { s as supabase } from "./client-Bd0g9e26.mjs";
+import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 const DIFFICULTY_LABEL = {
   easy: "Easy",

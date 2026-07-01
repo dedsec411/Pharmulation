@@ -1,6 +1,6 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { e as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { s as supabase } from "./client-Bd0g9e26.mjs";
+import { s as supabase } from "./client-CGYRwklv.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";

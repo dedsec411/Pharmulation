@@ -1,4 +1,4 @@
-import { s as supabase } from "./client-Bd0g9e26.mjs";
+import { s as supabase } from "./client-CGYRwklv.mjs";
 function getAuthCallbackUrl(next = "/dashboard") {
   if (typeof window === "undefined") return void 0;
   const callback = new URL("/auth/callback", window.location.origin);
