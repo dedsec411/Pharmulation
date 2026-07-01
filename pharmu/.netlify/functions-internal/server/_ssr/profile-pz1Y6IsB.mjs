@@ -1,7 +1,7 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { N as Navbar } from "./Navbar-B_svYs6u.mjs";
-import { u as useAuthStore } from "./router-BNwBbsCq.mjs";
+import { N as Navbar } from "./Navbar-DmFIjK8O.mjs";
+import { u as useAuthStore } from "./router-CjdgCv8I.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as tierFor, x as xpProgress } from "./levels-7qe6_GyK.mjs";
 import { M as MODE_LABEL } from "./shared-CP2LLHvv.mjs";
@@ -24,7 +24,7 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
-import "./vendor-tanstack-Csp-bHi_.mjs";
+import "./vendor-tanstack-D-RSGHsu.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
