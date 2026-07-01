@@ -1,9 +1,9 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { a as useDifficultyChoice, b as useCaseLoader, u as useGameExit, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-EgUqRVpw.mjs";
+import { a as useDifficultyChoice, b as useCaseLoader, u as useGameExit, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-m2ZcCu3f.mjs";
 import { M as ModeTheme } from "./ModeTheme-Dcsp8zjD.mjs";
 import { S as SimulatedPrescription } from "./SimulatedPrescription-BtzF8rKo.mjs";
 import { c as computeScore, s as submitScore, t as toastScore } from "./shared-JKtrmWmg.mjs";
-import { u as useAuthStore } from "./router-BNcp_T-P.mjs";
+import { u as useAuthStore } from "./router-kIoM_65U.mjs";
 import { p as prepareDrugCatalog, R as RX_DRUG_CATEGORIES, g as getBrandsForDrug } from "./drug-catalog-DKPW6qki.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
@@ -26,7 +26,7 @@ import "../_libs/isbot.mjs";
 import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
-import "./vendor-tanstack-B1LzCUcS.mjs";
+import "./vendor-tanstack-TJDJ1jS7.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -51,7 +51,7 @@ import "../_libs/motion-dom.mjs";
 import "../_libs/motion-utils.mjs";
 const LIMIT_RX = 180;
 const LIMIT_OTC = 120;
-const FREQS = ["once daily", "twice daily", "three times daily", "as needed"];
+const FREQS = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"];
 const TIMINGS = ["morning", "with food", "before sleep", "as needed"];
 const DURATIONS = ["7 days", "14 days", "4 weeks", "ongoing"];
 function CommunityFloatingPills({
@@ -1128,7 +1128,7 @@ function LabelStep({
 }) {
   const [freq, setFreq] = reactExports.useState("");
   const [timing, setTiming] = reactExports.useState("");
-  const [duration, setDuration] = reactExports.useState("");
+  const [duration, setDuration] = reactExports.useState(DURATIONS[0]);
   if (previous) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "mx-auto max-w-2xl px-4 py-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-2xl border border-border/40 bg-card/60 p-6", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-sm", children: [
@@ -1165,13 +1165,27 @@ function LabelStep({
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "Choose label instructions" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(OptionPicker, { label: "Frequency", options: FREQS, value: freq, onChange: setFreq }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(OptionPicker, { label: "Timing", options: TIMINGS, value: timing, onChange: setTiming }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(OptionPicker, { label: "Duration", options: DURATIONS, value: duration, onChange: setDuration }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: !freq || !timing || !duration, onClick: () => onSubmit({
+      /* @__PURE__ */ jsxRuntimeExports.jsx(DurationSlider, { value: duration, onChange: setDuration }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { disabled: !freq || !timing, onClick: () => onSubmit({
         frequency: freq,
         timing,
         duration
       }), className: "mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40", children: "Submit label" })
     ] })
+  ] });
+}
+function DurationSlider({
+  value,
+  onChange
+}) {
+  const index = Math.max(0, DURATIONS.indexOf(value));
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-primary", children: "Duration" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary", children: value })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("input", { type: "range", min: 0, max: DURATIONS.length - 1, step: 1, value: index, onChange: (event) => onChange(DURATIONS[Number(event.target.value)]), "aria-label": "Duration", className: "mt-4 w-full accent-primary" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 grid grid-cols-4 gap-1 text-center text-[10px] font-semibold text-muted-foreground", children: DURATIONS.map((durationOption) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: durationOption === value ? "text-primary" : "", children: durationOption }, durationOption)) })
   ] });
 }
 function OptionPicker({

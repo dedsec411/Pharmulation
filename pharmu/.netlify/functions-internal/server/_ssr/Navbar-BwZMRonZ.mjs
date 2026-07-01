@@ -1,6 +1,6 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { e as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { u as useAuthStore, L as LogoVideo } from "./router-BNcp_T-P.mjs";
+import { u as useAuthStore, L as LogoVideo } from "./router-kIoM_65U.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { J as User, K as LogOut } from "../_libs/lucide-react.mjs";

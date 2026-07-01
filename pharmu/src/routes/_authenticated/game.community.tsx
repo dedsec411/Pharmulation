@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/game/community")({
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LIMIT_RX  = 180;
 const LIMIT_OTC = 120;
-const FREQS     = ["once daily", "twice daily", "three times daily", "as needed"];
+const FREQS     = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"];
 const TIMINGS   = ["morning", "with food", "before sleep", "as needed"];
 const DURATIONS = ["7 days", "14 days", "4 weeks", "ongoing"];
 
@@ -1565,7 +1565,7 @@ function InfoSection({ label, items }: { label: string; items?: string[] | null 
 function LabelStep({ drug, count, onSubmit, previous }: any) {
   const [freq, setFreq]       = useState("");
   const [timing, setTiming]   = useState("");
-  const [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState(DURATIONS[0]);
 
   if (previous) {
     return (
@@ -1599,15 +1599,47 @@ function LabelStep({ drug, count, onSubmit, previous }: any) {
         <p className="text-sm text-muted-foreground">Choose label instructions</p>
         <OptionPicker label="Frequency" options={FREQS}     value={freq}     onChange={setFreq} />
         <OptionPicker label="Timing"    options={TIMINGS}   value={timing}   onChange={setTiming} />
-        <OptionPicker label="Duration"  options={DURATIONS} value={duration} onChange={setDuration} />
+        <DurationSlider value={duration} onChange={setDuration} />
         <button
-          disabled={!freq || !timing || !duration}
+          disabled={!freq || !timing}
           onClick={() => onSubmit({ frequency: freq, timing, duration })}
           className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
           Submit label
         </button>
       </div>
     </main>
+  );
+}
+
+function DurationSlider({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const index = Math.max(0, DURATIONS.indexOf(value));
+
+  return (
+    <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Duration</p>
+        <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+          {value}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={DURATIONS.length - 1}
+        step={1}
+        value={index}
+        onChange={(event) => onChange(DURATIONS[Number(event.target.value)])}
+        aria-label="Duration"
+        className="mt-4 w-full accent-primary"
+      />
+      <div className="mt-2 grid grid-cols-4 gap-1 text-center text-[10px] font-semibold text-muted-foreground">
+        {DURATIONS.map((durationOption) => (
+          <span key={durationOption} className={durationOption === value ? "text-primary" : ""}>
+            {durationOption}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 

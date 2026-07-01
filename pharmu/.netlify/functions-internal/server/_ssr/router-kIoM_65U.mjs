@@ -5,7 +5,7 @@ import { S as redirect } from "../_libs/tanstack__router-core.mjs";
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { T as Toaster$1 } from "../_libs/sonner.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
-import { c as createServerFn, a as createSsrRpc } from "./vendor-tanstack-B1LzCUcS.mjs";
+import { c as createServerFn, a as createSsrRpc } from "./vendor-tanstack-TJDJ1jS7.mjs";
 import { S as Slot } from "../_libs/radix-ui__react-slot.mjs";
 import { c as cva } from "../_libs/class-variance-authority.mjs";
 import { c as clsx } from "../_libs/clsx.mjs";
@@ -42,7 +42,7 @@ import "../_libs/srvx.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/motion-dom.mjs";
 import "../_libs/motion-utils.mjs";
-const appCss = "/assets/styles-DCKFMN1M.css";
+const appCss = "/assets/styles-CjI_PRn8.css";
 function reportLovableError(error, context = {}) {
   if (typeof window === "undefined") return;
   window.__lovableEvents?.captureException?.(
@@ -731,7 +731,7 @@ function ErrorComponent({ error, reset }) {
     ] })
   ] }) });
 }
-const Route$i = createRootRouteWithContext()({
+const Route$j = createRootRouteWithContext()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -777,7 +777,7 @@ function AuthBootstrap() {
   return null;
 }
 function RootComponent() {
-  const { queryClient } = Route$i.useRouteContext();
+  const { queryClient } = Route$j.useRouteContext();
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(QueryClientProvider, { client: queryClient, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(AuthBootstrap, {}),
     /* @__PURE__ */ jsxRuntimeExports.jsx(Outlet, {}),
@@ -785,26 +785,26 @@ function RootComponent() {
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, { position: "top-right", theme: "dark", richColors: true })
   ] });
 }
-const $$splitComponentImporter$g = () => import("./signup-DIizysBu.mjs");
-const Route$h = createFileRoute("/signup")({
+const $$splitComponentImporter$h = () => import("./signup-Ut_D31gD.mjs");
+const Route$i = createFileRoute("/signup")({
   head: () => ({
     meta: [{
-      title: "Sign up — PharmaVerse"
+      title: "Sign up - Pharmulation"
     }]
   }),
-  component: lazyRouteComponent($$splitComponentImporter$g, "component")
+  component: lazyRouteComponent($$splitComponentImporter$h, "component")
 });
-const $$splitComponentImporter$f = () => import("./login-Cqeh683B.mjs");
-const Route$g = createFileRoute("/login")({
+const $$splitComponentImporter$g = () => import("./login-CYxYD4RL.mjs");
+const Route$h = createFileRoute("/login")({
   head: () => ({
     meta: [{
       title: "Sign in - Pharmulation"
     }]
   }),
-  component: lazyRouteComponent($$splitComponentImporter$f, "component")
+  component: lazyRouteComponent($$splitComponentImporter$g, "component")
 });
-const $$splitComponentImporter$e = () => import("./leaderboard-b4s8bzrD.mjs");
-const Route$f = createFileRoute("/leaderboard")({
+const $$splitComponentImporter$f = () => import("./leaderboard--o-Gy02y.mjs");
+const Route$g = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [{
       title: "Leaderboard - PharmaVerse"
@@ -813,10 +813,10 @@ const Route$f = createFileRoute("/leaderboard")({
       content: "Top pharmacists on PharmaVerse."
     }]
   }),
-  component: lazyRouteComponent($$splitComponentImporter$e, "component")
+  component: lazyRouteComponent($$splitComponentImporter$f, "component")
 });
-const $$splitComponentImporter$d = () => import("./route-BFsOu0JM.mjs");
-const Route$e = createFileRoute("/_authenticated")({
+const $$splitComponentImporter$e = () => import("./route-BFsOu0JM.mjs");
+const Route$f = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
     const {
@@ -832,7 +832,7 @@ const Route$e = createFileRoute("/_authenticated")({
       user: data.user
     };
   },
-  component: lazyRouteComponent($$splitComponentImporter$d, "component")
+  component: lazyRouteComponent($$splitComponentImporter$e, "component")
 });
 function PillBackground() {
   const pills = Array.from({ length: 14 });
@@ -885,7 +885,7 @@ function LogoVideo({ className = "" }) {
     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "sr-only", children: "Pharmulation" })
   ] });
 }
-const Route$d = createFileRoute("/")({
+const Route$e = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Pharmulation — Train Like a Real Pharmacist" },
@@ -1037,7 +1037,16 @@ function Landing() {
     ] }) })
   ] });
 }
-const $$splitComponentImporter$c = () => import("./settings-CjKAWtT6.mjs");
+const $$splitComponentImporter$d = () => import("./auth.callback-ChGd8ZPi.mjs");
+const Route$d = createFileRoute("/auth/callback")({
+  head: () => ({
+    meta: [{
+      title: "Signing in - Pharmulation"
+    }]
+  }),
+  component: lazyRouteComponent($$splitComponentImporter$d, "component")
+});
+const $$splitComponentImporter$c = () => import("./settings-C_kt-P0o.mjs");
 const Route$c = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [{
@@ -1046,7 +1055,7 @@ const Route$c = createFileRoute("/_authenticated/settings")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$c, "component")
 });
-const $$splitComponentImporter$b = () => import("./profile-CkcMeZpa.mjs");
+const $$splitComponentImporter$b = () => import("./profile-CDm29NQo.mjs");
 const Route$b = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [{
@@ -1057,7 +1066,7 @@ const Route$b = createFileRoute("/_authenticated/profile")({
 });
 const $$splitNotFoundComponentImporter$8 = () => import("./modes-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$8 = () => import("./modes-CqlNFt5g.mjs");
-const $$splitComponentImporter$a = () => import("./modes-B3lfRRsR.mjs");
+const $$splitComponentImporter$a = () => import("./modes-Db9qhKsu.mjs");
 const Route$a = createFileRoute("/_authenticated/modes")({
   head: () => ({
     meta: [{
@@ -1068,7 +1077,7 @@ const Route$a = createFileRoute("/_authenticated/modes")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$8, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$8, "notFoundComponent")
 });
-const $$splitComponentImporter$9 = () => import("./drugs-BEUWCDOy.mjs");
+const $$splitComponentImporter$9 = () => import("./drugs-CXN9cWvn.mjs");
 const Route$9 = createFileRoute("/_authenticated/drugs")({
   head: () => ({
     meta: [{
@@ -1079,7 +1088,7 @@ const Route$9 = createFileRoute("/_authenticated/drugs")({
 });
 const $$splitNotFoundComponentImporter$7 = () => import("./dashboard-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$7 = () => import("./dashboard-CqlNFt5g.mjs");
-const $$splitComponentImporter$8 = () => import("./dashboard-Cb49-JP4.mjs");
+const $$splitComponentImporter$8 = () => import("./dashboard-CjZtWNEz.mjs");
 const Route$8 = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [{
@@ -1090,7 +1099,7 @@ const Route$8 = createFileRoute("/_authenticated/dashboard")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$7, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$7, "notFoundComponent")
 });
-const $$splitComponentImporter$7 = () => import("./admin-jkNDZ0TR.mjs");
+const $$splitComponentImporter$7 = () => import("./admin-6r6-HiPG.mjs");
 const Route$7 = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [{
@@ -1101,7 +1110,7 @@ const Route$7 = createFileRoute("/_authenticated/admin")({
 });
 const $$splitNotFoundComponentImporter$6 = () => import("./game.warehousing-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$6 = () => import("./game.warehousing-CqlNFt5g.mjs");
-const $$splitComponentImporter$6 = () => import("./game.warehousing-C79GJ9Mz.mjs");
+const $$splitComponentImporter$6 = () => import("./game.warehousing-DsGjcF4h.mjs");
 const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
   head: () => ({
     meta: [{
@@ -1114,7 +1123,7 @@ const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
 });
 const $$splitNotFoundComponentImporter$5 = () => import("./game.rx-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$5 = () => import("./game.rx-CqlNFt5g.mjs");
-const $$splitComponentImporter$5 = () => import("./game.rx-unMonWn8.mjs");
+const $$splitComponentImporter$5 = () => import("./game.rx-DKdsO0je.mjs");
 const Route$5 = createFileRoute("/_authenticated/game/rx")({
   head: () => ({
     meta: [{
@@ -1127,7 +1136,7 @@ const Route$5 = createFileRoute("/_authenticated/game/rx")({
 });
 const $$splitNotFoundComponentImporter$4 = () => import("./game.otc-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$4 = () => import("./game.otc-CqlNFt5g.mjs");
-const $$splitComponentImporter$4 = () => import("./game.otc-4UBETWIO.mjs");
+const $$splitComponentImporter$4 = () => import("./game.otc-D_AR0jQi.mjs");
 const Route$4 = createFileRoute("/_authenticated/game/otc")({
   head: () => ({
     meta: [{
@@ -1140,7 +1149,7 @@ const Route$4 = createFileRoute("/_authenticated/game/otc")({
 });
 const $$splitNotFoundComponentImporter$3 = () => import("./game.industry-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$3 = () => import("./game.industry-CqlNFt5g.mjs");
-const $$splitComponentImporter$3 = () => import("./game.industry-BPMeZsvx.mjs");
+const $$splitComponentImporter$3 = () => import("./game.industry-DwlpsMCS.mjs");
 const Route$3 = createFileRoute("/_authenticated/game/industry")({
   head: () => ({
     meta: [{
@@ -1186,9 +1195,9 @@ const Button = reactExports.forwardRef(
   }
 );
 Button.displayName = "Button";
-const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-Cmhp0p5e.mjs");
-const $$splitErrorComponentImporter$2 = () => import("./game.hospital-DozpVz1k.mjs");
-const $$splitComponentImporter$2 = () => import("./game.hospital-hL0zZnby.mjs");
+const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-BBf8Q6h-.mjs");
+const $$splitErrorComponentImporter$2 = () => import("./game.hospital-BE_qJJVt.mjs");
+const $$splitComponentImporter$2 = () => import("./game.hospital-fkILfXG7.mjs");
 const Route$2 = createFileRoute("/_authenticated/game/hospital")({
   head: () => ({
     meta: [{
@@ -1201,7 +1210,7 @@ const Route$2 = createFileRoute("/_authenticated/game/hospital")({
 });
 const $$splitNotFoundComponentImporter$1 = () => import("./game.emergency-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$1 = () => import("./game.emergency-CqlNFt5g.mjs");
-const $$splitComponentImporter$1 = () => import("./game.emergency-CG7z2y-H.mjs");
+const $$splitComponentImporter$1 = () => import("./game.emergency-W9FDfzJj.mjs");
 const Route$1 = createFileRoute("/_authenticated/game/emergency")({
   head: () => ({
     meta: [{
@@ -1214,7 +1223,7 @@ const Route$1 = createFileRoute("/_authenticated/game/emergency")({
 });
 const $$splitNotFoundComponentImporter = () => import("./game.community-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter = () => import("./game.community-CqlNFt5g.mjs");
-const $$splitComponentImporter = () => import("./game.community-DDf_Aza_.mjs");
+const $$splitComponentImporter = () => import("./game.community-C--Hj4mq.mjs");
 const Route = createFileRoute("/_authenticated/game/community")({
   head: () => ({
     meta: [{
@@ -1225,29 +1234,34 @@ const Route = createFileRoute("/_authenticated/game/community")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter, "notFoundComponent")
 });
-const SignupRoute = Route$h.update({
+const SignupRoute = Route$i.update({
   id: "/signup",
   path: "/signup",
-  getParentRoute: () => Route$i
+  getParentRoute: () => Route$j
 });
-const LoginRoute = Route$g.update({
+const LoginRoute = Route$h.update({
   id: "/login",
   path: "/login",
-  getParentRoute: () => Route$i
+  getParentRoute: () => Route$j
 });
-const LeaderboardRoute = Route$f.update({
+const LeaderboardRoute = Route$g.update({
   id: "/leaderboard",
   path: "/leaderboard",
-  getParentRoute: () => Route$i
+  getParentRoute: () => Route$j
 });
-const AuthenticatedRouteRoute = Route$e.update({
+const AuthenticatedRouteRoute = Route$f.update({
   id: "/_authenticated",
-  getParentRoute: () => Route$i
+  getParentRoute: () => Route$j
 });
-const IndexRoute = Route$d.update({
+const IndexRoute = Route$e.update({
   id: "/",
   path: "/",
-  getParentRoute: () => Route$i
+  getParentRoute: () => Route$j
+});
+const AuthCallbackRoute = Route$d.update({
+  id: "/auth/callback",
+  path: "/auth/callback",
+  getParentRoute: () => Route$j
 });
 const AuthenticatedSettingsRoute = Route$c.update({
   id: "/settings",
@@ -1335,9 +1349,10 @@ const rootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LeaderboardRoute,
   LoginRoute,
-  SignupRoute
+  SignupRoute,
+  AuthCallbackRoute
 };
-const routeTree = Route$i._addFileChildren(rootRouteChildren)._addFileTypes();
+const routeTree = Route$j._addFileChildren(rootRouteChildren)._addFileTypes();
 const getRouter = () => {
   const queryClient = new QueryClient();
   const router2 = createRouter({

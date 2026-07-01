@@ -1,7 +1,7 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
 import { s as supabase } from "./client-Bd0g9e26.mjs";
-import { u as useAuthStore } from "./router-BNcp_T-P.mjs";
+import { u as useAuthStore } from "./router-kIoM_65U.mjs";
 import { t as tierFor } from "./levels-7qe6_GyK.mjs";
 import { M as MODE_LABEL } from "./shared-JKtrmWmg.mjs";
 import { B as BackButton } from "./BackButton-DOnk_vvq.mjs";
@@ -32,7 +32,7 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
-import "./vendor-tanstack-B1LzCUcS.mjs";
+import "./vendor-tanstack-TJDJ1jS7.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
