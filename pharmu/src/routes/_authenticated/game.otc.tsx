@@ -17,7 +17,11 @@ import {
   OtcScenarioPanel,
   formatOtcCorrectChoice,
   getOtcCorrectChoices,
+  getOtcCorrectQuestionText,
   getOtcPatientResponse,
+  getOtcQuestionOptions,
+  getOtcSelectedQuestionText,
+  isOtcQuestionChoiceCorrect,
   type OtcDialogueTurn,
 } from "@/components/game/OtcScenarioPanel";
 
@@ -63,16 +67,17 @@ function OtcGame() {
 
   function pickQuestion(i: number) {
     const q = questions[qi];
-    const selectedQuestion = q.choices?.[i] ?? "";
+    const selectedQuestion = getOtcSelectedQuestionText(q, i);
     const patientResponse = getOtcPatientResponse(q, i);
-    setDialogueLog((log) => [...log, { pharmacist: selectedQuestion, patient: patientResponse, correct: i === q.correct }]);
-    if (i === q.correct) { setCorrect((n) => n + 1); toastScore(20, "good question"); }
+    const isCorrect = isOtcQuestionChoiceCorrect(q, i);
+    setDialogueLog((log) => [...log, { pharmacist: selectedQuestion, patient: patientResponse, correct: isCorrect }]);
+    if (isCorrect) { setCorrect((n) => n + 1); toastScore(20, "good question"); }
     else {
       setWrong((n) => n + 1); toastScore(-15, "wrong path");
       errPanel.logError({
         errorType: "Irrelevant follow-up question",
         wrongChoice: selectedQuestion,
-        correctChoice: q.choices?.[q.correct],
+        correctChoice: getOtcCorrectQuestionText(q),
         whyWrong: "That question does not uncover the key OTC safety information for this scenario.",
         whatToKnow: "Priority OTC questions establish who the medicine is for, symptoms, duration, prior treatment, allergies, medical conditions, and current medicines.",
         hint: "Ask about onset, severity, or red-flag features first.",
@@ -208,7 +213,7 @@ function OtcGame() {
                 <OtcScenarioPanel ans={ans} caseData={caseData} dialogueLog={dialogueLog} />
                 <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ask</p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {questions[qi].choices.map((c: string, i: number) => (
+                  {getOtcQuestionOptions(questions[qi]).map((c: string, i: number) => (
                     <button key={i} onClick={() => pickQuestion(i)}
                       className="rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm hover:border-primary/40 hover:bg-primary/5">
                       {c}

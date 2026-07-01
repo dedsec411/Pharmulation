@@ -1,5 +1,5 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useAuthStore, a as useActiveCaseStore, B as Button } from "./router-DEiKTBt8.mjs";
+import { u as useAuthStore, a as useActiveCaseStore, B as Button } from "./router-BNwBbsCq.mjs";
 import { e as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { f as fetchRandomCase, M as MODE_LABEL, D as DIFFICULTY_LABEL, d as DIFFICULTY_RULES } from "./shared-CP2LLHvv.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";

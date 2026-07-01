@@ -6,12 +6,72 @@ export type OtcDialogueTurn = {
   correct: boolean;
 };
 
+const DEFAULT_QUESTION_DECOYS = [
+  "Do you prefer tablets or capsules?",
+  "Which brand do you usually buy?",
+  "Would you like the cheapest option?",
+  "Do you want to buy two packs today?",
+  "Should I give you an antibiotic?",
+  "Do you want something very strong?",
+  "Is this for a refill?",
+  "Do you want a flavored medicine?",
+];
+
+export function getOtcQuestionOptions(question: any) {
+  if (isDialogueQuestion(question)) {
+    return normalizeFourOptions(question?.choices ?? [], question?.q ?? "What would you like to ask?");
+  }
+
+  const correctQuestion = String(question?.q ?? "What symptoms are you having?");
+  const decoys = DEFAULT_QUESTION_DECOYS.filter((item) => item !== correctQuestion);
+  return normalizeFourOptions([correctQuestion, ...decoys], correctQuestion);
+}
+
+export function getOtcCorrectQuestionText(question: any) {
+  if (isDialogueQuestion(question)) {
+    return getOtcQuestionOptions(question)[Number(question?.correct ?? 0)] ?? "";
+  }
+  return String(question?.q ?? "");
+}
+
+export function getOtcSelectedQuestionText(question: any, choiceIndex: number) {
+  return getOtcQuestionOptions(question)[choiceIndex] ?? "";
+}
+
+export function isOtcQuestionChoiceCorrect(question: any, choiceIndex: number) {
+  if (isDialogueQuestion(question)) return choiceIndex === Number(question?.correct ?? 0);
+  return choiceIndex === 0;
+}
+
 export function getOtcPatientResponse(question: any, choiceIndex: number) {
-  const isCorrect = choiceIndex === question?.correct;
+  const isCorrect = isOtcQuestionChoiceCorrect(question, choiceIndex);
   if (isCorrect) {
-    return question?.patient_response ?? question?.response ?? question?.answer ?? question?.q ?? "Okay.";
+    if (isDialogueQuestion(question)) {
+      return question?.patient_response ?? question?.response ?? question?.answer ?? "Okay.";
+    }
+    const answerIndex = Number(question?.correct ?? 0);
+    return question?.patient_response ?? question?.choices?.[answerIndex] ?? "Okay.";
   }
   return question?.wrong_response ?? "I am not sure that answers what I came in for.";
+}
+
+function isDialogueQuestion(question: any) {
+  return Boolean(
+    question?.patient_response ||
+    question?.response ||
+    question?.answer ||
+    question?.choice_type === "pharmacist_questions"
+  );
+}
+
+function normalizeFourOptions(options: unknown[], fallback: string) {
+  const normalized = options.map(String).filter(Boolean);
+  const unique = [...new Set(normalized.length ? normalized : [fallback])];
+  for (const decoy of DEFAULT_QUESTION_DECOYS) {
+    if (unique.length >= 4) break;
+    if (!unique.includes(decoy)) unique.push(decoy);
+  }
+  return unique.slice(0, 4);
 }
 
 export function getOtcCorrectChoices(ans: any) {

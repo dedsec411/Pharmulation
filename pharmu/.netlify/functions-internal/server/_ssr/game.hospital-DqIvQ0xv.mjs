@@ -1,7 +1,7 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-DJSijQm6.mjs";
+import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-COUs_biP.mjs";
 import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-CP2LLHvv.mjs";
-import { u as useAuthStore } from "./router-DEiKTBt8.mjs";
+import { u as useAuthStore } from "./router-BNwBbsCq.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/seroval.mjs";
@@ -22,7 +22,7 @@ import "stream";
 import "../_libs/isbot.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
-import "./vendor-tanstack-Z7Fi8gb-.mjs";
+import "./vendor-tanstack-Csp-bHi_.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";

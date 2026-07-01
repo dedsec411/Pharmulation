@@ -1,9 +1,9 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { a as useDifficultyChoice, b as useCaseLoader, u as useGameExit, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-DJSijQm6.mjs";
+import { a as useDifficultyChoice, b as useCaseLoader, u as useGameExit, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-COUs_biP.mjs";
 import { M as ModeTheme } from "./ModeTheme-Dcsp8zjD.mjs";
-import { S as SimulatedPrescription, O as OtcScenarioPanel, g as getOtcPatientResponse, a as getOtcCorrectChoices, f as formatOtcCorrectChoice } from "./OtcScenarioPanel-CRRTyNPq.mjs";
+import { S as SimulatedPrescription, O as OtcScenarioPanel, g as getOtcQuestionOptions, a as getOtcSelectedQuestionText, b as getOtcPatientResponse, i as isOtcQuestionChoiceCorrect, c as getOtcCorrectQuestionText, d as getOtcCorrectChoices, f as formatOtcCorrectChoice } from "./OtcScenarioPanel-Bcmb_myo.mjs";
 import { c as computeScore, s as submitScore, t as toastScore } from "./shared-CP2LLHvv.mjs";
-import { u as useAuthStore } from "./router-DEiKTBt8.mjs";
+import { u as useAuthStore } from "./router-BNwBbsCq.mjs";
 import { p as prepareDrugCatalog, R as RX_DRUG_CATEGORIES, g as getBrandsForDrug } from "./drug-catalog-DKPW6qki.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
@@ -26,7 +26,7 @@ import "../_libs/isbot.mjs";
 import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
-import "./vendor-tanstack-Z7Fi8gb-.mjs";
+import "./vendor-tanstack-Csp-bHi_.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -841,14 +841,15 @@ function OtcGame({
   const questions = ans.questions ?? [];
   function pickQuestion(i) {
     const q = questions[qi];
-    const selectedQuestion = q.choices?.[i] ?? "";
+    const selectedQuestion = getOtcSelectedQuestionText(q, i);
     const patientResponse = getOtcPatientResponse(q, i);
+    const isCorrect = isOtcQuestionChoiceCorrect(q, i);
     setDialogueLog((log) => [...log, {
       pharmacist: selectedQuestion,
       patient: patientResponse,
-      correct: i === q.correct
+      correct: isCorrect
     }]);
-    if (i === q.correct) {
+    if (isCorrect) {
       setCorrect((n) => n + 1);
       toastScore(20, "good question");
     } else {
@@ -857,7 +858,7 @@ function OtcGame({
       errPanel.logError({
         errorType: "Irrelevant follow-up question",
         wrongChoice: selectedQuestion,
-        correctChoice: q.choices?.[q.correct],
+        correctChoice: getOtcCorrectQuestionText(q),
         whyWrong: "That question does not uncover the key OTC safety information for this scenario.",
         whatToKnow: "Priority OTC questions establish who the medicine is for, symptoms, duration, prior treatment, allergies, medical conditions, and current medicines."
       });
@@ -1021,7 +1022,7 @@ function OtcGame({
         step === "questions" && questions[qi] && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(OtcScenarioPanel, { ans, caseData, dialogueLog }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2", children: "Your follow-up question" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-2 sm:grid-cols-2", children: questions[qi].choices.map((c, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => pickQuestion(i), className: "rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm hover:border-primary/40 hover:bg-primary/5 transition", children: c }, i)) })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-2 sm:grid-cols-2", children: getOtcQuestionOptions(questions[qi]).map((c, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => pickQuestion(i), className: "rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm hover:border-primary/40 hover:bg-primary/5 transition", children: c }, i)) })
         ] }),
         step === "drug" && /* @__PURE__ */ jsxRuntimeExports.jsx(OtcPicker, { title: "Recommend a medication", options: ans.drug_options ?? [], onPick: pickDrug }),
         step === "dose" && /* @__PURE__ */ jsxRuntimeExports.jsx(OtcPicker, { title: "Choose correct dose", options: ans.dose_options ?? [], onPick: pickDose }),
