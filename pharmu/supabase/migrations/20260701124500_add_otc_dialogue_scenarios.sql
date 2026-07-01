@@ -20,7 +20,7 @@ INSERT INTO public.cases (
   '7edab79d-3920-4b28-8d31-7f3a5d86e001',
   'otc',
   'easy',
-  'Case Scenario 1: Allergy',
+  'Case Scenario 1: Allergy (Allergic Rhinitis)',
   NULL,
   NULL,
   ARRAY['Cetirizine', 'Loratadine']::text[],
@@ -35,13 +35,12 @@ INSERT INTO public.cases (
   }$json$::jsonb,
   $json${
     "scenario_setting": "A patient visits a community pharmacy complaining of allergy symptoms.",
-    "opening_patient_line": "It's for me.",
     "complaint": "I've been sneezing a lot, my nose is runny, and my eyes are itchy and watery.",
     "questions": [
       {
         "q": "Confirm who needs the medicine.",
         "choices": [
-          "Who is the medicine for?",
+          "Good morning. Who is the medicine for?",
           "Which antibiotic do you want?",
           "Do you want a cough syrup?",
           "Should I give you eye drops only?"
@@ -161,7 +160,7 @@ INSERT INTO public.cases (
   '7edab79d-3920-4b28-8d31-7f3a5d86e002',
   'otc',
   'easy',
-  'Case Scenario 2: Headache',
+  'Case Scenario 2: Pain (Headache - OTC Analgesics)',
   NULL,
   NULL,
   ARRAY['Paracetamol']::text[],
@@ -176,13 +175,12 @@ INSERT INTO public.cases (
   }$json$::jsonb,
   $json${
     "scenario_setting": "A patient visits a community pharmacy requesting pain relief.",
-    "opening_patient_line": "It's for me.",
     "complaint": "I have a mild headache across my forehead.",
     "questions": [
       {
         "q": "Confirm who needs the medicine.",
         "choices": [
-          "Who is the medicine for?",
+          "Hello. Who is the medicine for?",
           "Which antibiotic do you want?",
           "Is this for a skin rash?",
           "Do you want a sedating medicine?"

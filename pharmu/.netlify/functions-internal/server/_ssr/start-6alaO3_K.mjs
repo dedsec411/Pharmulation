@@ -1,4 +1,4 @@
-import { d as createStart, b as createMiddleware } from "./vendor-tanstack-MYXmXOno.mjs";
+import { d as createStart, b as createMiddleware } from "./vendor-tanstack-Z7Fi8gb-.mjs";
 import { r as renderErrorPage } from "./index.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import "../_libs/react.mjs";

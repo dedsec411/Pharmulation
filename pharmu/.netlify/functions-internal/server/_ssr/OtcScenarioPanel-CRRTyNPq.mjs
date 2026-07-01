@@ -214,7 +214,7 @@ function OtcScenarioPanel({
 }) {
   const patient = caseData?.patient_info_json ?? {};
   const setting = ans?.scenario_setting ?? "A patient visits a community pharmacy requesting OTC advice.";
-  const openingLine = ans?.opening_patient_line ?? ans?.complaint ?? patient.symptoms ?? caseData?.title ?? "I need some advice.";
+  const openingLine = typeof ans?.opening_patient_line === "string" ? ans.opening_patient_line : ans?.scenario_setting ? "" : ans?.complaint ?? patient.symptoms ?? caseData?.title ?? "I need some advice.";
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-4 overflow-hidden rounded-2xl border border-primary/25 bg-primary/10 shadow-[0_0_34px_-22px_oklch(0.74_0.14_180/0.9)] backdrop-blur", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-3 border-b border-primary/20 bg-background/35 px-4 py-3", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
@@ -227,7 +227,7 @@ function OtcScenarioPanel({
       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary sm:inline-flex", children: "OTC dialogue" })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3 p-4", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(DialogueLine, { speaker: "Patient", text: openingLine }),
+      openingLine ? /* @__PURE__ */ jsxRuntimeExports.jsx(DialogueLine, { speaker: "Patient", text: openingLine }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "rounded-xl border border-primary/20 bg-background/35 px-3 py-2 text-xs text-muted-foreground", children: "Choose the pharmacist's next question to begin the consultation." }),
       dialogueLog.map((turn, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(DialogueLine, { speaker: "Pharmacist", text: turn.pharmacist, tone: turn.correct ? "pharmacist" : "warning" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(DialogueLine, { speaker: "Patient", text: turn.patient })

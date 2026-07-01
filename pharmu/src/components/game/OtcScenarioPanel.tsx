@@ -38,7 +38,11 @@ export function OtcScenarioPanel({
 }) {
   const patient = caseData?.patient_info_json ?? {};
   const setting = ans?.scenario_setting ?? "A patient visits a community pharmacy requesting OTC advice.";
-  const openingLine = ans?.opening_patient_line ?? ans?.complaint ?? patient.symptoms ?? caseData?.title ?? "I need some advice.";
+  const openingLine = typeof ans?.opening_patient_line === "string"
+    ? ans.opening_patient_line
+    : ans?.scenario_setting
+      ? ""
+      : ans?.complaint ?? patient.symptoms ?? caseData?.title ?? "I need some advice.";
 
   return (
     <div className="mb-4 overflow-hidden rounded-2xl border border-primary/25 bg-primary/10 shadow-[0_0_34px_-22px_oklch(0.74_0.14_180/0.9)] backdrop-blur">
@@ -58,7 +62,13 @@ export function OtcScenarioPanel({
       </div>
 
       <div className="space-y-3 p-4">
-        <DialogueLine speaker="Patient" text={openingLine} />
+        {openingLine ? (
+          <DialogueLine speaker="Patient" text={openingLine} />
+        ) : (
+          <p className="rounded-xl border border-primary/20 bg-background/35 px-3 py-2 text-xs text-muted-foreground">
+            Choose the pharmacist's next question to begin the consultation.
+          </p>
+        )}
         {dialogueLog.map((turn, index) => (
           <div key={`${turn.pharmacist}-${index}`} className="space-y-2">
             <DialogueLine speaker="Pharmacist" text={turn.pharmacist} tone={turn.correct ? "pharmacist" : "warning"} />
