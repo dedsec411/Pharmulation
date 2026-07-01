@@ -10,7 +10,7 @@ import { MODE_TIMERS } from "@/lib/game/shared";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 
 export const Route = createFileRoute("/_authenticated/modes")({
-  head: () => ({ meta: [{ title: "Training Modes - PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Training Modes - Pharmulation" }] }),
   component: Modes,
   errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
   notFoundComponent: () => <div className="p-8">Not found</div>,

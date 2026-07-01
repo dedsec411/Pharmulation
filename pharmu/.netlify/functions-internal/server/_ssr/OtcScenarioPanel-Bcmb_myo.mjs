@@ -1,6 +1,6 @@
 import { j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
-import { e as Stethoscope, a7 as MessageCircle } from "../_libs/lucide-react.mjs";
+import { d as Stethoscope, a6 as MessageCircle } from "../_libs/lucide-react.mjs";
 const DEFAULT_VITALS = {
   bp: "118/76",
   pulse: "82",

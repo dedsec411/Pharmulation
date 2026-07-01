@@ -6,6 +6,18 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { LogoVideo } from "@/components/LogoVideo";
 
+function cleanPlayerName(value?: string | null) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "Pharmacist";
+  return raw
+    .replace(/@.*/, "")
+    .replace(/[._-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export function Navbar() {
   const { profile } = useAuthStore();
   const navigate = useNavigate();
@@ -17,7 +29,8 @@ export function Navbar() {
     navigate({ to: "/" });
   }
 
-  const initials = (profile?.full_name || profile?.email || "U")
+  const displayName = cleanPlayerName(profile?.full_name ?? profile?.email);
+  const initials = displayName
     .split(" ").map((s: string) => s[0]).join("").slice(0, 2).toUpperCase();
   const isAdmin = (profile?.role as string) === "admin";
 
@@ -46,7 +59,7 @@ export function Navbar() {
           <button onClick={() => setOpen((o) => !o)}
             className="flex items-center gap-2 rounded-full glass px-3 py-1.5 transition duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]">
             <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground grid place-items-center text-xs font-bold">{initials}</div>
-            <span className="hidden sm:block text-sm">{profile?.full_name || "Pharmacist"}</span>
+            <span className="hidden sm:block text-sm">{displayName}</span>
           </button>
           {open && (
             <div className="absolute right-0 mt-2 w-48 glass-card p-1 text-sm z-50 shadow-[0_22px_55px_-30px_oklch(0.74_0.14_180/0.8)]">

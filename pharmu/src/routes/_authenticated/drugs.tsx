@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/drugs")({
-  head: () => ({ meta: [{ title: "Drug Database — PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Drug Database - Pharmulation" }] }),
   component: DrugsPage,
 });
 

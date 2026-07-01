@@ -6,30 +6,53 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { tierFor } from "@/lib/levels";
-import { MODE_LABEL } from "@/lib/game/shared";
+import { PUBLIC_MODE_GROUPS, type Mode } from "@/lib/game/shared";
 import { BackButton } from "@/components/BackButton";
+import { Navbar } from "@/components/Navbar";
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [
-      { title: "Leaderboard - PharmaVerse" },
-      { name: "description", content: "Top pharmacists on PharmaVerse." },
+      { title: "Leaderboard - Pharmulation" },
+      { name: "description", content: "Top pharmacists on Pharmulation." },
     ],
   }),
   component: LeaderboardPage,
 });
 
-const MODES = ["all", "rx", "otc", "hospital", "oncology", "cosmetic", "emergency", "industry", "warehousing"] as const;
+const FILTERS = [
+  { key: "all", label: "All Modes", modes: [] },
+  ...PUBLIC_MODE_GROUPS,
+] as const satisfies readonly { key: string; label: string; modes: readonly Mode[] }[];
+
+type LeaderboardFilter = (typeof FILTERS)[number]["key"];
+
+function cleanPlayerName(value?: string | null) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "Anonymous";
+  return raw
+    .replace(/@.*/, "")
+    .replace(/[._-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function playerInitial(value?: string | null) {
+  return cleanPlayerName(value).slice(0, 1).toUpperCase();
+}
 
 function LeaderboardPage() {
   const { profile } = useAuthStore();
   const [scope, setScope] = useState<"weekly" | "alltime">("alltime");
-  const [mode, setMode] = useState<(typeof MODES)[number]>("all");
+  const [filter, setFilter] = useState<LeaderboardFilter>("all");
+  const activeFilter = FILTERS.find((item) => item.key === filter) ?? FILTERS[0];
 
   const { data: players = [], refetch } = useQuery({
-    queryKey: ["leaderboard", scope, mode],
+    queryKey: ["leaderboard", scope, filter],
     queryFn: async () => {
-      if (mode === "all") {
+      if (filter === "all") {
         const { data } = await supabase.rpc("get_public_profiles", { limit_count: 50 });
         return (data ?? []) as any[];
       }
@@ -37,10 +60,13 @@ function LeaderboardPage() {
         scope === "weekly"
           ? new Date(Date.now() - 7 * 86400_000).toISOString()
           : new Date(0).toISOString();
-      const { data: scores } = await supabase.rpc("get_public_scores", {
-        mode_in: mode as any,
-        since: sinceIso,
-      });
+      const scoreResults = await Promise.all(
+        activeFilter.modes.map((mode) => supabase.rpc("get_public_scores", {
+          mode_in: mode as any,
+          since: sinceIso,
+        }))
+      );
+      const scores = scoreResults.flatMap((result) => result.data ?? []);
       const agg = new Map<string, { score: number; cases: number; acc: number }>();
       ((scores ?? []) as any[]).forEach((s: any) => {
         const a = agg.get(s.user_id) ?? { score: 0, cases: 0, acc: 0 };
@@ -75,12 +101,14 @@ function LeaderboardPage() {
   const rest = players.slice(3);
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
-      <div className="mb-6"><BackButton to={profile ? "/dashboard" : "/"} /></div>
+    <>
+    {profile && <Navbar />}
+    <main className="mx-auto max-w-5xl px-6 py-8">
+      <div className="mb-6"><BackButton to={profile ? "/dashboard" : "/"} label={profile ? "Dashboard" : "Home"} /></div>
       <div className="mt-3 flex items-end justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-primary">
-            <MonitorDot className="h-4 w-4" /> Hospital rankings board
+            <MonitorDot className="h-4 w-4" /> Pharmulation rankings board
           </div>
           <h1 className="mt-2 flex items-center gap-3 text-4xl font-extrabold">
             <Trophy className="h-8 w-8 text-primary" /> Leaderboard
@@ -99,12 +127,12 @@ function LeaderboardPage() {
       </div>
 
       <div className="mt-5 flex gap-2 flex-wrap rounded-2xl border border-cyan-300/10 bg-black/20 p-2 shadow-inner">
-        {MODES.map((m) => (
-          <button key={m} onClick={() => setMode(m)}
-            className={`text-xs rounded-full px-3 py-1.5 capitalize transition ${
-              mode === m ? "bg-primary/20 text-primary border border-primary/40 shadow-[0_0_18px_-8px_oklch(0.74_0.14_180)]" : "bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08]"
+        {FILTERS.map((item) => (
+          <button key={item.key} onClick={() => setFilter(item.key)}
+            className={`text-xs rounded-full px-3 py-1.5 transition ${
+              filter === item.key ? "bg-primary/20 text-primary border border-primary/40 shadow-[0_0_18px_-8px_oklch(0.74_0.14_180)]" : "bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08]"
             }`}>
-            {m === "all" ? "All modes" : MODE_LABEL[m as keyof typeof MODE_LABEL] ?? m}
+            {item.label}
           </button>
         ))}
       </div>
@@ -117,7 +145,7 @@ function LeaderboardPage() {
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-primary">
             <Activity className="h-4 w-4" /> Live standings
           </div>
-          <div className="font-mono text-xs text-muted-foreground">{scope === "weekly" ? "7 day board" : "all time board"}</div>
+          <div className="font-mono text-xs text-muted-foreground">{activeFilter.label} - {scope === "weekly" ? "7 day board" : "all time board"}</div>
         </div>
 
       {/* Podium */}
@@ -134,11 +162,11 @@ function LeaderboardPage() {
                 className={`rounded-2xl border border-cyan-200/15 bg-gradient-to-b ${color} p-5 ${height} text-center flex flex-col justify-end shadow-[0_22px_60px_-38px_oklch(0.74_0.14_180)]`}>
                 {idx === 0 && <Crown className="h-6 w-6 text-amber-300 mx-auto mb-2" />}
                 <div className="h-12 w-12 mx-auto rounded-xl border border-primary/35 bg-primary/15 text-primary grid place-items-center font-bold shadow-[0_0_20px_-8px_oklch(0.74_0.14_180)]">
-                  {(p.full_name || "U").slice(0, 1).toUpperCase()}
+                  {playerInitial(p.full_name)}
                 </div>
-                <div className="mt-2 font-bold text-sm truncate">{p.full_name || "Anonymous"}</div>
+                <div className="mt-2 font-bold text-sm truncate">{cleanPlayerName(p.full_name)}</div>
                 <div className="text-xs text-muted-foreground">{tierFor(p.xp ?? 0).title}</div>
-                <div className="text-primary font-bold mt-1">{p.xp} {mode === "all" ? "XP" : "pts"}</div>
+                <div className="text-primary font-bold mt-1">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
                 <div className="text-xs text-muted-foreground">#{idx + 1}</div>
               </motion.div>
             );
@@ -164,10 +192,10 @@ function LeaderboardPage() {
                   <UserRound className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold tracking-wide">{p.full_name ?? "Anonymous"} {isMe && <span className="text-xs text-primary">(you)</span>}</div>
+                  <div className="truncate font-semibold tracking-wide">{cleanPlayerName(p.full_name)} {isMe && <span className="text-xs text-primary">(you)</span>}</div>
                   <div className="text-xs text-muted-foreground capitalize">{tierFor(p.xp ?? 0).title} | {p.total_cases_completed ?? 0} cases | {p.accuracy_rate ?? 0}% acc</div>
                 </div>
-                <div className="rounded-md bg-primary/10 px-3 py-1 text-right font-bold text-primary">{p.xp} {mode === "all" ? "XP" : "pts"}</div>
+                <div className="rounded-md bg-primary/10 px-3 py-1 text-right font-bold text-primary">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
               </motion.div>
             );
           })}
@@ -178,10 +206,11 @@ function LeaderboardPage() {
       {myRank && myRank > 20 && (
         <div className="mt-4 rounded-2xl border border-primary/40 bg-primary/10 p-4 flex items-center gap-4 shadow-[0_0_35px_-22px_oklch(0.74_0.14_180)]">
           <div className="w-8 text-center font-bold text-primary">{myRank}</div>
-          <div className="flex-1 font-semibold">Your rank - {me?.full_name}</div>
-          <div className="text-primary font-bold">{me?.xp} {mode === "all" ? "XP" : "pts"}</div>
+          <div className="flex-1 font-semibold">Your rank - {cleanPlayerName(me?.full_name)}</div>
+          <div className="text-primary font-bold">{me?.xp} {filter === "all" ? "XP" : "pts"}</div>
         </div>
       )}
     </main>
+    </>
   );
 }

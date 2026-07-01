@@ -18,7 +18,7 @@ import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
 
 export const Route = createFileRoute("/_authenticated/game/warehousing")({
-  head: () => ({ meta: [{ title: "Warehousing — PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Warehousing - Pharmulation" }] }),
   component: () => <ModeTheme mode="warehousing"><WarehouseGame /></ModeTheme>,
   errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
   notFoundComponent: () => <div className="p-8">Not found</div>,

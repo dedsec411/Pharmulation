@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
-  FileText, Pill, Hospital, Microscope, Sparkles, Siren,
+  Pill, Hospital,
   TrendingUp, Database, Trophy, GraduationCap, Star,
   Boxes,
   Factory,
-  Box,
 } from "lucide-react";
 import { PillBackground } from "@/components/PillBackground";
 import { LogoVideo } from "@/components/LogoVideo";
@@ -13,8 +12,8 @@ import { LogoVideo } from "@/components/LogoVideo";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Pharmulation — Train Like a Real Pharmacist" },
-      { name: "description", content: "Interactive web-based pharmacy training simulator with real-world cases across Community, clinical, oncology, and emergencies." },
+      { title: "Pharmulation - Train Like a Real Pharmacist" },
+      { name: "description", content: "Interactive web-based pharmacy training simulator with real-world cases across community pharmacy, clinical, industry, and warehousing." },
       { property: "og:title", content: "Pharmulation" },
       { property: "og:description", content: "Train Like a Real Pharmacist. Anywhere. Anytime." },
     ],
@@ -25,23 +24,23 @@ export const Route = createFileRoute("/")({
 const modes = [
   {
     icon: Pill,
-    name: "Community",
-    desc: "Minor ailments, OTC guidance & medication counseling."
+    name: "Community Pharmacy",
+    desc: "Prescriptions, OTC guidance & medication counseling."
   },
   {
-    icon: Boxes,
-    name: "Warehousing",
-    desc: "Inventory management, cold chain & medicine distribution."
-  },
-  {
-    icon: Siren,
-    name: "Emergency",
-    desc: "Anaphylaxis, overdose & life-or-death decisions."
+    icon: Hospital,
+    name: "Clinical",
+    desc: "Hospital orders, patient files, labs & interaction review."
   },
   {
     icon: Factory,
     name: "Industry",
     desc: "Drug manufacturing, quality control & regulatory compliance."
+  },
+  {
+    icon: Boxes,
+    name: "Warehousing",
+    desc: "Inventory management, cold chain & medicine distribution."
   },
 ];
 
@@ -53,7 +52,7 @@ const stats = [
 ];
 
 const testimonials = [
-  { name: "Dr. Layla H.", role: "PharmD, Cairo", quote: "Pharmulation is the closest thing to real pharmacy I've found online. The oncology cases are brilliant." },
+  { name: "Dr. Layla H.", role: "PharmD, Cairo", quote: "Pharmulation is the closest thing to real pharmacy I've found online. The clinical cases are brilliant." },
   { name: "Omar K.", role: "Pharmacy student, Year 4", quote: "I went from terrified of prescriptions to confident in 3 weeks. The mentor tips are gold." },
   { name: "Sara M.", role: "Clinical pharmacist", quote: "Finally a CE platform that doesn't put me to sleep. The streaks keep me coming back daily." },
 ];
@@ -120,7 +119,7 @@ export default function Landing() {
             <h2 className="text-3xl md:text-4xl font-bold">Four worlds. One pharmacist.</h2>
             <p className="mt-3 text-muted-foreground">Every mode is built around real-world clinical situations.</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {modes.map((m, i) => (
               <motion.div
                 key={m.name}

@@ -8,7 +8,7 @@ import { Users, FlaskConical, Pill, BarChart3 } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Admin - Pharmulation" }] }),
   component: AdminPage,
 });
 

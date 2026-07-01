@@ -34,7 +34,7 @@ import {
 
 // ─── Route ───────────────────────────────────────────────────────────────────
 export const Route = createFileRoute("/_authenticated/game/community")({
-  head: () => ({ meta: [{ title: "Community Pharmacy - PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Community Pharmacy - Pharmulation" }] }),
   component: () => (
     <ModeTheme mode="rx">
       <CommunityGame />

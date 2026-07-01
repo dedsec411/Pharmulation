@@ -1,7 +1,7 @@
 import { j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useRouter, e as useNavigate } from "../_libs/tanstack__react-router.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
-import { V as ArrowLeft } from "../_libs/lucide-react.mjs";
+import { R as ArrowLeft } from "../_libs/lucide-react.mjs";
 function BackButton({ to, label = "Back", className = "" }) {
   const router = useRouter();
   const navigate = useNavigate();

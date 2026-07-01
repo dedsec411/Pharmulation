@@ -6,7 +6,7 @@ import { CalendarDays, Flame, Trophy, Factory, Package, Hospital, FileText, Ligh
 import { Navbar } from "@/components/Navbar";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
-import { MODE_LABEL } from "@/lib/game/shared";
+import { publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   notFoundComponent: () => <div className="p-8">Not found</div>,
 });
 
-const MODE_META: Record<string, { icon: any; label: string; tag: string; accent: string; glow: string; tint: string; to: string }> = {
+const MODE_META: Record<string, { icon: any; label: string; tag: string; accent: string; glow: string; tint: string; to: string; modes: readonly string[] }> = {
   rx: {
     icon: FileText,
     label: "Community Pharmacy",
@@ -25,6 +25,7 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     glow: "oklch(0.74 0.14 180 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.74 0.14 180 / 0.24), oklch(0.72 0.16 165 / 0.1) 48%, oklch(1 0 0 / 0.045))",
     to: "/game/community",
+    modes: ["rx", "otc", "cosmetic"],
   },
   hospital: {
     icon: Hospital,
@@ -34,6 +35,7 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     glow: "oklch(0.60 0.20 270 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.62 0.19 240 / 0.22), oklch(0.60 0.20 270 / 0.16) 50%, oklch(1 0 0 / 0.04))",
     to: "/game/hospital",
+    modes: ["hospital", "oncology", "emergency"],
   },
   industry: {
     icon: Factory,
@@ -43,6 +45,7 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     glow: "oklch(0.78 0.16 75 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.78 0.16 75 / 0.25), oklch(0.70 0.14 55 / 0.12) 52%, oklch(1 0 0 / 0.04))",
     to: "/game/industry",
+    modes: ["industry"],
   },
   warehousing: {
     icon: Package,
@@ -52,6 +55,7 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     glow: "oklch(0.60 0.18 220 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.60 0.18 220 / 0.25), oklch(0.72 0.13 210 / 0.12) 52%, oklch(1 0 0 / 0.04))",
     to: "/game/warehousing",
+    modes: ["warehousing"],
   },
 };
 
@@ -120,11 +124,23 @@ function formatActivityDate(value?: string | null) {
 }
 
 function activityMeta(mode: string) {
-  if (mode === "community" || mode === "rx" || mode === "otc") return MODE_META.rx;
-  if (mode === "hospital" || mode === "clinical") return MODE_META.hospital;
+  if (mode === "community" || mode === "rx" || mode === "otc" || mode === "cosmetic") return MODE_META.rx;
+  if (mode === "hospital" || mode === "clinical" || mode === "oncology" || mode === "emergency") return MODE_META.hospital;
   if (mode === "industry") return MODE_META.industry;
   if (mode === "warehousing") return MODE_META.warehousing;
-  return { ...MODE_META.rx, icon: FileText, label: MODE_LABEL[mode as keyof typeof MODE_LABEL] ?? mode };
+  return { ...MODE_META.rx, icon: FileText, label: publicModeLabel(mode) };
+}
+
+function cleanPlayerName(value?: string | null) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "Pharmacist";
+  return raw
+    .replace(/@.*/, "")
+    .replace(/[._-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function MentorTipBanner({ tip }: { tip: string }) {
@@ -232,6 +248,7 @@ function Dashboard() {
   const dailyChallenge = DAILY_CHALLENGES[dayOfYear(new Date()) % DAILY_CHALLENGES.length];
   const dailyMeta = activityMeta(dailyChallenge.mode);
   const DailyIcon = dailyMeta.icon;
+  const playerName = cleanPlayerName(profile?.full_name ?? profile?.email);
 
   return (
     <>
@@ -251,10 +268,10 @@ function Dashboard() {
           >
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 rounded-2xl bg-primary text-primary-foreground grid place-items-center text-2xl font-bold">
-                {(profile?.full_name || "U").slice(0, 1).toUpperCase()}
+                {playerName.slice(0, 1).toUpperCase()}
               </div>
               <div className="flex-1">
-                <div className="text-xl font-bold">{profile?.full_name ?? "Pharmacist"}</div>
+                <div className="text-xl font-bold">{playerName}</div>
                 <div className="text-xs text-muted-foreground capitalize">{profile?.role} | Level {profile?.level}</div>
               </div>
               <motion.div
@@ -374,7 +391,7 @@ function Dashboard() {
                     <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full bg-white/10 px-2 py-1">{m.tag}</span>
                   </div>
                   <div className="relative mt-4 text-base font-bold transition duration-300 group-hover:brightness-125" style={{ color: m.accent }}>{m.label}</div>
-                  <div className="relative text-xs text-muted-foreground mt-0.5">{(counts as any)[key] ?? 0} cases completed</div>
+                  <div className="relative text-xs text-muted-foreground mt-0.5">{publicModeCount(counts as Record<string, number>, m.modes)} cases completed</div>
                   <Link to={m.to as any}
                     className="relative mt-4 flex items-center justify-center gap-1 w-full rounded-full py-2 text-center text-sm font-semibold text-background transition duration-300 hover:brightness-110"
                     style={{ backgroundColor: m.accent, boxShadow: `0 12px 28px -18px ${m.glow}` }}>
@@ -412,7 +429,7 @@ function Dashboard() {
                         <ActivityIcon className="h-4.5 w-4.5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold">{MODE_LABEL[s.mode as keyof typeof MODE_LABEL] ?? meta.label}</p>
+                        <p className="truncate font-semibold">{meta.label}</p>
                         <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                           <CalendarDays className="h-3.5 w-3.5" />
                           {formatActivityDate(s.completed_at)}
@@ -450,7 +467,7 @@ function Dashboard() {
 
             <div className="relative mb-4 flex items-start justify-between gap-3">
               <div>
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-primary">Hospital rankings board</p>
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-primary">Pharmulation rankings board</p>
                 <h3 className="mt-1 flex items-center gap-2 text-lg font-black">
                   <Trophy className="h-5 w-5 text-primary drop-shadow-[0_0_12px_oklch(0.74_0.14_180/0.75)]" />
                   Top this week
@@ -488,7 +505,7 @@ function Dashboard() {
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-foreground">{p.full_name ?? "Anonymous"}</p>
+                      <p className="truncate font-semibold text-foreground">{cleanPlayerName(p.full_name)}</p>
                       <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">pharmacist rank</p>
                     </div>
                     <span className="rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 font-mono text-xs font-black tabular-nums text-primary shadow-inner">

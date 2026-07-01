@@ -1,9 +1,14 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { e as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
-import { u as useAuthStore, L as LogoVideo } from "./router-CjdgCv8I.mjs";
+import { u as useAuthStore, L as LogoVideo } from "./router-Cn57AZkw.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
-import { J as User, K as LogOut } from "../_libs/lucide-react.mjs";
+import { I as User, J as LogOut } from "../_libs/lucide-react.mjs";
+function cleanPlayerName(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "Pharmacist";
+  return raw.replace(/@.*/, "").replace(/[._-]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\s+/g, " ").trim().replace(/\b\w/g, (char) => char.toUpperCase());
+}
 function Navbar() {
   const { profile } = useAuthStore();
   const navigate = useNavigate();
@@ -13,7 +18,8 @@ function Navbar() {
     toast.success("Signed out");
     navigate({ to: "/" });
   }
-  const initials = (profile?.full_name || profile?.email || "U").split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
+  const displayName = cleanPlayerName(profile?.full_name ?? profile?.email);
+  const initials = displayName.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
   const isAdmin = profile?.role === "admin";
   return /* @__PURE__ */ jsxRuntimeExports.jsx("nav", { className: "sticky top-0 z-40 glass border-b border-border", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mx-auto flex h-24 max-w-7xl items-center justify-between px-6", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(Link, { to: "/dashboard", className: "flex h-20 w-60 items-center overflow-visible rounded-2xl transition duration-300 hover:-translate-y-0.5 hover:drop-shadow-[0_16px_34px_oklch(0.74_0.14_180/0.28)]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(LogoVideo, { className: "aspect-video w-full" }) }),
@@ -41,7 +47,7 @@ function Navbar() {
           className: "flex items-center gap-2 rounded-full glass px-3 py-1.5 transition duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]",
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-7 w-7 rounded-full bg-primary text-primary-foreground grid place-items-center text-xs font-bold", children: initials }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:block text-sm", children: profile?.full_name || "Pharmacist" })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:block text-sm", children: displayName })
           ]
         }
       ),

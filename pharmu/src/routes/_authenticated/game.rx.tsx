@@ -18,7 +18,7 @@ import { useGameExit } from "@/lib/game/useGameExit";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
 export const Route = createFileRoute("/_authenticated/game/rx")({
-  head: () => ({ meta: [{ title: "Rx Cases — PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Rx Cases - Pharmulation" }] }),
   component: () => <ModeTheme mode="rx"><RxGame /></ModeTheme>,
   errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
   notFoundComponent: () => <div className="p-8">Not found</div>,

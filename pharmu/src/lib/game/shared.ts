@@ -66,6 +66,22 @@ export const MODE_LABEL: Record<Mode, string> = {
   warehousing: "Warehousing",
 };
 
+export const PUBLIC_MODE_GROUPS = [
+  { key: "community", label: "Community Pharmacy", modes: ["rx", "otc", "cosmetic"] },
+  { key: "clinical", label: "Clinical", modes: ["hospital", "oncology", "emergency"] },
+  { key: "industry", label: "Industry", modes: ["industry"] },
+  { key: "warehousing", label: "Warehousing", modes: ["warehousing"] },
+] as const satisfies readonly { key: string; label: string; modes: readonly Mode[] }[];
+
+export function publicModeLabel(mode: string) {
+  const group = PUBLIC_MODE_GROUPS.find((item) => item.modes.includes(mode as Mode));
+  return group?.label ?? MODE_LABEL[mode as Mode] ?? mode;
+}
+
+export function publicModeCount(counts: Record<string, number>, modes: readonly string[]) {
+  return modes.reduce((total, mode) => total + (counts[mode] ?? 0), 0);
+}
+
 export type ScoreInput = {
   difficulty?: Difficulty | string | null;
   correctDrugs?: number;

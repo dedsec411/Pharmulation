@@ -51,6 +51,19 @@ const MODE_LABEL = {
   industry: "Industry",
   warehousing: "Warehousing"
 };
+const PUBLIC_MODE_GROUPS = [
+  { key: "community", label: "Community Pharmacy", modes: ["rx", "otc", "cosmetic"] },
+  { key: "clinical", label: "Clinical", modes: ["hospital", "oncology", "emergency"] },
+  { key: "industry", label: "Industry", modes: ["industry"] },
+  { key: "warehousing", label: "Warehousing", modes: ["warehousing"] }
+];
+function publicModeLabel(mode) {
+  const group = PUBLIC_MODE_GROUPS.find((item) => item.modes.includes(mode));
+  return group?.label ?? MODE_LABEL[mode] ?? mode;
+}
+function publicModeCount(counts, modes) {
+  return modes.reduce((total, mode) => total + (counts[mode] ?? 0), 0);
+}
 function computeScore(i) {
   const difficulty = i.difficulty === "easy" || i.difficulty === "hard" || i.difficulty === "medium" ? i.difficulty : "medium";
   const rules = DIFFICULTY_RULES[difficulty];
@@ -137,13 +150,16 @@ function toastScore(delta, label) {
 }
 export {
   DIFFICULTY_LABEL as D,
-  MODE_LABEL as M,
-  MODE_TIMERS as a,
+  MODE_TIMERS as M,
+  PUBLIC_MODE_GROUPS as P,
+  publicModeLabel as a,
   bumpCounterBadge as b,
   computeScore as c,
-  DIFFICULTY_RULES as d,
-  awardBadge as e,
+  MODE_LABEL as d,
+  DIFFICULTY_RULES as e,
   fetchRandomCase as f,
+  awardBadge as g,
+  publicModeCount as p,
   submitScore as s,
   toastScore as t
 };

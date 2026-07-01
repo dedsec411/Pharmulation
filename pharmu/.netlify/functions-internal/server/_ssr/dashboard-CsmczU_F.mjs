@@ -1,15 +1,15 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { N as Navbar } from "./Navbar-DmFIjK8O.mjs";
-import { u as useAuthStore } from "./router-CjdgCv8I.mjs";
+import { N as Navbar } from "./Navbar-Cy4lBQ3b.mjs";
+import { u as useAuthStore } from "./router-Cn57AZkw.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
-import { M as MODE_LABEL } from "./shared-CP2LLHvv.mjs";
+import { p as publicModeCount, a as publicModeLabel } from "./shared-Bfopko4w.mjs";
 import { M as ModeAmbientLayer } from "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/sonner.mjs";
 import "../_libs/seroval.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
-import { r as Flame, j as Package, F as Factory, t as Hospital, x as FileText, b as ChevronRight, y as CalendarDays, T as Trophy, z as Lightbulb } from "../_libs/lucide-react.mjs";
+import { r as Flame, j as Package, F as Factory, H as Hospital, w as FileText, b as ChevronRight, x as CalendarDays, T as Trophy, y as Lightbulb } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";
@@ -23,7 +23,7 @@ import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
 import "../_libs/tanstack__query-core.mjs";
-import "./vendor-tanstack-D-RSGHsu.mjs";
+import "./vendor-tanstack-DQdgH_5g.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -54,7 +54,8 @@ const MODE_META = {
     accent: "oklch(0.74 0.14 180)",
     glow: "oklch(0.74 0.14 180 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.74 0.14 180 / 0.24), oklch(0.72 0.16 165 / 0.1) 48%, oklch(1 0 0 / 0.045))",
-    to: "/game/community"
+    to: "/game/community",
+    modes: ["rx", "otc", "cosmetic"]
   },
   hospital: {
     icon: Hospital,
@@ -63,7 +64,8 @@ const MODE_META = {
     accent: "oklch(0.60 0.20 270)",
     glow: "oklch(0.60 0.20 270 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.62 0.19 240 / 0.22), oklch(0.60 0.20 270 / 0.16) 50%, oklch(1 0 0 / 0.04))",
-    to: "/game/hospital"
+    to: "/game/hospital",
+    modes: ["hospital", "oncology", "emergency"]
   },
   industry: {
     icon: Factory,
@@ -72,7 +74,8 @@ const MODE_META = {
     accent: "oklch(0.78 0.16 75)",
     glow: "oklch(0.78 0.16 75 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.78 0.16 75 / 0.25), oklch(0.70 0.14 55 / 0.12) 52%, oklch(1 0 0 / 0.04))",
-    to: "/game/industry"
+    to: "/game/industry",
+    modes: ["industry"]
   },
   warehousing: {
     icon: Package,
@@ -81,7 +84,8 @@ const MODE_META = {
     accent: "oklch(0.60 0.18 220)",
     glow: "oklch(0.60 0.18 220 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.60 0.18 220 / 0.25), oklch(0.72 0.13 210 / 0.12) 52%, oklch(1 0 0 / 0.04))",
-    to: "/game/warehousing"
+    to: "/game/warehousing",
+    modes: ["warehousing"]
   }
 };
 const MENTOR_TIPS = ["Always verify the patient's allergy status before dispensing antibiotics.", "Methotrexate is weekly, never daily. Read prescriptions out loud to catch errors.", "When in doubt, call the prescriber. Clarification prevents harm.", "Counsel one medicine at a time. Patients remember only a few key points.", "Cold chain breaks happen in seconds. Check the temperature log every time.", "FEFO isn't optional. First expired, first out - every single time.", "Look for drug interactions before adding a new medicine to the regimen.", "Never assume a handwritten prescription. Verify unclear orders immediately.", "Right patient, right drug, right dose, right route, right time - every case.", "Insulin is a high-alert medication. Double-check every dose before dispensing.", "A missed contraindication can be more dangerous than a missed diagnosis.", "Check renal and hepatic function before recommending dose adjustments.", "Store look-alike and sound-alike medicines separately to prevent mix-ups.", "Patient counseling is part of the treatment - not an optional extra.", "Always confirm the expiry date before dispensing or stocking medicines.", "Document every intervention. Good records protect both patients and pharmacists.", "Generic substitution is valuable, but only when clinically appropriate.", "If a medicine requires refrigeration, never leave it at room temperature unnecessarily.", "Quality begins with accurate inventory and proper storage conditions.", "The safest pharmacist is the one who never stops double-checking."];
@@ -153,15 +157,20 @@ function formatActivityDate(value) {
   }).format(new Date(value));
 }
 function activityMeta(mode) {
-  if (mode === "community" || mode === "rx" || mode === "otc") return MODE_META.rx;
-  if (mode === "hospital" || mode === "clinical") return MODE_META.hospital;
+  if (mode === "community" || mode === "rx" || mode === "otc" || mode === "cosmetic") return MODE_META.rx;
+  if (mode === "hospital" || mode === "clinical" || mode === "oncology" || mode === "emergency") return MODE_META.hospital;
   if (mode === "industry") return MODE_META.industry;
   if (mode === "warehousing") return MODE_META.warehousing;
   return {
     ...MODE_META.rx,
     icon: FileText,
-    label: MODE_LABEL[mode] ?? mode
+    label: publicModeLabel(mode)
   };
+}
+function cleanPlayerName(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "Pharmacist";
+  return raw.replace(/@.*/, "").replace(/[._-]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\s+/g, " ").trim().replace(/\b\w/g, (char) => char.toUpperCase());
 }
 function MentorTipBanner({
   tip
@@ -283,6 +292,7 @@ function Dashboard() {
   const dailyChallenge = DAILY_CHALLENGES[dayOfYear(/* @__PURE__ */ new Date()) % DAILY_CHALLENGES.length];
   const dailyMeta = activityMeta(dailyChallenge.mode);
   const DailyIcon = dailyMeta.icon;
+  const playerName = cleanPlayerName(profile?.full_name ?? profile?.email);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(Navbar, {}),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "mx-auto max-w-7xl px-6 py-6 space-y-5", children: [
@@ -298,9 +308,9 @@ function Dashboard() {
           scale: 0.99
         }, className: "glass-card p-6 lg:col-span-2 transition duration-300 hover:border-primary/40", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-16 w-16 rounded-2xl bg-primary text-primary-foreground grid place-items-center text-2xl font-bold", children: (profile?.full_name || "U").slice(0, 1).toUpperCase() }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-16 w-16 rounded-2xl bg-primary text-primary-foreground grid place-items-center text-2xl font-bold", children: playerName.slice(0, 1).toUpperCase() }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xl font-bold", children: profile?.full_name ?? "Pharmacist" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xl font-bold", children: playerName }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-xs text-muted-foreground capitalize", children: [
                 profile?.role,
                 " | Level ",
@@ -445,7 +455,7 @@ function Dashboard() {
               color: m.accent
             }, children: m.label }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative text-xs text-muted-foreground mt-0.5", children: [
-              counts[key] ?? 0,
+              publicModeCount(counts, m.modes),
               " cases completed"
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: m.to, className: "relative mt-4 flex items-center justify-center gap-1 w-full rounded-full py-2 text-center text-sm font-semibold text-background transition duration-300 hover:brightness-110", style: {
@@ -478,7 +488,7 @@ function Dashboard() {
                 color: meta.accent
               }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(ActivityIcon, { className: "h-4.5 w-4.5" }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "truncate font-semibold", children: MODE_LABEL[s.mode] ?? meta.label }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "truncate font-semibold", children: meta.label }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(CalendarDays, { className: "h-3.5 w-3.5" }),
                   formatActivityDate(s.completed_at)
@@ -515,7 +525,7 @@ function Dashboard() {
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/12 blur-3xl transition duration-300 group-hover:bg-primary/18" }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative mb-4 flex items-start justify-between gap-3", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-primary", children: "Hospital rankings board" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-primary", children: "Pharmulation rankings board" }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "mt-1 flex items-center gap-2 text-lg font-black", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Trophy, { className: "h-5 w-5 text-primary drop-shadow-[0_0_12px_oklch(0.74_0.14_180/0.75)]" }),
                 "Top this week"
@@ -538,7 +548,7 @@ function Dashboard() {
               }, className: "relative flex items-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 transition hover:border-primary/35 hover:bg-primary/7", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `grid h-8 w-8 shrink-0 place-items-center rounded-lg border font-mono text-xs font-black ${podium}`, children: i + 1 }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "truncate font-semibold text-foreground", children: p.full_name ?? "Anonymous" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "truncate font-semibold text-foreground", children: cleanPlayerName(p.full_name) }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-mono text-[10px] uppercase tracking-wider text-muted-foreground", children: "pharmacist rank" })
                 ] }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 font-mono text-xs font-black tabular-nums text-primary shadow-inner", children: [

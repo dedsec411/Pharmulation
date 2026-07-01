@@ -5,13 +5,13 @@ import { S as redirect } from "../_libs/tanstack__router-core.mjs";
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { T as Toaster$1 } from "../_libs/sonner.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
-import { c as createServerFn, a as createSsrRpc } from "./vendor-tanstack-D-RSGHsu.mjs";
+import { c as createServerFn, a as createSsrRpc } from "./vendor-tanstack-DQdgH_5g.mjs";
 import { S as Slot } from "../_libs/radix-ui__react-slot.mjs";
 import { c as cva } from "../_libs/class-variance-authority.mjs";
 import { c as clsx } from "../_libs/clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { A as AnimatePresence, m as motion } from "../_libs/framer-motion.mjs";
-import { X, C as ChevronLeft, a as CircleCheck, b as ChevronRight, G as GraduationCap, D as Database, T as Trophy, c as TrendingUp, P as Pill, B as Boxes, S as Siren, F as Factory, d as Star, e as Stethoscope, f as BookOpen, g as ClipboardList, h as CircleQuestionMark, H as HeartPulse, i as FlaskConical, j as Package, k as Syringe, l as Bot, m as Send } from "../_libs/lucide-react.mjs";
+import { X, C as ChevronLeft, a as CircleCheck, b as ChevronRight, G as GraduationCap, D as Database, T as Trophy, c as TrendingUp, P as Pill, H as Hospital, F as Factory, B as Boxes, S as Star, d as Stethoscope, e as BookOpen, f as ClipboardList, g as CircleQuestionMark, h as HeartPulse, i as FlaskConical, j as Package, k as Syringe, l as Bot, m as Send } from "../_libs/lucide-react.mjs";
 import { c as create } from "../_libs/zustand.mjs";
 import { o as objectType, l as literalType, a as arrayType, s as stringType, u as unionType, n as numberType, e as enumType } from "../_libs/zod.mjs";
 import "../_libs/react-dom.mjs";
@@ -803,14 +803,14 @@ const Route$h = createFileRoute("/login")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$g, "component")
 });
-const $$splitComponentImporter$f = () => import("./leaderboard-CrLyIZtU.mjs");
+const $$splitComponentImporter$f = () => import("./leaderboard-FZZSKlN4.mjs");
 const Route$g = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [{
-      title: "Leaderboard - PharmaVerse"
+      title: "Leaderboard - Pharmulation"
     }, {
       name: "description",
-      content: "Top pharmacists on PharmaVerse."
+      content: "Top pharmacists on Pharmulation."
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$f, "component")
@@ -888,8 +888,8 @@ function LogoVideo({ className = "" }) {
 const Route$e = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Pharmulation — Train Like a Real Pharmacist" },
-      { name: "description", content: "Interactive web-based pharmacy training simulator with real-world cases across Community, clinical, oncology, and emergencies." },
+      { title: "Pharmulation - Train Like a Real Pharmacist" },
+      { name: "description", content: "Interactive web-based pharmacy training simulator with real-world cases across community pharmacy, clinical, industry, and warehousing." },
       { property: "og:title", content: "Pharmulation" },
       { property: "og:description", content: "Train Like a Real Pharmacist. Anywhere. Anytime." }
     ]
@@ -899,23 +899,23 @@ const Route$e = createFileRoute("/")({
 const modes = [
   {
     icon: Pill,
-    name: "Community",
-    desc: "Minor ailments, OTC guidance & medication counseling."
+    name: "Community Pharmacy",
+    desc: "Prescriptions, OTC guidance & medication counseling."
   },
   {
-    icon: Boxes,
-    name: "Warehousing",
-    desc: "Inventory management, cold chain & medicine distribution."
-  },
-  {
-    icon: Siren,
-    name: "Emergency",
-    desc: "Anaphylaxis, overdose & life-or-death decisions."
+    icon: Hospital,
+    name: "Clinical",
+    desc: "Hospital orders, patient files, labs & interaction review."
   },
   {
     icon: Factory,
     name: "Industry",
     desc: "Drug manufacturing, quality control & regulatory compliance."
+  },
+  {
+    icon: Boxes,
+    name: "Warehousing",
+    desc: "Inventory management, cold chain & medicine distribution."
   }
 ];
 const stats = [
@@ -925,7 +925,7 @@ const stats = [
   { icon: TrendingUp, value: "100", label: "CPD Credit Hours" }
 ];
 const testimonials = [
-  { name: "Dr. Layla H.", role: "PharmD, Cairo", quote: "Pharmulation is the closest thing to real pharmacy I've found online. The oncology cases are brilliant." },
+  { name: "Dr. Layla H.", role: "PharmD, Cairo", quote: "Pharmulation is the closest thing to real pharmacy I've found online. The clinical cases are brilliant." },
   { name: "Omar K.", role: "Pharmacy student, Year 4", quote: "I went from terrified of prescriptions to confident in 3 weeks. The mentor tips are gold." },
   { name: "Sara M.", role: "Clinical pharmacist", quote: "Finally a CE platform that doesn't put me to sleep. The streaks keep me coming back daily." }
 ];
@@ -984,7 +984,7 @@ function Landing() {
         /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-3xl md:text-4xl font-bold", children: "Four worlds. One pharmacist." }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-3 text-muted-foreground", children: "Every mode is built around real-world clinical situations." })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid sm:grid-cols-2 lg:grid-cols-3 gap-5", children: modes.map((m, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid sm:grid-cols-2 lg:grid-cols-4 gap-5", children: modes.map((m, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
         motion.div,
         {
           initial: { opacity: 0, y: 16 },
@@ -1046,49 +1046,49 @@ const Route$d = createFileRoute("/auth/callback")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$d, "component")
 });
-const $$splitComponentImporter$c = () => import("./settings-BCls8xZi.mjs");
+const $$splitComponentImporter$c = () => import("./settings-BwK2A8fu.mjs");
 const Route$c = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [{
-      title: "Settings — PharmaVerse"
+      title: "Settings - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$c, "component")
 });
-const $$splitComponentImporter$b = () => import("./profile-pz1Y6IsB.mjs");
+const $$splitComponentImporter$b = () => import("./profile-CLNLTncg.mjs");
 const Route$b = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [{
-      title: "Profile — PharmaVerse"
+      title: "Profile - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$b, "component")
 });
 const $$splitNotFoundComponentImporter$8 = () => import("./modes-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$8 = () => import("./modes-CqlNFt5g.mjs");
-const $$splitComponentImporter$a = () => import("./modes-1mmzzmUr.mjs");
+const $$splitComponentImporter$a = () => import("./modes-CVSNCAyJ.mjs");
 const Route$a = createFileRoute("/_authenticated/modes")({
   head: () => ({
     meta: [{
-      title: "Training Modes - PharmaVerse"
+      title: "Training Modes - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$a, "component"),
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$8, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$8, "notFoundComponent")
 });
-const $$splitComponentImporter$9 = () => import("./drugs-BQrGcN-F.mjs");
+const $$splitComponentImporter$9 = () => import("./drugs-BY4UssRd.mjs");
 const Route$9 = createFileRoute("/_authenticated/drugs")({
   head: () => ({
     meta: [{
-      title: "Drug Database — PharmaVerse"
+      title: "Drug Database - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$9, "component")
 });
 const $$splitNotFoundComponentImporter$7 = () => import("./dashboard-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$7 = () => import("./dashboard-CqlNFt5g.mjs");
-const $$splitComponentImporter$8 = () => import("./dashboard-BffWzzVS.mjs");
+const $$splitComponentImporter$8 = () => import("./dashboard-CsmczU_F.mjs");
 const Route$8 = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [{
@@ -1099,22 +1099,22 @@ const Route$8 = createFileRoute("/_authenticated/dashboard")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$7, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$7, "notFoundComponent")
 });
-const $$splitComponentImporter$7 = () => import("./admin-BZMyZAw6.mjs");
+const $$splitComponentImporter$7 = () => import("./admin-BlchNu6F.mjs");
 const Route$7 = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [{
-      title: "Admin — PharmaVerse"
+      title: "Admin - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$7, "component")
 });
 const $$splitNotFoundComponentImporter$6 = () => import("./game.warehousing-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$6 = () => import("./game.warehousing-CqlNFt5g.mjs");
-const $$splitComponentImporter$6 = () => import("./game.warehousing-BYJ9uggR.mjs");
+const $$splitComponentImporter$6 = () => import("./game.warehousing-rhf1MEU5.mjs");
 const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
   head: () => ({
     meta: [{
-      title: "Warehousing — PharmaVerse"
+      title: "Warehousing - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$6, "component"),
@@ -1123,11 +1123,11 @@ const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
 });
 const $$splitNotFoundComponentImporter$5 = () => import("./game.rx-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$5 = () => import("./game.rx-CqlNFt5g.mjs");
-const $$splitComponentImporter$5 = () => import("./game.rx-CdcZeguw.mjs");
+const $$splitComponentImporter$5 = () => import("./game.rx-DRjxyKF5.mjs");
 const Route$5 = createFileRoute("/_authenticated/game/rx")({
   head: () => ({
     meta: [{
-      title: "Rx Cases — PharmaVerse"
+      title: "Rx Cases - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$5, "component"),
@@ -1136,11 +1136,11 @@ const Route$5 = createFileRoute("/_authenticated/game/rx")({
 });
 const $$splitNotFoundComponentImporter$4 = () => import("./game.otc-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$4 = () => import("./game.otc-CqlNFt5g.mjs");
-const $$splitComponentImporter$4 = () => import("./game.otc-SoEAh5qn.mjs");
+const $$splitComponentImporter$4 = () => import("./game.otc-BCx_ntKe.mjs");
 const Route$4 = createFileRoute("/_authenticated/game/otc")({
   head: () => ({
     meta: [{
-      title: "OTC Consultation — PharmaVerse"
+      title: "OTC Consultation - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$4, "component"),
@@ -1149,11 +1149,11 @@ const Route$4 = createFileRoute("/_authenticated/game/otc")({
 });
 const $$splitNotFoundComponentImporter$3 = () => import("./game.industry-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$3 = () => import("./game.industry-CqlNFt5g.mjs");
-const $$splitComponentImporter$3 = () => import("./game.industry-NJY1S1vZ.mjs");
+const $$splitComponentImporter$3 = () => import("./game.industry-BS2Pv7mn.mjs");
 const Route$3 = createFileRoute("/_authenticated/game/industry")({
   head: () => ({
     meta: [{
-      title: "Industry - PharmaVerse"
+      title: "Industry - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$3, "component"),
@@ -1195,13 +1195,13 @@ const Button = reactExports.forwardRef(
   }
 );
 Button.displayName = "Button";
-const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-p9UqQBiB.mjs");
-const $$splitErrorComponentImporter$2 = () => import("./game.hospital-B2JJ45iD.mjs");
-const $$splitComponentImporter$2 = () => import("./game.hospital-JOXQ2Y4q.mjs");
+const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-Ct1Ydwxb.mjs");
+const $$splitErrorComponentImporter$2 = () => import("./game.hospital-DpOlDNWr.mjs");
+const $$splitComponentImporter$2 = () => import("./game.hospital-DDudHJA2.mjs");
 const Route$2 = createFileRoute("/_authenticated/game/hospital")({
   head: () => ({
     meta: [{
-      title: "Clinical - PharmaVerse"
+      title: "Clinical - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$2, "component"),
@@ -1210,11 +1210,11 @@ const Route$2 = createFileRoute("/_authenticated/game/hospital")({
 });
 const $$splitNotFoundComponentImporter$1 = () => import("./game.emergency-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$1 = () => import("./game.emergency-CqlNFt5g.mjs");
-const $$splitComponentImporter$1 = () => import("./game.emergency-BoG4WVFF.mjs");
+const $$splitComponentImporter$1 = () => import("./game.emergency-8p2Gzl6R.mjs");
 const Route$1 = createFileRoute("/_authenticated/game/emergency")({
   head: () => ({
     meta: [{
-      title: "Emergency — PharmaVerse"
+      title: "Emergency - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter$1, "component"),
@@ -1223,11 +1223,11 @@ const Route$1 = createFileRoute("/_authenticated/game/emergency")({
 });
 const $$splitNotFoundComponentImporter = () => import("./game.community-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter = () => import("./game.community-CqlNFt5g.mjs");
-const $$splitComponentImporter = () => import("./game.community-nxbqWMM3.mjs");
+const $$splitComponentImporter = () => import("./game.community-3Ff6ScD5.mjs");
 const Route = createFileRoute("/_authenticated/game/community")({
   head: () => ({
     meta: [{
-      title: "Community Pharmacy - PharmaVerse"
+      title: "Community Pharmacy - Pharmulation"
     }]
   }),
   component: lazyRouteComponent($$splitComponentImporter, "component"),

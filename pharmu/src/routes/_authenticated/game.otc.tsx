@@ -26,7 +26,7 @@ import {
 } from "@/components/game/OtcScenarioPanel";
 
 export const Route = createFileRoute("/_authenticated/game/otc")({
-  head: () => ({ meta: [{ title: "OTC Consultation — PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "OTC Consultation - Pharmulation" }] }),
   component: () => <ModeTheme mode="otc"><OtcGame /></ModeTheme>,
   errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
   notFoundComponent: () => <div className="p-8">Not found</div>,

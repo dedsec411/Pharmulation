@@ -1,11 +1,12 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-ls8Y-NKz.mjs";
-import { t as toastScore, a as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-CP2LLHvv.mjs";
-import { u as useAuthStore } from "./router-CjdgCv8I.mjs";
+import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-DCFOkmRx.mjs";
+import { M as ModeTheme } from "./ModeTheme-Dcsp8zjD.mjs";
+import { t as toastScore, M as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-Bfopko4w.mjs";
+import { u as useAuthStore } from "./router-Cn57AZkw.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/seroval.mjs";
-import { g as ClipboardList, D as Database, ac as Terminal, ad as Plus, H as HeartPulse, Y as Trash2, Q as TriangleAlert } from "../_libs/lucide-react.mjs";
+import { f as ClipboardList, D as Database, ab as Terminal, ac as Plus, h as HeartPulse, W as Trash2, O as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
 import "../_libs/tanstack__react-router.mjs";
 import "../_libs/tanstack__router-core.mjs";
@@ -20,9 +21,10 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
+import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
-import "./vendor-tanstack-D-RSGHsu.mjs";
+import "./vendor-tanstack-DQdgH_5g.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -510,10 +512,8 @@ function HospitalGame({
 function Loading() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "grid min-h-[60vh] place-items-center text-muted-foreground", children: "Loading case..." });
 }
-const SplitErrorComponent = ({
-  error
-}) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-destructive", children: error.message });
+const SplitComponent = () => /* @__PURE__ */ jsxRuntimeExports.jsx(ModeTheme, { mode: "hospital", children: /* @__PURE__ */ jsxRuntimeExports.jsx(HospitalGame, { mode: "hospital" }) });
 export {
   HospitalGame,
-  SplitErrorComponent as errorComponent
+  SplitComponent as component
 };

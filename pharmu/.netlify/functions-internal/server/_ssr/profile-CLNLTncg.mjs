@@ -1,10 +1,10 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { N as Navbar } from "./Navbar-DmFIjK8O.mjs";
-import { u as useAuthStore } from "./router-CjdgCv8I.mjs";
+import { N as Navbar } from "./Navbar-Cy4lBQ3b.mjs";
+import { u as useAuthStore } from "./router-Cn57AZkw.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as tierFor, x as xpProgress } from "./levels-7qe6_GyK.mjs";
-import { M as MODE_LABEL } from "./shared-CP2LLHvv.mjs";
+import { P as PUBLIC_MODE_GROUPS, p as publicModeCount, a as publicModeLabel } from "./shared-Bfopko4w.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import { B as BackButton } from "./BackButton-DOnk_vvq.mjs";
 import "../_libs/seroval.mjs";
@@ -24,7 +24,7 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
-import "./vendor-tanstack-D-RSGHsu.mjs";
+import "./vendor-tanstack-DQdgH_5g.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -185,7 +185,11 @@ function ProfilePage() {
   scores.forEach((s) => {
     byMode[s.mode] = (byMode[s.mode] ?? 0) + 1;
   });
-  const maxMode = Math.max(1, ...Object.values(byMode));
+  const modeGroupCounts = PUBLIC_MODE_GROUPS.map((group) => ({
+    ...group,
+    count: publicModeCount(byMode, group.modes)
+  }));
+  const maxMode = Math.max(1, ...modeGroupCounts.map((group) => group.count));
   async function claimCertificate(hours) {
     if (!userId) return;
     const existing = certs.find((c) => c.hours_earned === hours);
@@ -217,7 +221,7 @@ function ProfilePage() {
         issuedAt,
         certId
       });
-      doc.save(`pharmaverse-cpd-${hours}h.pdf`);
+      doc.save(`pharmulation-cpd-${hours}h.pdf`);
     } finally {
       setDownloadingCertId(null);
     }
@@ -282,13 +286,13 @@ function ProfilePage() {
         ] }, s.label)) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-6 glass-card p-6", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "font-bold mb-4", children: "Cases by mode" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-2", children: ["rx", "otc", "hospital", "oncology", "cosmetic", "emergency", "industry", "warehousing"].map((m) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-24 text-sm text-muted-foreground", children: MODE_LABEL[m] ?? m }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-2", children: modeGroupCounts.map((group) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-32 text-sm text-muted-foreground", children: group.label }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 h-2 rounded-full bg-white/10 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full bg-primary", style: {
-              width: `${(byMode[m] ?? 0) / maxMode * 100}%`
+              width: `${group.count / maxMode * 100}%`
             } }) }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-8 text-right text-sm", children: byMode[m] ?? 0 })
-          ] }, m)) })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-8 text-right text-sm", children: group.count })
+          ] }, group.key)) })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-6 glass-card p-6", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between flex-wrap gap-2", children: [
@@ -352,7 +356,7 @@ function ProfilePage() {
         /* @__PURE__ */ jsxRuntimeExports.jsxs("tbody", { children: [
           scores.map((s) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { className: "border-b border-border/50 hover:bg-white/5", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-3", children: new Date(s.completed_at).toLocaleDateString() }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-3", children: MODE_LABEL[s.mode] ?? s.mode }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-3", children: publicModeLabel(s.mode) }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "p-3 text-right font-bold text-primary", children: s.score }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { className: "p-3 text-right", children: [
               Math.round(s.accuracy * 100),

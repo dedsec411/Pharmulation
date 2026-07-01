@@ -8,12 +8,12 @@ import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { tierFor, xpProgress } from "@/lib/levels";
 import { cpdHoursFromCases, CPD_MILESTONES, generateCertificatePdf, nextCpdMilestone } from "@/lib/cpd";
-import { MODE_LABEL } from "@/lib/game/shared";
+import { PUBLIC_MODE_GROUPS, publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
 
 export const Route = createFileRoute("/_authenticated/profile")({
-  head: () => ({ meta: [{ title: "Profile — PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Profile - Pharmulation" }] }),
   component: ProfilePage,
 });
 
@@ -70,7 +70,11 @@ function ProfilePage() {
   // Per-mode breakdown
   const byMode: Record<string, number> = {};
   scores.forEach((s: any) => { byMode[s.mode] = (byMode[s.mode] ?? 0) + 1; });
-  const maxMode = Math.max(1, ...Object.values(byMode));
+  const modeGroupCounts = PUBLIC_MODE_GROUPS.map((group) => ({
+    ...group,
+    count: publicModeCount(byMode, group.modes),
+  }));
+  const maxMode = Math.max(1, ...modeGroupCounts.map((group) => group.count));
 
   async function claimCertificate(hours: number) {
     if (!userId) return;
@@ -89,7 +93,7 @@ function ProfilePage() {
     setDownloadingCertId(certId);
     try {
       const doc = await generateCertificatePdf({ fullName: name, hours, issuedAt, certId });
-      doc.save(`pharmaverse-cpd-${hours}h.pdf`);
+      doc.save(`pharmulation-cpd-${hours}h.pdf`);
     } finally {
       setDownloadingCertId(null);
     }
@@ -156,13 +160,13 @@ function ProfilePage() {
             <div className="mt-6 glass-card p-6">
               <h3 className="font-bold mb-4">Cases by mode</h3>
               <div className="space-y-2">
-                {["rx", "otc", "hospital", "oncology", "cosmetic", "emergency", "industry", "warehousing"].map((m) => (
-                  <div key={m} className="flex items-center gap-3">
-                    <div className="w-24 text-sm text-muted-foreground">{MODE_LABEL[m as keyof typeof MODE_LABEL] ?? m}</div>
+                {modeGroupCounts.map((group) => (
+                  <div key={group.key} className="flex items-center gap-3">
+                    <div className="w-32 text-sm text-muted-foreground">{group.label}</div>
                     <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: `${((byMode[m] ?? 0) / maxMode) * 100}%` }} />
+                      <div className="h-full bg-primary" style={{ width: `${(group.count / maxMode) * 100}%` }} />
                     </div>
-                    <div className="w-8 text-right text-sm">{byMode[m] ?? 0}</div>
+                    <div className="w-8 text-right text-sm">{group.count}</div>
                   </div>
                 ))}
               </div>
@@ -231,7 +235,7 @@ function ProfilePage() {
                 {scores.map((s: any) => (
                   <tr key={s.id} className="border-b border-border/50 hover:bg-white/5">
                     <td className="p-3">{new Date(s.completed_at).toLocaleDateString()}</td>
-                    <td className="p-3">{MODE_LABEL[s.mode as keyof typeof MODE_LABEL] ?? s.mode}</td>
+                    <td className="p-3">{publicModeLabel(s.mode)}</td>
                     <td className="p-3 text-right font-bold text-primary">{s.score}</td>
                     <td className="p-3 text-right">{Math.round(s.accuracy * 100)}%</td>
                     <td className="p-3 text-right">{s.time_taken}s</td>

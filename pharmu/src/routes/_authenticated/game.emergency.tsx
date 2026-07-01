@@ -17,7 +17,7 @@ import { BackButton } from "@/components/BackButton";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
 export const Route = createFileRoute("/_authenticated/game/emergency")({
-  head: () => ({ meta: [{ title: "Emergency — PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Emergency - Pharmulation" }] }),
   component: () => <ModeTheme mode="emergency"><EmergencyGate /></ModeTheme>,
   errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
   notFoundComponent: () => <div className="p-8">Not found</div>,

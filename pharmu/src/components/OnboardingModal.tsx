@@ -91,7 +91,7 @@ export function OnboardingModal() {
               ) : (
                 <button onClick={finish}
                   className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:scale-105 transition">
-                  Enter PharmaVerse
+                  Enter Pharmulation
                 </button>
               )}
             </div>

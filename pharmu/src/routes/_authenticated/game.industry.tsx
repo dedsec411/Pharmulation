@@ -17,7 +17,7 @@ import { useGameExit } from "@/lib/game/useGameExit";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
 export const Route = createFileRoute("/_authenticated/game/industry")({
-  head: () => ({ meta: [{ title: "Industry - PharmaVerse" }] }),
+  head: () => ({ meta: [{ title: "Industry - Pharmulation" }] }),
   component: () => <ModeTheme mode="industry"><IndustryGame /></ModeTheme>,
   errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
   notFoundComponent: () => <div className="p-8">Not found</div>,
