@@ -37,7 +37,7 @@ type TutorialGuide = {
 
 const STORAGE_PREFIX = "pharmulation_tutorial_";
 const FIRST_RUN_KEY = "pharmulation_tutorial_first_run_done";
-const DOCTOR_IMAGE = "/doctor-hakim.svg";
+const DOCTOR_IMAGE = "/dr hakim.png";
 
 const GUIDES: Record<string, TutorialGuide> = {
   home: {
