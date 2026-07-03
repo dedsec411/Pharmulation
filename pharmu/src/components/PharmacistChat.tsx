@@ -1,46 +1,25 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { useRouterState } from "@tanstack/react-router";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Send, X } from "lucide-react";
 import { sendChatMessage } from "@/lib/api/chat.functions";
-import { useActiveCaseStore } from "@/lib/active-case-store";
 
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
-type PatientInfo = {
-  name?: string | null;
-  age?: string | number | null;
-  symptoms?: string | null;
-  allergies?: string | null;
-  current_meds?: string | null;
-};
-
 const MAX_EXCHANGES = 15;
-const PRACTICE_PATIENT: PatientInfo = {
-  name: "Ayesha Khan",
-  age: 32,
-  symptoms: "blocked nose, sore throat, dry cough, and feeling tired for the last 2 days",
-  allergies: "penicillin caused a rash once",
-  current_meds: "metformin 500 mg twice daily and occasional paracetamol",
-};
+const OPENING_MESSAGE = "Hi, I am Dr. Hakim. Ask me a quick pharmacy question or a coaching tip.";
 
 export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const activeCase = useActiveCaseStore((state) => state.caseData);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [waiting, setWaiting] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  const isGame = pathname.includes("/game/");
-  const patientInfo = useMemo(() => extractPatientInfo(activeCase), [activeCase]);
-  const conversationKey = `${pathname}:${activeCase?.id ?? "practice"}`;
-  const context = "patient" as const;
-  const title = patientInfo.name || "Patient";
-  const subtitle = isGame && activeCase ? "Case patient" : "Practice patient";
+  const context = "mentor" as const;
+  const title = "Dr. Hakim";
+  const subtitle = "Pharmacy mentor";
   const exchangeCount = messages.filter((message) => message.role === "user").length;
   const limitReached = exchangeCount >= MAX_EXCHANGES;
 
@@ -53,17 +32,11 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
   }, [open]);
 
   useEffect(() => {
-    setMessages([]);
-    setInput("");
-    setWaiting(false);
-  }, [conversationKey]);
-
-  useEffect(() => {
     if (!open) return;
     setMessages((current) => current.length
       ? current
-      : [{ role: "assistant", content: openingLine(patientInfo) }]);
-  }, [open, conversationKey, patientInfo]);
+      : [{ role: "assistant", content: OPENING_MESSAGE }]);
+  }, [open]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -83,7 +56,6 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
         data: {
           messages: messagesForApi(nextMessages),
           context,
-          patientInfo,
         },
       });
       setMessages((current) => [...current, { role: "assistant", content: result.reply }]);
@@ -107,7 +79,7 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
           <header className="flex items-center justify-between gap-3 border-b border-border/40 bg-primary/10 p-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary">
-                Patient chat
+                Mentor chat
               </p>
               <h2 className="mt-1 text-lg font-black leading-none">{title}</h2>
               <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
@@ -125,7 +97,7 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.length === 0 && (
               <div className="rounded-2xl border border-border/35 bg-card/45 p-4 text-sm text-muted-foreground">
-                Ask the patient focused questions about symptoms, allergies, current medicines, red flags, and expectations.
+                Ask Dr. Hakim for a quick explanation, dosing reminder, safety check, or study tip.
               </div>
             )}
 
@@ -166,7 +138,7 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 disabled={waiting || limitReached}
-                placeholder="Ask the patient..."
+                placeholder="Ask Dr. Hakim..."
                 className="min-w-0 flex-1 rounded-full border border-border/45 bg-card/70 px-4 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/70 focus:ring-2 focus:ring-primary/20 disabled:opacity-55"
               />
               <button
@@ -185,33 +157,7 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
   );
 }
 
-function extractPatientInfo(caseData: any): PatientInfo {
-  if (!caseData) return PRACTICE_PATIENT;
-
-  const patient = caseData?.patient_info_json ?? {};
-  const symptoms = patient.symptoms ?? patient.complaint ?? patient.presenting_complaint ?? patient.diagnosis ?? caseData?.title ?? "";
-  const meds = patient.current_meds ?? patient.currentMeds ?? patient.medications ?? patient.home_meds ?? "";
-  return {
-    name: patient.name ?? caseData?.electronic_prescription_json?.patient ?? "Patient",
-    age: patient.age ?? "",
-    symptoms: stringifyInfo(symptoms),
-    allergies: stringifyInfo(patient.allergies ?? patient.allergy ?? "none"),
-    current_meds: stringifyInfo(meds || "none"),
-  };
-}
-
-function openingLine(patientInfo: PatientInfo) {
-  const symptomText = patientInfo.symptoms || "a problem I wanted to ask about";
-  return `Hi, I wanted to ask about ${symptomText}. Can you help me?`;
-}
-
 function messagesForApi(messages: ChatMessage[]) {
   const firstQuestionIndex = messages.findIndex((message) => message.role === "user");
   return firstQuestionIndex === -1 ? messages : messages.slice(firstQuestionIndex);
-}
-
-function stringifyInfo(value: unknown) {
-  if (Array.isArray(value)) return value.map(String).join(", ");
-  if (value && typeof value === "object") return Object.values(value).map(String).join(", ");
-  return String(value ?? "");
 }

@@ -1,11 +1,11 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-DCFOkmRx.mjs";
+import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-BEVgRkEv.mjs";
 import { t as toastScore, M as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-Bfopko4w.mjs";
-import { u as useAuthStore } from "./router-Cn57AZkw.mjs";
+import { u as useAuthStore } from "./router-D8H_Rjl1.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/seroval.mjs";
-import { f as ClipboardList, D as Database, ab as Terminal, ac as Plus, h as HeartPulse, W as Trash2, O as TriangleAlert } from "../_libs/lucide-react.mjs";
+import { f as ClipboardList, D as Database, ac as Terminal, ad as Plus, h as HeartPulse, W as Trash2, O as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
 import "../_libs/tanstack__react-router.mjs";
 import "../_libs/tanstack__router-core.mjs";
@@ -22,7 +22,7 @@ import "stream";
 import "../_libs/isbot.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
-import "./vendor-tanstack-DQdgH_5g.mjs";
+import "./vendor-tanstack-Cnrvb9Cp.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -510,8 +510,10 @@ function HospitalGame({
 function Loading() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "grid min-h-[60vh] place-items-center text-muted-foreground", children: "Loading case..." });
 }
-const SplitNotFoundComponent = () => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8", children: "Not found" });
+const SplitErrorComponent = ({
+  error
+}) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-destructive", children: error.message });
 export {
   HospitalGame,
-  SplitNotFoundComponent as notFoundComponent
+  SplitErrorComponent as errorComponent
 };

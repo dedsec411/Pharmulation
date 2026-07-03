@@ -1,0 +1,23 @@
+Design And Development
+
+Pharmulation was designed as an interactive pharmacy training simulation platform that helps pharmacy students and trainees practice real-world decision-making in a safe digital environment. The project focuses on four major training areas: Community Pharmacy, Clinical/Hospital Pharmacy, Industry, and Warehousing. Each mode was designed to feel different visually and functionally while still keeping one consistent glassmorphism-based interface across the website.
+
+The design uses a dark clinical green theme to represent healthcare, safety, and professionalism. Cards, panels, navigation elements, and game screens use translucent glass-style backgrounds, soft borders, glow effects, and subtle animations to create an immersive medical training environment. Each mode has its own visual identity: Community Pharmacy uses floating pill animations, Clinical mode uses ECG/vital monitor styling, Industry uses manufacturing and batch-record visuals, and Warehousing uses shipment, conveyor, and stock-management themes.
+
+The main dashboard was developed to act as the central learning hub. It includes training mode cards, XP progress, streak information, recent activity, daily challenges, leaderboard previews, and a tutorial assistant. The tutorial bot was designed as a doctor/pharmacist guide that helps new users understand the website after signup, while still allowing regular users to access help manually.
+
+Development was carried out using React, Vite, TanStack routing, TypeScript, Tailwind CSS, Supabase, and Netlify deployment. The frontend was structured around reusable components, route-based pages, shared game utilities, and mode-specific logic. Supabase was used for authentication, user profiles, cases, scores, leaderboard data, and training progress. Database migrations were added as the project expanded, including support for difficulty levels, case scoring, and compounding-based Rx cases.
+
+Community Pharmacy includes Rx and OTC gameplay. Rx cases simulate prescription interpretation, drug selection, brand selection, counseling, labeling, and special compounding triggers when a commercial medicine is not available. OTC cases guide users through patient questioning, drug recommendation, dose selection, quantity selection, and counseling advice. Clinical mode simulates patient files, vitals, medications, labs, formulary search, and order building. Industry mode simulates dosage form selection, batch manufacturing records, weighing, process maps, mixing, QC checks, and release decisions. Warehousing mode includes shipment handling, temperature control, FEFO dispatch, quarantine, reconciliation, and stock-management challenges.
+
+The development process also included performance improvements. Heavy pages and route components were code-split where possible, and large libraries were dynamically loaded only where needed. The production build output was reviewed to reduce the initial bundle size and improve navigation smoothness.
+
+Testing And Feedback
+
+Testing was done throughout development using local builds, browser testing, and production deployment checks. The project was repeatedly tested with `npm run build` to confirm that the application compiled successfully for production. Netlify deployment issues were also debugged, including build directory configuration, redirect handling, and page routing problems.
+
+Functional testing was performed across the main workflows: signing up, logging in, opening the dashboard, selecting difficulty levels, playing each training mode, submitting answers, viewing score feedback, and checking leaderboard/progress updates. Specific bugs were identified and fixed during testing, such as incorrect medicine display, empty clinical panels, prescription layout issues, timer behavior, mobile layout problems, wrong navigation behavior, and missing database-driven content.
+
+User interface feedback was also used heavily during development. Several visual improvements were made based on feedback, including clearer prescription templates, sticky dispensing trays, better hover animations, stronger dashboard card distinction, improved XP bar readability, animated timers, more immersive mode backgrounds, mobile hero layout fixes, and a consistent dark green healthcare-inspired design. Feedback also led to expanded drug databases, brand selection, compounding categories, industry batch-size automation, and more complex warehousing cases.
+
+Overall, testing and feedback helped refine both the technical reliability and the learning experience of Pharmulation. The final result is a more immersive, smoother, and more realistic pharmacy simulation platform that supports practical learning through interactive scenarios.

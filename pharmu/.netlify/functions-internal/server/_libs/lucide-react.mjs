@@ -75,7 +75,7 @@ const createLucideIcon = (iconName, iconNode) => {
   Component.displayName = toPascalCase(iconName);
   return Component;
 };
-const __iconNode$14 = [
+const __iconNode$15 = [
   [
     "path",
     {
@@ -84,12 +84,17 @@ const __iconNode$14 = [
     }
   ]
 ];
-const Activity = createLucideIcon("activity", __iconNode$14);
-const __iconNode$13 = [
+const Activity = createLucideIcon("activity", __iconNode$15);
+const __iconNode$14 = [
   ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
   ["path", { d: "M19 12H5", key: "x3x0zl" }]
 ];
-const ArrowLeft = createLucideIcon("arrow-left", __iconNode$13);
+const ArrowLeft = createLucideIcon("arrow-left", __iconNode$14);
+const __iconNode$13 = [
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
+];
+const ArrowRight = createLucideIcon("arrow-right", __iconNode$13);
 const __iconNode$12 = [
   [
     "path",
@@ -747,14 +752,15 @@ export {
   Gauge as a4,
   ShieldAlert as a5,
   MessageCircle as a6,
-  CupSoda as a7,
-  PackageCheck as a8,
-  Droplets as a9,
-  Cog as aa,
-  Terminal as ab,
-  Plus as ac,
-  Siren as ad,
-  ShoppingBag as ae,
+  ArrowRight as a7,
+  CupSoda as a8,
+  PackageCheck as a9,
+  Droplets as aa,
+  Cog as ab,
+  Terminal as ac,
+  Plus as ad,
+  Siren as ae,
+  ShoppingBag as af,
   ChevronRight as b,
   TrendingUp as c,
   Stethoscope as d,

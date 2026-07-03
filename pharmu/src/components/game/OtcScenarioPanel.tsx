@@ -90,14 +90,15 @@ export function formatOtcCorrectChoice(ans: any) {
 export function OtcScenarioPanel({
   ans,
   caseData,
-  dialogueLog,
+  dialogueLog = [],
 }: {
   ans: any;
   caseData: any;
-  dialogueLog: OtcDialogueTurn[];
+  dialogueLog?: OtcDialogueTurn[];
 }) {
   const patient = caseData?.patient_info_json ?? {};
   const setting = ans?.scenario_setting ?? "A patient visits a community pharmacy requesting OTC advice.";
+  const caseSummary = buildCaseSummary(ans, caseData, patient);
   const openingLine = typeof ans?.opening_patient_line === "string"
     ? ans.opening_patient_line
     : ans?.scenario_setting
@@ -122,13 +123,10 @@ export function OtcScenarioPanel({
       </div>
 
       <div className="space-y-3 p-4">
+        <DialogueLine speaker="Case brief" text={caseSummary} tone="pharmacist" />
         {openingLine ? (
           <DialogueLine speaker="Patient" text={openingLine} />
-        ) : (
-          <p className="rounded-xl border border-primary/20 bg-background/35 px-3 py-2 text-xs text-muted-foreground">
-            Choose the pharmacist's next question to begin the consultation.
-          </p>
-        )}
+        ) : null}
         {dialogueLog.map((turn, index) => (
           <div key={`${turn.pharmacist}-${index}`} className="space-y-2">
             <DialogueLine speaker="Pharmacist" text={turn.pharmacist} tone={turn.correct ? "pharmacist" : "warning"} />
@@ -138,6 +136,12 @@ export function OtcScenarioPanel({
       </div>
     </div>
   );
+}
+
+function buildCaseSummary(ans: any, caseData: any, patient: any) {
+  const patientConcern = patient.symptoms ?? ans?.complaint ?? caseData?.title ?? "Ask the patient to uncover the concern.";
+  const focus = "Use the patient conversation to confirm who it is for, symptoms, duration, previous treatment, allergies, medical conditions, current medicines, and red flags.";
+  return `${caseData?.title ?? "OTC case"}. Patient concern: ${patientConcern}. ${focus}`;
 }
 
 function DialogueLine({

@@ -12,7 +12,13 @@ const PatientInfoSchema = z.object({
   symptoms: z.string().optional().nullable(),
   allergies: z.string().optional().nullable(),
   current_meds: z.string().optional().nullable(),
+  medical_conditions: z.string().optional().nullable(),
+  scenario_dialogue: z.string().optional().nullable(),
 }).optional();
+
+function mentorPrompt() {
+  return "You are Dr. Hakim, an experienced, encouraging pharmacy mentor inside the Pharmulation training app. Give concise, accurate, clinically correct pharmacy guidance. Keep responses under 100 words. Stay warm and supportive, like a senior pharmacist mentoring a student.";
+}
 
 function patientPrompt(patientInfo?: z.infer<typeof PatientInfoSchema>) {
   const name = patientInfo?.name || "the patient";
@@ -20,7 +26,9 @@ function patientPrompt(patientInfo?: z.infer<typeof PatientInfoSchema>) {
   const symptoms = patientInfo?.symptoms || "a pharmacy concern";
   const allergies = patientInfo?.allergies || "none stated";
   const currentMeds = patientInfo?.current_meds || "none stated";
-  return `You are not a pharmacist, doctor, AI assistant, tutor, or mentor. You are roleplaying as ${name}, a ${age}-year-old patient speaking to a pharmacist in a real pharmacy. Your situation is: ${symptoms}. Speak naturally in simple patient language, with normal uncertainty and emotion. Do not teach, diagnose, recommend medicines, explain guidelines, or reveal the correct answer. Only answer the pharmacist's questions as the patient. Hidden details: allergies - ${allergies}; current medications - ${currentMeds}. Never volunteer hidden details unless the pharmacist specifically and appropriately asks about them. Keep replies brief, 1-3 sentences, and stay in character at all times.`;
+  const medicalConditions = patientInfo?.medical_conditions || "none stated";
+  const scenarioDialogue = patientInfo?.scenario_dialogue || "No scripted dialogue supplied.";
+  return `You are not a pharmacist, doctor, AI assistant, tutor, or mentor. You are roleplaying as ${name}, a ${age}-year-old patient speaking to a pharmacist in a real pharmacy. Your situation is: ${symptoms}. Speak naturally in simple patient language, with normal uncertainty and emotion. Do not teach, diagnose, recommend medicines, explain guidelines, or reveal the correct answer. Only answer the pharmacist's questions as the patient. Hidden details: allergies - ${allergies}; current medications - ${currentMeds}; medical conditions - ${medicalConditions}. Never volunteer hidden details unless the pharmacist specifically and appropriately asks about them. Use this case dialogue/facts to keep answers consistent: ${scenarioDialogue}. If the pharmacist asks the same or a clinically equivalent question, answer with the matching patient information. Keep replies brief, 1-3 sentences, and stay in character at all times.`;
 }
 
 function modelCandidates() {
@@ -47,7 +55,7 @@ function geminiKeyProblem(apiKey: string) {
 export const sendChatMessage = createServerFn({ method: "POST" })
   .validator(z.object({
     messages: z.array(ChatMessageSchema).min(1).max(30),
-    context: z.literal("patient"),
+    context: z.enum(["mentor", "patient"]),
     patientInfo: PatientInfoSchema,
   }))
   .handler(async ({ data }) => {
@@ -60,7 +68,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       return { reply: keyProblem };
     }
 
-    const systemPromptString = patientPrompt(data.patientInfo);
+    const systemPromptString = data.context === "patient"
+      ? patientPrompt(data.patientInfo)
+      : mentorPrompt();
 
     const failures: string[] = [];
     try {

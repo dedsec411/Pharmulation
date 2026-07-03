@@ -18,13 +18,8 @@ import {
   OtcScenarioPanel,
   formatOtcCorrectChoice,
   getOtcCorrectChoices,
-  getOtcCorrectQuestionText,
-  getOtcPatientResponse,
-  getOtcQuestionOptions,
-  getOtcSelectedQuestionText,
-  isOtcQuestionChoiceCorrect,
-  type OtcDialogueTurn,
 } from "@/components/game/OtcScenarioPanel";
+import { OtcPatientChat } from "@/components/game/OtcPatientChat";
 import { toast } from "sonner";
 
 import {
@@ -1252,13 +1247,11 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
   const onExit = useGameExit("/modes");
 
   const [step, setStep]     = useState<OtcStep>("questions");
-  const [qi, setQi]         = useState(0);
   const [correct, setCorrect] = useState(0);
   const [wrong, setWrong]   = useState(0);
   const [hints, setHints]   = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [result, setResult] = useState<any>(null);
-  const [dialogueLog, setDialogueLog] = useState<OtcDialogueTurn[]>([]);
 
   const timer   = useTimer(LIMIT, () => step !== "done" && finish(true));
   const errPanel = useErrorPanel({
@@ -1269,32 +1262,10 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
   });
 
   useEffect(() => {
-    setStep("questions"); setQi(0); setCorrect(0); setWrong(0); setHints(0); setQuantity(1); setResult(null); setDialogueLog([]);
+    setStep("questions"); setCorrect(0); setWrong(0); setHints(0); setQuantity(1); setResult(null);
   }, [caseData?.id]);
 
   const ans: any       = caseData?.correct_answer_json ?? {};
-  const questions: any[] = ans.questions ?? [];
-
-  function pickQuestion(i: number) {
-    const q = questions[qi];
-    const selectedQuestion = getOtcSelectedQuestionText(q, i);
-    const patientResponse = getOtcPatientResponse(q, i);
-    const isCorrect = isOtcQuestionChoiceCorrect(q, i);
-    setDialogueLog((log) => [...log, { pharmacist: selectedQuestion, patient: patientResponse, correct: isCorrect }]);
-    if (isCorrect) { setCorrect((n) => n + 1); toastScore(20, "good question"); }
-    else {
-      setWrong((n) => n + 1); toastScore(-15, "wrong path");
-      errPanel.logError({
-        errorType: "Irrelevant follow-up question",
-        wrongChoice: selectedQuestion,
-        correctChoice: getOtcCorrectQuestionText(q),
-        whyWrong: "That question does not uncover the key OTC safety information for this scenario.",
-        whatToKnow: "Priority OTC questions establish who the medicine is for, symptoms, duration, prior treatment, allergies, medical conditions, and current medicines.",
-      });
-    }
-    if (qi + 1 < questions.length) setQi((x) => x + 1);
-    else setStep("drug");
-  }
 
   function pickDrug(opt: string) {
     const correctChoices = getOtcCorrectChoices(ans);
@@ -1367,7 +1338,7 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "otc",
       score, timeTaken: timer.taken, errors: wrong + wl,
-      correctDrugs: correct, totalDrugs: questions.length + 4,
+      correctDrugs: correct + cl, totalDrugs: 4,
       errorsDetail: errPanel.errors,
     });
     setResult({ score, xpGain });
@@ -1429,22 +1400,14 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
 
         {/* Question / answer area */}
         <section className="relative z-10">
-          <motion.div key={`${step}-${qi}`}
+          <motion.div key={`${step}-${caseData.id}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
 
-            {step === "questions" && questions[qi] && (
+            {step === "questions" && (
               <>
-                <OtcScenarioPanel ans={ans} caseData={caseData} dialogueLog={dialogueLog} />
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Your follow-up question</p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {getOtcQuestionOptions(questions[qi]).map((c: string, i: number) => (
-                    <button key={i} onClick={() => pickQuestion(i)}
-                      className="rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm hover:border-primary/40 hover:bg-primary/5 transition">
-                      {c}
-                    </button>
-                  ))}
-                </div>
+                <OtcScenarioPanel ans={ans} caseData={caseData} />
+                <OtcPatientChat ans={ans} caseData={caseData} onComplete={() => setStep("drug")} />
               </>
             )}
 

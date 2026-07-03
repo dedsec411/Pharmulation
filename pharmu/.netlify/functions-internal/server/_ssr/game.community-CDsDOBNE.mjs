@@ -1,15 +1,15 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { a as useDifficultyChoice, b as useCaseLoader, u as useGameExit, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-DCFOkmRx.mjs";
+import { a as useDifficultyChoice, b as useCaseLoader, u as useGameExit, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-BEVgRkEv.mjs";
 import { M as ModeTheme } from "./ModeTheme-Dcsp8zjD.mjs";
-import { S as SimulatedPrescription, O as OtcScenarioPanel, g as getOtcQuestionOptions, a as getOtcSelectedQuestionText, b as getOtcPatientResponse, i as isOtcQuestionChoiceCorrect, c as getOtcCorrectQuestionText, d as getOtcCorrectChoices, f as formatOtcCorrectChoice } from "./OtcScenarioPanel-Bcmb_myo.mjs";
+import { S as SimulatedPrescription, O as OtcScenarioPanel, a as OtcPatientChat, g as getOtcCorrectChoices, f as formatOtcCorrectChoice } from "./OtcPatientChat-zcxdctMo.mjs";
 import { c as computeScore, s as submitScore, t as toastScore } from "./shared-Bfopko4w.mjs";
-import { u as useAuthStore } from "./router-Cn57AZkw.mjs";
+import { u as useAuthStore } from "./router-D8H_Rjl1.mjs";
 import { p as prepareDrugCatalog, R as RX_DRUG_CATEGORIES, g as getBrandsForDrug } from "./drug-catalog-DKPW6qki.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/seroval.mjs";
 import { m as motion, A as AnimatePresence } from "../_libs/framer-motion.mjs";
-import { w as FileText, ae as ShoppingBag, f as ClipboardList, W as Trash2, R as ArrowLeft, P as Pill, V as Tags, X, I as User, Y as Check } from "../_libs/lucide-react.mjs";
+import { w as FileText, af as ShoppingBag, f as ClipboardList, W as Trash2, R as ArrowLeft, P as Pill, V as Tags, X, I as User, Y as Check } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__react-router.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
@@ -26,7 +26,7 @@ import "../_libs/isbot.mjs";
 import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
-import "./vendor-tanstack-DQdgH_5g.mjs";
+import "./vendor-tanstack-Cnrvb9Cp.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -813,13 +813,11 @@ function OtcGame({
   } = useAuthStore();
   const onExit = useGameExit("/modes");
   const [step, setStep] = reactExports.useState("questions");
-  const [qi, setQi] = reactExports.useState(0);
   const [correct, setCorrect] = reactExports.useState(0);
   const [wrong, setWrong] = reactExports.useState(0);
   const [hints, setHints] = reactExports.useState(0);
   const [quantity, setQuantity] = reactExports.useState(1);
   const [result, setResult] = reactExports.useState(null);
-  const [dialogueLog, setDialogueLog] = reactExports.useState([]);
   const timer = useTimer(LIMIT, () => step !== "done" && finish(true));
   const errPanel = useErrorPanel({
     mode: "otc",
@@ -829,43 +827,13 @@ function OtcGame({
   });
   reactExports.useEffect(() => {
     setStep("questions");
-    setQi(0);
     setCorrect(0);
     setWrong(0);
     setHints(0);
     setQuantity(1);
     setResult(null);
-    setDialogueLog([]);
   }, [caseData?.id]);
   const ans = caseData?.correct_answer_json ?? {};
-  const questions = ans.questions ?? [];
-  function pickQuestion(i) {
-    const q = questions[qi];
-    const selectedQuestion = getOtcSelectedQuestionText(q, i);
-    const patientResponse = getOtcPatientResponse(q, i);
-    const isCorrect = isOtcQuestionChoiceCorrect(q, i);
-    setDialogueLog((log) => [...log, {
-      pharmacist: selectedQuestion,
-      patient: patientResponse,
-      correct: isCorrect
-    }]);
-    if (isCorrect) {
-      setCorrect((n) => n + 1);
-      toastScore(20, "good question");
-    } else {
-      setWrong((n) => n + 1);
-      toastScore(-15, "wrong path");
-      errPanel.logError({
-        errorType: "Irrelevant follow-up question",
-        wrongChoice: selectedQuestion,
-        correctChoice: getOtcCorrectQuestionText(q),
-        whyWrong: "That question does not uncover the key OTC safety information for this scenario.",
-        whatToKnow: "Priority OTC questions establish who the medicine is for, symptoms, duration, prior treatment, allergies, medical conditions, and current medicines."
-      });
-    }
-    if (qi + 1 < questions.length) setQi((x) => x + 1);
-    else setStep("drug");
-  }
   function pickDrug(opt) {
     const correctChoices = getOtcCorrectChoices(ans);
     if (correctChoices.includes(opt)) {
@@ -960,8 +928,8 @@ function OtcGame({
       score,
       timeTaken: timer.taken,
       errors: wrong + wl,
-      correctDrugs: correct,
-      totalDrugs: questions.length + 4,
+      correctDrugs: correct + cl,
+      totalDrugs: 4,
       errorsDetail: errPanel.errors
     });
     setResult({
@@ -1019,16 +987,15 @@ function OtcGame({
         opacity: 1,
         y: 0
       }, className: "rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur", children: [
-        step === "questions" && questions[qi] && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(OtcScenarioPanel, { ans, caseData, dialogueLog }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2", children: "Your follow-up question" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-2 sm:grid-cols-2", children: getOtcQuestionOptions(questions[qi]).map((c, i) => /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => pickQuestion(i), className: "rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm hover:border-primary/40 hover:bg-primary/5 transition", children: c }, i)) })
+        step === "questions" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(OtcScenarioPanel, { ans, caseData }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(OtcPatientChat, { ans, caseData, onComplete: () => setStep("drug") })
         ] }),
         step === "drug" && /* @__PURE__ */ jsxRuntimeExports.jsx(OtcPicker, { title: "Recommend a medication", options: ans.drug_options ?? [], onPick: pickDrug }),
         step === "dose" && /* @__PURE__ */ jsxRuntimeExports.jsx(OtcPicker, { title: "Choose correct dose", options: ans.dose_options ?? [], onPick: pickDose }),
         step === "quantity" && /* @__PURE__ */ jsxRuntimeExports.jsx(OtcQuantitySlider, { value: quantity, max: getOtcQuantityMax(ans), onChange: setQuantity, onSubmit: submitQuantity }),
         step === "advice" && /* @__PURE__ */ jsxRuntimeExports.jsx(OtcPicker, { title: "Counsel the patient", options: ans.advice_options ?? [], onPick: pickAdvice })
-      ] }, `${step}-${qi}`) })
+      ] }, `${step}-${caseData.id}`) })
     ] }),
     errPanel.panel
   ] });

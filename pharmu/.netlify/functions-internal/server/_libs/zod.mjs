@@ -3565,7 +3565,6 @@ const objectType = ZodObject.create;
 const unionType = ZodUnion.create;
 ZodIntersection.create;
 ZodTuple.create;
-const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
 ZodPromise.create;
 ZodOptional.create;
@@ -3573,7 +3572,6 @@ ZodNullable.create;
 export {
   arrayType as a,
   enumType as e,
-  literalType as l,
   numberType as n,
   objectType as o,
   stringType as s,

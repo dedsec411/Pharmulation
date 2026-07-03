@@ -81,7 +81,7 @@ function getResponse() {
 }
 var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 async function getStartManifest(matchedRoutes) {
-  const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-TW1-76RA.mjs");
+  const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-B6vqD-V1.mjs");
   const startManifest = tsrStartManifest();
   let routes = startManifest.routes;
   routes[rootRouteId];
@@ -103,7 +103,7 @@ async function getStartManifest(matchedRoutes) {
 const manifest = {
   "6998d5bda3c8f203fdc10234018043ebcfba19eaea0dab1a9b324f1a8d498e87": {
     functionName: "sendChatMessage_createServerFn_handler",
-    importer: () => import("./chat.functions-y2Qox8lL.mjs")
+    importer: () => import("./chat.functions-CvQ1krbD.mjs")
   }
 };
 async function getServerFnById(id, access) {
@@ -1366,8 +1366,8 @@ var getBaseManifest = getProdBaseManifest;
 var createEarlyHintsForRequest = createEarlyHintsCollector;
 async function loadEntries() {
   const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-    import("./router-Cn57AZkw.mjs").then((n) => n.r),
-    import("./start-FEx5vwub.mjs"),
+    import("./router-D8H_Rjl1.mjs").then((n) => n.r),
+    import("./start-DVmkxmse.mjs"),
     Promise.resolve().then(() => emptyPluginAdapters)
   ]);
   return {

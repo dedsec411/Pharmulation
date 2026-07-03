@@ -1,7 +1,7 @@
-import { e as createServerRpc, c as createServerFn } from "./vendor-tanstack-DQdgH_5g.mjs";
+import { e as createServerRpc, c as createServerFn } from "./vendor-tanstack-Cnrvb9Cp.mjs";
 import "../_libs/react.mjs";
 import "../_libs/seroval.mjs";
-import { o as objectType, s as stringType, e as enumType, u as unionType, n as numberType, l as literalType, a as arrayType } from "../_libs/zod.mjs";
+import { o as objectType, s as stringType, e as enumType, u as unionType, n as numberType, a as arrayType } from "../_libs/zod.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -28,15 +28,22 @@ const PatientInfoSchema = objectType({
   age: unionType([stringType(), numberType()]).optional().nullable(),
   symptoms: stringType().optional().nullable(),
   allergies: stringType().optional().nullable(),
-  current_meds: stringType().optional().nullable()
+  current_meds: stringType().optional().nullable(),
+  medical_conditions: stringType().optional().nullable(),
+  scenario_dialogue: stringType().optional().nullable()
 }).optional();
+function mentorPrompt() {
+  return "You are Dr. Hakim, an experienced, encouraging pharmacy mentor inside the Pharmulation training app. Give concise, accurate, clinically correct pharmacy guidance. Keep responses under 100 words. Stay warm and supportive, like a senior pharmacist mentoring a student.";
+}
 function patientPrompt(patientInfo) {
   const name = patientInfo?.name || "the patient";
   const age = patientInfo?.age || "unknown age";
   const symptoms = patientInfo?.symptoms || "a pharmacy concern";
   const allergies = patientInfo?.allergies || "none stated";
   const currentMeds = patientInfo?.current_meds || "none stated";
-  return `You are not a pharmacist, doctor, AI assistant, tutor, or mentor. You are roleplaying as ${name}, a ${age}-year-old patient speaking to a pharmacist in a real pharmacy. Your situation is: ${symptoms}. Speak naturally in simple patient language, with normal uncertainty and emotion. Do not teach, diagnose, recommend medicines, explain guidelines, or reveal the correct answer. Only answer the pharmacist's questions as the patient. Hidden details: allergies - ${allergies}; current medications - ${currentMeds}. Never volunteer hidden details unless the pharmacist specifically and appropriately asks about them. Keep replies brief, 1-3 sentences, and stay in character at all times.`;
+  const medicalConditions = patientInfo?.medical_conditions || "none stated";
+  const scenarioDialogue = patientInfo?.scenario_dialogue || "No scripted dialogue supplied.";
+  return `You are not a pharmacist, doctor, AI assistant, tutor, or mentor. You are roleplaying as ${name}, a ${age}-year-old patient speaking to a pharmacist in a real pharmacy. Your situation is: ${symptoms}. Speak naturally in simple patient language, with normal uncertainty and emotion. Do not teach, diagnose, recommend medicines, explain guidelines, or reveal the correct answer. Only answer the pharmacist's questions as the patient. Hidden details: allergies - ${allergies}; current medications - ${currentMeds}; medical conditions - ${medicalConditions}. Never volunteer hidden details unless the pharmacist specifically and appropriately asks about them. Use this case dialogue/facts to keep answers consistent: ${scenarioDialogue}. If the pharmacist asks the same or a clinically equivalent question, answer with the matching patient information. Keep replies brief, 1-3 sentences, and stay in character at all times.`;
 }
 function modelCandidates() {
   return [process.env.GEMINI_MODEL, "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"].filter((model, index, models) => Boolean(model) && models.indexOf(model) === index);
@@ -57,7 +64,7 @@ const sendChatMessage = createServerFn({
   method: "POST"
 }).validator(objectType({
   messages: arrayType(ChatMessageSchema).min(1).max(30),
-  context: literalType("patient"),
+  context: enumType(["mentor", "patient"]),
   patientInfo: PatientInfoSchema
 })).handler(sendChatMessage_createServerFn_handler, async ({
   data
@@ -74,7 +81,7 @@ const sendChatMessage = createServerFn({
       reply: keyProblem
     };
   }
-  const systemPromptString = patientPrompt(data.patientInfo);
+  const systemPromptString = data.context === "patient" ? patientPrompt(data.patientInfo) : mentorPrompt();
   const failures = [];
   try {
     for (const model of modelCandidates()) {
