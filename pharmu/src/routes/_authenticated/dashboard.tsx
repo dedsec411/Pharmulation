@@ -81,7 +81,7 @@ const MENTOR_TIPS = [
   "Quality begins with accurate inventory and proper storage conditions.",
   "The safest pharmacist is the one who never stops double-checking."
 ];
-const DOCTOR_IMAGE = "/dr hakim.jpg";
+const DOCTOR_IMAGE = "/dr-hakim-clean.png";
 const DASHBOARD_CARD_HOVER = {
   y: -6,
   scale: 1.012,

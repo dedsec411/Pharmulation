@@ -5,7 +5,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { toast } from "sonner";
 import { Sparkles, FileText, Trophy, MessageCircle, type LucideIcon } from "lucide-react";
 
-const DOCTOR_IMAGE = "/dr hakim.jpg";
+const DOCTOR_IMAGE = "/dr-hakim-clean.png";
 
 type OnboardingStep = {
   icon: LucideIcon;
