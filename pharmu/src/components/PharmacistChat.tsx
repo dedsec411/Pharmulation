@@ -9,7 +9,8 @@ type ChatMessage = {
 };
 
 const MAX_EXCHANGES = 15;
-const OPENING_MESSAGE = "Hi, I am Dr. Hakim. Ask me a quick pharmacy question or a coaching tip.";
+const DOCTOR_IMAGE = "/doctor-hakim.svg";
+const OPENING_MESSAGE = "Hi, I am Dr. Hakim, your pharmacy AI mentor. Ask me about medicines, doses, counseling, interactions, calculations, compounding, or study help.";
 
 export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -19,7 +20,7 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
 
   const context = "mentor" as const;
   const title = "Dr. Hakim";
-  const subtitle = "Pharmacy mentor";
+  const subtitle = "Pharmacy AI mentor";
   const exchangeCount = messages.filter((message) => message.role === "user").length;
   const limitReached = exchangeCount >= MAX_EXCHANGES;
 
@@ -77,12 +78,21 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
           className="glass-card fixed bottom-24 left-5 z-[60] flex h-[min(620px,calc(100vh-8rem))] w-[min(420px,calc(100vw-2.5rem))] flex-col overflow-hidden border-primary/35 bg-background/90 shadow-[0_24px_70px_-26px_oklch(0.74_0.14_180/0.95)]"
         >
           <header className="flex items-center justify-between gap-3 border-b border-border/40 bg-primary/10 p-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary">
-                Mentor chat
-              </p>
-              <h2 className="mt-1 text-lg font-black leading-none">{title}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-primary/30 bg-background/55 shadow-[0_0_20px_-8px_oklch(0.74_0.14_180/0.9)]">
+                <img
+                  src={DOCTOR_IMAGE}
+                  alt=""
+                  className="h-16 w-14 object-contain object-top drop-shadow-[0_8px_14px_rgba(0,0,0,0.28)]"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+                  Mentor chat
+                </p>
+                <h2 className="mt-1 text-lg font-black leading-none">{title}</h2>
+                <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
+              </div>
             </div>
             <button
               type="button"
@@ -97,7 +107,7 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.length === 0 && (
               <div className="rounded-2xl border border-border/35 bg-card/45 p-4 text-sm text-muted-foreground">
-                Ask Dr. Hakim for a quick explanation, dosing reminder, safety check, or study tip.
+                Ask Dr. Hakim any pharmacy question: drug therapy, OTC counseling, interactions, dosing, calculations, formulations, or exam practice.
               </div>
             )}
 

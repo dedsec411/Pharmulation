@@ -5,7 +5,7 @@ import { S as redirect } from "../_libs/tanstack__router-core.mjs";
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { T as Toaster$1 } from "../_libs/sonner.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
-import { c as createServerFn, a as createSsrRpc } from "./vendor-tanstack-Cnrvb9Cp.mjs";
+import { c as createServerFn, a as createSsrRpc } from "./vendor-tanstack-DpYfDUXI.mjs";
 import { S as Slot } from "../_libs/radix-ui__react-slot.mjs";
 import { c as cva } from "../_libs/class-variance-authority.mjs";
 import { c as clsx } from "../_libs/clsx.mjs";
@@ -42,7 +42,7 @@ import "../_libs/srvx.mjs";
 import "../_libs/radix-ui__react-compose-refs.mjs";
 import "../_libs/motion-dom.mjs";
 import "../_libs/motion-utils.mjs";
-const appCss = "/assets/styles-DqzlVXrA.css";
+const appCss = "/assets/styles-D9E-2QiO.css";
 function reportLovableError(error, context = {}) {
   if (typeof window === "undefined") return;
   window.__lovableEvents?.captureException?.(
@@ -107,7 +107,8 @@ const sendChatMessage = createServerFn({
   patientInfo: PatientInfoSchema
 })).handler(createSsrRpc("6998d5bda3c8f203fdc10234018043ebcfba19eaea0dab1a9b324f1a8d498e87"));
 const MAX_EXCHANGES = 15;
-const OPENING_MESSAGE = "Hi, I am Dr. Hakim. Ask me a quick pharmacy question or a coaching tip.";
+const DOCTOR_IMAGE$1 = "/doctor-hakim.svg";
+const OPENING_MESSAGE = "Hi, I am Dr. Hakim, your pharmacy AI mentor. Ask me about medicines, doses, counseling, interactions, calculations, compounding, or study help.";
 function PharmacistChat({ open, onClose }) {
   const [messages, setMessages] = reactExports.useState([]);
   const [input, setInput] = reactExports.useState("");
@@ -115,7 +116,7 @@ function PharmacistChat({ open, onClose }) {
   const endRef = reactExports.useRef(null);
   const context = "mentor";
   const title = "Dr. Hakim";
-  const subtitle = "Pharmacy mentor";
+  const subtitle = "Pharmacy AI mentor";
   const exchangeCount = messages.filter((message) => message.role === "user").length;
   const limitReached = exchangeCount >= MAX_EXCHANGES;
   reactExports.useEffect(() => {
@@ -164,10 +165,20 @@ function PharmacistChat({ open, onClose }) {
       className: "glass-card fixed bottom-24 left-5 z-[60] flex h-[min(620px,calc(100vh-8rem))] w-[min(420px,calc(100vw-2.5rem))] flex-col overflow-hidden border-primary/35 bg-background/90 shadow-[0_24px_70px_-26px_oklch(0.74_0.14_180/0.95)]",
       children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "flex items-center justify-between gap-3 border-b border-border/40 bg-primary/10 p-4", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-[0.24em] text-primary", children: "Mentor chat" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "mt-1 text-lg font-black leading-none", children: title }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-xs text-muted-foreground", children: subtitle })
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex min-w-0 items-center gap-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-primary/30 bg-background/55 shadow-[0_0_20px_-8px_oklch(0.74_0.14_180/0.9)]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "img",
+              {
+                src: DOCTOR_IMAGE$1,
+                alt: "",
+                className: "h-16 w-14 object-contain object-top drop-shadow-[0_8px_14px_rgba(0,0,0,0.28)]"
+              }
+            ) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-[0.24em] text-primary", children: "Mentor chat" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "mt-1 text-lg font-black leading-none", children: title }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "mt-1 text-xs text-muted-foreground", children: subtitle })
+            ] })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             "button",
@@ -181,7 +192,7 @@ function PharmacistChat({ open, onClose }) {
           )
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 space-y-3 overflow-y-auto p-4", children: [
-          messages.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-2xl border border-border/35 bg-card/45 p-4 text-sm text-muted-foreground", children: "Ask Dr. Hakim for a quick explanation, dosing reminder, safety check, or study tip." }),
+          messages.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-2xl border border-border/35 bg-card/45 p-4 text-sm text-muted-foreground", children: "Ask Dr. Hakim any pharmacy question: drug therapy, OTC counseling, interactions, dosing, calculations, formulations, or exam practice." }),
           messages.map((message, index) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `flex ${message.role === "user" ? "justify-end" : "justify-start"}`, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
             "div",
             {
@@ -231,7 +242,7 @@ function messagesForApi(messages) {
 }
 const STORAGE_PREFIX = "pharmulation_tutorial_";
 const FIRST_RUN_KEY = "pharmulation_tutorial_first_run_done";
-const DOCTOR_IMAGE = "/doctor-mentor.png";
+const DOCTOR_IMAGE = "/doctor-hakim.svg";
 const GUIDES = {
   home: {
     key: "home",
@@ -762,7 +773,7 @@ const Route$h = createFileRoute("/login")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$g, "component")
 });
-const $$splitComponentImporter$f = () => import("./leaderboard-CHJYl5s7.mjs");
+const $$splitComponentImporter$f = () => import("./leaderboard-D06CJSBG.mjs");
 const Route$g = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [{
@@ -1005,7 +1016,7 @@ const Route$d = createFileRoute("/auth/callback")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$d, "component")
 });
-const $$splitComponentImporter$c = () => import("./settings-BUKm3VaL.mjs");
+const $$splitComponentImporter$c = () => import("./settings-BpNB9h--.mjs");
 const Route$c = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [{
@@ -1014,7 +1025,7 @@ const Route$c = createFileRoute("/_authenticated/settings")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$c, "component")
 });
-const $$splitComponentImporter$b = () => import("./profile-BfoOq1P7.mjs");
+const $$splitComponentImporter$b = () => import("./profile-DbaeppZo.mjs");
 const Route$b = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [{
@@ -1025,7 +1036,7 @@ const Route$b = createFileRoute("/_authenticated/profile")({
 });
 const $$splitNotFoundComponentImporter$8 = () => import("./modes-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$8 = () => import("./modes-CqlNFt5g.mjs");
-const $$splitComponentImporter$a = () => import("./modes-CEnELmAs.mjs");
+const $$splitComponentImporter$a = () => import("./modes-B4NZtbsb.mjs");
 const Route$a = createFileRoute("/_authenticated/modes")({
   head: () => ({
     meta: [{
@@ -1036,7 +1047,7 @@ const Route$a = createFileRoute("/_authenticated/modes")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$8, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$8, "notFoundComponent")
 });
-const $$splitComponentImporter$9 = () => import("./drugs-BWNPK9hk.mjs");
+const $$splitComponentImporter$9 = () => import("./drugs-sSS02l_S.mjs");
 const Route$9 = createFileRoute("/_authenticated/drugs")({
   head: () => ({
     meta: [{
@@ -1047,7 +1058,7 @@ const Route$9 = createFileRoute("/_authenticated/drugs")({
 });
 const $$splitNotFoundComponentImporter$7 = () => import("./dashboard-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$7 = () => import("./dashboard-CqlNFt5g.mjs");
-const $$splitComponentImporter$8 = () => import("./dashboard-CP2FwUyD.mjs");
+const $$splitComponentImporter$8 = () => import("./dashboard-CfW3PuOB.mjs");
 const Route$8 = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [{
@@ -1058,7 +1069,7 @@ const Route$8 = createFileRoute("/_authenticated/dashboard")({
   errorComponent: lazyRouteComponent($$splitErrorComponentImporter$7, "errorComponent"),
   notFoundComponent: lazyRouteComponent($$splitNotFoundComponentImporter$7, "notFoundComponent")
 });
-const $$splitComponentImporter$7 = () => import("./admin-UWiS4Tgw.mjs");
+const $$splitComponentImporter$7 = () => import("./admin-CxdC6IVO.mjs");
 const Route$7 = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [{
@@ -1069,7 +1080,7 @@ const Route$7 = createFileRoute("/_authenticated/admin")({
 });
 const $$splitNotFoundComponentImporter$6 = () => import("./game.warehousing-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$6 = () => import("./game.warehousing-CqlNFt5g.mjs");
-const $$splitComponentImporter$6 = () => import("./game.warehousing-1VYPF09F.mjs");
+const $$splitComponentImporter$6 = () => import("./game.warehousing-4B2Bqpz_.mjs");
 const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
   head: () => ({
     meta: [{
@@ -1082,7 +1093,7 @@ const Route$6 = createFileRoute("/_authenticated/game/warehousing")({
 });
 const $$splitNotFoundComponentImporter$5 = () => import("./game.rx-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$5 = () => import("./game.rx-CqlNFt5g.mjs");
-const $$splitComponentImporter$5 = () => import("./game.rx-D5EeN4bk.mjs");
+const $$splitComponentImporter$5 = () => import("./game.rx-BGAVTQI_.mjs");
 const Route$5 = createFileRoute("/_authenticated/game/rx")({
   head: () => ({
     meta: [{
@@ -1095,7 +1106,7 @@ const Route$5 = createFileRoute("/_authenticated/game/rx")({
 });
 const $$splitNotFoundComponentImporter$4 = () => import("./game.otc-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$4 = () => import("./game.otc-CqlNFt5g.mjs");
-const $$splitComponentImporter$4 = () => import("./game.otc-DnCK6mcq.mjs");
+const $$splitComponentImporter$4 = () => import("./game.otc-BeQHdy3o.mjs");
 const Route$4 = createFileRoute("/_authenticated/game/otc")({
   head: () => ({
     meta: [{
@@ -1108,7 +1119,7 @@ const Route$4 = createFileRoute("/_authenticated/game/otc")({
 });
 const $$splitNotFoundComponentImporter$3 = () => import("./game.industry-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$3 = () => import("./game.industry-CqlNFt5g.mjs");
-const $$splitComponentImporter$3 = () => import("./game.industry-B0bQHaEM.mjs");
+const $$splitComponentImporter$3 = () => import("./game.industry-Dt6Ee9dU.mjs");
 const Route$3 = createFileRoute("/_authenticated/game/industry")({
   head: () => ({
     meta: [{
@@ -1158,9 +1169,9 @@ const useActiveCaseStore = create((set) => ({
   caseData: null,
   setActiveCase: (caseData) => set({ caseData })
 }));
-const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-ifhF7XdC.mjs");
-const $$splitErrorComponentImporter$2 = () => import("./game.hospital-B0GEFsrN.mjs");
-const $$splitComponentImporter$2 = () => import("./game.hospital-BCftI_5J.mjs");
+const $$splitNotFoundComponentImporter$2 = () => import("./game.hospital-CXzQVZIx.mjs");
+const $$splitErrorComponentImporter$2 = () => import("./game.hospital-KowGtj3O.mjs");
+const $$splitComponentImporter$2 = () => import("./game.hospital-B0x24W80.mjs");
 const Route$2 = createFileRoute("/_authenticated/game/hospital")({
   head: () => ({
     meta: [{
@@ -1173,7 +1184,7 @@ const Route$2 = createFileRoute("/_authenticated/game/hospital")({
 });
 const $$splitNotFoundComponentImporter$1 = () => import("./game.emergency-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter$1 = () => import("./game.emergency-CqlNFt5g.mjs");
-const $$splitComponentImporter$1 = () => import("./game.emergency-_9lQQJdZ.mjs");
+const $$splitComponentImporter$1 = () => import("./game.emergency-Dm6_ib9M.mjs");
 const Route$1 = createFileRoute("/_authenticated/game/emergency")({
   head: () => ({
     meta: [{
@@ -1186,7 +1197,7 @@ const Route$1 = createFileRoute("/_authenticated/game/emergency")({
 });
 const $$splitNotFoundComponentImporter = () => import("./game.community-cKqJa9j4.mjs");
 const $$splitErrorComponentImporter = () => import("./game.community-CqlNFt5g.mjs");
-const $$splitComponentImporter = () => import("./game.community-CDsDOBNE.mjs");
+const $$splitComponentImporter = () => import("./game.community-Dh4kyROB.mjs");
 const Route = createFileRoute("/_authenticated/game/community")({
   head: () => ({
     meta: [{

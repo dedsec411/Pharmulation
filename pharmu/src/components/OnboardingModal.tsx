@@ -3,13 +3,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { toast } from "sonner";
-import { Sparkles, FileText, Trophy, MessageCircle } from "lucide-react";
+import { Sparkles, FileText, Trophy, MessageCircle, type LucideIcon } from "lucide-react";
 
-const steps = [
+const DOCTOR_IMAGE = "/doctor-hakim.svg";
+
+type OnboardingStep = {
+  icon: LucideIcon;
+  title: string;
+  body: string;
+  art?: string;
+};
+
+const steps: OnboardingStep[] = [
   {
     icon: Sparkles,
     title: "Welcome to Pharmulation",
-    body: "An immersive pharmacy training simulator. Real cases, real drugs, real growth — all from your browser.",
+    body: "An immersive pharmacy training simulator. Real cases, real drugs, real growth - all from your browser.",
   },
   {
     icon: FileText,
@@ -24,7 +33,8 @@ const steps = [
   {
     icon: MessageCircle,
     title: "Meet your mentor",
-    body: "👨‍⚕️ Dr. Hakim, your in-game mentor, will drop tips during cases. Tap 'Ask Mentor' anytime for a hint.",
+    art: DOCTOR_IMAGE,
+    body: "Dr. Hakim, your in-game mentor, will drop tips during cases. Tap 'Ask Mentor' anytime for a hint.",
   },
 ];
 
@@ -50,7 +60,7 @@ export function OnboardingModal() {
   const Current = steps[step].icon;
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 p-4 backdrop-blur-sm">
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
@@ -60,8 +70,16 @@ export function OnboardingModal() {
           transition={{ duration: 0.25 }}
           className="glass-card w-full max-w-lg p-8 text-center"
         >
-          <div className="mx-auto mb-5 h-16 w-16 rounded-2xl bg-primary/15 grid place-items-center text-primary">
-            <Current className="h-8 w-8" />
+          <div className="mx-auto mb-5 grid h-16 w-16 place-items-center overflow-hidden rounded-2xl bg-primary/15 text-primary">
+            {steps[step].art ? (
+              <img
+                src={steps[step].art}
+                alt=""
+                className="h-20 w-16 object-contain object-top drop-shadow-[0_8px_14px_rgba(0,0,0,0.22)]"
+              />
+            ) : (
+              <Current className="h-8 w-8" />
+            )}
           </div>
           <h2 className="text-2xl font-bold">{steps[step].title}</h2>
           <p className="mt-3 text-muted-foreground">{steps[step].body}</p>
@@ -78,19 +96,25 @@ export function OnboardingModal() {
             </button>
             <div className="flex gap-2">
               {step > 0 && (
-                <button onClick={() => setStep(step - 1)}
-                  className="rounded-full px-5 py-2 text-sm border border-border hover:bg-white/5">
+                <button
+                  onClick={() => setStep(step - 1)}
+                  className="rounded-full border border-border px-5 py-2 text-sm hover:bg-white/5"
+                >
                   Back
                 </button>
               )}
               {step < steps.length - 1 ? (
-                <button onClick={() => setStep(step + 1)}
-                  className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:scale-105 transition">
+                <button
+                  onClick={() => setStep(step + 1)}
+                  className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:scale-105"
+                >
                   Next
                 </button>
               ) : (
-                <button onClick={finish}
-                  className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:scale-105 transition">
+                <button
+                  onClick={finish}
+                  className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:scale-105"
+                >
                   Enter Pharmulation
                 </button>
               )}

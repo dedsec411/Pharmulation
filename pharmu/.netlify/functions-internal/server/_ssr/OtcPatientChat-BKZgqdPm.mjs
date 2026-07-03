@@ -1,5 +1,5 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
-import { s as sendChatMessage } from "./router-D8H_Rjl1.mjs";
+import { s as sendChatMessage } from "./router-3YGERiUv.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
 import { d as Stethoscope, a6 as MessageCircle, m as Send, a7 as ArrowRight } from "../_libs/lucide-react.mjs";
 const DEFAULT_VITALS = {

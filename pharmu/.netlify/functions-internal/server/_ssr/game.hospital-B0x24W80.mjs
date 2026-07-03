@@ -1,7 +1,8 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-BEVgRkEv.mjs";
+import { u as useGameExit, a as useDifficultyChoice, b as useCaseLoader, c as useTimer, d as useErrorPanel, F as FeedbackScreen, G as GameHeader } from "./DifficultySelect-CdUKFC47.mjs";
+import { M as ModeTheme } from "./ModeTheme-Dcsp8zjD.mjs";
 import { t as toastScore, M as MODE_TIMERS, c as computeScore, s as submitScore } from "./shared-Bfopko4w.mjs";
-import { u as useAuthStore } from "./router-D8H_Rjl1.mjs";
+import { u as useAuthStore } from "./router-3YGERiUv.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { t as toast } from "../_libs/sonner.mjs";
 import "../_libs/seroval.mjs";
@@ -20,9 +21,10 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
+import "./ModeAmbientLayer-B2Acv9Tx.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
-import "./vendor-tanstack-Cnrvb9Cp.mjs";
+import "./vendor-tanstack-DpYfDUXI.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -510,10 +512,8 @@ function HospitalGame({
 function Loading() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "grid min-h-[60vh] place-items-center text-muted-foreground", children: "Loading case..." });
 }
-const SplitErrorComponent = ({
-  error
-}) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-destructive", children: error.message });
+const SplitComponent = () => /* @__PURE__ */ jsxRuntimeExports.jsx(ModeTheme, { mode: "hospital", children: /* @__PURE__ */ jsxRuntimeExports.jsx(HospitalGame, { mode: "hospital" }) });
 export {
   HospitalGame,
-  SplitErrorComponent as errorComponent
+  SplitComponent as component
 };

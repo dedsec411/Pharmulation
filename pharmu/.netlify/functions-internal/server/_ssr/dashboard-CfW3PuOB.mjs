@@ -1,8 +1,8 @@
 import { j as jsxRuntimeExports, r as reactExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
 import { u as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { N as Navbar } from "./Navbar-BMmnf87p.mjs";
-import { u as useAuthStore } from "./router-D8H_Rjl1.mjs";
+import { N as Navbar } from "./Navbar-Cz3rhuwH.mjs";
+import { u as useAuthStore } from "./router-3YGERiUv.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
 import { p as publicModeCount, a as publicModeLabel } from "./shared-Bfopko4w.mjs";
 import { M as ModeAmbientLayer } from "./ModeAmbientLayer-B2Acv9Tx.mjs";
@@ -23,7 +23,7 @@ import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
 import "../_libs/tanstack__query-core.mjs";
-import "./vendor-tanstack-Cnrvb9Cp.mjs";
+import "./vendor-tanstack-DpYfDUXI.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";
@@ -89,7 +89,7 @@ const MODE_META = {
   }
 };
 const MENTOR_TIPS = ["Always verify the patient's allergy status before dispensing antibiotics.", "Methotrexate is weekly, never daily. Read prescriptions out loud to catch errors.", "When in doubt, call the prescriber. Clarification prevents harm.", "Counsel one medicine at a time. Patients remember only a few key points.", "Cold chain breaks happen in seconds. Check the temperature log every time.", "FEFO isn't optional. First expired, first out - every single time.", "Look for drug interactions before adding a new medicine to the regimen.", "Never assume a handwritten prescription. Verify unclear orders immediately.", "Right patient, right drug, right dose, right route, right time - every case.", "Insulin is a high-alert medication. Double-check every dose before dispensing.", "A missed contraindication can be more dangerous than a missed diagnosis.", "Check renal and hepatic function before recommending dose adjustments.", "Store look-alike and sound-alike medicines separately to prevent mix-ups.", "Patient counseling is part of the treatment - not an optional extra.", "Always confirm the expiry date before dispensing or stocking medicines.", "Document every intervention. Good records protect both patients and pharmacists.", "Generic substitution is valuable, but only when clinically appropriate.", "If a medicine requires refrigeration, never leave it at room temperature unnecessarily.", "Quality begins with accurate inventory and proper storage conditions.", "The safest pharmacist is the one who never stops double-checking."];
-const DOCTOR_IMAGE = "/doctor-mentor.png";
+const DOCTOR_IMAGE = "/doctor-hakim.svg";
 const DASHBOARD_CARD_HOVER = {
   y: -6,
   scale: 1.012,

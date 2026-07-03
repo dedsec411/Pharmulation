@@ -1,5 +1,5 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { u as useAuthStore, a as useActiveCaseStore, B as Button } from "./router-D8H_Rjl1.mjs";
+import { u as useAuthStore, a as useActiveCaseStore, B as Button } from "./router-3YGERiUv.mjs";
 import { e as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { f as fetchRandomCase, d as MODE_LABEL, D as DIFFICULTY_LABEL, e as DIFFICULTY_RULES } from "./shared-Bfopko4w.mjs";
 import { s as supabase } from "./client-CGYRwklv.mjs";
@@ -858,7 +858,7 @@ function useTimer(seconds, onTimeout) {
   return { remaining, taken, pct, paused, pauseUsed, togglePause, setExternalPaused };
 }
 const AUTO_DISMISS_SEC = 15;
-const DOCTOR_IMAGE = "/doctor-mentor.png";
+const DOCTOR_IMAGE = "/doctor-hakim.svg";
 function ErrorExplanationPanel({ entry, mentorTip, onDismiss }) {
   const [count, setCount] = reactExports.useState(AUTO_DISMISS_SEC);
   const [expanded, setExpanded] = reactExports.useState(false);
