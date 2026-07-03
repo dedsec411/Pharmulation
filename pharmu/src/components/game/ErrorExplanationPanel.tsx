@@ -22,7 +22,7 @@ type Props = {
 };
 
 const AUTO_DISMISS_SEC = 15;
-const DOCTOR_IMAGE = "/dr hakim.png";
+const DOCTOR_IMAGE = "/dr hakim.jpg";
 
 export function ErrorExplanationPanel({ entry, mentorTip, onDismiss }: Props) {
   const [count, setCount] = useState(AUTO_DISMISS_SEC);

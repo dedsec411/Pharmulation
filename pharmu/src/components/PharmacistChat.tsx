@@ -9,7 +9,7 @@ type ChatMessage = {
 };
 
 const MAX_EXCHANGES = 15;
-const DOCTOR_IMAGE = "/dr hakim.png";
+const DOCTOR_IMAGE = "/dr hakim.jpg";
 const OPENING_MESSAGE = "Hi, I am Dr. Hakim, your pharmacy AI mentor. Ask me about medicines, doses, counseling, interactions, calculations, compounding, or study help.";
 
 export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () => void }) {
