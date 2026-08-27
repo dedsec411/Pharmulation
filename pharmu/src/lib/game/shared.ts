@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { applyCaseResult } from "@/lib/supabase-rpc";
 import { toast } from "sonner";
 
 export type Mode = "rx" | "otc" | "hospital" | "oncology" | "industry" | "warehousing";
@@ -162,34 +163,18 @@ export async function submitScore(args: {
     toast.error("Your score could not be saved.");
   }
 
-  const { data: profile, error: profileErr } = await supabase
-    .from("profiles")
-    .select("xp, level, total_cases_completed")
-    .eq("user_id", args.userId)
-    .single();
+  // Single atomic UPDATE server-side. Doing this as a read-then-write from
+  // here let two concurrent submissions clobber each other's increment.
+  const { data: updatedRows, error: applyErr } = await applyCaseResult(xpGain);
 
-  if (profileErr) {
-    console.error("[supabase] failed to load profile for XP update:", profileErr);
+  if (applyErr) {
+    console.error("[supabase] failed to apply case result:", applyErr);
     toast.error("Your XP could not be updated.");
   }
 
-  if (profile) {
-    const newXp = (profile.xp ?? 0) + xpGain;
-    const newLevel = Math.max(1, Math.floor(newXp / 500) + 1);
-    const newTotal = (profile.total_cases_completed ?? 0) + 1;
-    const { error: updateErr } = await supabase
-      .from("profiles")
-      .update({
-        xp: newXp,
-        level: newLevel,
-        total_cases_completed: newTotal,
-      })
-      .eq("user_id", args.userId);
-
-    if (updateErr) {
-      console.error("[supabase] failed to update XP:", updateErr);
-      toast.error("Your XP could not be updated.");
-    }
+  const updated = updatedRows?.[0];
+  if (updated) {
+    const newTotal = updated.total_cases_completed;
 
     // Badge triggers
     if (newTotal === 1) awardBadge(args.userId, "First Case", "Completed your first case", "🎓");

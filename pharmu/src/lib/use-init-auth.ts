@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore, type Profile } from "./auth-store";
+import { touchDailyStreak } from "./supabase-rpc";
 
 async function loadProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
@@ -17,22 +18,16 @@ async function loadProfile(userId: string): Promise<Profile | null> {
 
 async function bumpStreak(profile: Profile) {
   const today = new Date().toISOString().slice(0, 10);
+  // Already counted today; skip the round trip. The RPC is idempotent anyway.
   if (profile.last_active === today) return profile;
-  const last = profile.last_active ? new Date(profile.last_active) : null;
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yStr = yesterday.toISOString().slice(0, 10);
-  const newStreak =
-    last && profile.last_active === yStr ? profile.streak_days + 1 : 1;
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ streak_days: newStreak, last_active: today })
-    .eq("user_id", profile.user_id)
-    .select("*")
-    .maybeSingle();
+
+  // The streak is computed inside a single atomic UPDATE server-side. Doing
+  // the read-then-write here meant two tabs loading at once could both see
+  // yesterday's date and double-count the day.
+  const { data, error } = await touchDailyStreak();
   // Falls back to the un-bumped profile, so this degrades rather than breaking.
   if (error) console.error("[supabase] failed to update streak:", error);
-  return (data as Profile | null) ?? profile;
+  return (data?.[0] as Profile | undefined) ?? profile;
 }
 
 export function useInitAuth() {
