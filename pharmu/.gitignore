@@ -21,6 +21,9 @@ dist-ssr
 # Environment variables
 .env
 
+# Supabase CLI scratch files
+supabase/.temp/
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
