@@ -5,7 +5,7 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 ## Done
 
 - [x] Untrack `.env` from git, add it to `.gitignore`, add `.env.example` — leaked `GEMINI_API_KEY` is no longer tracked; key has been rotated.
-- [ ] **Close the `profiles.role` self-escalation hole — MIGRATION WRITTEN BUT NOT APPLIED.** `20260827120000_prevent_profile_role_self_escalation.sql` exists, but verified against the live database (`hpzjxzmqgrcpbizxucbp`) that a normal authenticated user can still self-promote to `admin` right now. Apply it via the Supabase dashboard SQL editor. Note `supabase/config.toml` points at a different project (`ogxbvpnpqbwjmdyhrabr`), so `supabase db push` will not target the live database until that is corrected.
+- [x] **Close the `profiles.role` self-escalation hole** — `20260827120000_prevent_profile_role_self_escalation.sql`, applied to the live database and verified end-to-end: an authenticated user's self-promote is reverted, their normal profile updates (xp etc.) still work, and the service-role path used by the admin panel can still promote.
 - [x] Remove Emergency mode (was broken — `onExit` crash — and unreachable from any nav link).
 - [x] Remove Cosmetic mode (was dead config, no route ever existed).
 - [x] Delete standalone `game.rx.tsx` / `game.otc.tsx`; `game.community.tsx` is now the single Rx+OTC implementation.
