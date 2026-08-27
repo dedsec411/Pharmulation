@@ -20,6 +20,11 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 
 ## Next up — correctness / security
 
+- [ ] **Migrations in this repo are drifting from the live database — fix the pipeline, not the symptoms.** `supabase/config.toml` points at `ogxbvpnpqbwjmdyhrabr` while the app runs against `hpzjxzmqgrcpbizxucbp`, so `supabase db push` never targets production and migrations are being applied by hand (or not at all). Two have already been caught missing after the fact:
+  - `20260827120000` (role self-escalation trigger) — applied late, hole was live until then.
+  - `20260615153330` (badge/leaderboard lockdown) — **never ran**; until 2026-08-27 any authenticated user could self-award badges and write arbitrary leaderboard scores, and `award_badge_if_earned` did not exist so no badge had ever been awarded.
+  Point `config.toml` at the real project and reconcile, or assume more silent drift.
+
 ## Content gaps
 
 - [ ] **Consolidate the "mentor" persona constant** (`DOCTOR_IMAGE`, currently `/dr-hakim-clean.png`) — still duplicated verbatim as a private constant in `OnboardingModal.tsx`, `PharmacistChat.tsx`, `TutorialBot.tsx`, `ErrorExplanationPanel.tsx`, and `dashboard.tsx`. This is exactly the pattern that caused the 5-commit "Dr Hakim gender" fix chain — extract to one shared module (e.g. `src/lib/mentor.ts`).
