@@ -1,5 +1,4 @@
 import js from "@eslint/js";
-import eslintPluginPrettier from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
@@ -38,5 +37,9 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
-  eslintPluginPrettier,
 );
+
+// Prettier is deliberately NOT wired into eslint. The codebase was never
+// formatted with it, so `eslint-plugin-prettier` reported ~4,200 formatting
+// errors and buried every real finding. Formatting is available on demand via
+// `npm run format`; lint is for correctness.

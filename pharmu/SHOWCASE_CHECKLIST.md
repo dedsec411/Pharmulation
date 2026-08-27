@@ -30,6 +30,8 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 
   Still worth doing: `supabase link --project-ref hpzjxzmqgrcpbizxucbp` and confirm `supabase migration list` shows local and remote in step, so future migrations apply through the CLI rather than by hand.
 
+- [x] **Repo hygiene** — added a root README (setup, env vars, modes, migration workflow, layout); deleted `netlify.toml` (published `dist` while the Nitro vercel preset outputs `.vercel/output`, so Netlify builds were already broken) and the stale `pharma-verse-play-main/`; rewrote the mangled root `.gitignore`; moved working documents into `docs/`. Kept `bun.lock` (its `bunfig.toml` carries a real supply-chain guard) and the root `package.json` (Vercel may use it for project detection) — both documented in the README instead.
+
 ## Architecture / code quality
 
 - [ ] Centralize the ~16 files' worth of duplicated `supabase.from(...)` query logic into `src/lib/api/*` modules instead of embedding raw queries per route.
@@ -39,13 +41,7 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 
 ## Repo hygiene / DX
 
-- [ ] **Fix the `supabase/config.toml` project mismatch** — it points at `ogxbvpnpqbwjmdyhrabr` while the app actually runs against `hpzjxzmqgrcpbizxucbp`. Until fixed, any `supabase db push` / `migration list` targets the wrong project, which is why migrations in this repo have not been reaching the live database.
-- [ ] Fix the corrupted root `.gitignore` (`c:\Users\DeDSeC\Desktop\pharmulation\.gitignore` has garbled/spaced-out text).
-- [ ] **Decide on Prettier formatting.** `npm run lint` reports ~4,200 `prettier/prettier` errors because the codebase was never formatted but `eslint-plugin-prettier` is configured to error on it. `npx prettier --write .` fixes all of them, but reformats essentially every file — a huge diff that would bury real history. Either run it once deliberately (ideally as its own commit, and worth adding a `.git-blame-ignore-revs`), or drop the prettier plugin from the eslint config. Left alone for now since it is a judgement call. Underneath the formatting noise the only real findings are 165 `no-explicit-any`, 14 `react-refresh/only-export-components`, 5 `react-hooks/exhaustive-deps` (all in `game.industry.tsx` / `game.warehousing.tsx`), and 1 `prefer-const`.
-- [ ] Decide the fate of `netlify.toml` (root) vs. the Nitro `vercel` preset in `vite.config.ts` — currently mismatched/stale (project has moved to Vercel).
-- [ ] Delete the stale `pharma-verse-play-main/` folder and the duplicate root `package.json`/`package-lock.json` (repo root has no `src/`, so these don't participate in the real build).
-- [ ] Pick one package manager — both `package-lock.json` (npm) and `bun.lock`/`bunfig.toml` (bun) exist; deploy configs use npm.
-- [ ] Add a real root `README.md` (setup, env vars, scripts, architecture) — none exists today.
+- [x] **Prettier decision made: not wired into lint.** `eslint-plugin-prettier` was reporting ~4,200 formatting errors because the codebase was never formatted with it, which buried every real finding. Rather than reformat essentially every file (a diff that would bury real history for no reviewer-visible gain), prettier was removed from the eslint config and remains available on demand via `npm run format`. `npm run lint` now reports **152 real problems** (140 `no-explicit-any`, 12 warnings) instead of 4,380. `no-explicit-any` is deliberately left as an error rather than downgraded — it is genuine lost type safety, tracked below.
 - [ ] Consolidate duplicate seed data — `supabase/seed_from_current_project.sql` and `supabase/seed_chunks/seed_00{1,2,3}.sql` contain the same drug rows in two forms.
 - [ ] Decide the fate of the `leaderboard` DB table — fully locked down by RLS with no code path that ever writes to it; either wire it up or drop it.
 - [ ] No automated tests and no CI type-check step exist — several real `tsc` errors currently ship unnoticed (was true as of the audit; worth re-checking after the recent edits).
