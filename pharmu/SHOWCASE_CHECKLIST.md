@@ -9,6 +9,7 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 - [x] Remove Emergency mode (was broken — `onExit` crash — and unreachable from any nav link).
 - [x] Remove Cosmetic mode (was dead config, no route ever existed).
 - [x] Delete standalone `game.rx.tsx` / `game.otc.tsx`; `game.community.tsx` is now the single Rx+OTC implementation.
+- [x] **Rebuild OTC as a fully AI consultation** — the patient now improvises from an authored 12-case clinical bank (`lib/game/otc-cases.ts`) with no scripted dialogue, and the consultation itself is graded against WWHAM plus red-flag recognition (`gradeConsultation`). Replaces the two hardcoded cases, the scripted fallback, and the previously unscored conversation. Lives in `OtcConsultation.tsx`.
 - [x] **Make the in-game score agree with the final score** — added `liveScore`/`liveScoreFromPoints` (delegating to `computeScore` so they cannot drift) and `SCORE_WEIGHTS` as the single source of truth for point values. Verified live and final now match exactly across all difficulties. Fixed three real bugs found on the way: hospital showed `orders.length * 5` (tracked nothing; now hidden, since it only reveals correctness on submit), industry/warehousing hardcoded `- 100` for the difficulty base (easy lost 10 points, hard gained 20), and several OTC toasts quoted point values that disagreed with what was actually scored.
 - [x] **Make XP/streak updates atomic** — `apply_case_result` / `touch_daily_streak` SECURITY DEFINER RPCs (migration `20260827130000_atomic_profile_counters.sql`), applied live and verified: 20 concurrent increments now all land (xp 2000/2000), where the old read-modify-write pattern lost 19 of 20 (xp 100/2000). The RPC also clamps caller-supplied XP, and the streak is idempotent within a day.
 - [x] **Surface Supabase errors instead of swallowing them** — added `lib/supabase-query.ts` (`unwrap`/`unwrapList`) that throws with a user-facing message and logs the raw Postgrest error, plus a global `QueryCache` handler in `router.tsx` that toasts failures (deduped by message). Applied across the query call sites; paths with their own fallback log instead, and score submission toasts since a lost score is silent data loss.
@@ -21,7 +22,6 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 
 ## Content gaps
 
-- [ ] **OTC Consultation only has 2 possible cases** (hardcoded UUIDs cycled in `useCaseLoader.ts`, sourced from two migrations). Repeat plays will show identical content — needs more case content authored through the same pipeline, or migrated onto the templated `case_templates` system the other modes use.
 - [ ] **Consolidate the "mentor" persona constant** (`DOCTOR_IMAGE`, currently `/dr-hakim-clean.png`) — still duplicated verbatim as a private constant in `OnboardingModal.tsx`, `PharmacistChat.tsx`, `TutorialBot.tsx`, `ErrorExplanationPanel.tsx`, and `dashboard.tsx`. This is exactly the pattern that caused the 5-commit "Dr Hakim gender" fix chain — extract to one shared module (e.g. `src/lib/mentor.ts`).
 
 ## Architecture / code quality
@@ -30,7 +30,6 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 - [ ] Replace `(supabase as any)` casts in `useCaseLoader.ts` (lines ~299, 321, 536, 544, 550) — `case_templates`/`user_seen_cases` are already properly typed in the generated types, the casts are stale.
 - [ ] De-duplicate the `Profile` type in `auth-store.ts` — hand-maintained instead of importing `Tables<'profiles'>` from the generated Supabase types; can silently drift from the real schema.
 - [ ] Split oversized multi-concern files: `game.community.tsx` (still ~1600 lines mixing mode-picker + Rx game + OTC game), `game.industry.tsx` (~1277 lines), `useCaseLoader.ts` (generic hook + OTC hardcoded fallback + procedural case generator, three concerns in one file).
-- [ ] Reduce the OTC pilot case content living in 3 places at once (two migrations + the ~200-line `OTC_PILOT_FALLBACK_CASES` constant in `useCaseLoader.ts`) — will naturally shrink once the OTC content-gap item above is addressed.
 
 ## Repo hygiene / DX
 
