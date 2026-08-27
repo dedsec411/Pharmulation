@@ -32,7 +32,7 @@ describe("computeScore", () => {
 
   it("applies the documented weight for each action", () => {
     const base = computeScore({ difficulty: "medium", ...NO_SPEED_BONUS });
-    const delta = (input: Parameters<typeof computeScore>[0]) =>
+    const delta = (input: Partial<Parameters<typeof computeScore>[0]>) =>
       computeScore({ difficulty: "medium", ...NO_SPEED_BONUS, ...input }) - base;
 
     expect(delta({ correctDrugs: 1 })).toBe(SCORE_WEIGHTS.correctDrug);

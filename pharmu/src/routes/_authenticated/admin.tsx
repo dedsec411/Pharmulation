@@ -21,7 +21,7 @@ function AdminPage() {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  if (profile && (profile.role as string) !== "admin") {
+  if (profile && profile.role !== "admin") {
     throw redirect({ to: "/dashboard" });
   }
 

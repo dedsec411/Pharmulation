@@ -4,11 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useActiveCaseStore } from "@/lib/active-case-store";
 
-const OTC_PILOT_CASE_IDS = [
-  "7edab79d-3920-4b28-8d31-7f3a5d86e001",
-  "7edab79d-3920-4b28-8d31-7f3a5d86e002",
-];
-
 export function useCaseLoader(mode: Mode, difficulty?: Difficulty | null) {
   const { profile } = useAuthStore();
   const setActiveCase = useActiveCaseStore((state) => state.setActiveCase);
@@ -23,10 +18,10 @@ export function useCaseLoader(mode: Mode, difficulty?: Difficulty | null) {
       return;
     }
     setLoading(true);
-    const c = mode === "otc"
-      ? await fetchOtcPilotCase(reloadKey)
-      : await fetchTemplateCase(mode, difficulty, profile?.user_id, profile?.level) ??
-        await fetchRandomCase(mode, difficulty);
+    // OTC is not loaded here: it runs its own AI consultation off the
+    // authored case bank in lib/game/otc-cases.ts.
+    const c = await fetchTemplateCase(mode, difficulty, profile?.user_id, profile?.level)
+      ?? await fetchRandomCase(mode, difficulty);
     setCaseData(c);
     setActiveCase(c);
     setLoading(false);
@@ -36,19 +31,6 @@ export function useCaseLoader(mode: Mode, difficulty?: Difficulty | null) {
   useEffect(() => () => setActiveCase(null), [setActiveCase]);
 
   return { caseData, loading, next: () => setReloadKey((k) => k + 1) };
-}
-
-async function fetchOtcPilotCase(reloadKey: number) {
-  const targetIndex = reloadKey % OTC_PILOT_CASE_IDS.length;
-  const targetId = OTC_PILOT_CASE_IDS[targetIndex];
-  const { data, error } = await supabase
-    .from("cases")
-    .select("*")
-    .eq("id", targetId)
-    .maybeSingle();
-
-  if (error) console.warn("OTC pilot case fetch failed", error);
-  return data ? buildOtcPilotFallbackCase(targetIndex, data.id) : buildOtcPilotFallbackCase(targetIndex);
 }
 
 type TemplateRow = {
@@ -74,221 +56,6 @@ type DrugRow = {
   category?: string | null;
 };
 
-const OTC_PILOT_FALLBACK_CASES = [
-  {
-    id: "generated:otc-pilot:allergy",
-    mode: "otc",
-    difficulty: "easy",
-    title: "Case Scenario 1: Allergy (Allergic Rhinitis)",
-    prescription_image_url: null,
-    electronic_prescription_json: null,
-    drugs_required: ["Cetirizine", "Loratadine"],
-    patient_info_json: {
-      age: 26,
-      name: "Allergy patient",
-      gender: "unspecified",
-      symptoms: "Sneezing, runny nose, itchy watery eyes for three days",
-      allergies: "none",
-      current_meds: "none",
-      medical_conditions: "none",
-    },
-    correct_answer_json: {
-      scenario_setting: "A patient visits a community pharmacy complaining of allergy symptoms.",
-      questions: [
-        {
-          q: "Confirm who needs the medicine.",
-          choices: [
-            "Good morning. Who is the medicine for?",
-            "Which antibiotic do you want?",
-            "Do you want a cough syrup?",
-            "Should I give you eye drops only?",
-          ],
-          correct: 0,
-          patient_response: "It's for me.",
-        },
-        {
-          q: "Ask about symptoms.",
-          choices: [
-            "What symptoms are you having?",
-            "Are you taking blood pressure medicine?",
-            "Do you have stomach pain?",
-            "Which brand do you usually buy?",
-          ],
-          correct: 0,
-          patient_response: "I've been sneezing a lot, my nose is runny, and my eyes are itchy and watery.",
-        },
-        {
-          q: "Ask about duration.",
-          choices: [
-            "How long have you had these symptoms?",
-            "Do you want tablets or capsules?",
-            "Did someone else tell you to take this?",
-            "Are you here to refill a prescription?",
-          ],
-          correct: 0,
-          patient_response: "They started about three days ago.",
-        },
-        {
-          q: "Ask about prior treatment.",
-          choices: [
-            "Have you taken anything for it already?",
-            "Do you want something very strong?",
-            "Can I give you antibiotics?",
-            "Do you need medicine for fever only?",
-          ],
-          correct: 0,
-          patient_response: "No, I haven't taken any medicine yet.",
-        },
-        {
-          q: "Screen medicines and conditions.",
-          choices: [
-            "Are you taking any other medicines or do you have any medical conditions?",
-            "Do you prefer a small tablet?",
-            "Do you want to buy two boxes?",
-            "Should I give this without asking anything else?",
-          ],
-          correct: 0,
-          patient_response: "No, I'm healthy and I'm not taking any medicines.",
-        },
-      ],
-      correct_drug: "Cetirizine 10mg",
-      correct_drugs: ["Cetirizine 10mg", "Loratadine 10mg"],
-      drug_options: ["Cetirizine 10mg", "Loratadine 10mg", "Amoxicillin 500mg", "Chlorpheniramine 4mg"],
-      correct_dose: "Cetirizine 10mg or loratadine 10mg once daily",
-      dose_options: [
-        "Cetirizine 10mg or loratadine 10mg once daily",
-        "Cetirizine 10mg four times daily",
-        "Amoxicillin 500mg three times daily",
-        "Chlorpheniramine 4mg every hour",
-      ],
-      correct_quantity: 1,
-      correct_advice: "Use once daily, avoid driving if drowsy, and see a doctor if symptoms worsen or do not improve.",
-      advice_options: [
-        "Use once daily, avoid driving if drowsy, and see a doctor if symptoms worsen or do not improve.",
-        "Take extra tablets whenever sneezing starts.",
-        "Start antibiotics if the nose keeps running.",
-        "Use it only with alcohol to help sleep.",
-      ],
-    },
-    explanation: "Symptoms fit uncomplicated allergic rhinitis. A non-drowsy antihistamine such as cetirizine or loratadine is appropriate after screening medicines and conditions.",
-    mentor_tip: "OTC allergy counseling should confirm who it is for, symptoms, duration, prior treatment, current medicines, and warning signs.",
-    created_at: "2026-07-02T00:00:00.000Z",
-    formula_json: null,
-    shipment_json: null,
-    requires_compounding: false,
-    compound_type: null,
-    compound_data: null,
-  },
-  {
-    id: "generated:otc-pilot:headache",
-    mode: "otc",
-    difficulty: "easy",
-    title: "Case Scenario 2: Pain (Headache - OTC Analgesics)",
-    prescription_image_url: null,
-    electronic_prescription_json: null,
-    drugs_required: ["Paracetamol"],
-    patient_info_json: {
-      age: 30,
-      name: "Headache patient",
-      gender: "unspecified",
-      symptoms: "Mild headache across the forehead for six hours",
-      allergies: "none",
-      current_meds: "none",
-      medical_conditions: "none",
-    },
-    correct_answer_json: {
-      scenario_setting: "A patient visits a community pharmacy requesting pain relief.",
-      questions: [
-        {
-          q: "Confirm who needs the medicine.",
-          choices: [
-            "Hello. Who is the medicine for?",
-            "Which antibiotic do you want?",
-            "Is this for a skin rash?",
-            "Do you want a sedating medicine?",
-          ],
-          correct: 0,
-          patient_response: "It's for me.",
-        },
-        {
-          q: "Ask about pain location and character.",
-          choices: [
-            "Can you describe your pain and where it is located?",
-            "Do you want medicine for cough?",
-            "Which brand looks cheapest?",
-            "Can I give you an antibiotic?",
-          ],
-          correct: 0,
-          patient_response: "I have a mild headache across my forehead.",
-        },
-        {
-          q: "Ask about duration.",
-          choices: [
-            "How long have you had the headache?",
-            "Do you want capsules instead of tablets?",
-            "Are you buying this for someone else?",
-            "Should I give a strong painkiller?",
-          ],
-          correct: 0,
-          patient_response: "Since this morning, around six hours ago.",
-        },
-        {
-          q: "Ask about prior treatment.",
-          choices: [
-            "Have you taken any medicine or tried anything to relieve it?",
-            "Do you want two packs?",
-            "Do you need medicine for allergy?",
-            "Do you want an injection?",
-          ],
-          correct: 0,
-          patient_response: "No, I just drank some water and rested, but it didn't help much.",
-        },
-        {
-          q: "Screen contraindications and current medicines.",
-          choices: [
-            "Do you have any allergies, stomach ulcers, liver disease, or are you taking any other medicines?",
-            "Do you prefer orange flavor?",
-            "Should I give this without checking your history?",
-            "Do you want antibiotics with it?",
-          ],
-          correct: 0,
-          patient_response: "No, I don't have any medical problems and I'm not taking any medicines.",
-        },
-      ],
-      correct_drug: "Paracetamol 500mg",
-      drug_options: ["Paracetamol 500mg", "Ibuprofen 400mg", "Amoxicillin 500mg", "Tramadol 50mg"],
-      correct_dose: "500-1000mg every 4-6 hours, max 4g/day",
-      dose_options: [
-        "500-1000mg every 4-6 hours, max 4g/day",
-        "2g every 2 hours",
-        "500mg once weekly",
-        "Take the whole strip at once",
-      ],
-      correct_quantity: 1,
-      correct_advice: "Take with water, avoid other paracetamol products, and see a doctor if headache is severe, unusual, or lasts more than 3 days.",
-      advice_options: [
-        "Take with water, avoid other paracetamol products, and see a doctor if headache is severe, unusual, or lasts more than 3 days.",
-        "Take double doses if the pain returns.",
-        "Combine with alcohol for faster relief.",
-        "Ignore worsening headache unless it lasts a month.",
-      ],
-    },
-    explanation: "The presentation is a mild uncomplicated headache with no stated red flags. Paracetamol is an appropriate OTC analgesic after screening contraindications and current medicines.",
-    mentor_tip: "For OTC pain relief, screen red flags and check liver disease, alcohol use, allergies, pregnancy, ulcers, and interacting medicines before recommending.",
-    created_at: "2026-07-02T00:00:00.000Z",
-    formula_json: null,
-    shipment_json: null,
-    requires_compounding: false,
-    compound_type: null,
-    compound_data: null,
-  },
-] as const;
-
-function buildOtcPilotFallbackCase(index: number, idOverride?: string) {
-  const pilotCase = structuredCloneSafe(OTC_PILOT_FALLBACK_CASES[index] ?? OTC_PILOT_FALLBACK_CASES[0]);
-  return idOverride ? { ...pilotCase, id: idOverride } : pilotCase;
-}
-
 async function fetchTemplateCase(
   mode: Mode,
   selectedDifficulty: Difficulty,
@@ -296,7 +63,7 @@ async function fetchTemplateCase(
   playerLevel = 1,
 ) {
   const difficulties = weightedDifficulties(selectedDifficulty, playerLevel);
-  const { data: templates, error } = await (supabase as any)
+  const { data: templates, error } = await supabase
     .from("case_templates")
     .select("*")
     .eq("mode", mode)
@@ -318,7 +85,7 @@ async function fetchTemplateCase(
 
 async function fetchSeenSeeds(userId: string | undefined, mode: Mode) {
   if (!userId) return new Set<string>();
-  const { data } = await (supabase as any)
+  const { data } = await supabase
     .from("user_seen_cases")
     .select("template_id, generated_seed")
     .eq("user_id", userId)
@@ -537,7 +304,7 @@ function buildSeed(patient: any, drug: DrugRow) {
 
 async function rememberGeneratedCase(userId: string | undefined, template: TemplateRow, seed: string) {
   if (!userId) return;
-  const { data: existing } = await (supabase as any)
+  const { data: existing } = await supabase
     .from("user_seen_cases")
     .select("id")
     .eq("user_id", userId)
@@ -545,13 +312,13 @@ async function rememberGeneratedCase(userId: string | undefined, template: Templ
     .eq("generated_seed", seed)
     .maybeSingle();
   if (existing?.id) {
-    await (supabase as any)
+    await supabase
       .from("user_seen_cases")
       .update({ last_seen_at: new Date().toISOString() })
       .eq("id", existing.id);
     return;
   }
-  await (supabase as any)
+  await supabase
     .from("user_seen_cases")
     .insert({
       user_id: userId,

@@ -1,22 +1,14 @@
 import { create } from "zustand";
 import type { Session, User } from "@supabase/supabase-js";
+import type { Tables } from "@/integrations/supabase/types";
 
-export type Profile = {
-  user_id: string;
-  email: string | null;
-  full_name: string | null;
-  role: "student" | "graduate" | "pharmd";
-  avatar_url: string | null;
-  level: number;
-  xp: number;
-  total_cases_completed: number;
-  accuracy_rate: number;
-  avg_time_per_case: number;
-  streak_days: number;
-  last_active: string | null;
-  cpd_hours_earned: number;
-  onboarding_completed: boolean;
-};
+/**
+ * Derived from the generated schema rather than hand-written, so it cannot
+ * drift from the database. The previous hand-maintained version had already
+ * fallen behind: it listed only student/graduate/pharmd, missing the `admin`
+ * role added later, which is why callers had to cast `role` to compare it.
+ */
+export type Profile = Tables<"profiles">;
 
 type AuthState = {
   user: User | null;
