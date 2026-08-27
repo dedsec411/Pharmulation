@@ -26,11 +26,19 @@ function callRpc<T>(fn: string, args?: Record<string, unknown>) {
 }
 
 /**
- * Atomically add XP, increment the completed-case count, and recompute level
- * for the current user. Returns the updated profile.
+ * Atomically apply one completed case for the current user: add XP, increment
+ * the case count, recompute level, and fold this case's accuracy and duration
+ * into the running averages shown on the profile and leaderboard.
+ *
+ * @param accuracy fraction correct for this case, 0..1
+ * @param timeTakenSec seconds spent on this case
  */
-export function applyCaseResult(xpGain: number) {
-  return callRpc<ProfileRow[]>("apply_case_result", { _xp_gain: xpGain });
+export function applyCaseResult(xpGain: number, accuracy: number, timeTakenSec: number) {
+  return callRpc<ProfileRow[]>("apply_case_result", {
+    _xp_gain: xpGain,
+    _accuracy: accuracy,
+    _time_taken: timeTakenSec,
+  });
 }
 
 /**

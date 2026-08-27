@@ -269,7 +269,7 @@ async function persistScore(
 
   // Single atomic UPDATE server-side. Doing this as a read-then-write from
   // here let two concurrent submissions clobber each other's increment.
-  const { data: updatedRows, error: applyErr } = await applyCaseResult(xpGain);
+  const { data: updatedRows, error: applyErr } = await applyCaseResult(xpGain, accuracy, args.timeTaken);
 
   if (applyErr) {
     console.error("[supabase] failed to apply case result:", applyErr);
