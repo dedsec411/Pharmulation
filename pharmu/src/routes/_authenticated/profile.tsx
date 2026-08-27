@@ -11,6 +11,7 @@ import { cpdHoursFromCases, CPD_MILESTONES, generateCertificatePdf, nextCpdMiles
 import { PUBLIC_MODE_GROUPS, publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
+import { unwrapList } from "@/lib/supabase-query";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile - Pharmulation" }] }),
@@ -27,24 +28,31 @@ function ProfilePage() {
     queryKey: ["my-scores", userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data } = await supabase.from("scores").select("*")
-        .eq("user_id", userId).order("completed_at", { ascending: false });
-      return data ?? [];
+      return unwrapList(
+        await supabase.from("scores").select("*")
+          .eq("user_id", userId).order("completed_at", { ascending: false }),
+        "your scores",
+      );
     }, enabled: !!userId,
   });
 
   const { data: allBadges = [] } = useQuery({
     queryKey: ["all-badges"],
-    queryFn: async () => (await supabase.from("badges").select("*").order("name")).data ?? [],
+    queryFn: async () => unwrapList(
+      await supabase.from("badges").select("*").order("name"),
+      "badges",
+    ),
   });
 
   const { data: earnedBadges = [] } = useQuery({
     queryKey: ["my-badges", userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data } = await supabase.from("user_badges")
-        .select("badge_id, earned_at").eq("user_id", userId);
-      return data ?? [];
+      return unwrapList(
+        await supabase.from("user_badges")
+          .select("badge_id, earned_at").eq("user_id", userId),
+        "your badges",
+      );
     }, enabled: !!userId,
   });
 
@@ -52,9 +60,11 @@ function ProfilePage() {
     queryKey: ["certs", userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data } = await supabase.from("cpd_certificates").select("*")
-        .eq("user_id", userId).order("issued_at", { ascending: false });
-      return data ?? [];
+      return unwrapList(
+        await supabase.from("cpd_certificates").select("*")
+          .eq("user_id", userId).order("issued_at", { ascending: false }),
+        "your certificates",
+      );
     }, enabled: !!userId,
   });
 

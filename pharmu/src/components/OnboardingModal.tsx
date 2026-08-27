@@ -47,12 +47,17 @@ export function OnboardingModal() {
 
   async function finish() {
     if (!profile) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({ onboarding_completed: true })
       .eq("user_id", profile.user_id)
       .select("*")
       .maybeSingle();
+    if (error) {
+      console.error("[supabase] failed to complete onboarding:", error);
+      toast.error("Could not save your progress. Please try again.");
+      return;
+    }
     if (data) setProfile(data as typeof profile);
     toast.success("You're all set. Let's go!");
   }

@@ -182,12 +182,18 @@ export function TutorialBot() {
   async function completeFirstRunIfNeeded() {
     if (!profile || profile.onboarding_completed) return;
     localStorage.setItem(`${FIRST_RUN_KEY}_${profile.user_id}`, "done");
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({ onboarding_completed: true })
       .eq("user_id", profile.user_id)
       .select("*")
       .maybeSingle();
+    if (error) {
+      // Non-blocking: the tutorial has already been shown, so log rather than
+      // interrupting the user with a toast over the guide.
+      console.error("[supabase] failed to mark onboarding complete:", error);
+      return;
+    }
     if (data) setProfile(data as typeof profile);
   }
 

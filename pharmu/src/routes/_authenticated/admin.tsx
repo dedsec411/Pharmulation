@@ -8,6 +8,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { Users, FlaskConical, Pill, BarChart3 } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { promoteUserToAdmin, deleteCaseById } from "@/lib/api/admin.functions";
+import { unwrapList } from "@/lib/supabase-query";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin - Pharmulation" }] }),
@@ -26,34 +27,45 @@ function AdminPage() {
 
   const { data: users = [] } = useQuery({
     queryKey: ["admin-users"],
-    queryFn: async () => (await supabase.from("profiles").select("*").order("xp", { ascending: false })).data ?? [],
+    queryFn: async () => unwrapList(
+      await supabase.from("profiles").select("*").order("xp", { ascending: false }),
+      "users",
+    ),
   });
   const { data: cases = [] } = useQuery({
     queryKey: ["admin-cases"],
-    queryFn: async () => (await supabase.from("cases").select("*").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => unwrapList(
+      await supabase.from("cases").select("*").order("created_at", { ascending: false }),
+      "cases",
+    ),
   });
   const { data: drugs = [] } = useQuery({
     queryKey: ["admin-drugs"],
-    queryFn: async () => (await supabase.from("drugs").select("*").order("name")).data ?? [],
+    queryFn: async () => unwrapList(
+      await supabase.from("drugs").select("*").order("name"),
+      "drugs",
+    ),
   });
   const { data: scoresToday = [] } = useQuery({
     queryKey: ["admin-scores-today"],
     queryFn: async () => {
       const since = new Date(); since.setHours(0, 0, 0, 0);
-      const { data } = await supabase.from("scores").select("mode, accuracy").gte("completed_at", since.toISOString());
-      return data ?? [];
+      return unwrapList(
+        await supabase.from("scores").select("mode, accuracy").gte("completed_at", since.toISOString()),
+        "today's scores",
+      );
     },
   });
   const { data: recentErrors = [] } = useQuery({
     queryKey: ["admin-recent-errors"],
-    queryFn: async () => {
-      const { data } = await supabase
+    queryFn: async () => unwrapList(
+      await supabase
         .from("scores")
         .select("mode, errors_detail")
         .order("completed_at", { ascending: false })
-        .limit(500);
-      return data ?? [];
-    },
+        .limit(500),
+      "recent errors",
+    ),
   });
 
   // Aggregate most common errors per mode

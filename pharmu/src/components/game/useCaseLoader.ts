@@ -335,14 +335,18 @@ async function generateCaseFromTemplate(template: TemplateRow, seenSeeds: Set<st
   const drugIds = Array.isArray(rules.drug_pool) ? rules.drug_pool.map(String).filter(Boolean) : [];
   if (!patients.length || !drugIds.length) return null;
 
-  const { data: poolDrugs } = await supabase
+  const { data: poolDrugs, error: poolErr } = await supabase
     .from("drugs")
     .select("*")
     .in("id", drugIds);
+  // Errors here are non-fatal: the caller falls back to a non-generated case,
+  // so log rather than throwing and losing that fallback.
+  if (poolErr) console.error("[supabase] failed to load template drug pool:", poolErr);
   const drugs = (poolDrugs ?? []) as DrugRow[];
   if (!drugs.length) return null;
 
-  const { data: allDrugData } = await supabase.from("drugs").select("*");
+  const { data: allDrugData, error: allDrugErr } = await supabase.from("drugs").select("*");
+  if (allDrugErr) console.error("[supabase] failed to load drugs for distractors:", allDrugErr);
   const allDrugs = (allDrugData ?? []) as DrugRow[];
 
   for (let attempt = 0; attempt < 18; attempt += 1) {

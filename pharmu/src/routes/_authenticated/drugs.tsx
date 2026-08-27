@@ -9,6 +9,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { prepareDrugCatalog } from "@/lib/drug-catalog";
 import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
+import { unwrapList } from "@/lib/supabase-query";
 
 export const Route = createFileRoute("/_authenticated/drugs")({
   head: () => ({ meta: [{ title: "Drug Database - Pharmulation" }] }),
@@ -40,8 +41,10 @@ function DrugsPage() {
 
   const { data: drugs = [] } = useQuery({
     queryKey: ["drugs"],
-    queryFn: async () =>
-      (((await supabase.from("drugs").select("*").order("name")).data) ?? []) as Drug[],
+    queryFn: async () => unwrapList(
+      await supabase.from("drugs").select("*").order("name"),
+      "the drug database",
+    ) as Drug[],
   });
   const catalogDrugs = useMemo(() => prepareDrugCatalog(drugs) as Drug[], [drugs]);
 
@@ -49,9 +52,11 @@ function DrugsPage() {
     queryKey: ["bookmarks", userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data } = await supabase
-        .from("drug_bookmarks").select("drug_id").eq("user_id", userId);
-      return (data ?? []).map((b: any) => b.drug_id as string);
+      const data = unwrapList(
+        await supabase.from("drug_bookmarks").select("drug_id").eq("user_id", userId),
+        "your bookmarks",
+      );
+      return data.map((b: any) => b.drug_id as string);
     },
     enabled: !!userId,
   });

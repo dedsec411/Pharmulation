@@ -9,6 +9,7 @@ import { tierFor } from "@/lib/levels";
 import { PUBLIC_MODE_GROUPS, type Mode } from "@/lib/game/shared";
 import { BackButton } from "@/components/BackButton";
 import { Navbar } from "@/components/Navbar";
+import { unwrapList } from "@/lib/supabase-query";
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -53,8 +54,10 @@ function LeaderboardPage() {
     queryKey: ["leaderboard", scope, filter],
     queryFn: async () => {
       if (filter === "all") {
-        const { data } = await supabase.rpc("get_public_profiles", { limit_count: 50 });
-        return (data ?? []) as any[];
+        return unwrapList(
+          await supabase.rpc("get_public_profiles", { limit_count: 50 }),
+          "the leaderboard",
+        ) as any[];
       }
       const sinceIso =
         scope === "weekly"
@@ -66,7 +69,7 @@ function LeaderboardPage() {
           since: sinceIso,
         }))
       );
-      const scores = scoreResults.flatMap((result) => result.data ?? []);
+      const scores = scoreResults.flatMap((result) => unwrapList(result, "leaderboard scores"));
       const agg = new Map<string, { score: number; cases: number; acc: number }>();
       ((scores ?? []) as any[]).forEach((s: any) => {
         const a = agg.get(s.user_id) ?? { score: 0, cases: 0, acc: 0 };
@@ -75,8 +78,11 @@ function LeaderboardPage() {
       });
       const ids = Array.from(agg.keys());
       if (ids.length === 0) return [];
-      const { data: profs } = await supabase.rpc("get_profiles_safe", { ids });
-      return ((profs ?? []) as any[])
+      const profs = unwrapList(
+        await supabase.rpc("get_profiles_safe", { ids }),
+        "leaderboard players",
+      );
+      return (profs as any[])
         .map((p: any) => {
           const a = agg.get(p.user_id)!;
           return { ...p, total_cases_completed: a.cases, accuracy_rate: Math.round((a.acc / a.cases) * 100), xp: a.score };

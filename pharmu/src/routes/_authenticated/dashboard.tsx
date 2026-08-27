@@ -7,6 +7,7 @@ import { Navbar } from "@/components/Navbar";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { publicModeCount, publicModeLabel } from "@/lib/game/shared";
+import { unwrapList } from "@/lib/supabase-query";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -214,10 +215,12 @@ function Dashboard() {
     queryKey: ["recent-scores", userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data } = await supabase
-        .from("scores").select("*").eq("user_id", userId)
-        .order("completed_at", { ascending: false }).limit(5);
-      return data ?? [];
+      return unwrapList(
+        await supabase
+          .from("scores").select("*").eq("user_id", userId)
+          .order("completed_at", { ascending: false }).limit(5),
+        "your recent activity",
+      );
     },
     enabled: !!userId,
   });
@@ -226,9 +229,12 @@ function Dashboard() {
     queryKey: ["mode-counts", userId],
     queryFn: async () => {
       if (!userId) return {} as Record<string, number>;
-      const { data } = await supabase.from("scores").select("mode").eq("user_id", userId);
+      const data = unwrapList(
+        await supabase.from("scores").select("mode").eq("user_id", userId),
+        "your progress",
+      );
       const c: Record<string, number> = {};
-      (data ?? []).forEach((r: any) => { c[r.mode] = (c[r.mode] ?? 0) + 1; });
+      data.forEach((r: any) => { c[r.mode] = (c[r.mode] ?? 0) + 1; });
       return c;
     },
     enabled: !!userId,
@@ -236,10 +242,10 @@ function Dashboard() {
 
   const { data: topPlayers = [] } = useQuery({
     queryKey: ["mini-lb"],
-    queryFn: async () => {
-      const { data } = await supabase.rpc("get_public_profiles", { limit_count: 5 });
-      return (data ?? []) as any[];
-    },
+    queryFn: async () => unwrapList(
+      await supabase.rpc("get_public_profiles", { limit_count: 5 }),
+      "the leaderboard",
+    ) as any[],
   });
 
   const xpToNext = (profile?.level ?? 1) * 500;

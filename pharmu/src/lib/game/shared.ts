@@ -153,19 +153,27 @@ export async function submitScore(args: {
     accuracy,
     errors_detail: (args.errorsDetail ?? []) as any,
   });
-  if (scoreErr) console.error(scoreErr);
+  if (scoreErr) {
+    console.error("[supabase] failed to save score:", scoreErr);
+    toast.error("Your score could not be saved.");
+  }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileErr } = await supabase
     .from("profiles")
     .select("xp, level, total_cases_completed")
     .eq("user_id", args.userId)
     .single();
 
+  if (profileErr) {
+    console.error("[supabase] failed to load profile for XP update:", profileErr);
+    toast.error("Your XP could not be updated.");
+  }
+
   if (profile) {
     const newXp = (profile.xp ?? 0) + xpGain;
     const newLevel = Math.max(1, Math.floor(newXp / 500) + 1);
     const newTotal = (profile.total_cases_completed ?? 0) + 1;
-    await supabase
+    const { error: updateErr } = await supabase
       .from("profiles")
       .update({
         xp: newXp,
@@ -173,6 +181,11 @@ export async function submitScore(args: {
         total_cases_completed: newTotal,
       })
       .eq("user_id", args.userId);
+
+    if (updateErr) {
+      console.error("[supabase] failed to update XP:", updateErr);
+      toast.error("Your XP could not be updated.");
+    }
 
     // Badge triggers
     if (newTotal === 1) awardBadge(args.userId, "First Case", "Completed your first case", "🎓");
