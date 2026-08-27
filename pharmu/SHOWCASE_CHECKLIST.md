@@ -32,19 +32,26 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 
 - [x] **Repo hygiene** — added a root README (setup, env vars, modes, migration workflow, layout); deleted `netlify.toml` (published `dist` while the Nitro vercel preset outputs `.vercel/output`, so Netlify builds were already broken) and the stale `pharma-verse-play-main/`; rewrote the mangled root `.gitignore`; moved working documents into `docs/`. Kept `bun.lock` (its `bunfig.toml` carries a real supply-chain guard) and the root `package.json` (Vercel may use it for project detection) — both documented in the README instead.
 
-## Architecture / code quality
+- [x] **Add a test suite and CI** — 73 vitest tests over the pure logic (scoring engine, retry decay, tiers/CPD, the error-unwrap helper, and structural validation of all 12 OTC clinical cases), plus a GitHub Actions workflow running typecheck, tests and build on push and PR. Lint runs non-blocking while the `any`s remain.
+- [x] **Tighten types** — `Profile` now derives from the generated schema (the hand-written one had already drifted, missing the `admin` role, forcing a cast in `admin.tsx`), and the five stale `(supabase as any)` casts in `useCaseLoader` are gone.
+- [x] **Delete the dead OTC pilot loader** — the two hardcoded case UUIDs, the ~210-line embedded fallback and its helpers. Nothing had called `useCaseLoader("otc")` since OTC moved to the authored case bank. 578 lines down to 346, and the third copy of that content is gone.
+- [x] **De-duplicate seed data** — the single-file dump and the three chunks held the identical 147 rows. Kept the chunks (the 220KB single file is too large for the SQL editor) with a README explaining the order.
 
-- [ ] Centralize the ~16 files' worth of duplicated `supabase.from(...)` query logic into `src/lib/api/*` modules instead of embedding raw queries per route.
-- [ ] Replace `(supabase as any)` casts in `useCaseLoader.ts` (lines ~299, 321, 536, 544, 550) — `case_templates`/`user_seen_cases` are already properly typed in the generated types, the casts are stale.
-- [ ] De-duplicate the `Profile` type in `auth-store.ts` — hand-maintained instead of importing `Tables<'profiles'>` from the generated Supabase types; can silently drift from the real schema.
-- [ ] Split oversized multi-concern files: `game.community.tsx` (still ~1600 lines mixing mode-picker + Rx game + OTC game), `game.industry.tsx` (~1277 lines), `useCaseLoader.ts` (generic hook + OTC hardcoded fallback + procedural case generator, three concerns in one file).
+## Architecture / code quality — deliberately deferred
+
+These are refactors, not defects. Each is a large, purely internal change with
+real regression risk and nothing a user or reviewer would see, so none were
+bulk-applied while the app was being prepared for showcase. Worth doing after,
+ideally one at a time behind the test suite that now exists.
+
+- [ ] Centralize the duplicated `supabase.from(...)` query logic into `src/lib/api/*`. Touches ~16 files; the error-handling half of the problem is already solved by `unwrapList`.
+- [ ] Work through the ~136 `no-explicit-any` lint errors. Many are untyped case JSON, which needs a real schema for case content first rather than a mechanical cast-removal pass.
+- [ ] Split the oversized files: `game.community.tsx` (~1,400 lines, mode picker + Rx game) and `game.industry.tsx` (~1,277). `useCaseLoader.ts` is already down to 346.
+- [ ] `leaderboard` table is dead schema — never read or written, and fully locked down by RLS. Harmless where it is; drop it only alongside a deliberate migration, not as incidental cleanup.
 
 ## Repo hygiene / DX
 
 - [x] **Prettier decision made: not wired into lint.** `eslint-plugin-prettier` was reporting ~4,200 formatting errors because the codebase was never formatted with it, which buried every real finding. Rather than reformat essentially every file (a diff that would bury real history for no reviewer-visible gain), prettier was removed from the eslint config and remains available on demand via `npm run format`. `npm run lint` now reports **152 real problems** (140 `no-explicit-any`, 12 warnings) instead of 4,380. `no-explicit-any` is deliberately left as an error rather than downgraded — it is genuine lost type safety, tracked below.
-- [ ] Consolidate duplicate seed data — `supabase/seed_from_current_project.sql` and `supabase/seed_chunks/seed_00{1,2,3}.sql` contain the same drug rows in two forms.
-- [ ] Decide the fate of the `leaderboard` DB table — fully locked down by RLS with no code path that ever writes to it; either wire it up or drop it.
-- [ ] No automated tests and no CI type-check step exist — several real `tsc` errors currently ship unnoticed (was true as of the audit; worth re-checking after the recent edits).
 
 ## Deliberately deferred (flagged, not forgotten)
 
