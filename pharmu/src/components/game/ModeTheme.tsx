@@ -6,7 +6,6 @@ const MODE_ACCENTS: Record<string, string> = {
   otc: "oklch(0.72 0.16 165)",
   community: "oklch(0.74 0.14 180)",
   hospital: "oklch(0.60 0.20 270)",
-  oncology: "oklch(0.62 0.22 300)",
   industry: "oklch(0.78 0.16 75)",
   warehousing: "oklch(0.60 0.18 220)",
 };

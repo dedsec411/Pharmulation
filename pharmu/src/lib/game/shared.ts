@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { applyCaseResult } from "@/lib/supabase-rpc";
 import { toast } from "sonner";
 
-export type Mode = "rx" | "otc" | "hospital" | "oncology" | "industry" | "warehousing";
+export type Mode = "rx" | "otc" | "hospital" | "industry" | "warehousing";
 export type Difficulty = "easy" | "medium" | "hard";
 
 export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
@@ -52,7 +52,6 @@ export const MODE_TIMERS: Record<Mode, number> = {
   // needs materially more time than the click-driven modes.
   otc: 360,
   hospital: 240,
-  oncology: 300,
   industry: 360,
   warehousing: 300,
 };
@@ -79,14 +78,13 @@ export const MODE_LABEL: Record<Mode, string> = {
   rx: "Rx Cases",
   otc: "OTC Consultation",
   hospital: "Clinical",
-  oncology: "Oncology",
   industry: "Industry",
   warehousing: "Warehousing",
 };
 
 export const PUBLIC_MODE_GROUPS = [
   { key: "community", label: "Community Pharmacy", modes: ["rx", "otc"] },
-  { key: "clinical", label: "Clinical", modes: ["hospital", "oncology"] },
+  { key: "clinical", label: "Clinical", modes: ["hospital"] },
   { key: "industry", label: "Industry", modes: ["industry"] },
   { key: "warehousing", label: "Warehousing", modes: ["warehousing"] },
 ] as const satisfies readonly { key: string; label: string; modes: readonly Mode[] }[];

@@ -37,7 +37,7 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     glow: "oklch(0.60 0.20 270 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.62 0.19 240 / 0.22), oklch(0.60 0.20 270 / 0.16) 50%, oklch(1 0 0 / 0.04))",
     to: "/game/hospital",
-    modes: ["hospital", "oncology"],
+    modes: ["hospital"],
   },
   industry: {
     icon: Factory,
@@ -126,7 +126,7 @@ function formatActivityDate(value?: string | null) {
 
 function activityMeta(mode: string) {
   if (mode === "community" || mode === "rx" || mode === "otc") return MODE_META.rx;
-  if (mode === "hospital" || mode === "clinical" || mode === "oncology") return MODE_META.hospital;
+  if (mode === "hospital" || mode === "clinical") return MODE_META.hospital;
   if (mode === "industry") return MODE_META.industry;
   if (mode === "warehousing") return MODE_META.warehousing;
   return { ...MODE_META.rx, icon: FileText, label: publicModeLabel(mode) };

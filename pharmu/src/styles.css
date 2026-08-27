@@ -304,9 +304,6 @@ body.mode-otc [data-slot="card"] {
 body.mode-hospital [data-slot="card"] {
   background: linear-gradient(180deg, rgba(12,18,42,0.85), rgba(6,10,28,0.85)) !important;
 }
-body.mode-oncology [data-slot="card"] {
-  background: linear-gradient(180deg, rgba(28,12,46,0.82), rgba(14,6,28,0.82)) !important;
-}
 body.mode-industry [data-slot="card"] {
   background:
     repeating-linear-gradient(135deg, rgba(245,158,11,0.05) 0 8px, transparent 8px 16px),
@@ -349,14 +346,6 @@ body.mode-warehousing [data-slot="card"] {
 }
 @keyframes gear-spin-kf {
   to { transform: rotate(360deg); }
-}
-@keyframes onco-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.10; }
-  50% { transform: scale(1.15); opacity: 0.22; }
-}
-@keyframes bokeh-float {
-  0%, 100% { transform: translate(0,0) scale(1); opacity: 0.35; }
-  50% { transform: translate(20px,-30px) scale(1.1); opacity: 0.55; }
 }
 
 .ambient-pill {
@@ -443,21 +432,6 @@ body.mode-warehousing [data-slot="card"] {
   border-color: rgba(239,68,68,0.55) !important;
   background: linear-gradient(90deg, rgba(127,29,29,0.94), rgba(24,8,12,0.96)) !important;
   animation: score-wrong-alarm 0.85s ease-in-out 2;
-}
-.onco-cell {
-  position: absolute;
-  border-radius: 999px;
-  background: radial-gradient(circle at 35% 30%, rgba(236,72,153,0.45), transparent 65%);
-  border: 1px solid rgba(168,85,247,0.35);
-  opacity: 0.14;
-  animation: onco-pulse 8s ease-in-out infinite;
-}
-.cosm-bokeh {
-  position: absolute;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(249,168,212,0.55) 0%, transparent 65%);
-  filter: blur(8px);
-  animation: bokeh-float 12s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
