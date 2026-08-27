@@ -55,5 +55,5 @@ ideally one at a time behind the test suite that now exists.
 
 ## Deliberately deferred (flagged, not forgotten)
 
-- `oncology` mode: same shape as the removed `cosmetic` (dead config, no route), but wasn't requested for removal — left in place.
+- [x] `oncology` mode removed — dead config with no route, same as `cosmetic`. Took the orphaned `.onco-cell` / `.cosm-bokeh` ambient styles with it.
 - DB `case_mode` enum still contains `oncology`/`cosmetic`/`emergency` values — harmless to leave; dropping enum values requires type recreation and wasn't in scope.
