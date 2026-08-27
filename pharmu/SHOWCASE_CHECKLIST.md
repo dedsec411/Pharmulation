@@ -9,6 +9,8 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 - [x] Remove Emergency mode (was broken — `onExit` crash — and unreachable from any nav link).
 - [x] Remove Cosmetic mode (was dead config, no route ever existed).
 - [x] Delete standalone `game.rx.tsx` / `game.otc.tsx`; `game.community.tsx` is now the single Rx+OTC implementation.
+- [x] **Make account deletion real** — was deleting only the `profiles` row from the browser, leaving the auth user, scores, badges and certificates behind while claiming to delete everything; signing back in gave an account with no profile row. Now a `deleteOwnAccount` server function deletes the auth user with the service role and everything cascades. Verified all user tables drop to zero and credentials stop working.
+- [x] **Consolidate the mentor persona** into `lib/mentor.ts` — the avatar path was copy-pasted across five components (the cause of the five-commit "dr hakim gender" chain). Orphaned assets removed.
 - [x] **Rebuild OTC as a fully AI consultation** — the patient now improvises from an authored 12-case clinical bank (`lib/game/otc-cases.ts`) with no scripted dialogue, and the consultation itself is graded against WWHAM plus red-flag recognition (`gradeConsultation`). Replaces the two hardcoded cases, the scripted fallback, and the previously unscored conversation. Lives in `OtcConsultation.tsx`.
 - [x] **Make the in-game score agree with the final score** — added `liveScore`/`liveScoreFromPoints` (delegating to `computeScore` so they cannot drift) and `SCORE_WEIGHTS` as the single source of truth for point values. Verified live and final now match exactly across all difficulties. Fixed three real bugs found on the way: hospital showed `orders.length * 5` (tracked nothing; now hidden, since it only reveals correctness on submit), industry/warehousing hardcoded `- 100` for the difficulty base (easy lost 10 points, hard gained 20), and several OTC toasts quoted point values that disagreed with what was actually scored.
 - [x] **Make XP/streak updates atomic** — `apply_case_result` / `touch_daily_streak` SECURITY DEFINER RPCs (migration `20260827130000_atomic_profile_counters.sql`), applied live and verified: 20 concurrent increments now all land (xp 2000/2000), where the old read-modify-write pattern lost 19 of 20 (xp 100/2000). The RPC also clamps caller-supplied XP, and the streak is idempotent within a day.
@@ -28,10 +30,6 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 
   Still worth doing: `supabase link --project-ref hpzjxzmqgrcpbizxucbp` and confirm `supabase migration list` shows local and remote in step, so future migrations apply through the CLI rather than by hand.
 
-## Content gaps
-
-- [ ] **Consolidate the "mentor" persona constant** (`DOCTOR_IMAGE`, currently `/dr-hakim-clean.png`) — still duplicated verbatim as a private constant in `OnboardingModal.tsx`, `PharmacistChat.tsx`, `TutorialBot.tsx`, `ErrorExplanationPanel.tsx`, and `dashboard.tsx`. This is exactly the pattern that caused the 5-commit "Dr Hakim gender" fix chain — extract to one shared module (e.g. `src/lib/mentor.ts`).
-
 ## Architecture / code quality
 
 - [ ] Centralize the ~16 files' worth of duplicated `supabase.from(...)` query logic into `src/lib/api/*` modules instead of embedding raw queries per route.
@@ -50,7 +48,6 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 - [ ] Add a real root `README.md` (setup, env vars, scripts, architecture) — none exists today.
 - [ ] Consolidate duplicate seed data — `supabase/seed_from_current_project.sql` and `supabase/seed_chunks/seed_00{1,2,3}.sql` contain the same drug rows in two forms.
 - [ ] Decide the fate of the `leaderboard` DB table — fully locked down by RLS with no code path that ever writes to it; either wire it up or drop it.
-- [ ] Fix the "Delete account" feature (`settings.tsx`) — only deletes the `profiles` row and signs out; doesn't delete the underlying `auth.users` record (needs a service-role call), so the user can log back in to a fresh blank profile.
 - [ ] No automated tests and no CI type-check step exist — several real `tsc` errors currently ship unnoticed (was true as of the audit; worth re-checking after the recent edits).
 
 ## Deliberately deferred (flagged, not forgotten)
