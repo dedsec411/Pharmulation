@@ -10,7 +10,7 @@ import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 import { useTimer } from "@/lib/game/useTimer";
 import {
   computeScoreFromPoints, liveScoreFromPoints, submitScore, modeTimeLimit, toastScore,
-  bumpCounterBadge,
+  bumpCounterBadge, retryRewardFactor,
 } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
 import { AlertTriangle, Barcode, Flag, Lock, Package, Thermometer } from "lucide-react";
@@ -191,6 +191,10 @@ function WarehouseGame() {
   // operations audit
   const [auditIdx, setAuditIdx] = useState(0);
   const [auditAns, setAuditAns] = useState<Record<number, string>>({});
+  // Wrong options already tried, per question: shown struck through, and used
+  // to decay the reward for the answer that eventually lands.
+  const [expiryTried, setExpiryTried] = useState<Record<number, string[]>>({});
+  const [auditTried, setAuditTried] = useState<Record<number, string[]>>({});
 
   // reconciliation
   const [reconChecked, setReconChecked] = useState<Record<number, boolean>>({});
@@ -348,9 +352,17 @@ function WarehouseGame() {
   function answerExpiry(idx: number, action: string) {
     const item = s.expiring[idx];
     const ok = action === item.correctAction;
-    setExpiryAns((m) => ({ ...m, [idx]: action }));
-    if (ok) { setPoints((p) => p + 15); toastScore(15, "Expiry handled"); }
-    else {
+    if (ok) {
+      // Worth less for each attempt it took, so the retry is a learning step
+      // rather than a way to reach full marks by elimination.
+      const earned = Math.round(15 * retryRewardFactor((expiryTried[idx] ?? []).length));
+      setExpiryAns((m) => ({ ...m, [idx]: action }));
+      setPoints((p) => p + earned);
+      toastScore(earned, "Expiry handled");
+      return;
+    }
+    {
+      setExpiryTried((m) => ({ ...m, [idx]: [...(m[idx] ?? []), action] }));
       setErrors((e) => e + 1); setPoints((p) => p - 5); toastScore(-5, "Wrong action");
       errPanel.logError({
         errorType: "Wrong expiry-handling action",
@@ -366,12 +378,11 @@ function WarehouseGame() {
   function answerAudit(action: string) {
     const scenario = auditScenarios[auditIdx];
     if (!scenario) return;
-    const ok = action === scenario.correctAction;
-    setAuditAns((m) => ({ ...m, [auditIdx]: action }));
-    if (ok) {
-      setPoints((p) => p + scenario.points);
-      toastScore(scenario.points, "Audit decision");
-    } else {
+
+    if (action !== scenario.correctAction) {
+      // Stay on this scenario: the explanation is only useful if it can still
+      // change the decision.
+      setAuditTried((m) => ({ ...m, [auditIdx]: [...(m[auditIdx] ?? []), action] }));
       setErrors((e) => e + 1);
       setPoints((p) => p - scenario.penalty);
       toastScore(-scenario.penalty, "Wrong audit decision");
@@ -382,7 +393,13 @@ function WarehouseGame() {
         whyWrong: scenario.whyWrong,
         whatToKnow: scenario.whatToKnow,
       });
+      return;
     }
+
+    const earned = Math.round(scenario.points * retryRewardFactor((auditTried[auditIdx] ?? []).length));
+    setAuditAns((m) => ({ ...m, [auditIdx]: action }));
+    setPoints((p) => p + earned);
+    toastScore(earned, "Audit decision");
     if (auditIdx + 1 < auditScenarios.length) setAuditIdx((i) => i + 1);
     else setPhase("reconcile");
   }
@@ -573,12 +590,21 @@ function WarehouseGame() {
                       <p className="text-xs text-muted-foreground">Batch {it.batch} · expires {it.expiry} {it.hasOrder ? "· has active order" : "· no orders"}</p>
                     </div>
                     <div className="flex gap-1">
-                      {["Mark for Priority Dispatch", "Mark for Return to Supplier"].map((a) => (
-                        <button key={a} disabled={!!expiryAns[i]} onClick={() => answerExpiry(i, a)}
-                          className={`rounded-full px-3 py-1 text-xs ${expiryAns[i] === a ? "bg-primary text-primary-foreground" : "border border-border/40"}`}>
-                          {a.replace("Mark for ", "")}
-                        </button>
-                      ))}
+                      {["Mark for Priority Dispatch", "Mark for Return to Supplier"].map((a) => {
+                        const ruledOut = (expiryTried[i] ?? []).includes(a);
+                        return (
+                          <button key={a} disabled={!!expiryAns[i] || ruledOut} onClick={() => answerExpiry(i, a)}
+                            className={`rounded-full px-3 py-1 text-xs ${
+                              expiryAns[i] === a
+                                ? "bg-primary text-primary-foreground"
+                                : ruledOut
+                                  ? "border border-destructive/30 text-muted-foreground line-through opacity-60"
+                                  : "border border-border/40"
+                            }`}>
+                            {a.replace("Mark for ", "")}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </li>
@@ -627,15 +653,23 @@ function WarehouseGame() {
               <h3 className="mt-1 text-xl font-bold">{auditScenarios[auditIdx].title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{auditScenarios[auditIdx].prompt}</p>
               <div className="mt-5 grid gap-2">
-                {auditScenarios[auditIdx].options.map((option: string) => (
-                  <button
-                    key={option}
-                    onClick={() => answerAudit(option)}
-                    className="rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm transition hover:border-primary/45 hover:bg-primary/5"
-                  >
-                    {option}
-                  </button>
-                ))}
+                {auditScenarios[auditIdx].options.map((option: string) => {
+                  const ruledOut = (auditTried[auditIdx] ?? []).includes(option);
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => answerAudit(option)}
+                      disabled={ruledOut}
+                      className={
+                        ruledOut
+                          ? "rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-left text-sm text-muted-foreground line-through opacity-60"
+                          : "rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm transition hover:border-primary/45 hover:bg-primary/5"
+                      }
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </section>

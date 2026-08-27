@@ -9,7 +9,7 @@ import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { SimulatedPrescription as PrescriptionSheet } from "@/components/game/SimulatedPrescription";
 import { useTimer } from "@/lib/game/useTimer";
-import { computeScore, submitScore, toastScore, liveScore, modeTimeLimit, SCORE_WEIGHTS } from "@/lib/game/shared";
+import { computeScore, submitScore, toastScore, liveScore, modeTimeLimit, retryRewardFactor, SCORE_WEIGHTS } from "@/lib/game/shared";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useAuthStore } from "@/lib/auth-store";
 import { RX_DRUG_CATEGORIES, getBrandsForDrug, prepareDrugCatalog } from "@/lib/drug-catalog";
@@ -432,6 +432,10 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
   const [infoIdx, setInfoIdx]           = useState(0);
   const [labelIdx, setLabelIdx]         = useState(0);
   const [labelAnswers, setLabelAnswers] = useState<Record<string, any>>({});
+  // Failed attempts per question, used to decay the reward for the answer that
+  // eventually lands. Steps do not advance until they are answered correctly.
+  const [labelTries, setLabelTries] = useState<Record<string, number>>({});
+  const [compoundTries, setCompoundTries] = useState(0);
   const [result, setResult]             = useState<any>(null);
 
   const timer   = useTimer(LIMIT, () => phase !== "done" && finish(true));
@@ -452,6 +456,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     setCompoundCorrect(0); setCompoundWrong(0); setCompoundCompleted(false); setHints(0);
     setCategory(""); setBrandDrug(null); setSelectedBrands({});
     setShowClean(false); setInfoIdx(0); setLabelIdx(0); setLabelAnswers({});
+    setLabelTries({}); setCompoundTries(0);
     setResult(null);
   }, [caseData?.id]);
 
@@ -547,9 +552,20 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
       ans.frequency === correctAns.frequency &&
       ans.timing === correctAns.timing &&
       ans.duration === correctAns.duration;
-    setLabelAnswers((m) => ({ ...m, [drug]: { ans, ok, correct: correctAns } }));
-    if (ok) { setCorrectLabels((n) => n + 1); toastScore(SCORE_WEIGHTS.correctLabel, "label OK"); }
-    else {
+    if (ok) {
+      // Worth less for each attempt it took to get the label right.
+      const factor = retryRewardFactor(labelTries[drug] ?? 0);
+      setLabelAnswers((m) => ({ ...m, [drug]: { ans, ok, correct: correctAns } }));
+      setCorrectLabels((n) => n + factor);
+      toastScore(Math.round(SCORE_WEIGHTS.correctLabel * factor), "label OK");
+      if (labelIdx + 1 < correctDrugs.length) setLabelIdx((i) => i + 1);
+      else finish(false);
+      return;
+    }
+
+    // Stay on this label so the correction can actually be applied.
+    setLabelTries((m) => ({ ...m, [drug]: (m[drug] ?? 0) + 1 }));
+    {
       setWrongLabels((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongLabel, "label off");
       if (correctAns) {
         const fields: string[] = [];
@@ -565,8 +581,6 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
         });
       }
     }
-    if (labelIdx + 1 < correctDrugs.length) setLabelIdx((i) => i + 1);
-    else finish(false);
   }
 
   function recordCompoundAnswer(ok: boolean, error: {
@@ -576,9 +590,10 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     whyWrong: string;
     whatToKnow: string;
   }) {
+    const factor = retryRewardFactor(compoundTries);
     if (ok) {
-      setCompoundCorrect((n) => n + 1);
-      toastScore(SCORE_WEIGHTS.correctLabel, "compound OK");
+      setCompoundCorrect((n) => n + factor);
+      toastScore(Math.round(SCORE_WEIGHTS.correctLabel * factor), "compound OK");
     } else {
       setCompoundWrong((n) => n + 1);
       toastScore(-SCORE_WEIGHTS.wrongDrug, "compound error");
@@ -589,9 +604,13 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
   function submitCompound(submission: CompoundSubmission) {
     const data = caseData?.compound_data ?? {};
     const type = caseData?.compound_type;
+    // The preparation has to be right in every respect before it can be made
+    // up, so the phase only advances once all checks pass.
+    let allOk = true;
     if (submission.type === "topical") {
       const baseOk = normalizeText(submission.base) === normalizeText(data.correct_base);
       const gramsOk = withinTolerance(submission.grams, Number(data.correct_drug_grams), 0.05);
+      allOk = baseOk && gramsOk;
       recordCompoundAnswer(baseOk, {
         errorType: "Wrong compounding base",
         wrongChoice: submission.base || "No base selected",
@@ -609,6 +628,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     } else if (submission.type === "iv_sterile") {
       const diluentOk = normalizeText(submission.diluent) === normalizeText(data.correct_diluent);
       const volumeOk = withinTolerance(submission.volume, Number(data.correct_volume_ml), 0.05);
+      allOk = diluentOk && volumeOk;
       recordCompoundAnswer(diluentOk, {
         errorType: "Wrong sterile IV diluent",
         wrongChoice: submission.diluent || "No diluent selected",
@@ -626,6 +646,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     } else if (submission.type === "antibiotic_dilution") {
       const volumeOk = withinTolerance(submission.volume, Number(data.correct_volume_ml), 0.05);
       const stabilityOk = normalizeText(submission.stability) === normalizeText(String(data.correct_stability_days));
+      allOk = volumeOk && stabilityOk;
       recordCompoundAnswer(volumeOk, {
         errorType: "Wrong antibiotic reconstitution volume",
         wrongChoice: `${submission.volume || 0} mL`,
@@ -648,6 +669,10 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
         whyWrong: "This case is marked for compounding but does not define a supported compounding workflow.",
         whatToKnow: "Compounding cases need a compound_type and compound_data object before they can be safely simulated.",
       });
+    }
+    if (!allOk) {
+      setCompoundTries((n) => n + 1);
+      return;
     }
     setCompoundCompleted(true);
     setPhase("info");
