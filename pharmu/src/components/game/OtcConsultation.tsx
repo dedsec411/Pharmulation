@@ -56,6 +56,10 @@ export function OtcConsultation({
   const [wrong, setWrong] = useState(0);
   const [hints, setHints] = useState(0);
   const [result, setResult] = useState<any>(null);
+  // Wrong answers already tried on the current step. The step does not advance
+  // until the right one is chosen, so these are struck through to show what is
+  // ruled out without letting the same mistake be re-scored.
+  const [tried, setTried] = useState<string[]>([]);
 
   const timer = useTimer(limit, () => step !== "done" && finish(true));
   const errPanel = useErrorPanel({
@@ -111,63 +115,70 @@ export function OtcConsultation({
     }
   }
 
+  /** Advance to `nextStep`, clearing the ruled-out answers for the new one. */
+  function advance(nextStep: Step) {
+    setTried([]);
+    setStep(nextStep);
+  }
+
   function pickDrug(option: string) {
-    const isCorrect = otcCase.recommendation.correct.includes(option);
-    if (isCorrect) {
+    if (otcCase.recommendation.correct.includes(option)) {
       setCorrect((n) => n + 1);
       toastScore(SCORE_WEIGHTS.correctDrug, "correct recommendation");
-    } else {
-      setWrong((n) => n + 1);
-      toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong recommendation");
-      errPanel.logError({
-        errorType: otcCase.outcome === "refer" ? "Sold when referral was needed" : "Wrong OTC recommendation",
-        wrongChoice: option,
-        correctChoice: otcCase.recommendation.correct.join(" or "),
-        whyWrong: otcCase.outcome === "refer"
-          ? "This patient has findings that need medical assessment. Supplying an OTC product here delays diagnosis."
-          : `${option} is not appropriate for this patient given their symptoms, medicines or circumstances.`,
-        whatToKnow: otcCase.explanation,
-      });
+      advance("dose");
+      return;
     }
-    setStep("dose");
+    setWrong((n) => n + 1);
+    setTried((current) => [...current, option]);
+    toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong recommendation");
+    errPanel.logError({
+      errorType: otcCase.outcome === "refer" ? "Sold when referral was needed" : "Wrong OTC recommendation",
+      wrongChoice: option,
+      correctChoice: otcCase.recommendation.correct.join(" or "),
+      whyWrong: otcCase.outcome === "refer"
+        ? "This patient has findings that need medical assessment. Supplying an OTC product here delays diagnosis."
+        : `${option} is not appropriate for this patient given their symptoms, medicines or circumstances.`,
+      whatToKnow: otcCase.explanation,
+    });
   }
 
   function pickDose(option: string) {
     if (option === otcCase.recommendation.dose) {
       setCorrect((n) => n + 1);
       toastScore(SCORE_WEIGHTS.correctDrug, "correct dose");
-    } else {
-      setWrong((n) => n + 1);
-      toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong dose");
-      errPanel.logError({
-        errorType: "Wrong dose or direction",
-        wrongChoice: option,
-        correctChoice: otcCase.recommendation.dose,
-        whyWrong: "That is outside the safe or effective regimen for this patient.",
-        whatToKnow: otcCase.explanation,
-      });
+      advance("counselling");
+      return;
     }
-    setStep("counselling");
+    setWrong((n) => n + 1);
+    setTried((current) => [...current, option]);
+    toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong dose");
+    errPanel.logError({
+      errorType: "Wrong dose or direction",
+      wrongChoice: option,
+      correctChoice: otcCase.recommendation.dose,
+      whyWrong: "That is outside the safe or effective regimen for this patient.",
+      whatToKnow: otcCase.explanation,
+    });
   }
 
   function pickCounselling(option: string) {
-    let correctLabels = 0;
-    let wrongLabels = 0;
     if (option === otcCase.recommendation.counselling) {
-      correctLabels = 1;
       toastScore(SCORE_WEIGHTS.correctLabel, "good counselling");
-    } else {
-      wrongLabels = 1;
-      toastScore(-SCORE_WEIGHTS.wrongLabel, "incomplete counselling");
-      errPanel.logError({
-        errorType: "Incomplete counselling",
-        wrongChoice: option,
-        correctChoice: otcCase.recommendation.counselling,
-        whyWrong: "That advice is incomplete or misleading for this scenario.",
-        whatToKnow: "Counselling should cover how to take it, what to watch for, and when to seek further help.",
-      });
+      // Wrong attempts are already counted in `wrong`; pass the label result
+      // for the one that finally landed.
+      finish(false, 1, 0);
+      return;
     }
-    finish(false, correctLabels, wrongLabels);
+    setWrong((n) => n + 1);
+    setTried((current) => [...current, option]);
+    toastScore(-SCORE_WEIGHTS.wrongLabel, "incomplete counselling");
+    errPanel.logError({
+      errorType: "Incomplete counselling",
+      wrongChoice: option,
+      correctChoice: otcCase.recommendation.counselling,
+      whyWrong: "That advice is incomplete or misleading for this scenario.",
+      whatToKnow: "Counselling should cover how to take it, what to watch for, and when to seek further help.",
+    });
   }
 
   async function finish(timedOut: boolean, correctLabels = 0, wrongLabels = 0) {
@@ -209,6 +220,7 @@ export function OtcConsultation({
     setCorrect(0);
     setWrong(0);
     setHints(0);
+    setTried([]);
     setResult(null);
     errPanel.reset();
     next();
@@ -325,14 +337,25 @@ export function OtcConsultation({
                 title="What do you recommend?"
                 hint={otcCase.outcome === "refer" ? "Selling something is not always the right answer." : undefined}
                 options={otcCase.recommendation.options}
+                tried={tried}
                 onPick={pickDrug}
               />
             )}
             {step === "dose" && (
-              <Chooser title="Dose and directions" options={otcCase.recommendation.doseOptions} onPick={pickDose} />
+              <Chooser
+                title="Dose and directions"
+                options={otcCase.recommendation.doseOptions}
+                tried={tried}
+                onPick={pickDose}
+              />
             )}
             {step === "counselling" && (
-              <Chooser title="What do you tell the patient?" options={otcCase.recommendation.counsellingOptions} onPick={pickCounselling} />
+              <Chooser
+                title="What do you tell the patient?"
+                options={otcCase.recommendation.counsellingOptions}
+                tried={tried}
+                onPick={pickCounselling}
+              />
             )}
           </motion.div>
         </section>
@@ -346,14 +369,17 @@ function Chooser({
   title,
   hint,
   options,
+  tried,
   onPick,
 }: {
   title: string;
   hint?: string;
   options: string[];
+  tried: string[];
   onPick: (option: string) => void;
 }) {
-  // Shuffled once per mount so the correct answer isn't always first.
+  // Shuffled once per mount so the correct answer isn't always first. Stable
+  // across retries, so the list does not reorder under the player.
   const shuffled = useMemo(
     () => [...options].sort(() => Math.random() - 0.5),
     [options],
@@ -362,16 +388,29 @@ function Chooser({
     <>
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">{title}</p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {tried.length > 0 && (
+        <p className="mt-2 rounded-lg border border-amber-400/35 bg-amber-400/10 px-3 py-1.5 text-xs text-amber-500">
+          Not quite — try again.
+        </p>
+      )}
       <div className="mt-3 grid gap-2">
-        {shuffled.map((option) => (
-          <button
-            key={option}
-            onClick={() => onPick(option)}
-            className="rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm transition hover:border-primary/50 hover:bg-primary/10"
-          >
-            {option}
-          </button>
-        ))}
+        {shuffled.map((option) => {
+          const ruledOut = tried.includes(option);
+          return (
+            <button
+              key={option}
+              onClick={() => onPick(option)}
+              disabled={ruledOut}
+              className={
+                ruledOut
+                  ? "rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-left text-sm text-muted-foreground line-through opacity-60"
+                  : "rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm transition hover:border-primary/50 hover:bg-primary/10"
+              }
+            >
+              {option}
+            </button>
+          );
+        })}
       </div>
     </>
   );
