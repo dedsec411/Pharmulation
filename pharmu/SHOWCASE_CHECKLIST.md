@@ -9,6 +9,7 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 - [x] Remove Emergency mode (was broken — `onExit` crash — and unreachable from any nav link).
 - [x] Remove Cosmetic mode (was dead config, no route ever existed).
 - [x] Delete standalone `game.rx.tsx` / `game.otc.tsx`; `game.community.tsx` is now the single Rx+OTC implementation.
+- [x] **Make XP/streak updates atomic** — `apply_case_result` / `touch_daily_streak` SECURITY DEFINER RPCs (migration `20260827130000_atomic_profile_counters.sql`), applied live and verified: 20 concurrent increments now all land (xp 2000/2000), where the old read-modify-write pattern lost 19 of 20 (xp 100/2000). The RPC also clamps caller-supplied XP, and the streak is idempotent within a day.
 - [x] **Surface Supabase errors instead of swallowing them** — added `lib/supabase-query.ts` (`unwrap`/`unwrapList`) that throws with a user-facing message and logs the raw Postgrest error, plus a global `QueryCache` handler in `router.tsx` that toasts failures (deduped by message). Applied across the query call sites; paths with their own fallback log instead, and score submission toasts since a lost score is silent data loss.
 - [x] **Fix the four latent `tsc` errors and add a `typecheck` script** — none were caught at build time because vite/esbuild strips types without checking. `npm run typecheck` is now clean.
 - [x] **Make `npm run lint` usable** — it was walking `.vercel`/`.netlify` build output, taking minutes and crashing on stale generated files. Now ignores build output and the generated route tree; finishes in ~20s.
@@ -16,7 +17,6 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 - [x] Fix Gemini chat failing with 404s on every model — `chat.functions.ts`'s hardcoded model fallback list (`gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-2.0-*`, `gemini-1.5-flash`) was entirely deprecated for new API keys. Replaced with `gemini-flash-lite-latest` / `gemini-flash-latest` / `gemini-3.5-flash` / `gemini-3.5-flash-lite`, verified against the live key.
 
 ## Next up — correctness / security
-- [ ] **Make XP/streak updates atomic** — `submitScore()` in `lib/game/shared.ts` and `bumpStreak()` in `lib/use-init-auth.ts` both do read-then-compute-then-write on `profiles`, which can lose an update under concurrent submits (double-tab, double-click). Convert to a single SQL update or a SECURITY DEFINER RPC (same pattern already used for `award_badge_if_earned`).
 - [ ] **Reconcile live score display with `computeScore`** — `game.hospital.tsx`, and the Rx/OTC sub-games in `game.community.tsx`, each show a hand-rolled running score (e.g. `orders.length * 5`, or manual `correct*20 - wrong*15 + ...`) that can diverge from the authoritative `computeScore()` shown on the final `FeedbackScreen`.
 
 ## Content gaps
