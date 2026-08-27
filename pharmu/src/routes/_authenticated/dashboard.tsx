@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { unwrapList } from "@/lib/supabase-query";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
+import { MENTOR_IMAGE } from "@/lib/mentor";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard - Pharmulation" }] }),
@@ -82,7 +83,6 @@ const MENTOR_TIPS = [
   "Quality begins with accurate inventory and proper storage conditions.",
   "The safest pharmacist is the one who never stops double-checking."
 ];
-const DOCTOR_IMAGE = "/dr-hakim-clean.png";
 const DASHBOARD_CARD_HOVER = {
   y: -6,
   scale: 1.012,
@@ -164,7 +164,7 @@ function MentorTipBanner({ tip }: { tip: string }) {
         <div className="shrink-0 relative">
           <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border border-primary/40 bg-background/55 text-transparent shadow-[0_0_18px_oklch(0.74_0.14_180/0.35)]">
             <motion.img
-              src={DOCTOR_IMAGE}
+              src={MENTOR_IMAGE}
               alt=""
               className="absolute inset-x-0 top-0 mx-auto h-16 w-14 object-contain object-top"
               animate={{ y: [0, -2, 0] }}
@@ -190,7 +190,7 @@ function MentorTipBanner({ tip }: { tip: string }) {
 
         {/* Decorative Rx watermark */}
         <motion.img
-          src={DOCTOR_IMAGE}
+          src={MENTOR_IMAGE}
           alt=""
           aria-hidden="true"
           className="pointer-events-none hidden h-24 w-20 shrink-0 self-end object-contain object-bottom opacity-80 drop-shadow-[0_14px_24px_rgba(0,0,0,0.28)] sm:block"

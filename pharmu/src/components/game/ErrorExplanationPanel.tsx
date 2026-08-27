@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { XCircle, CheckCircle2, MessageCircle, Sparkles } from "lucide-react";
+import { MENTOR_IMAGE } from "@/lib/mentor";
 
 export type ErrorEntry = {
   timestamp: number;
@@ -22,7 +23,6 @@ type Props = {
 };
 
 const AUTO_DISMISS_SEC = 15;
-const DOCTOR_IMAGE = "/dr-hakim-clean.png";
 
 export function ErrorExplanationPanel({ entry, mentorTip, onDismiss }: Props) {
   const [count, setCount] = useState(AUTO_DISMISS_SEC);
@@ -70,7 +70,7 @@ export function ErrorExplanationPanel({ entry, mentorTip, onDismiss }: Props) {
             <div className="absolute right-4 top-4 flex flex-col items-end gap-1">
               <div className="grid size-12 place-items-center overflow-hidden rounded-2xl border border-primary/25 bg-primary/10">
                 <motion.img
-                  src={DOCTOR_IMAGE}
+                  src={MENTOR_IMAGE}
                   alt=""
                   className="h-14 w-12 object-contain object-top drop-shadow-[0_8px_14px_rgba(0,0,0,0.2)]"
                   animate={{ y: [0, -2, 0] }}

@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { toast } from "sonner";
 import { Sparkles, FileText, Trophy, MessageCircle, type LucideIcon } from "lucide-react";
+import { MENTOR_IMAGE } from "@/lib/mentor";
 
-const DOCTOR_IMAGE = "/dr-hakim-clean.png";
 
 type OnboardingStep = {
   icon: LucideIcon;
@@ -33,7 +33,7 @@ const steps: OnboardingStep[] = [
   {
     icon: MessageCircle,
     title: "Meet your mentor",
-    art: DOCTOR_IMAGE,
+    art: MENTOR_IMAGE,
     body: "Dr. Hakim, your in-game mentor, will drop tips during cases. Tap 'Ask Mentor' anytime for a hint.",
   },
 ];

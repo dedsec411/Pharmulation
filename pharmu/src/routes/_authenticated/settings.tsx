@@ -6,6 +6,7 @@ import { useSettings } from "@/lib/settings-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { deleteOwnAccount } from "@/lib/api/account.functions";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings - Pharmulation" }] }),
@@ -17,6 +18,7 @@ function SettingsPage() {
   const { profile } = useAuthStore();
   const [name, setName] = useState(profile?.full_name ?? "");
   const [password, setPassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   async function saveName() {
     if (!profile) return;
@@ -32,12 +34,26 @@ function SettingsPage() {
     setPassword("");
   }
   async function deleteAccount() {
-    if (!confirm("Delete your account? This cannot be undone.")) return;
-    if (!profile) return;
-    await supabase.from("profiles").delete().eq("user_id", profile.user_id);
-    await supabase.auth.signOut();
-    toast.success("Account deleted");
-    window.location.href = "/";
+    if (!profile || deleting) return;
+    if (!confirm("Delete your account? This permanently removes your progress, scores and badges, and cannot be undone.")) return;
+
+    setDeleting(true);
+    try {
+      // Runs server-side with the service role: deleting the auth user is what
+      // actually removes the account, and everything else cascades from it.
+      const result = await deleteOwnAccount({});
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not delete your account. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -72,8 +88,12 @@ function SettingsPage() {
         <section className="glass-card p-6">
           <h2 className="font-bold text-destructive">Danger zone</h2>
           <p className="text-sm text-muted-foreground mt-1">Permanently delete your account and all data.</p>
-          <button onClick={deleteAccount} className="mt-3 rounded-full bg-destructive/20 text-destructive border border-destructive/40 px-5 py-2 text-sm font-semibold hover:bg-destructive/30">
-            Delete account
+          <button
+            onClick={deleteAccount}
+            disabled={deleting}
+            className="mt-3 rounded-full bg-destructive/20 text-destructive border border-destructive/40 px-5 py-2 text-sm font-semibold hover:bg-destructive/30 disabled:opacity-50"
+          >
+            {deleting ? "Deleting..." : "Delete account"}
           </button>
         </section>
       </main>

@@ -18,6 +18,7 @@ import {
   Trophy,
   X,
 } from "lucide-react";
+import { MENTOR_IMAGE } from "@/lib/mentor";
 
 type TutorialStep = {
   title: string;
@@ -34,7 +35,6 @@ type TutorialGuide = {
 
 const STORAGE_PREFIX = "pharmulation_tutorial_";
 const FIRST_RUN_KEY = "pharmulation_tutorial_first_run_done";
-const DOCTOR_IMAGE = "/dr-hakim-clean.png";
 
 const GUIDES: Record<string, TutorialGuide> = {
   home: {
@@ -223,7 +223,7 @@ export function TutorialBot() {
           Hi
         </span>
         <img
-          src={DOCTOR_IMAGE}
+          src={MENTOR_IMAGE}
           alt=""
           className="h-14 w-14 object-contain object-top drop-shadow-[0_8px_16px_rgba(0,0,0,0.28)] transition duration-300 group-hover:scale-110"
         />
@@ -248,7 +248,7 @@ export function TutorialBot() {
             >
               <div className="relative overflow-hidden border-b border-border/40 bg-primary/10 p-4">
                 <motion.img
-                  src={DOCTOR_IMAGE}
+                  src={MENTOR_IMAGE}
                   alt=""
                   aria-hidden="true"
                   initial={{ y: 10, opacity: 0 }}
@@ -259,7 +259,7 @@ export function TutorialBot() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="relative grid size-14 place-items-center overflow-hidden rounded-2xl border border-primary/25 bg-background/45 text-primary shadow-inner">
-                      <img src={DOCTOR_IMAGE} alt="" className="h-16 w-14 object-contain object-top" />
+                      <img src={MENTOR_IMAGE} alt="" className="h-16 w-14 object-contain object-top" />
                       <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full border border-border bg-background text-[9px] font-black text-primary">Rx</span>
                     </div>
                     <div>

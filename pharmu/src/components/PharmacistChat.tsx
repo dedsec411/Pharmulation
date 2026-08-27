@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Send, X } from "lucide-react";
 import { sendChatMessage } from "@/lib/api/chat.functions";
+import { MENTOR_IMAGE } from "@/lib/mentor";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -9,7 +10,6 @@ type ChatMessage = {
 };
 
 const MAX_EXCHANGES = 15;
-const DOCTOR_IMAGE = "/dr-hakim-clean.png";
 const OPENING_MESSAGE = "Hi, I am Dr. Hakim, your pharmacy AI mentor. Ask me about medicines, doses, counseling, interactions, calculations, compounding, or study help.";
 
 export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -81,7 +81,7 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
             <div className="flex min-w-0 items-center gap-3">
               <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-primary/30 bg-background/55 shadow-[0_0_20px_-8px_oklch(0.74_0.14_180/0.9)]">
                 <img
-                  src={DOCTOR_IMAGE}
+                  src={MENTOR_IMAGE}
                   alt=""
                   className="h-16 w-14 object-contain object-top drop-shadow-[0_8px_14px_rgba(0,0,0,0.28)]"
                 />
