@@ -7,7 +7,8 @@ import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
 import {
-  computeScore, submitScore, MODE_TIMERS, toastScore, awardBadge, bumpCounterBadge,
+  computeScoreFromPoints, liveScoreFromPoints, submitScore, MODE_TIMERS, toastScore,
+  awardBadge, bumpCounterBadge,
 } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
 import { Check, X as XIcon, Thermometer, Droplets, FlaskConical, Pill, CupSoda, PackageCheck, Sparkles, Cog, ClipboardCheck } from "lucide-react";
@@ -740,13 +741,15 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
 
   async function finish(timedOut: boolean, releaseDelta = 0) {
     const totalPoints = points + releaseDelta;
-    const score = computeScore({
+    // Was `computeScore(...) - 100`, which hardcoded the *medium* base, so easy
+    // cases (base 90) silently lost 10 points and hard ones (base 120) gained 20.
+    const finalScore = computeScoreFromPoints({
       difficulty: caseData?.difficulty,
       correctDrugs: 0, wrongDrugs: 0,
       hintsUsed: hints, pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
-    }) - 100 + Math.max(0, totalPoints); // strip base, use custom points
-    const finalScore = Math.max(0, Math.round(score));
+      points: totalPoints,
+    });
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "industry",
       score: finalScore, timeTaken: timer.taken, errors,
@@ -799,7 +802,11 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         title={`Batch - ${batchProduct}`}
         remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause}
-        score={points}
+        score={liveScoreFromPoints({
+          difficulty: caseData?.difficulty,
+          hintsUsed: hints, pauseUsed: timer.pauseUsed,
+          points,
+        })}
         onExit={onExit}
         onHint={() => { setHints((n) => n + 1); toast(`Stage ${stageIdx + 1}: ${STAGES[stageIdx]} - read the formula carefully.`); }}
       />

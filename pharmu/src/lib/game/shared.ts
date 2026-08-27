@@ -97,22 +97,74 @@ export type ScoreInput = {
   timedOut?: boolean;
 };
 
-export function computeScore(i: ScoreInput) {
-  const difficulty = (i.difficulty === "easy" || i.difficulty === "hard" || i.difficulty === "medium")
-    ? i.difficulty
+/**
+ * Point value of each scoring action, before difficulty multipliers.
+ *
+ * Single source of truth: `computeScore` applies these, and the in-game
+ * `toastScore` calls should quote them rather than repeating the numbers, so
+ * tuning the scoring only requires editing this table.
+ */
+export const SCORE_WEIGHTS = {
+  correctDrug: 20,
+  infoRead: 15,
+  correctLabel: 25,
+  wrongDrug: 15,
+  wrongLabel: 10,
+  hint: 10,
+} as const;
+
+export function difficultyRules(difficulty?: Difficulty | string | null) {
+  const key = (difficulty === "easy" || difficulty === "hard" || difficulty === "medium")
+    ? difficulty
     : "medium";
-  const rules = DIFFICULTY_RULES[difficulty];
+  return DIFFICULTY_RULES[key];
+}
+
+export function computeScore(i: ScoreInput) {
+  const rules = difficultyRules(i.difficulty);
   let s = rules.base;
-  s += (i.correctDrugs ?? 0) * 20 * rules.rewardMultiplier;
-  s += (i.infoRead ?? 0) * 15 * rules.rewardMultiplier;
-  s += (i.correctLabels ?? 0) * 25 * rules.rewardMultiplier;
-  s -= (i.wrongDrugs ?? 0) * 15 * rules.penaltyMultiplier;
-  s -= (i.wrongLabels ?? 0) * 10 * rules.penaltyMultiplier;
-  s -= (i.hintsUsed ?? 0) * 10 * rules.penaltyMultiplier;
+  s += (i.correctDrugs ?? 0) * SCORE_WEIGHTS.correctDrug * rules.rewardMultiplier;
+  s += (i.infoRead ?? 0) * SCORE_WEIGHTS.infoRead * rules.rewardMultiplier;
+  s += (i.correctLabels ?? 0) * SCORE_WEIGHTS.correctLabel * rules.rewardMultiplier;
+  s -= (i.wrongDrugs ?? 0) * SCORE_WEIGHTS.wrongDrug * rules.penaltyMultiplier;
+  s -= (i.wrongLabels ?? 0) * SCORE_WEIGHTS.wrongLabel * rules.penaltyMultiplier;
+  s -= (i.hintsUsed ?? 0) * SCORE_WEIGHTS.hint * rules.penaltyMultiplier;
   if (i.pauseUsed) s -= rules.pausePenalty;
   if (i.timeTakenSec < i.timeLimitSec / 2) s += rules.speedBonus;
   if (i.timedOut) s = Math.floor(s * rules.timeoutMultiplier);
   return Math.max(0, Math.round(s));
+}
+
+/**
+ * Score for a mode that tracks its own points (industry, warehousing) rather
+ * than drug/label counters: the difficulty base is replaced by the mode's
+ * point total, while hint, pause, speed and timeout adjustments stay identical
+ * to every other mode.
+ */
+export function computeScoreFromPoints(i: ScoreInput & { points: number }) {
+  const rules = difficultyRules(i.difficulty);
+  const withoutBase = computeScore(i) - rules.base;
+  return Math.max(0, Math.round(withoutBase + Math.max(0, i.points)));
+}
+
+type LiveScoreInput = Omit<ScoreInput, "timeTakenSec" | "timeLimitSec" | "timedOut">;
+
+/**
+ * Running score to show while a case is still in progress.
+ *
+ * Delegates to `computeScore` so the number on screen during play cannot drift
+ * from the one on the results screen. The speed bonus and timeout penalty are
+ * deliberately excluded - neither is known until the case ends, and showing
+ * them early makes the counter jump around. Passing equal take/limit values
+ * suppresses the speed bonus.
+ */
+export function liveScore(i: LiveScoreInput) {
+  return computeScore({ ...i, timeTakenSec: 1, timeLimitSec: 1, timedOut: false });
+}
+
+/** Running score for a points-based mode. See `liveScore`. */
+export function liveScoreFromPoints(i: LiveScoreInput & { points: number }) {
+  return computeScoreFromPoints({ ...i, timeTakenSec: 1, timeLimitSec: 1, timedOut: false });
 }
 
 export async function fetchRandomCase(mode: Mode, difficulty?: Difficulty | null) {

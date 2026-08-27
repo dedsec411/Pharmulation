@@ -14,6 +14,11 @@ interface GameHeaderProps {
   togglePause: () => void;
   onHint?: () => void;
   hidePause?: boolean;
+  /**
+   * Hide the running score. For modes that only reveal correctness on submit,
+   * a live score would give the answer away.
+   */
+  hideScore?: boolean;
 }
 
 function getTimerState(pct: number): {
@@ -67,6 +72,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   togglePause,
   onHint,
   hidePause = false,
+  hideScore = false,
 }) => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const state = getTimerState(pct);
@@ -161,10 +167,12 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-2">
-          <div className="flex items-center rounded-lg border border-border/40 bg-muted/60 px-2.5 py-1.5 text-sm font-medium sm:px-3">
-            <Trophy className="mr-1.5 h-4 w-4 shrink-0 text-amber-500" />
-            <span className="font-bold tabular-nums">{score}</span>
-          </div>
+          {!hideScore && (
+            <div className="flex items-center rounded-lg border border-border/40 bg-muted/60 px-2.5 py-1.5 text-sm font-medium sm:px-3">
+              <Trophy className="mr-1.5 h-4 w-4 shrink-0 text-amber-500" />
+              <span className="font-bold tabular-nums">{score}</span>
+            </div>
+          )}
 
           {streak > 0 && (
             <div className="hidden items-center rounded-lg border border-border/40 bg-muted/60 px-3 py-1.5 text-sm font-medium sm:flex">

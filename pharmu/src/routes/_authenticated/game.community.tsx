@@ -8,7 +8,7 @@ import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { SimulatedPrescription as PrescriptionSheet } from "@/components/game/SimulatedPrescription";
 import { useTimer } from "@/lib/game/useTimer";
-import { computeScore, submitScore, toastScore } from "@/lib/game/shared";
+import { computeScore, submitScore, toastScore, liveScore, SCORE_WEIGHTS } from "@/lib/game/shared";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useAuthStore } from "@/lib/auth-store";
 import { RX_DRUG_CATEGORIES, getBrandsForDrug, prepareDrugCatalog } from "@/lib/drug-catalog";
@@ -477,7 +477,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     const name = drug.name;
     if (collected.includes(name)) return;
     if (!required.includes(name)) {
-      setWrong((n) => n + 1); toastScore(-15, `wrong: ${name}`);
+      setWrong((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongDrug, `wrong: ${name}`);
       errPanel.logError({
         errorType: "Wrong drug selected",
         wrongChoice: name,
@@ -496,7 +496,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     setCollected((c) => [...c, name]);
     if (brand) setSelectedBrands((m) => ({ ...m, [name]: brand }));
     setCorrect((n) => n + 1);
-    toastScore(20, brand ? `${name} - ${brand}` : name);
+    toastScore(SCORE_WEIGHTS.correctDrug, brand ? `${name} - ${brand}` : name);
     maybeStartCompound(name);
   }
 
@@ -528,7 +528,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
   const correctDrugs = collected.filter((c) => required.includes(c));
 
   function markInfo() {
-    setInfoRead((n) => n + 1); toastScore(15, "info read");
+    setInfoRead((n) => n + 1); toastScore(SCORE_WEIGHTS.infoRead, "info read");
     if (infoIdx + 1 < correctDrugs.length) setInfoIdx((i) => i + 1);
     else setPhase("label");
   }
@@ -540,9 +540,9 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
       ans.timing === correctAns.timing &&
       ans.duration === correctAns.duration;
     setLabelAnswers((m) => ({ ...m, [drug]: { ans, ok, correct: correctAns } }));
-    if (ok) { setCorrectLabels((n) => n + 1); toastScore(25, "label OK"); }
+    if (ok) { setCorrectLabels((n) => n + 1); toastScore(SCORE_WEIGHTS.correctLabel, "label OK"); }
     else {
-      setWrongLabels((n) => n + 1); toastScore(-10, "label off");
+      setWrongLabels((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongLabel, "label off");
       if (correctAns) {
         const fields: string[] = [];
         if (ans.frequency !== correctAns.frequency) fields.push(`frequency`);
@@ -570,10 +570,10 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
   }) {
     if (ok) {
       setCompoundCorrect((n) => n + 1);
-      toastScore(25, "compound OK");
+      toastScore(SCORE_WEIGHTS.correctLabel, "compound OK");
     } else {
       setCompoundWrong((n) => n + 1);
-      toastScore(-15, "compound error");
+      toastScore(-SCORE_WEIGHTS.wrongDrug, "compound error");
       errPanel.logError(error);
     }
   }
@@ -692,9 +692,16 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
         title={caseData.title ?? "Community Pharmacy"}
         remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause}
-        score={correct * 20 - wrong * 15 + infoRead * 15 + correctLabels * 25 - wrongLabels * 10 + compoundCorrect * 25 - compoundWrong * 15}
+        score={liveScore({
+          difficulty: caseData?.difficulty,
+          correctDrugs: correct, wrongDrugs: wrong + compoundWrong, infoRead,
+          correctLabels: correctLabels + compoundCorrect,
+          wrongLabels,
+          hintsUsed: hints,
+          pauseUsed: timer.pauseUsed,
+        })}
         onExit={onExit}
-        onHint={() => { setHints((n) => n + 1); toastScore(-10, "hint"); setShowClean(true); }}
+        onHint={() => { setHints((n) => n + 1); toastScore(-SCORE_WEIGHTS.hint, "hint"); setShowClean(true); }}
       />
 
       {/* Sub-mode badge strip */}
@@ -1270,9 +1277,9 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
 
   function pickDrug(opt: string) {
     const correctChoices = getOtcCorrectChoices(ans);
-    if (correctChoices.includes(opt)) { setCorrect((n) => n + 1); toastScore(20, "correct drug"); }
+    if (correctChoices.includes(opt)) { setCorrect((n) => n + 1); toastScore(SCORE_WEIGHTS.correctDrug, "correct drug"); }
     else {
-      setWrong((n) => n + 1); toastScore(-15, "wrong drug");
+      setWrong((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong drug");
       errPanel.logError({
         errorType: "Wrong OTC recommendation",
         wrongChoice: opt, correctChoice: formatOtcCorrectChoice(ans),
@@ -1284,9 +1291,9 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
   }
 
   function pickDose(opt: string) {
-    if (opt === ans.correct_dose) { setCorrect((n) => n + 1); toastScore(25, "correct dose"); }
+    if (opt === ans.correct_dose) { setCorrect((n) => n + 1); toastScore(SCORE_WEIGHTS.correctDrug, "correct dose"); }
     else {
-      setWrong((n) => n + 1); toastScore(-10, "wrong dose");
+      setWrong((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong dose");
       errPanel.logError({
         errorType: "Wrong dose",
         wrongChoice: opt, correctChoice: ans.correct_dose,
@@ -1300,9 +1307,9 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
 
   function submitQuantity(qty: number) {
     const expected = getOtcCorrectQuantity(ans);
-    if (qty === expected) { setCorrect((n) => n + 1); toastScore(10, "correct quantity"); }
+    if (qty === expected) { setCorrect((n) => n + 1); toastScore(SCORE_WEIGHTS.correctDrug, "correct quantity"); }
     else {
-      setWrong((n) => n + 1); toastScore(-5, "quantity off");
+      setWrong((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongDrug, "quantity off");
       errPanel.logError({
         errorType: "Wrong OTC quantity",
         wrongChoice: `${qty} pack${qty === 1 ? "" : "s"}`,
@@ -1316,9 +1323,9 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
 
   async function pickAdvice(opt: string) {
     let cl = 0, wl = 0;
-    if (opt === ans.correct_advice) { cl = 1; toastScore(25, "good counseling"); }
+    if (opt === ans.correct_advice) { cl = 1; toastScore(SCORE_WEIGHTS.correctLabel, "good counseling"); }
     else {
-      wl = 1; toastScore(-10, "off counseling");
+      wl = 1; toastScore(-SCORE_WEIGHTS.wrongLabel, "off counseling");
       errPanel.logError({
         errorType: "Wrong counseling advice",
         wrongChoice: opt, correctChoice: ans.correct_advice,
@@ -1364,9 +1371,13 @@ function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; L
         title={caseData.title ?? "Community Pharmacy"}
         remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause}
-        score={correct * 20 - wrong * 15}
+        score={liveScore({
+          difficulty: caseData?.difficulty,
+          correctDrugs: correct, wrongDrugs: wrong,
+          hintsUsed: hints, pauseUsed: timer.pauseUsed,
+        })}
         onExit={onExit}
-        onHint={() => { setHints((n) => n + 1); toastScore(-10, "hint used"); }}
+        onHint={() => { setHints((n) => n + 1); toastScore(-SCORE_WEIGHTS.hint, "hint used"); }}
       />
 
       {/* Sub-mode badge */}

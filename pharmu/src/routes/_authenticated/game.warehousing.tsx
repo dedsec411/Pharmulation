@@ -9,7 +9,8 @@ import { ModeTheme } from "@/components/game/ModeTheme";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 import { useTimer } from "@/lib/game/useTimer";
 import {
-  computeScore, submitScore, MODE_TIMERS, toastScore, bumpCounterBadge,
+  computeScoreFromPoints, liveScoreFromPoints, submitScore, MODE_TIMERS, toastScore,
+  bumpCounterBadge,
 } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
 import { AlertTriangle, Barcode, Flag, Lock, Package, Thermometer } from "lucide-react";
@@ -398,12 +399,14 @@ function WarehouseGame() {
   async function finish(timedOut: boolean) {
     let totalPoints = points;
     if (contaminated) totalPoints -= 30;
-    const score = computeScore({
+    // Was `computeScore(...) - 100`, which hardcoded the *medium* base, so easy
+    // cases (base 90) silently lost 10 points and hard ones (base 120) gained 20.
+    const finalScore = computeScoreFromPoints({
       difficulty: caseData?.difficulty,
       hintsUsed: hints, pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
-    }) - 100 + Math.max(0, totalPoints);
-    const finalScore = Math.max(0, Math.round(score));
+      points: totalPoints,
+    });
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "warehousing",
       score: finalScore, timeTaken: timer.taken, errors,
@@ -442,7 +445,11 @@ function WarehouseGame() {
         title={`Warehouse · ${phaseLabel[phase]}`}
         remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause}
-        score={points}
+        score={liveScoreFromPoints({
+          difficulty: caseData?.difficulty,
+          hintsUsed: hints, pauseUsed: timer.pauseUsed,
+          points,
+        })}
         onExit={onExit}
         onHint={() => { setHints((n) => n + 1); toast("Read each label carefully — storage requirements matter."); }}
       />

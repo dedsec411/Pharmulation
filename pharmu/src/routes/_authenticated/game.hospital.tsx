@@ -6,7 +6,7 @@ import { FeedbackScreen } from "@/components/game/FeedbackScreen";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
-import { computeScore, submitScore, MODE_TIMERS, toastScore, type Mode } from "@/lib/game/shared";
+import { computeScore, submitScore, MODE_TIMERS, toastScore, SCORE_WEIGHTS, type Mode } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, ClipboardList, Database, HeartPulse, Plus, Terminal, Trash2 } from "lucide-react";
@@ -366,9 +366,13 @@ export function HospitalGame({ mode }: { mode: Mode }) {
       {difficultyModal}
       <ClinicalEkgFloor />
       <ClinicalAlarmBanner message={alarm} />
+      {/* Score is hidden here rather than shown live: orders are only marked
+          correct on submit, so a running score would reveal the answer. It
+          previously showed `orders.length * 5`, which tracked nothing real and
+          disagreed with the final score. */}
       <GameHeader title={caseData.title ?? "Clinical"} onExit={onExit} remaining={timer.remaining} pct={timer.pct}
-        paused={timer.paused} togglePause={timer.togglePause} score={orders.length * 5}
-        onHint={() => { setHints((n) => n + 1); toastScore(-10, "hint used"); toast.info(`Hint: ${caseData.mentor_tip}`); }} />
+        paused={timer.paused} togglePause={timer.togglePause} score={0} hideScore
+        onHint={() => { setHints((n) => n + 1); toastScore(-SCORE_WEIGHTS.hint, "hint used"); toast.info(`Hint: ${caseData.mentor_tip}`); }} />
       <main className="relative z-10 mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.3fr]">
         <aside className="relative rounded-2xl border border-indigo-300/20 bg-slate-900/55 p-4 text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl">
           <div className="absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-indigo-200/20 bg-slate-700/70 shadow-inner backdrop-blur" />
