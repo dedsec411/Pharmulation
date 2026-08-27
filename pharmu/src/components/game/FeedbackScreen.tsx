@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Trophy, RotateCw, Home, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import type { ErrorEntry } from "./ErrorExplanationPanel";
 
@@ -16,9 +16,11 @@ type Props = {
   breakdown?: { label: string; delta: number }[];
   errors?: ErrorEntry[];
   onNext: () => void;
+  /** Extra mode-specific review, rendered above the actions. */
+  children?: ReactNode;
 };
 
-export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanation, drugs = [], breakdown = [], errors = [], onNext }: Props) {
+export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanation, drugs = [], breakdown = [], errors = [], onNext, children }: Props) {
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     const start = performance.now();
@@ -107,6 +109,8 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
         {explanation && (
           <p className="mt-3 text-sm text-muted-foreground">{explanation}</p>
         )}
+
+        {children}
 
         <div className="mt-6 flex flex-wrap gap-3">
           <button onClick={onNext} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
+import { OtcConsultation } from "@/components/game/OtcConsultation";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { SimulatedPrescription as PrescriptionSheet } from "@/components/game/SimulatedPrescription";
@@ -14,12 +15,6 @@ import { useAuthStore } from "@/lib/auth-store";
 import { RX_DRUG_CATEGORIES, getBrandsForDrug, prepareDrugCatalog } from "@/lib/drug-catalog";
 import { supabase } from "@/integrations/supabase/client";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
-import {
-  OtcScenarioPanel,
-  formatOtcCorrectChoice,
-  getOtcCorrectChoices,
-} from "@/components/game/OtcScenarioPanel";
-import { OtcPatientChat } from "@/components/game/OtcPatientChat";
 import { toast } from "sonner";
 
 import {
@@ -359,10 +354,29 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void 
 function CommunityRun({ activeMode }: { activeMode: "rx" | "otc" }) {
   const { difficulty, difficultyModal } = useDifficultyChoice(activeMode);
   const rxLoader = useCaseLoader("rx", difficulty);
-  const otcLoader = useCaseLoader("otc", difficulty);
+  const [seenOtcIds, setSeenOtcIds] = useState<string[]>([]);
 
-  const loader = activeMode === "rx" ? rxLoader : otcLoader;
-  const LIMIT  = modeTimeLimit(activeMode, difficulty);
+  const LIMIT = modeTimeLimit(activeMode, difficulty);
+
+  // OTC runs its own AI consultation off the authored case bank rather than
+  // the shared DB case loader, so it needs difficulty resolved but no caseData.
+  if (activeMode === "otc") {
+    if (!difficulty) return <>{difficultyModal}</>;
+    return (
+      <>
+        {difficultyModal}
+        <OtcConsultation
+          difficulty={difficulty}
+          seenIds={seenOtcIds}
+          onSeen={(id) => setSeenOtcIds((current) => current.includes(id) ? current : [...current, id])}
+          next={() => {}}
+          limit={LIMIT}
+        />
+      </>
+    );
+  }
+
+  const loader = rxLoader;
 
   if (loader.loading || !loader.caseData) {
     return (
@@ -381,11 +395,7 @@ function CommunityRun({ activeMode }: { activeMode: "rx" | "otc" }) {
   return (
     <>
       {difficultyModal}
-      {activeMode === "rx" ? (
-        <RxGame caseData={loader.caseData} next={loader.next} LIMIT={LIMIT} />
-      ) : (
-        <OtcGame caseData={loader.caseData} next={loader.next} LIMIT={LIMIT} />
-      )}
+      <RxGame caseData={loader.caseData} next={loader.next} LIMIT={LIMIT} />
     </>
   );
 }
@@ -1246,253 +1256,6 @@ function CompoundOptionGrid({
   );
 }
 
-type OtcStep = "questions" | "drug" | "dose" | "quantity" | "advice" | "done";
-
-function OtcGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LIMIT: number }) {
-  const { profile } = useAuthStore();
-  const onExit = useGameExit("/modes");
-
-  const [step, setStep]     = useState<OtcStep>("questions");
-  const [correct, setCorrect] = useState(0);
-  const [wrong, setWrong]   = useState(0);
-  const [hints, setHints]   = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [result, setResult] = useState<any>(null);
-
-  const timer   = useTimer(LIMIT, () => step !== "done" && finish(true));
-  const errPanel = useErrorPanel({
-    mode: "otc",
-    difficulty: caseData?.difficulty,
-    mentorTip: caseData?.mentor_tip,
-    setExternalPaused: timer.setExternalPaused,
-  });
-
-  useEffect(() => {
-    setStep("questions"); setCorrect(0); setWrong(0); setHints(0); setQuantity(1); setResult(null);
-  }, [caseData?.id]);
-
-  const ans: any       = caseData?.correct_answer_json ?? {};
-
-  function pickDrug(opt: string) {
-    const correctChoices = getOtcCorrectChoices(ans);
-    if (correctChoices.includes(opt)) { setCorrect((n) => n + 1); toastScore(SCORE_WEIGHTS.correctDrug, "correct drug"); }
-    else {
-      setWrong((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong drug");
-      errPanel.logError({
-        errorType: "Wrong OTC recommendation",
-        wrongChoice: opt, correctChoice: formatOtcCorrectChoice(ans),
-        whyWrong: `${opt} is not appropriate for this patient given their symptoms or contraindications.`,
-        whatToKnow: "Match OTC product to symptom + screen for red flags, pregnancy, allergies, and current meds.",
-      });
-    }
-    setStep("dose");
-  }
-
-  function pickDose(opt: string) {
-    if (opt === ans.correct_dose) { setCorrect((n) => n + 1); toastScore(SCORE_WEIGHTS.correctDrug, "correct dose"); }
-    else {
-      setWrong((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong dose");
-      errPanel.logError({
-        errorType: "Wrong dose",
-        wrongChoice: opt, correctChoice: ans.correct_dose,
-        whyWrong: `${opt} is outside the safe/effective range for this patient.`,
-        whatToKnow: "OTC dosing depends on age, weight, renal/hepatic function, and product strength.",
-      });
-    }
-    setQuantity(getOtcCorrectQuantity(ans));
-    setStep("quantity");
-  }
-
-  function submitQuantity(qty: number) {
-    const expected = getOtcCorrectQuantity(ans);
-    if (qty === expected) { setCorrect((n) => n + 1); toastScore(SCORE_WEIGHTS.correctDrug, "correct quantity"); }
-    else {
-      setWrong((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongDrug, "quantity off");
-      errPanel.logError({
-        errorType: "Wrong OTC quantity",
-        wrongChoice: `${qty} pack${qty === 1 ? "" : "s"}`,
-        correctChoice: `${expected} pack${expected === 1 ? "" : "s"}`,
-        whyWrong: "The quantity should match the recommended OTC course without oversupplying or leaving the patient short.",
-        whatToKnow: "OTC quantity should follow dose, duration, pack size, safety limits, and referral advice.",
-      });
-    }
-    setStep("advice");
-  }
-
-  async function pickAdvice(opt: string) {
-    let cl = 0, wl = 0;
-    if (opt === ans.correct_advice) { cl = 1; toastScore(SCORE_WEIGHTS.correctLabel, "good counseling"); }
-    else {
-      wl = 1; toastScore(-SCORE_WEIGHTS.wrongLabel, "off counseling");
-      errPanel.logError({
-        errorType: "Wrong counseling advice",
-        wrongChoice: opt, correctChoice: ans.correct_advice,
-        whyWrong: "That advice is incomplete or misleading for this scenario.",
-        whatToKnow: "Counseling should cover how to take it, side effects to watch, and when to seek further help.",
-      });
-    }
-    finish(false, cl, wl);
-  }
-
-  async function finish(timedOut: boolean, cl = 0, wl = 0) {
-    const score = computeScore({
-      difficulty: caseData?.difficulty,
-      correctDrugs: correct, wrongDrugs: wrong, correctLabels: cl, wrongLabels: wl,
-      hintsUsed: hints, pauseUsed: timer.pauseUsed,
-      timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
-    });
-    const { xpGain } = await submitScore({
-      userId: profile!.user_id, caseId: caseData.id, mode: "otc",
-      score, timeTaken: timer.taken, errors: wrong + wl,
-      correctDrugs: correct + cl, totalDrugs: 4,
-      errorsDetail: errPanel.errors,
-    });
-    setResult({ score, xpGain });
-    setStep("done");
-  }
-
-  if (step === "done" && result) {
-    return (
-      <FeedbackScreen
-        score={result.score} xpGain={result.xpGain} timeTaken={timer.taken}
-        mentorTip={caseData.mentor_tip} explanation={caseData.explanation}
-        drugs={[{ name: ans.correct_drug, correct: true, info: `${ans.correct_dose} · Qty ${quantity}` }]}
-        errors={errPanel.errors}
-        onNext={next}
-      />
-    );
-  }
-
-  return (
-    <>
-      <GameHeader
-        title={caseData.title ?? "Community Pharmacy"}
-        remaining={timer.remaining} pct={timer.pct}
-        paused={timer.paused} togglePause={timer.togglePause}
-        score={liveScore({
-          difficulty: caseData?.difficulty,
-          correctDrugs: correct, wrongDrugs: wrong,
-          hintsUsed: hints, pauseUsed: timer.pauseUsed,
-        })}
-        onExit={onExit}
-        onHint={() => { setHints((n) => n + 1); toastScore(-SCORE_WEIGHTS.hint, "hint used"); }}
-      />
-
-      {/* Sub-mode badge */}
-      <div className="border-b border-border/30 bg-background/60 backdrop-blur px-4 py-2 flex items-center gap-3">
-        <SubmodeBadge mode="otc" />
-        <span className="text-xs text-muted-foreground">{caseData.title}</span>
-      </div>
-
-      <main className="relative mx-auto grid max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[1fr_2fr]">
-        <CommunityFloatingPills className="opacity-30" />
-        {/* Patient panel */}
-        <aside className="relative z-10 rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur">
-          <div className="flex items-center gap-2 mb-3">
-            <User className="size-4 text-primary" />
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Patient</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-full bg-primary/20">
-              <User className="size-5 text-primary" />
-            </div>
-            <div>
-              <p className="font-semibold">{caseData.patient_info_json?.name}</p>
-              <p className="text-xs text-muted-foreground">Age {caseData.patient_info_json?.age ?? "-"}</p>
-            </div>
-          </div>
-          <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
-            {Object.entries(caseData.patient_info_json ?? {}).map(([k, v]) => (
-              <li key={k}><span className="font-medium text-foreground">{k}:</span> {String(v)}</li>
-            ))}
-          </ul>
-        </aside>
-
-        {/* Question / answer area */}
-        <section className="relative z-10">
-          <motion.div key={`${step}-${caseData.id}`}
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
-
-            {step === "questions" && (
-              <>
-                <OtcScenarioPanel ans={ans} caseData={caseData} />
-                <OtcPatientChat ans={ans} caseData={caseData} onComplete={() => setStep("drug")} />
-              </>
-            )}
-
-            {step === "drug"   && <OtcPicker title="Recommend a medication" options={ans.drug_options ?? []} onPick={pickDrug} />}
-            {step === "dose"   && <OtcPicker title="Choose correct dose"    options={ans.dose_options ?? []} onPick={pickDose} />}
-            {step === "quantity" && (
-              <OtcQuantitySlider value={quantity} max={getOtcQuantityMax(ans)} onChange={setQuantity} onSubmit={submitQuantity} />
-            )}
-            {step === "advice" && <OtcPicker title="Counsel the patient"    options={ans.advice_options ?? []} onPick={pickAdvice} />}
-          </motion.div>
-        </section>
-      </main>
-      {errPanel.panel}
-    </>
-  );
-}
-
-// ─── Shared sub-components ────────────────────────────────────────────────────
-function getOtcCorrectQuantity(ans: any) {
-  const raw = ans.correct_quantity ?? ans.quantity ?? ans.recommended_quantity ?? ans.pack_quantity ?? 1;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 1;
-}
-
-function getOtcQuantityMax(ans: any) {
-  return Math.max(5, getOtcCorrectQuantity(ans) + 2);
-}
-
-function OtcQuantitySlider({
-  value,
-  max,
-  onChange,
-  onSubmit,
-}: {
-  value: number;
-  max: number;
-  onChange: (value: number) => void;
-  onSubmit: (value: number) => void;
-}) {
-  return (
-    <div>
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">Select quantity</p>
-      <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Dispense quantity</p>
-            <p className="mt-1 font-mono text-4xl font-black tabular-nums text-primary">{value}</p>
-          </div>
-          <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">
-            {value === 1 ? "1 pack" : `${value} packs`}
-          </span>
-        </div>
-        <input
-          type="range"
-          min={1}
-          max={max}
-          step={1}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="mt-5 w-full accent-primary"
-        />
-        <div className="mt-2 flex justify-between font-mono text-[10px] text-muted-foreground">
-          <span>1</span>
-          <span>{max}</span>
-        </div>
-        <button
-          onClick={() => onSubmit(value)}
-          className="mt-4 w-full rounded-full bg-primary px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-primary-foreground shadow-[0_0_32px_-14px_oklch(0.74_0.14_180/0.9)] transition hover:-translate-y-0.5 hover:bg-primary/90"
-        >
-          Confirm quantity
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function OtcPicker({ title, options, onPick }: { title: string; options: string[]; onPick: (s: string) => void }) {
   return (

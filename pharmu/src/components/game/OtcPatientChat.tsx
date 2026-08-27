@@ -1,89 +1,117 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, MessageCircle, Send } from "lucide-react";
+import { AlertTriangle, ArrowRight, MessageCircle, RotateCcw, Send } from "lucide-react";
 import { sendChatMessage } from "@/lib/api/chat.functions";
+import type { OtcCase } from "@/lib/game/otc-cases";
+import type { Difficulty } from "@/lib/game/shared";
 
-type ChatMessage = {
+export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
-type PatientInfo = {
-  name?: string | null;
-  age?: string | number | null;
-  symptoms?: string | null;
-  allergies?: string | null;
-  current_meds?: string | null;
-  medical_conditions?: string | null;
-  scenario_dialogue?: string | null;
-};
+/**
+ * Gemini requires the conversation to start with a user turn, so drop the
+ * patient's opening line. It comes from the case facts in the system prompt
+ * anyway, so no context is lost.
+ */
+function forApi(messages: ChatMessage[]) {
+  const firstUser = messages.findIndex((message) => message.role === "user");
+  return firstUser === -1 ? messages : messages.slice(firstUser);
+}
 
-type ScriptedResponse = {
-  key: string;
-  patient: string;
+/** Questions asked, not messages: how many chances the pharmacist gets. */
+const MAX_QUESTIONS: Record<Difficulty, number> = {
+  easy: 14,
+  medium: 11,
+  hard: 9,
 };
-
-const MAX_EXCHANGES = 15;
 
 export function OtcPatientChat({
-  ans,
-  caseData,
+  otcCase,
+  difficulty,
+  messages,
+  setMessages,
   onComplete,
 }: {
-  ans: any;
-  caseData: any;
+  otcCase: OtcCase;
+  difficulty: Difficulty;
+  messages: ChatMessage[];
+  setMessages: (updater: (current: ChatMessage[]) => ChatMessage[]) => void;
   onComplete: () => void;
 }) {
-  const patientInfo = useMemo(() => buildPatientInfo(caseData, ans), [caseData, ans]);
-  const scriptedResponses = useMemo(() => buildScriptedResponses(ans), [ans]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [waiting, setWaiting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastFailed, setLastFailed] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  const exchangeCount = messages.filter((message) => message.role === "user").length;
-  const limitReached = exchangeCount >= MAX_EXCHANGES;
-
-  useEffect(() => {
-    setMessages([{ role: "assistant", content: getOpeningLine(ans) }]);
-    setInput("");
-    setWaiting(false);
-  }, [caseData?.id, ans]);
+  const maxQuestions = MAX_QUESTIONS[difficulty] ?? MAX_QUESTIONS.medium;
+  const asked = messages.filter((message) => message.role === "user").length;
+  const remaining = Math.max(0, maxQuestions - asked);
+  const limitReached = remaining === 0;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, waiting]);
+  }, [messages, waiting, error]);
+
+  async function ask(question: string) {
+    setWaiting(true);
+    setError(null);
+
+    const history: ChatMessage[] = [...messages, { role: "user", content: question }];
+
+    try {
+      const result = await sendChatMessage({
+        data: {
+          messages: forApi(history),
+          context: "patient",
+          caseFacts: {
+            name: otcCase.patient.name,
+            age: otcCase.patient.age,
+            manner: otcCase.patient.manner,
+            who: otcCase.hidden.who,
+            what: otcCase.hidden.what,
+            howLong: otcCase.hidden.howLong,
+            action: otcCase.hidden.action,
+            medication: otcCase.hidden.medication,
+            allergies: otcCase.hidden.allergies,
+            conditions: otcCase.hidden.conditions,
+            extra: otcCase.hidden.extra ?? [],
+            difficulty,
+          },
+        },
+      });
+
+      if (!result.ok) {
+        // No scripted stand-in: a canned reply would teach the wrong lesson.
+        setError(result.reply);
+        setLastFailed(question);
+        return;
+      }
+
+      setMessages((current) => [...current, { role: "assistant", content: result.reply }]);
+      setLastFailed(null);
+    } catch {
+      setError("Could not reach the patient. Check your connection and try again.");
+      setLastFailed(question);
+    } finally {
+      setWaiting(false);
+    }
+  }
 
   async function submit(event?: FormEvent) {
     event?.preventDefault();
     const content = input.trim();
     if (!content || waiting || limitReached) return;
-
-    const nextMessages: ChatMessage[] = [...messages, { role: "user", content }];
-    setMessages(nextMessages);
     setInput("");
-    setWaiting(true);
+    setMessages((current) => [...current, { role: "user", content }]);
+    await ask(content);
+  }
 
-    try {
-      const result = await sendChatMessage({
-        data: {
-          messages: messagesForApi(nextMessages),
-          context: "patient",
-          patientInfo,
-        },
-      });
-      const reply = shouldUseLocalFallback(result.reply)
-        ? localPatientReply(content, patientInfo, scriptedResponses)
-        : result.reply;
-      setMessages((current) => [...current, { role: "assistant", content: reply }]);
-    } catch {
-      setMessages((current) => [
-        ...current,
-        { role: "assistant", content: localPatientReply(content, patientInfo, scriptedResponses) },
-      ]);
-    } finally {
-      setWaiting(false);
-    }
+  async function retry() {
+    if (!lastFailed || waiting) return;
+    await ask(lastFailed);
   }
 
   return (
@@ -94,12 +122,20 @@ export function OtcPatientChat({
             <MessageCircle className="size-4 text-primary" />
           </span>
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">Patient conversation</p>
-            <p className="text-[11px] text-muted-foreground">Ask your own OTC assessment questions.</p>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">
+              {otcCase.patient.name}, {otcCase.patient.age}
+            </p>
+            <p className="text-[11px] text-muted-foreground">Take the history in your own words.</p>
           </div>
         </div>
-        <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
-          AI patient
+        <span
+          className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+            remaining <= 2
+              ? "border-amber-400/40 bg-amber-400/10 text-amber-400"
+              : "border-primary/25 bg-primary/10 text-primary"
+          }`}
+        >
+          {remaining} question{remaining === 1 ? "" : "s"} left
         </span>
       </div>
 
@@ -132,13 +168,32 @@ export function OtcPatientChat({
             </div>
           </div>
         )}
+
+        {error && (
+          <div className="flex items-start gap-2 rounded-xl border border-destructive/35 bg-destructive/10 px-3 py-2.5 text-xs text-destructive-foreground">
+            <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-destructive" />
+            <div className="min-w-0 flex-1">
+              <p className="leading-relaxed">{error}</p>
+              {lastFailed && (
+                <button
+                  type="button"
+                  onClick={retry}
+                  disabled={waiting}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-destructive/40 px-3 py-1 font-bold transition hover:bg-destructive/15 disabled:opacity-50"
+                >
+                  <RotateCcw className="size-3" /> Retry
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
       <form onSubmit={submit} className="border-t border-border/35 bg-background/60 p-3">
         {limitReached && (
           <p className="mb-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
-            Conversation limit reached. Continue to recommendation when ready.
+            No questions left. Continue to your recommendation.
           </p>
         )}
         <div className="flex items-center gap-2">
@@ -146,14 +201,14 @@ export function OtcPatientChat({
             value={input}
             onChange={(event) => setInput(event.target.value)}
             disabled={waiting || limitReached}
-            placeholder="Ask the patient..."
+            placeholder="Ask the patient a question..."
             className="min-w-0 flex-1 rounded-full border border-border/45 bg-card/70 px-4 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/70 focus:ring-2 focus:ring-primary/20 disabled:opacity-55"
           />
           <button
             type="submit"
             disabled={waiting || limitReached || !input.trim()}
             className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_-16px_oklch(0.74_0.14_180/0.95)] transition hover:brightness-110 disabled:opacity-45"
-            aria-label="Send patient question"
+            aria-label="Send question to patient"
           >
             <Send className="size-4" />
           </button>
@@ -168,94 +223,4 @@ export function OtcPatientChat({
       </form>
     </div>
   );
-}
-
-function buildPatientInfo(caseData: any, ans: any): PatientInfo {
-  const patient = caseData?.patient_info_json ?? {};
-  return {
-    name: patient.name ?? caseData?.title ?? "OTC patient",
-    age: patient.age ?? "",
-    symptoms: stringifyInfo(patient.symptoms ?? ans?.complaint ?? caseData?.title ?? "an OTC concern"),
-    allergies: stringifyInfo(patient.allergies ?? patient.allergy ?? "none"),
-    current_meds: stringifyInfo(patient.current_meds ?? patient.currentMeds ?? patient.medications ?? "none"),
-    medical_conditions: stringifyInfo(patient.medical_conditions ?? patient.conditions ?? "none"),
-    scenario_dialogue: buildScenarioDialogue(ans),
-  };
-}
-
-function buildScenarioDialogue(ans: any) {
-  const questions = Array.isArray(ans?.questions) ? ans.questions : [];
-  const turns = questions.map((question: any) => {
-    const correctIndex = Number(question?.correct ?? 0);
-    const pharmacist = question?.choices?.[correctIndex] ?? question?.q ?? "Ask an appropriate OTC question.";
-    const patient = question?.patient_response ?? question?.response ?? question?.answer ?? "Okay.";
-    return `Pharmacist: ${pharmacist}\nPatient: ${patient}`;
-  });
-  const outcome = ans?.correct_drugs?.length
-    ? `Outcome: recommend ${ans.correct_drugs.join(" or ")}.`
-    : ans?.correct_drug
-      ? `Outcome: recommend ${ans.correct_drug}.`
-      : "";
-  return [...turns, outcome].filter(Boolean).join("\n");
-}
-
-function buildScriptedResponses(ans: any): ScriptedResponse[] {
-  const questions = Array.isArray(ans?.questions) ? ans.questions : [];
-  return questions.map((question: any) => {
-    const correctIndex = Number(question?.correct ?? 0);
-    const pharmacist = String(question?.choices?.[correctIndex] ?? question?.q ?? "");
-    return {
-      key: classifyQuestion(pharmacist),
-      patient: String(question?.patient_response ?? question?.response ?? question?.answer ?? "Okay."),
-    };
-  }).filter((item: ScriptedResponse) => item.key && item.patient);
-}
-
-function localPatientReply(question: string, patientInfo: PatientInfo, scriptedResponses: ScriptedResponse[]) {
-  const key = classifyQuestion(question);
-  const scripted = scriptedResponses.find((response) => response.key === key);
-  if (scripted) return scripted.patient;
-
-  if (key === "symptoms" && patientInfo.symptoms) return patientInfo.symptoms;
-  if (key === "history") {
-    return `Allergies: ${patientInfo.allergies || "none"}. Current medicines: ${patientInfo.current_meds || "none"}. Medical conditions: ${patientInfo.medical_conditions || "none"}.`;
-  }
-  return "I'm not sure. Could you ask me that another way?";
-}
-
-function classifyQuestion(value: string) {
-  const text = normalize(value);
-  if (/\b(who|for|yourself|someone)\b/.test(text)) return "who";
-  if (/\b(symptom|symptoms|having|feel|feeling|problem|pain|located|where)\b/.test(text)) return "symptoms";
-  if (/\b(how long|started|start|duration|since|when)\b/.test(text)) return "duration";
-  if (/\b(taken|tried|already|relieve|medicine yet|anything for)\b/.test(text)) return "prior_treatment";
-  if (/\b(allerg|ulcer|liver|medical|condition|conditions|other medicines|current medicines|taking any)\b/.test(text)) return "history";
-  return "";
-}
-
-function getOpeningLine(ans: any) {
-  if (typeof ans?.opening_patient_line === "string" && ans.opening_patient_line.trim()) {
-    return ans.opening_patient_line.trim();
-  }
-  return "Hi, I need some advice. Can you help me?";
-}
-
-function messagesForApi(messages: ChatMessage[]) {
-  const firstQuestionIndex = messages.findIndex((message) => message.role === "user");
-  return firstQuestionIndex === -1 ? messages : messages.slice(firstQuestionIndex);
-}
-
-function shouldUseLocalFallback(reply: string) {
-  const text = reply.toLowerCase();
-  return text.includes("gemini") || text.includes("api key") || text.includes("quota") || text.includes("not connected");
-}
-
-function stringifyInfo(value: unknown) {
-  if (Array.isArray(value)) return value.map(String).join(", ");
-  if (value && typeof value === "object") return Object.values(value).map(String).join(", ");
-  return String(value ?? "");
-}
-
-function normalize(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
