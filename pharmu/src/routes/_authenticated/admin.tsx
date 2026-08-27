@@ -1,11 +1,13 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { Users, FlaskConical, Pill, BarChart3 } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
+import { promoteUserToAdmin, deleteCaseById } from "@/lib/api/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin - Pharmulation" }] }),
@@ -15,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 function AdminPage() {
   const { profile } = useAuthStore();
   const [tab, setTab] = useState<"overview" | "users" | "cases" | "drugs">("overview");
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   if (profile && (profile.role as string) !== "admin") {
     throw redirect({ to: "/dashboard" });
@@ -72,11 +76,40 @@ function AdminPage() {
     : 0;
 
   async function promoteUser(uid: string) {
-    await supabase.from("profiles").update({ role: "admin" as any }).eq("user_id", uid);
+    setPendingId(uid);
+    try {
+      const result = await promoteUserToAdmin({ data: { userId: uid } });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success("User promoted to admin.");
+      await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not promote this user.");
+    } finally {
+      setPendingId(null);
+    }
   }
+
   async function deleteCase(id: string) {
     if (!confirm("Delete this case?")) return;
-    await supabase.from("cases").delete().eq("id", id);
+    setPendingId(id);
+    try {
+      const result = await deleteCaseById({ data: { caseId: id } });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success("Case deleted.");
+      await queryClient.invalidateQueries({ queryKey: ["admin-cases"] });
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not delete this case.");
+    } finally {
+      setPendingId(null);
+    }
   }
 
   return (
@@ -155,7 +188,13 @@ function AdminPage() {
                     <td className="p-3 text-right">{u.total_cases_completed}</td>
                     <td className="p-3 text-right">
                       {u.role !== "admin" && (
-                        <button onClick={() => promoteUser(u.user_id)} className="text-xs text-primary hover:underline">Promote</button>
+                        <button
+                          onClick={() => promoteUser(u.user_id)}
+                          disabled={pendingId === u.user_id}
+                          className="text-xs text-primary hover:underline disabled:opacity-50"
+                        >
+                          {pendingId === u.user_id ? "Promoting..." : "Promote"}
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -179,7 +218,13 @@ function AdminPage() {
                     <td className="p-3 capitalize">{c.difficulty}</td>
                     <td className="p-3 text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</td>
                     <td className="p-3 text-right">
-                      <button onClick={() => deleteCase(c.id)} className="text-xs text-rose-400 hover:underline">Delete</button>
+                      <button
+                        onClick={() => deleteCase(c.id)}
+                        disabled={pendingId === c.id}
+                        className="text-xs text-rose-400 hover:underline disabled:opacity-50"
+                      >
+                        {pendingId === c.id ? "Deleting..." : "Delete"}
+                      </button>
                     </td>
                   </tr>
                 ))}
