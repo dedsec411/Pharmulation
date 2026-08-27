@@ -5,7 +5,7 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 ## Done
 
 - [x] Untrack `.env` from git, add it to `.gitignore`, add `.env.example` — leaked `GEMINI_API_KEY` is no longer tracked; key has been rotated.
-- [x] Close the `profiles.role` self-escalation hole — migration `20260827120000_prevent_profile_role_self_escalation.sql` adds a trigger so a non-admin can't set their own `role` to `admin`.
+- [ ] **Close the `profiles.role` self-escalation hole — MIGRATION WRITTEN BUT NOT APPLIED.** `20260827120000_prevent_profile_role_self_escalation.sql` exists, but verified against the live database (`hpzjxzmqgrcpbizxucbp`) that a normal authenticated user can still self-promote to `admin` right now. Apply it via the Supabase dashboard SQL editor. Note `supabase/config.toml` points at a different project (`ogxbvpnpqbwjmdyhrabr`), so `supabase db push` will not target the live database until that is corrected.
 - [x] Remove Emergency mode (was broken — `onExit` crash — and unreachable from any nav link).
 - [x] Remove Cosmetic mode (was dead config, no route ever existed).
 - [x] Delete standalone `game.rx.tsx` / `game.otc.tsx`; `game.community.tsx` is now the single Rx+OTC implementation.
@@ -32,6 +32,7 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 
 ## Repo hygiene / DX
 
+- [ ] **Fix the `supabase/config.toml` project mismatch** — it points at `ogxbvpnpqbwjmdyhrabr` while the app actually runs against `hpzjxzmqgrcpbizxucbp`. Until fixed, any `supabase db push` / `migration list` targets the wrong project, which is why migrations in this repo have not been reaching the live database.
 - [ ] Fix the corrupted root `.gitignore` (`c:\Users\DeDSeC\Desktop\pharmulation\.gitignore` has garbled/spaced-out text).
 - [ ] Add `.vercel`/`.netlify` build output to eslint's ignore list (`eslint.config.js` only ignores `dist`/`.output`/`.vinxi` — `npm run lint` currently scans the huge `.vercel/output` tree and can crash on stale generated files if a build ran concurrently).
 - [ ] Decide the fate of `netlify.toml` (root) vs. the Nitro `vercel` preset in `vite.config.ts` — currently mismatched/stale (project has moved to Vercel).
