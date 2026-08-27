@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pharmu
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: pharmu/package-lock.json
+
+      - run: npm ci
+
+      # The build does not type-check: vite/esbuild strips types without
+      # checking them, so type errors reach production unless this runs.
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # Build-time only; real values come from the hosting provider.
+          # These are public/anon-shaped placeholders, never secrets.
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: placeholder-key
+          SUPABASE_URL: https://placeholder.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: placeholder-key
+
+      # Reported but not blocking: the codebase still has ~140 `any`s to work
+      # through, and failing CI on that today would just make it ignorable.
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
