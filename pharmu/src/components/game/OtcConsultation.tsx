@@ -12,7 +12,7 @@ import { gradeConsultation, type ConsultationGrade } from "@/lib/api/chat.functi
 import { pickOtcCase, type OtcCase } from "@/lib/game/otc-cases";
 import {
   computeScore, liveScore, submitScore, toastScore, SCORE_WEIGHTS,
-  type Difficulty,
+  retryRewardFactor, type Difficulty,
 } from "@/lib/game/shared";
 
 type Step = "consult" | "grading" | "drug" | "dose" | "counselling" | "done";
@@ -52,6 +52,11 @@ export function OtcConsultation({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [grade, setGrade] = useState<ConsultationGrade | null>(null);
   const [gradeError, setGradeError] = useState<string | null>(null);
+  // Reward credit is fractional: an answer reached on the second try is worth
+  // 0.6 of a correct answer, so computeScore's difficulty multipliers still
+  // apply. `correct` stays a whole count, for the accuracy figure sent to the DB.
+  const [rewardDrugs, setRewardDrugs] = useState(0);
+  const [rewardLabels, setRewardLabels] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [wrong, setWrong] = useState(0);
   const [hints, setHints] = useState(0);
@@ -121,10 +126,24 @@ export function OtcConsultation({
     setStep(nextStep);
   }
 
+  /**
+   * Credit a correct answer, scaled down by how many attempts it took, and
+   * report the actual points so the toast never overstates what was earned.
+   * Returns the fractional credit, which the final step needs for scoring.
+   */
+  function awardCorrect(kind: "drug" | "label", weight: number, label: string) {
+    const factor = retryRewardFactor(tried.length);
+    const points = Math.round(weight * factor);
+    setCorrect((n) => n + 1);
+    if (kind === "drug") setRewardDrugs((r) => r + factor);
+    else setRewardLabels((r) => r + factor);
+    toastScore(points, tried.length === 0 ? label : `${label} (try ${tried.length + 1})`);
+    return factor;
+  }
+
   function pickDrug(option: string) {
     if (otcCase.recommendation.correct.includes(option)) {
-      setCorrect((n) => n + 1);
-      toastScore(SCORE_WEIGHTS.correctDrug, "correct recommendation");
+      awardCorrect("drug", SCORE_WEIGHTS.correctDrug, "correct recommendation");
       advance("dose");
       return;
     }
@@ -144,8 +163,7 @@ export function OtcConsultation({
 
   function pickDose(option: string) {
     if (option === otcCase.recommendation.dose) {
-      setCorrect((n) => n + 1);
-      toastScore(SCORE_WEIGHTS.correctDrug, "correct dose");
+      awardCorrect("drug", SCORE_WEIGHTS.correctDrug, "correct dose");
       advance("counselling");
       return;
     }
@@ -163,10 +181,8 @@ export function OtcConsultation({
 
   function pickCounselling(option: string) {
     if (option === otcCase.recommendation.counselling) {
-      toastScore(SCORE_WEIGHTS.correctLabel, "good counselling");
-      // Wrong attempts are already counted in `wrong`; pass the label result
-      // for the one that finally landed.
-      finish(false, 1, 0);
+      const earned = awardCorrect("label", SCORE_WEIGHTS.correctLabel, "good counselling");
+      finish(false, earned);
       return;
     }
     setWrong((n) => n + 1);
@@ -181,13 +197,13 @@ export function OtcConsultation({
     });
   }
 
-  async function finish(timedOut: boolean, correctLabels = 0, wrongLabels = 0) {
+  async function finish(timedOut: boolean, earnedLabelCredit = 0) {
     const base = computeScore({
       difficulty,
-      correctDrugs: correct,
+      // Fractional credit: retries are worth progressively less.
+      correctDrugs: rewardDrugs,
       wrongDrugs: wrong,
-      correctLabels,
-      wrongLabels,
+      correctLabels: rewardLabels + earnedLabelCredit,
       hintsUsed: hints,
       pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken,
@@ -203,8 +219,8 @@ export function OtcConsultation({
       mode: "otc",
       score,
       timeTaken: timer.taken,
-      errors: wrong + wrongLabels,
-      correctDrugs: correct + correctLabels,
+      errors: wrong,
+      correctDrugs: correct,
       totalDrugs: 3,
       errorsDetail: errPanel.errors,
     });
@@ -218,6 +234,8 @@ export function OtcConsultation({
     setGrade(null);
     setGradeError(null);
     setCorrect(0);
+    setRewardDrugs(0);
+    setRewardLabels(0);
     setWrong(0);
     setHints(0);
     setTried([]);
@@ -263,7 +281,10 @@ export function OtcConsultation({
         togglePause={timer.togglePause}
         score={liveScore({
           difficulty,
-          correctDrugs: correct,
+          // Same fractional credit the final score uses, so the running total
+          // cannot drift from the results screen.
+          correctDrugs: rewardDrugs,
+          correctLabels: rewardLabels,
           wrongDrugs: wrong,
           hintsUsed: hints,
           pauseUsed: timer.pauseUsed,

@@ -134,6 +134,21 @@ export const SCORE_WEIGHTS = {
   hint: 10,
 } as const;
 
+/**
+ * What a correct answer is worth after N failed attempts on the same question.
+ *
+ * Modes that make you retry until you are right would otherwise pay full marks
+ * for an answer arrived at by elimination. Full credit for first time, sharply
+ * less for each retry, nothing from the fourth attempt on - so the mentor
+ * explanation is still worth reading, but guessing is not worth doing.
+ */
+export const RETRY_REWARD_FACTORS = [1, 0.6, 0.3, 0] as const;
+
+export function retryRewardFactor(wrongAttempts: number) {
+  const index = Math.min(Math.max(wrongAttempts, 0), RETRY_REWARD_FACTORS.length - 1);
+  return RETRY_REWARD_FACTORS[index];
+}
+
 export function difficultyRules(difficulty?: Difficulty | string | null) {
   const key = (difficulty === "easy" || difficulty === "hard" || difficulty === "medium")
     ? difficulty
