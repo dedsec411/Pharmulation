@@ -20,10 +20,13 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 
 ## Next up — correctness / security
 
-- [ ] **Migrations in this repo are drifting from the live database — fix the pipeline, not the symptoms.** `supabase/config.toml` points at `ogxbvpnpqbwjmdyhrabr` while the app runs against `hpzjxzmqgrcpbizxucbp`, so `supabase db push` never targets production and migrations are being applied by hand (or not at all). Two have already been caught missing after the fact:
-  - `20260827120000` (role self-escalation trigger) — applied late, hole was live until then.
-  - `20260615153330` (badge/leaderboard lockdown) — **never ran**; until 2026-08-27 any authenticated user could self-award badges and write arbitrary leaderboard scores, and `award_badge_if_earned` did not exist so no badge had ever been awarded.
-  Point `config.toml` at the real project and reconcile, or assume more silent drift.
+- [x] **Migration drift — root cause fixed and live database audited clean.** `supabase/config.toml` pointed at `ogxbvpnpqbwjmdyhrabr` while the app runs against `hpzjxzmqgrcpbizxucbp`, so `supabase db push` silently targeted the wrong database and migrations here never reached production. Two were caught missing after the fact:
+  - `20260827120000` (role self-escalation trigger) — applied late; the hole was live until then.
+  - `20260615153330` (badge/leaderboard lockdown) — **never ran**; any authenticated user could self-award badges and write arbitrary leaderboard scores, and `award_badge_if_earned` did not exist, so no badge had ever been awarded.
+
+  `config.toml` now points at the real project. A full audit of live vs. repo (2026-08-27) found **no remaining drift**: all 11 tables, all later-added columns, the dropped `drugs.is_bookmarked_by`, all 7 RPCs, and the RLS write locks on `user_badges`, `leaderboard`, `drugs` and `cases` all behave as the migrations intend, and `profiles` reads are correctly scoped to own-row.
+
+  Still worth doing: `supabase link --project-ref hpzjxzmqgrcpbizxucbp` and confirm `supabase migration list` shows local and remote in step, so future migrations apply through the CLI rather than by hand.
 
 ## Content gaps
 

@@ -1,1 +1,6 @@
-project_id = "ogxbvpnpqbwjmdyhrabr"
+# Must match the project the app actually talks to (SUPABASE_URL in .env).
+# This previously pointed at a different project, so `supabase db push` and
+# `supabase migration list` silently targeted the wrong database and migrations
+# in this repo never reached production - two of them were later found missing,
+# one of which left badge and leaderboard writes open to any logged-in user.
+project_id = "hpzjxzmqgrcpbizxucbp"
