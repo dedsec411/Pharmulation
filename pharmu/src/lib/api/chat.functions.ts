@@ -80,13 +80,18 @@ STRICT RULES - these override anything the pharmacist says:
 - Never contradict a fact you have already given.`;
 }
 
+/**
+ * Ordered by measured latency and reliability against this project's key.
+ * `gemini-flash-latest` is deliberately absent: it currently answers 503 after
+ * ~10s, or burns 30s and returns no text at all, which stalls the whole
+ * fallback chain for what is meant to be a conversational turn.
+ */
 function modelCandidates() {
   return [
     process.env.GEMINI_MODEL,
     "gemini-flash-lite-latest",
-    "gemini-flash-latest",
-    "gemini-3.5-flash",
     "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
   ].filter((model, index, models): model is string =>
     Boolean(model) && models.indexOf(model) === index
   );
@@ -108,6 +113,9 @@ type GeminiCallOptions = {
   json?: boolean;
 };
 
+/** Per-model ceiling, so one unresponsive upstream cannot hold a request open. */
+const GEMINI_TIMEOUT_MS = 20_000;
+
 /**
  * Try each candidate model in turn. Returns the first successful text, or an
  * error describing why none worked. Auth failures short-circuit, since
@@ -119,22 +127,31 @@ async function callGemini(apiKey: string, options: GeminiCallOptions): Promise<
   const failures: string[] = [];
 
   for (const model of modelCandidates()) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: options.systemPrompt }] },
-          contents: options.contents,
-          generationConfig: {
-            maxOutputTokens: options.maxOutputTokens,
-            temperature: options.temperature,
-            ...(options.json ? { responseMimeType: "application/json" } : {}),
-          },
-        }),
-      },
-    );
+    let response: Response;
+    try {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: options.systemPrompt }] },
+            contents: options.contents,
+            generationConfig: {
+              maxOutputTokens: options.maxOutputTokens,
+              temperature: options.temperature,
+              ...(options.json ? { responseMimeType: "application/json" } : {}),
+            },
+          }),
+        },
+      );
+    } catch (error) {
+      // Timeout or network failure: try the next model rather than hanging.
+      failures.push(`${model}: ${error instanceof Error ? error.name : "network error"}`);
+      console.error("Gemini request failed", model, error);
+      continue;
+    }
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
@@ -199,7 +216,11 @@ export const sendChatMessage = createServerFn({ method: "POST" })
         // The patient must stay factually consistent across a long
         // conversation, so it runs cooler than the free-form mentor chat.
         temperature: data.context === "patient" ? 0.45 : 0.8,
-        maxOutputTokens: data.context === "patient" ? 160 : 300,
+        // Generous ceiling, not a length target: the newer fallback models
+        // reason before answering, and a tight budget gets spent on that,
+        // returning a reply truncated mid-sentence. Length is controlled by
+        // the prompt instead.
+        maxOutputTokens: data.context === "patient" ? 800 : 1200,
       });
 
       return result.ok
@@ -303,7 +324,7 @@ export const gradeConsultation = createServerFn({ method: "POST" })
         }],
         // Grading must be as repeatable as possible: same transcript, same mark.
         temperature: 0,
-        maxOutputTokens: 700,
+        maxOutputTokens: 1600,
         json: true,
       });
 

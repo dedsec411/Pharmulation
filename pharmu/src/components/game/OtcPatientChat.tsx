@@ -20,6 +20,22 @@ function forApi(messages: ChatMessage[]) {
   return firstUser === -1 ? messages : messages.slice(firstUser);
 }
 
+/**
+ * Backstop so the typing indicator can never spin forever. The server has its
+ * own per-model timeout, but a request that dies in transit (stale dev server,
+ * dropped connection) would otherwise leave a promise that never settles.
+ */
+const REPLY_TIMEOUT_MS = 30_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), ms),
+    ),
+  ]);
+}
+
 /** Questions asked, not messages: how many chances the pharmacist gets. */
 const MAX_QUESTIONS: Record<Difficulty, number> = {
   easy: 14,
@@ -62,7 +78,7 @@ export function OtcPatientChat({
     const history: ChatMessage[] = [...messages, { role: "user", content: question }];
 
     try {
-      const result = await sendChatMessage({
+      const result = await withTimeout(sendChatMessage({
         data: {
           messages: forApi(history),
           context: "patient",
@@ -81,7 +97,7 @@ export function OtcPatientChat({
             difficulty,
           },
         },
-      });
+      }), REPLY_TIMEOUT_MS);
 
       if (!result.ok) {
         // No scripted stand-in: a canned reply would teach the wrong lesson.
@@ -92,8 +108,12 @@ export function OtcPatientChat({
 
       setMessages((current) => [...current, { role: "assistant", content: result.reply }]);
       setLastFailed(null);
-    } catch {
-      setError("Could not reach the patient. Check your connection and try again.");
+    } catch (caught) {
+      setError(
+        caught instanceof Error && caught.message === "timeout"
+          ? "The patient took too long to respond. If this keeps happening, restart the dev server."
+          : "Could not reach the patient. Check your connection and try again.",
+      );
       setLastFailed(question);
     } finally {
       setWaiting(false);
