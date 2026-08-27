@@ -428,7 +428,7 @@ function buildCorrectAnswer(mode: Mode, baseAnswer: any, correctDrug: DrugRow, d
       correct_quantity: baseAnswer.correct_quantity ?? 1,
     };
   }
-  if (mode === "hospital" || mode === "emergency") {
+  if (mode === "hospital") {
     return {
       ...baseAnswer,
       drugs: [

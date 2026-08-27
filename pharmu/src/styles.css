@@ -307,13 +307,6 @@ body.mode-hospital [data-slot="card"] {
 body.mode-oncology [data-slot="card"] {
   background: linear-gradient(180deg, rgba(28,12,46,0.82), rgba(14,6,28,0.82)) !important;
 }
-body.mode-cosmetics [data-slot="card"] {
-  background: linear-gradient(180deg, rgba(40,18,38,0.78), rgba(22,10,22,0.78)) !important;
-  border-radius: 18px !important;
-}
-body.mode-emergency [data-slot="card"] {
-  background: linear-gradient(180deg, rgba(46,10,10,0.85), rgba(22,5,5,0.85)) !important;
-}
 body.mode-industry [data-slot="card"] {
   background:
     repeating-linear-gradient(135deg, rgba(245,158,11,0.05) 0 8px, transparent 8px 16px),
@@ -325,9 +318,6 @@ body.mode-warehousing [data-slot="card"] {
   border-radius: 4px !important;
 }
 
-body.mode-emergency {
-  animation: emergency-edge 2.2s ease-in-out infinite;
-}
 @keyframes emergency-edge {
   0%, 100% { box-shadow: inset 0 0 60px -10px rgba(239,68,68,0.4); }
   50% { box-shadow: inset 0 0 140px -10px rgba(239,68,68,0.75); }
@@ -352,10 +342,6 @@ body.mode-emergency {
 @keyframes conveyor-kf {
   0% { transform: translateX(0); }
   100% { transform: translateX(-48px); }
-}
-@keyframes emergency-pulse-kf {
-  0%, 100% { box-shadow: inset 0 0 80px -20px rgba(239,68,68,0.45); }
-  50% { box-shadow: inset 0 0 160px -20px rgba(239,68,68,0.85); }
 }
 @keyframes siren-slide {
   0% { transform: translateX(-100%); }
@@ -423,9 +409,6 @@ body.mode-emergency {
   animation: conveyor-kf 1.6s linear infinite;
   backface-visibility: hidden;
   will-change: transform;
-}
-.emergency-edge-pulse {
-  animation: emergency-pulse-kf 2.4s ease-in-out infinite;
 }
 .siren-bar {
   animation: siren-slide 1.6s linear infinite;

@@ -328,7 +328,6 @@ export function HospitalGame({ mode }: { mode: Mode }) {
       correctDrugs, wrongDrugs, correctLabels, wrongLabels,
       hintsUsed: hints, pauseUsed: timer.pauseUsed,
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
-      emergencyMultiplier: mode === "emergency",
     });
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode,

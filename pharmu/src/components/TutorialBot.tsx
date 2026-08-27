@@ -10,14 +10,11 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  ClipboardList,
   FlaskConical,
   HeartPulse,
-  HelpCircle,
   Package,
   Pill,
   Stethoscope,
-  Syringe,
   Trophy,
   X,
 } from "lucide-react";
@@ -47,7 +44,7 @@ const GUIDES: Record<string, TutorialGuide> = {
     icon: Stethoscope,
     steps: [
       { title: "Welcome to Pharmulation", body: "This is your pharmacy training simulator. Start training, check the leaderboard, or sign in to save progress." },
-      { title: "Training modes", body: "Each mode is built around a real workflow: Rx cases, OTC consultation, clinical orders, industry, emergency, and warehousing." },
+      { title: "Training modes", body: "Each mode is built around a real workflow: Rx cases, OTC consultation, clinical orders, industry, and warehousing." },
       { title: "Your mentor", body: "I will appear throughout the site. You can skip a guide, finish it, or reopen it from the floating help button." },
     ],
   },
@@ -85,28 +82,6 @@ const GUIDES: Record<string, TutorialGuide> = {
       { title: "Watch the timer", body: "Leaving while the timer runs can lose progress. Finish the case or confirm before exiting." },
     ],
   },
-  rx: {
-    key: "rx",
-    label: "Rx Cases tutorial",
-    role: "Dispensing pharmacist",
-    icon: ClipboardList,
-    steps: [
-      { title: "Read before tapping", body: "Check patient details, allergies, diagnosis, and prescribed medicines before collecting anything." },
-      { title: "Collect accurately", body: "Tap only the required drugs. Wrong selections reduce score and trigger mentor feedback." },
-      { title: "Finish labels", body: "After collection, confirm drug information and choose correct label instructions for each medicine." },
-    ],
-  },
-  otc: {
-    key: "otc",
-    label: "OTC tutorial",
-    role: "OTC pharmacist",
-    icon: HelpCircle,
-    steps: [
-      { title: "Start with questions", body: "Good OTC care begins by asking about duration, severity, red flags, allergies, pregnancy, and current medicines." },
-      { title: "Recommend safely", body: "Choose the drug that best matches symptoms and patient risk factors." },
-      { title: "Counsel clearly", body: "Finish with dose, how to take it, side effects, and when the patient should seek medical help." },
-    ],
-  },
   clinical: {
     key: "clinical",
     label: "Clinical tutorial",
@@ -140,17 +115,6 @@ const GUIDES: Record<string, TutorialGuide> = {
       { title: "Cold chain matters", body: "Temperature-sensitive products need correct storage. Quarantine stock when conditions are unsafe." },
     ],
   },
-  emergency: {
-    key: "emergency",
-    label: "Emergency tutorial",
-    role: "Emergency pharmacist",
-    icon: Syringe,
-    steps: [
-      { title: "Move fast", body: "Emergency mode is high pressure. Read the scenario, identify the risk, and act quickly." },
-      { title: "Pick critical interventions", body: "Choose medicines and actions that address immediate danger first." },
-      { title: "Accuracy still counts", body: "Speed helps, but unsafe choices can cost heavily. Use hints when stuck." },
-    ],
-  },
   generic: {
     key: "generic",
     label: "Page tutorial",
@@ -168,12 +132,9 @@ function guideForPath(pathname: string): TutorialGuide {
   if (pathname.includes("/dashboard")) return GUIDES.dashboard;
   if (pathname.includes("/modes")) return GUIDES.modes;
   if (pathname.includes("/game/community")) return GUIDES.community;
-  if (pathname.includes("/game/rx")) return GUIDES.rx;
-  if (pathname.includes("/game/otc")) return GUIDES.otc;
   if (pathname.includes("/game/hospital")) return GUIDES.clinical;
   if (pathname.includes("/game/industry")) return GUIDES.industry;
   if (pathname.includes("/game/warehousing")) return GUIDES.warehousing;
-  if (pathname.includes("/game/emergency")) return GUIDES.emergency;
   return GUIDES.generic;
 }
 

@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export type Mode = "rx" | "otc" | "hospital" | "oncology" | "cosmetic" | "emergency" | "industry" | "warehousing";
+export type Mode = "rx" | "otc" | "hospital" | "oncology" | "industry" | "warehousing";
 export type Difficulty = "easy" | "medium" | "hard";
 
 export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
@@ -49,8 +49,6 @@ export const MODE_TIMERS: Record<Mode, number> = {
   otc: 120,
   hospital: 240,
   oncology: 300,
-  cosmetic: 120,
-  emergency: 90,
   industry: 360,
   warehousing: 300,
 };
@@ -60,15 +58,13 @@ export const MODE_LABEL: Record<Mode, string> = {
   otc: "OTC Consultation",
   hospital: "Clinical",
   oncology: "Oncology",
-  cosmetic: "Cosmetics",
-  emergency: "Emergency",
   industry: "Industry",
   warehousing: "Warehousing",
 };
 
 export const PUBLIC_MODE_GROUPS = [
-  { key: "community", label: "Community Pharmacy", modes: ["rx", "otc", "cosmetic"] },
-  { key: "clinical", label: "Clinical", modes: ["hospital", "oncology", "emergency"] },
+  { key: "community", label: "Community Pharmacy", modes: ["rx", "otc"] },
+  { key: "clinical", label: "Clinical", modes: ["hospital", "oncology"] },
   { key: "industry", label: "Industry", modes: ["industry"] },
   { key: "warehousing", label: "Warehousing", modes: ["warehousing"] },
 ] as const satisfies readonly { key: string; label: string; modes: readonly Mode[] }[];
@@ -93,7 +89,6 @@ export type ScoreInput = {
   pauseUsed?: boolean;
   timeTakenSec: number;
   timeLimitSec: number;
-  emergencyMultiplier?: boolean;
   timedOut?: boolean;
 };
 
@@ -112,7 +107,6 @@ export function computeScore(i: ScoreInput) {
   if (i.pauseUsed) s -= rules.pausePenalty;
   if (i.timeTakenSec < i.timeLimitSec / 2) s += rules.speedBonus;
   if (i.timedOut) s = Math.floor(s * rules.timeoutMultiplier);
-  if (i.emergencyMultiplier) s = s * 3;
   return Math.max(0, Math.round(s));
 }
 

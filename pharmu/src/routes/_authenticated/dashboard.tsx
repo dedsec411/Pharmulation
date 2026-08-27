@@ -25,7 +25,7 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     glow: "oklch(0.74 0.14 180 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.74 0.14 180 / 0.24), oklch(0.72 0.16 165 / 0.1) 48%, oklch(1 0 0 / 0.045))",
     to: "/game/community",
-    modes: ["rx", "otc", "cosmetic"],
+    modes: ["rx", "otc"],
   },
   hospital: {
     icon: Hospital,
@@ -35,7 +35,7 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     glow: "oklch(0.60 0.20 270 / 0.9)",
     tint: "linear-gradient(135deg, oklch(0.62 0.19 240 / 0.22), oklch(0.60 0.20 270 / 0.16) 50%, oklch(1 0 0 / 0.04))",
     to: "/game/hospital",
-    modes: ["hospital", "oncology", "emergency"],
+    modes: ["hospital", "oncology"],
   },
   industry: {
     icon: Factory,
@@ -124,8 +124,8 @@ function formatActivityDate(value?: string | null) {
 }
 
 function activityMeta(mode: string) {
-  if (mode === "community" || mode === "rx" || mode === "otc" || mode === "cosmetic") return MODE_META.rx;
-  if (mode === "hospital" || mode === "clinical" || mode === "oncology" || mode === "emergency") return MODE_META.hospital;
+  if (mode === "community" || mode === "rx" || mode === "otc") return MODE_META.rx;
+  if (mode === "hospital" || mode === "clinical" || mode === "oncology") return MODE_META.hospital;
   if (mode === "industry") return MODE_META.industry;
   if (mode === "warehousing") return MODE_META.warehousing;
   return { ...MODE_META.rx, icon: FileText, label: publicModeLabel(mode) };

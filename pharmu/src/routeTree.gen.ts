@@ -22,11 +22,8 @@ import { Route as AuthenticatedDrugsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedGameWarehousingRouteImport } from './routes/_authenticated/game.warehousing'
-import { Route as AuthenticatedGameRxRouteImport } from './routes/_authenticated/game.rx'
-import { Route as AuthenticatedGameOtcRouteImport } from './routes/_authenticated/game.otc'
 import { Route as AuthenticatedGameIndustryRouteImport } from './routes/_authenticated/game.industry'
 import { Route as AuthenticatedGameHospitalRouteImport } from './routes/_authenticated/game.hospital'
-import { Route as AuthenticatedGameEmergencyRouteImport } from './routes/_authenticated/game.emergency'
 import { Route as AuthenticatedGameCommunityRouteImport } from './routes/_authenticated/game.community'
 
 const SignupRoute = SignupRouteImport.update({
@@ -94,16 +91,6 @@ const AuthenticatedGameWarehousingRoute =
     path: '/game/warehousing',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedGameRxRoute = AuthenticatedGameRxRouteImport.update({
-  id: '/game/rx',
-  path: '/game/rx',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedGameOtcRoute = AuthenticatedGameOtcRouteImport.update({
-  id: '/game/otc',
-  path: '/game/otc',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedGameIndustryRoute =
   AuthenticatedGameIndustryRouteImport.update({
     id: '/game/industry',
@@ -114,12 +101,6 @@ const AuthenticatedGameHospitalRoute =
   AuthenticatedGameHospitalRouteImport.update({
     id: '/game/hospital',
     path: '/game/hospital',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedGameEmergencyRoute =
-  AuthenticatedGameEmergencyRouteImport.update({
-    id: '/game/emergency',
-    path: '/game/emergency',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedGameCommunityRoute =
@@ -142,11 +123,8 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
-  '/game/emergency': typeof AuthenticatedGameEmergencyRoute
   '/game/hospital': typeof AuthenticatedGameHospitalRoute
   '/game/industry': typeof AuthenticatedGameIndustryRoute
-  '/game/otc': typeof AuthenticatedGameOtcRoute
-  '/game/rx': typeof AuthenticatedGameRxRoute
   '/game/warehousing': typeof AuthenticatedGameWarehousingRoute
 }
 export interface FileRoutesByTo {
@@ -162,11 +140,8 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
-  '/game/emergency': typeof AuthenticatedGameEmergencyRoute
   '/game/hospital': typeof AuthenticatedGameHospitalRoute
   '/game/industry': typeof AuthenticatedGameIndustryRoute
-  '/game/otc': typeof AuthenticatedGameOtcRoute
-  '/game/rx': typeof AuthenticatedGameRxRoute
   '/game/warehousing': typeof AuthenticatedGameWarehousingRoute
 }
 export interface FileRoutesById {
@@ -184,11 +159,8 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/game/community': typeof AuthenticatedGameCommunityRoute
-  '/_authenticated/game/emergency': typeof AuthenticatedGameEmergencyRoute
   '/_authenticated/game/hospital': typeof AuthenticatedGameHospitalRoute
   '/_authenticated/game/industry': typeof AuthenticatedGameIndustryRoute
-  '/_authenticated/game/otc': typeof AuthenticatedGameOtcRoute
-  '/_authenticated/game/rx': typeof AuthenticatedGameRxRoute
   '/_authenticated/game/warehousing': typeof AuthenticatedGameWarehousingRoute
 }
 export interface FileRouteTypes {
@@ -206,11 +178,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/game/community'
-    | '/game/emergency'
     | '/game/hospital'
     | '/game/industry'
-    | '/game/otc'
-    | '/game/rx'
     | '/game/warehousing'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -226,11 +195,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/auth/callback'
     | '/game/community'
-    | '/game/emergency'
     | '/game/hospital'
     | '/game/industry'
-    | '/game/otc'
-    | '/game/rx'
     | '/game/warehousing'
   id:
     | '__root__'
@@ -247,11 +213,8 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/auth/callback'
     | '/_authenticated/game/community'
-    | '/_authenticated/game/emergency'
     | '/_authenticated/game/hospital'
     | '/_authenticated/game/industry'
-    | '/_authenticated/game/otc'
-    | '/_authenticated/game/rx'
     | '/_authenticated/game/warehousing'
   fileRoutesById: FileRoutesById
 }
@@ -357,20 +320,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGameWarehousingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/game/rx': {
-      id: '/_authenticated/game/rx'
-      path: '/game/rx'
-      fullPath: '/game/rx'
-      preLoaderRoute: typeof AuthenticatedGameRxRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/game/otc': {
-      id: '/_authenticated/game/otc'
-      path: '/game/otc'
-      fullPath: '/game/otc'
-      preLoaderRoute: typeof AuthenticatedGameOtcRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/game/industry': {
       id: '/_authenticated/game/industry'
       path: '/game/industry'
@@ -383,13 +332,6 @@ declare module '@tanstack/react-router' {
       path: '/game/hospital'
       fullPath: '/game/hospital'
       preLoaderRoute: typeof AuthenticatedGameHospitalRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/game/emergency': {
-      id: '/_authenticated/game/emergency'
-      path: '/game/emergency'
-      fullPath: '/game/emergency'
-      preLoaderRoute: typeof AuthenticatedGameEmergencyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/game/community': {
@@ -410,11 +352,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedGameCommunityRoute: typeof AuthenticatedGameCommunityRoute
-  AuthenticatedGameEmergencyRoute: typeof AuthenticatedGameEmergencyRoute
   AuthenticatedGameHospitalRoute: typeof AuthenticatedGameHospitalRoute
   AuthenticatedGameIndustryRoute: typeof AuthenticatedGameIndustryRoute
-  AuthenticatedGameOtcRoute: typeof AuthenticatedGameOtcRoute
-  AuthenticatedGameRxRoute: typeof AuthenticatedGameRxRoute
   AuthenticatedGameWarehousingRoute: typeof AuthenticatedGameWarehousingRoute
 }
 
@@ -426,11 +365,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedGameCommunityRoute: AuthenticatedGameCommunityRoute,
-  AuthenticatedGameEmergencyRoute: AuthenticatedGameEmergencyRoute,
   AuthenticatedGameHospitalRoute: AuthenticatedGameHospitalRoute,
   AuthenticatedGameIndustryRoute: AuthenticatedGameIndustryRoute,
-  AuthenticatedGameOtcRoute: AuthenticatedGameOtcRoute,
-  AuthenticatedGameRxRoute: AuthenticatedGameRxRoute,
   AuthenticatedGameWarehousingRoute: AuthenticatedGameWarehousingRoute,
 }
 
