@@ -8,7 +8,7 @@ import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { SimulatedPrescription as PrescriptionSheet } from "@/components/game/SimulatedPrescription";
 import { useTimer } from "@/lib/game/useTimer";
-import { computeScore, submitScore, toastScore, liveScore, SCORE_WEIGHTS } from "@/lib/game/shared";
+import { computeScore, submitScore, toastScore, liveScore, modeTimeLimit, SCORE_WEIGHTS } from "@/lib/game/shared";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useAuthStore } from "@/lib/auth-store";
 import { RX_DRUG_CATEGORIES, getBrandsForDrug, prepareDrugCatalog } from "@/lib/drug-catalog";
@@ -40,8 +40,6 @@ export const Route = createFileRoute("/_authenticated/game/community")({
 });
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const LIMIT_RX  = 180;
-const LIMIT_OTC = 120;
 const FREQS     = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"];
 const TIMINGS   = ["morning", "with food", "before sleep", "as needed"];
 const DURATIONS = ["7 days", "14 days", "4 weeks", "ongoing"];
@@ -364,7 +362,7 @@ function CommunityRun({ activeMode }: { activeMode: "rx" | "otc" }) {
   const otcLoader = useCaseLoader("otc", difficulty);
 
   const loader = activeMode === "rx" ? rxLoader : otcLoader;
-  const LIMIT  = activeMode === "rx" ? LIMIT_RX : LIMIT_OTC;
+  const LIMIT  = modeTimeLimit(activeMode, difficulty);
 
   if (loader.loading || !loader.caseData) {
     return (

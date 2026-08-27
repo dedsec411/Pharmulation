@@ -6,7 +6,7 @@ import { FeedbackScreen } from "@/components/game/FeedbackScreen";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
-import { computeScore, submitScore, MODE_TIMERS, toastScore, SCORE_WEIGHTS, type Mode } from "@/lib/game/shared";
+import { computeScore, submitScore, modeTimeLimit, toastScore, SCORE_WEIGHTS, type Mode } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, ClipboardList, Database, HeartPulse, Plus, Terminal, Trash2 } from "lucide-react";
@@ -210,9 +210,9 @@ function buildClinicalChart(caseData: any, patient: any) {
 }
 
 export function HospitalGame({ mode }: { mode: Mode }) {
-  const LIMIT = MODE_TIMERS[mode];
   const onExit = useGameExit("/modes");
   const { difficulty, difficultyModal } = useDifficultyChoice(mode);
+  const LIMIT = modeTimeLimit(mode, difficulty);
   const { profile } = useAuthStore();
   const { caseData, loading, next } = useCaseLoader(mode, difficulty);
   const [allDrugs, setAllDrugs] = useState<any[]>([]);

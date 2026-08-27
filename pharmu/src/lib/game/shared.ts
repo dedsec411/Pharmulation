@@ -45,14 +45,35 @@ export const DIFFICULTY_RULES: Record<Difficulty, {
   },
 };
 
+/** Baseline seconds per case, at medium difficulty. */
 export const MODE_TIMERS: Record<Mode, number> = {
   rx: 180,
-  otc: 120,
+  // OTC is a typed consultation with an AI patient, not a few clicks, so it
+  // needs materially more time than the click-driven modes.
+  otc: 360,
   hospital: 240,
   oncology: 300,
   industry: 360,
   warehousing: 300,
 };
+
+/**
+ * Difficulty changes how long you get, not just how the score is weighted:
+ * easy buys thinking time, hard squeezes it.
+ */
+export const DIFFICULTY_TIME_SCALE: Record<Difficulty, number> = {
+  easy: 1.25,
+  medium: 1,
+  hard: 0.85,
+};
+
+/** Seconds allowed for a case, scaled by difficulty. */
+export function modeTimeLimit(mode: Mode, difficulty?: Difficulty | string | null) {
+  const key = (difficulty === "easy" || difficulty === "hard" || difficulty === "medium")
+    ? difficulty
+    : "medium";
+  return Math.round(MODE_TIMERS[mode] * DIFFICULTY_TIME_SCALE[key]);
+}
 
 export const MODE_LABEL: Record<Mode, string> = {
   rx: "Rx Cases",

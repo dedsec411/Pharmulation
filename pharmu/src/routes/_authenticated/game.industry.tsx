@@ -7,7 +7,7 @@ import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
 import {
-  computeScoreFromPoints, liveScoreFromPoints, submitScore, MODE_TIMERS, toastScore,
+  computeScoreFromPoints, liveScoreFromPoints, submitScore, modeTimeLimit, toastScore,
   awardBadge, bumpCounterBadge,
 } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
@@ -24,7 +24,6 @@ export const Route = createFileRoute("/_authenticated/game/industry")({
   notFoundComponent: () => <div className="p-8">Not found</div>,
 });
 
-const LIMIT = MODE_TIMERS.industry;
 
 type Phase = "formula" | "weighing" | "env" | "process" | "qc" | "release" | "done";
 type IngEntry = { name: string; weight: number; ok: boolean };
@@ -509,6 +508,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   const [qcAnswers, setQcAnswers] = useState<Record<number, boolean>>({});
   const [releaseFlash, setReleaseFlash] = useState<"release" | "reject" | null>(null);
 
+  const LIMIT = modeTimeLimit("industry", difficulty);
   const timer = useTimer(LIMIT, () => phase !== "done" && finish(true));
   const errPanel = useErrorPanel({
     mode: "industry",

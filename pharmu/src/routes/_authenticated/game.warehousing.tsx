@@ -9,7 +9,7 @@ import { ModeTheme } from "@/components/game/ModeTheme";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 import { useTimer } from "@/lib/game/useTimer";
 import {
-  computeScoreFromPoints, liveScoreFromPoints, submitScore, MODE_TIMERS, toastScore,
+  computeScoreFromPoints, liveScoreFromPoints, submitScore, modeTimeLimit, toastScore,
   bumpCounterBadge,
 } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
@@ -25,7 +25,6 @@ export const Route = createFileRoute("/_authenticated/game/warehousing")({
   notFoundComponent: () => <div className="p-8">Not found</div>,
 });
 
-const LIMIT = MODE_TIMERS.warehousing;
 type Phase = "receiving" | "dispatch" | "expiry" | "audit" | "reconcile" | "done";
 
 type AuditScenario = {
@@ -197,6 +196,7 @@ function WarehouseGame() {
   const [reconChecked, setReconChecked] = useState<Record<number, boolean>>({});
 
   const [result, setResult] = useState<any>(null);
+  const LIMIT = modeTimeLimit("warehousing", difficulty);
   const timer = useTimer(LIMIT, () => phase !== "done" && finish(true));
   const errPanel = useErrorPanel({
     mode: "warehousing",
