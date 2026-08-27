@@ -14,11 +14,15 @@ export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
  * the call sites below stay fully typed.
  */
 function callRpc<T>(fn: string, args?: Record<string, unknown>) {
-  const rpc = supabase.rpc as unknown as (
+  type RpcFn = (
     name: string,
     params?: Record<string, unknown>,
   ) => Promise<{ data: T | null; error: PostgrestError | null }>;
-  return rpc(fn, args);
+
+  // `.call(supabase, ...)` matters: `supabase` is a lazily-constructed Proxy,
+  // and pulling `rpc` off it into a bare variable drops the `this` binding
+  // supabase-js needs, so the call throws instead of returning a result.
+  return (supabase.rpc as unknown as RpcFn).call(supabase, fn, args);
 }
 
 /**

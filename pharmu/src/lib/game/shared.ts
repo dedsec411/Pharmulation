@@ -221,6 +221,24 @@ export async function submitScore(args: {
   const xpGain = Math.round(args.score / 2);
   const caseId = args.caseId?.startsWith("generated:") ? null : args.caseId;
 
+  // Never throw. Callers finish the case with this result, so an error escaping
+  // here strands the player on the last question with no way forward.
+  try {
+    await persistScore(args, { accuracy, xpGain });
+  } catch (error) {
+    console.error("[supabase] failed to submit score:", error);
+    toast.error("Your score could not be saved.");
+  }
+
+  return { xpGain };
+}
+
+async function persistScore(
+  args: Parameters<typeof submitScore>[0],
+  { accuracy, xpGain }: { accuracy: number; xpGain: number },
+) {
+  const caseId = args.caseId?.startsWith("generated:") ? null : args.caseId;
+
   const { error: scoreErr } = await supabase.from("scores").insert({
     user_id: args.userId,
     case_id: caseId,
@@ -255,15 +273,21 @@ export async function submitScore(args: {
     if (newTotal === 25) awardBadge(args.userId, "Pharmacist", "Completed 25 cases", "🏆");
     if (args.score >= 200) awardBadge(args.userId, "High Roller", "Scored 200+ in one case", "🔥");
   }
-
-  return { xpGain };
 }
 
 export async function awardBadge(_userId: string, name: string, _description: string, _icon: string) {
   // Server-side validation via SECURITY DEFINER RPC; client cannot self-award.
-  const { data, error } = await supabase.rpc("award_badge_if_earned", { _badge_name: name });
-  if (!error && data === true) {
-    toast.success(`🏅 Badge unlocked: ${name}`);
+  // Badges are cosmetic, so a failure here is logged and swallowed rather than
+  // interrupting the end of a case.
+  try {
+    const { data, error } = await supabase.rpc("award_badge_if_earned", { _badge_name: name });
+    if (error) {
+      console.error("[supabase] badge check failed:", error);
+      return;
+    }
+    if (data === true) toast.success(`🏅 Badge unlocked: ${name}`);
+  } catch (error) {
+    console.error("[supabase] badge check threw:", error);
   }
 }
 
