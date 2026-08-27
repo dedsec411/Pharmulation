@@ -5,6 +5,7 @@ import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { OtcConsultation } from "@/components/game/OtcConsultation";
+import { BackButton } from "@/components/BackButton";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { SimulatedPrescription as PrescriptionSheet } from "@/components/game/SimulatedPrescription";
@@ -288,8 +289,13 @@ function CommunityGame() {
 
 function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void }) {
   return (
-    <main className="relative mx-auto grid min-h-[70vh] max-w-5xl place-items-center px-4 py-10">
+    <main className="relative mx-auto max-w-5xl px-4 py-10">
       <CommunityFloatingPills className="opacity-45" />
+      {/* Without this there was no way back to the mode list except the
+          browser button. */}
+      <div className="relative z-10 mb-6">
+        <BackButton to="/modes" />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -991,6 +997,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
       {phase === "label" && (
         <LabelStep
           drug={correctDrugs[labelIdx]}
+          caseData={caseData}
           previous={labelAnswers[correctDrugs[labelIdx]]}
           count={`${labelIdx + 1} / ${correctDrugs.length}`}
           onSubmit={(a: { frequency: string; timing: string; duration: string }) =>
@@ -1332,7 +1339,7 @@ function InfoSection({ label, items }: { label: string; items?: string[] | null 
   );
 }
 
-function LabelStep({ drug, count, onSubmit, previous }: any) {
+function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
   const [freq, setFreq]       = useState("");
   const [timing, setTiming]   = useState("");
   const [duration, setDuration] = useState(DURATIONS[0]);
@@ -1362,7 +1369,14 @@ function LabelStep({ drug, count, onSubmit, previous }: any) {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    // The prescription stays on screen while labelling: checking the label
+    // against the script is the actual dispensing check, not a convenience.
+    <main className="mx-auto grid max-w-5xl gap-5 px-4 py-6 lg:grid-cols-[1fr_1fr] lg:items-start">
+      <div className="order-2 lg:order-1">
+        <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Prescription</p>
+        <PrescriptionSheet caseData={caseData} />
+      </div>
+      <div className="order-1 lg:order-2">
       <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Label {count}</p>
       <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
         <h2 className="text-xl font-bold">{drug}</h2>
@@ -1376,6 +1390,7 @@ function LabelStep({ drug, count, onSubmit, previous }: any) {
           className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
           Submit label
         </button>
+      </div>
       </div>
     </main>
   );

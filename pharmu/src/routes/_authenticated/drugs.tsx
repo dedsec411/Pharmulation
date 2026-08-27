@@ -10,6 +10,7 @@ import { prepareDrugCatalog } from "@/lib/drug-catalog";
 import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
 import { unwrapList } from "@/lib/supabase-query";
+import { drugTagColor } from "@/lib/drug-colors";
 
 export const Route = createFileRoute("/_authenticated/drugs")({
   head: () => ({ meta: [{ title: "Drug Database - Pharmulation" }] }),
@@ -150,18 +151,38 @@ function DrugsPage() {
                     layout key={d.id} onClick={() => setSelected(d)}
                     whileHover={{ y: -2 }}
                     className="glass-card p-5 text-left hover:border-primary/40 transition relative">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleBookmark.mutate(d); }}
-                      className={`absolute top-4 right-4 p-1.5 rounded-full transition ${
-                        bookmarked ? "bg-rose-500/20 text-rose-400" : "bg-white/5 text-muted-foreground hover:text-rose-400"
-                      }`}>
-                      <Heart className="h-4 w-4" fill={bookmarked ? "currentColor" : "none"} />
-                    </button>
-                    <div className="font-bold pr-8">{d.name}</div>
+                    {/* Catalog entries cannot be bookmarked, so no control is
+                        offered for them rather than one that refuses. */}
+                    {!d.id.startsWith("catalog-") && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleBookmark.mutate(d); }}
+                        title={bookmarked ? `Remove ${d.name} from your study list` : `Save ${d.name} to your study list`}
+                        aria-label={bookmarked ? `Remove ${d.name} from your study list` : `Save ${d.name} to your study list`}
+                        aria-pressed={bookmarked}
+                        className={`absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition ${
+                          bookmarked
+                            ? "bg-rose-500/20 text-rose-400"
+                            : "bg-white/5 text-muted-foreground hover:bg-rose-500/15 hover:text-rose-400"
+                        }`}>
+                        <Heart className="h-3.5 w-3.5" fill={bookmarked ? "currentColor" : "none"} />
+                        {bookmarked ? "Saved" : "Save"}
+                      </button>
+                    )}
+                    <div className="font-bold pr-20">{d.name}</div>
                     <div className="text-xs text-muted-foreground">{d.generic_name}</div>
                     <div className="mt-3 flex gap-2 flex-wrap">
-                      {d.drug_class && <span className="text-[10px] uppercase tracking-wider rounded-full bg-primary/15 text-primary px-2 py-1">{d.drug_class}</span>}
-                      {d.category && <span className="text-[10px] uppercase tracking-wider rounded-full bg-white/10 text-muted-foreground px-2 py-1">{d.category}</span>}
+                      {d.drug_class && (
+                        <span
+                          className="rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider"
+                          style={drugTagColor(d.drug_class)}
+                        >{d.drug_class}</span>
+                      )}
+                      {d.category && (
+                        <span
+                          className="rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider"
+                          style={drugTagColor(d.category)}
+                        >{d.category}</span>
+                      )}
                     </div>
                   </motion.button>
                 );
@@ -210,7 +231,15 @@ function DrugsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-2xl font-bold">{selected.name}</div>
-                  <div className="text-sm text-muted-foreground">{selected.generic_name} · {selected.drug_class}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {selected.generic_name}
+                    {selected.drug_class && (
+                      <span
+                        className="ml-2 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider"
+                        style={drugTagColor(selected.drug_class)}
+                      >{selected.drug_class}</span>
+                    )}
+                  </div>
                 </div>
                 <button onClick={() => setSelected(null)} className="p-2 hover:bg-white/5 rounded-full"><X className="h-4 w-4" /></button>
               </div>

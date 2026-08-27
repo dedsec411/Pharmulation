@@ -323,6 +323,52 @@ function IndustryAmbient() {
   );
 }
 
+/**
+ * The batch you actually made. The mode ended on a score with no sense of
+ * having produced anything, which is the one thing a manufacturing run should
+ * leave you with.
+ */
+function BatchCelebration({
+  product, form, units, released,
+}: { product: string; form: string; units: number; released: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.15 }}
+      className={`mt-6 overflow-hidden rounded-2xl border p-5 ${
+        released
+          ? "border-amber-300/40 bg-gradient-to-br from-amber-400/15 to-amber-500/5"
+          : "border-destructive/35 bg-destructive/10"
+      }`}
+    >
+      <div className="flex items-center gap-4">
+        <motion.div
+          animate={{ rotate: [0, -6, 6, 0] }}
+          transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 2.5, ease: "easeInOut" }}
+          className={`grid size-14 shrink-0 place-items-center rounded-2xl border ${
+            released ? "border-amber-300/50 bg-amber-400/20" : "border-destructive/40 bg-destructive/15"
+          }`}
+        >
+          <PackageCheck className={`size-7 ${released ? "text-amber-300" : "text-destructive"}`} />
+        </motion.div>
+        <div className="min-w-0">
+          <p className={`text-[11px] font-black uppercase tracking-[0.18em] ${
+            released ? "text-amber-300" : "text-destructive"
+          }`}>
+            {released ? "Batch released" : "Batch rejected"}
+          </p>
+          <p className="mt-1 truncate text-lg font-bold capitalize">{product}</p>
+          <p className="text-xs text-muted-foreground capitalize">
+            {form} · {units.toLocaleString()} units
+            {released ? " · passed QC and released to stock" : " · quarantined, not fit for supply"}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function BatchFlash({ decision }: { decision: "release" | "reject" | null }) {
   if (!decision) return null;
   const isRelease = decision === "release";
@@ -578,7 +624,10 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   function acknowledgeFormula() {
     setPoints((p) => p + 10);
     toastScore(10, "Formula acknowledged");
-    setPhase("weighing");
+    // Environment is checked before weighing: you condition the room, then you
+    // weigh into it. Weighing hygroscopic material in out-of-spec humidity is
+    // the error this ordering teaches.
+    setPhase("env");
   }
 
   function updateBatchCount(nextCount: number) {
@@ -643,7 +692,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
       setEnvFixed(true);
       setPoints((p) => p + 20);
       toastScore(20, "Env check OK");
-      setPhase("process");
+      setPhase("weighing");
       return;
     }
     if (correct) {
@@ -652,7 +701,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
       setEnvFixed(true);
       setPoints((p) => p + 20);
       toastScore(20, "Conditions normalized");
-      setPhase("process");
+      setPhase("weighing");
     } else {
       setErrors((e) => e + 1);
       setPoints((p) => p - 10);
@@ -678,7 +727,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
       whyWrong: "Proceeding outside the safe range will degrade moisture-sensitive APIs and fail GMP requirements. The batch is now at risk.",
       whatToKnow: "GMP requires strict environmental controls during manufacture. Out-of-spec conditions mandate hold + investigation, not 'continue anyway'.",
     });
-    setPhase("process");
+    setPhase("weighing");
   }
 
   function chooseStage(stage: Stage, ok: boolean) {
@@ -789,7 +838,14 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         ]}
         errors={errPanel.errors}
         onNext={next}
-      />
+      >
+        <BatchCelebration
+          product={batchProduct}
+          form={productChoice.form}
+          units={batchCount}
+          released={releaseFlash !== "reject" && !contaminated}
+        />
+      </FeedbackScreen>
     );
   }
 
@@ -969,7 +1025,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                   </p>
                 ))}
               </div>
-              <button disabled={!allWeighed} onClick={() => setPhase("env")}
+              <button disabled={!allWeighed} onClick={() => setPhase("process")}
                 className={`mt-3 w-full rounded-full border px-5 py-3 text-sm font-black uppercase tracking-[0.12em] transition ${
                   allWeighed
                     ? "border-amber-200/60 bg-amber-400 text-slate-950 shadow-[0_0_34px_-10px_rgba(251,191,36,0.95)] hover:-translate-y-0.5 hover:bg-amber-300 hover:shadow-[0_0_44px_-8px_rgba(251,191,36,1)]"

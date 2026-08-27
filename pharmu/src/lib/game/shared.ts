@@ -5,10 +5,18 @@ import { toast } from "sonner";
 export type Mode = "rx" | "otc" | "hospital" | "industry" | "warehousing";
 export type Difficulty = "easy" | "medium" | "hard";
 
+/**
+ * Player-facing difficulty names. The internal keys stay easy/medium/hard so
+ * stored scores and saved preferences keep working.
+ *
+ * Note: "Apprentice" is also a badge awarded at 10 cases, and "Expert
+ * Pharmacist" is the top XP tier, so these names overlap with progression
+ * wording elsewhere.
+ */
 export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
-  easy: "Easy",
-  medium: "Medium",
-  hard: "Hard",
+  easy: "Trainee",
+  medium: "Apprentice",
+  hard: "Expert",
 };
 
 export const DIFFICULTY_RULES: Record<Difficulty, {

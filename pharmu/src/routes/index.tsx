@@ -86,9 +86,6 @@ export default function Landing() {
               <Link to="/login" className="w-44 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03] sm:w-auto sm:px-8 sm:py-3.5 sm:text-base">
                 Start Training
               </Link>
-              <Link to="/leaderboard" className="w-44 rounded-full border border-border glass px-6 py-3 text-sm font-semibold text-foreground transition hover:border-primary/50 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base">
-                View Leaderboard
-              </Link>
             </div>
           </div>
         </motion.div>

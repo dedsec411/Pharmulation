@@ -16,20 +16,23 @@ const OPTIONS: Array<{
   icon: any;
   desc: string;
 }> = [
+  // Descriptions state what actually changes, so the choice is informed:
+  // time allowed, scoring weights, how much the mentor reveals after a
+  // mistake, and how forthcoming the AI patient is in OTC.
   {
     difficulty: "easy",
     icon: Activity,
-    desc: "More forgiving penalties and gentler timeout scoring.",
+    desc: "25% more time. Gentle penalties. After a mistake the mentor explains it and shows you the correct answer. Patients answer openly.",
   },
   {
     difficulty: "medium",
     icon: Gauge,
-    desc: "Balanced scoring and standard case rules.",
+    desc: "Standard time and scoring. The mentor still reveals the correct answer after a mistake. Patients answer what you ask, no more.",
   },
   {
     difficulty: "hard",
     icon: ShieldAlert,
-    desc: "Higher rewards, harsher penalties, and less help on mistakes.",
+    desc: "15% less time. Bigger rewards, harsher penalties. The mentor explains why you were wrong but withholds the answer. Patients are vague and volunteer nothing.",
   },
 ];
 
