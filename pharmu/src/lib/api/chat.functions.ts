@@ -34,11 +34,10 @@ function patientPrompt(patientInfo?: z.infer<typeof PatientInfoSchema>) {
 function modelCandidates() {
   return [
     process.env.GEMINI_MODEL,
-    "gemini-2.5-flash-lite",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
+    "gemini-flash-lite-latest",
+    "gemini-flash-latest",
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
   ].filter((model, index, models): model is string =>
     Boolean(model) && models.indexOf(model) === index
   );
