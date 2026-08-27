@@ -6,7 +6,9 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  // Build output. Without .vercel/.netlify here, eslint walks the whole
+  // generated bundle - slow, and it errors out on stale files mid-rebuild.
+  { ignores: ["dist", ".output", ".vinxi", ".vercel", ".netlify", ".nitro", "src/routeTree.gen.ts"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
