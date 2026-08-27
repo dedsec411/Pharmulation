@@ -70,7 +70,11 @@ export const PUBLIC_MODE_GROUPS = [
 ] as const satisfies readonly { key: string; label: string; modes: readonly Mode[] }[];
 
 export function publicModeLabel(mode: string) {
-  const group = PUBLIC_MODE_GROUPS.find((item) => item.modes.includes(mode as Mode));
+  // `as const` narrows each group's `modes` to a literal tuple, so `.includes`
+  // would only accept that group's own members. Widen to string to compare.
+  const group = PUBLIC_MODE_GROUPS.find((item) =>
+    (item.modes as readonly string[]).includes(mode)
+  );
   return group?.label ?? MODE_LABEL[mode as Mode] ?? mode;
 }
 

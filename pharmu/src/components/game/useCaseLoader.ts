@@ -326,7 +326,7 @@ async function fetchSeenSeeds(userId: string | undefined, mode: Mode) {
     .not("generated_seed", "is", null)
     .order("last_seen_at", { ascending: false })
     .limit(10);
-  return new Set((data ?? []).map((row: any) => `${row.template_id}:${row.generated_seed}`));
+  return new Set<string>((data ?? []).map((row: any) => `${row.template_id}:${row.generated_seed}`));
 }
 
 async function generateCaseFromTemplate(template: TemplateRow, seenSeeds: Set<string>, userId?: string) {

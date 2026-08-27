@@ -953,7 +953,8 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
           drug={correctDrugs[labelIdx]}
           previous={labelAnswers[correctDrugs[labelIdx]]}
           count={`${labelIdx + 1} / ${correctDrugs.length}`}
-          onSubmit={(a) => submitLabel(correctDrugs[labelIdx], a)}
+          onSubmit={(a: { frequency: string; timing: string; duration: string }) =>
+            submitLabel(correctDrugs[labelIdx], a)}
         />
       )}
       {errPanel.panel}

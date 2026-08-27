@@ -208,7 +208,7 @@ function buildScriptedResponses(ans: any): ScriptedResponse[] {
       key: classifyQuestion(pharmacist),
       patient: String(question?.patient_response ?? question?.response ?? question?.answer ?? "Okay."),
     };
-  }).filter((item) => item.key && item.patient);
+  }).filter((item: ScriptedResponse) => item.key && item.patient);
 }
 
 function localPatientReply(question: string, patientInfo: PatientInfo, scriptedResponses: ScriptedResponse[]) {
