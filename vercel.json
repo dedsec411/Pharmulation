@@ -1,0 +1,5 @@
+{
+  "installCommand": "cd pharmu && npm install",
+  "buildCommand": "cd pharmu && npm run build",
+  "outputDirectory": "pharmu/.vercel/output"
+}
