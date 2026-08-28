@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Pill, ShieldAlert, X as XIcon } from "lucide-react";
-import { RX_DRUG_CATEGORIES, getBrandsForDrug } from "@/lib/drug-catalog";
+import { RX_DRUG_CATEGORIES, getBrandsForDrug, setRealBrands } from "@/lib/drug-catalog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { unwrapList } from "@/lib/supabase-query";
 
 /**
  * The dispensing controls shared by Rx and OTC.
@@ -118,6 +121,28 @@ export function DispensingShelf({
 }) {
   const [category, setCategory] = useState("");
   const [brandDrug, setBrandDrug] = useState<ShelfDrug | null>(null);
+
+  // Real brands for the shelf, so a learner picks Lasix rather than
+  // "Furosemide Generic". Falls back to generated names where a medicine has
+  // no brand recorded for the market.
+  useQuery({
+    queryKey: ["drug-brands"],
+    queryFn: async () => {
+      const rows = unwrapList(
+        await supabase.from("drug_brands").select("brand, market, drugs(name, generic_name)"),
+        "medicine brands",
+      );
+      const byGeneric: Record<string, string[]> = {};
+      for (const row of rows as any[]) {
+        const key = String(row.drugs?.generic_name || row.drugs?.name || "").toLowerCase().trim();
+        if (!key) continue;
+        (byGeneric[key] ??= []).push(row.brand);
+      }
+      setRealBrands(byGeneric);
+      return byGeneric;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const categoryStats = useMemo(
     () => RX_DRUG_CATEGORIES

@@ -271,7 +271,23 @@ export function normalizeDrugKey(value?: string | null) {
     .trim();
 }
 
+/**
+ * Real brands loaded from the database, keyed by lowercase generic name.
+ * Populated once by the drugs page so the dispensing shelf can offer genuine
+ * brands where they exist, and fall back to generated training names where
+ * they do not. Kept module-level rather than threaded through every shelf.
+ */
+let realBrands: Record<string, string[]> = {};
+
+export function setRealBrands(byGeneric: Record<string, string[]>) {
+  realBrands = byGeneric;
+}
+
 export function getBrandsForDrug(drug: DrugLike) {
+  // A real brand beats a generated one wherever we have it.
+  const generic = String(drug?.generic_name || drug?.name || "").toLowerCase().trim();
+  if (realBrands[generic]?.length) return realBrands[generic];
+
   const candidates = [
     normalizeDrugKey(drug?.generic_name),
     normalizeDrugKey(drug?.name),

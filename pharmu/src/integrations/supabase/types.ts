@@ -155,6 +155,41 @@ export type Database = {
         }
         Relationships: []
       }
+      drug_brands: {
+        Row: {
+          brand: string
+          created_at: string
+          drug_id: string
+          id: string
+          manufacturer: string | null
+          market: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          drug_id: string
+          id?: string
+          manufacturer?: string | null
+          market?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          drug_id?: string
+          id?: string
+          manufacturer?: string | null
+          market?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drug_brands_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: false
+            referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drug_bookmarks: {
         Row: {
           created_at: string
@@ -178,6 +213,7 @@ export type Database = {
       }
       drugs: {
         Row: {
+          needs_review: boolean
           category: string | null
           contraindications: string[] | null
           created_at: string
@@ -191,6 +227,7 @@ export type Database = {
           side_effects: string[] | null
         }
         Insert: {
+          needs_review?: boolean
           category?: string | null
           contraindications?: string[] | null
           created_at?: string
@@ -204,6 +241,7 @@ export type Database = {
           side_effects?: string[] | null
         }
         Update: {
+          needs_review?: boolean
           category?: string | null
           contraindications?: string[] | null
           created_at?: string
