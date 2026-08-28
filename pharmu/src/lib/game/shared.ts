@@ -289,12 +289,37 @@ async function persistScore(
     const newTotal = updated.total_cases_completed;
 
     // Badge triggers
-    if (newTotal === 1) awardBadge(args.userId, "First Case", "Completed your first case", "🎓");
-    if (newTotal === 10) awardBadge(args.userId, "Apprentice", "Completed 10 cases", "💊");
-    if (newTotal === 25) awardBadge(args.userId, "Pharmacist", "Completed 25 cases", "🏆");
-    if (args.score >= 200) awardBadge(args.userId, "High Roller", "Scored 200+ in one case", "🔥");
+    // Ask for every badge, not just the one matching an exact milestone.
+    // `newTotal === 10` meant a player already past 10 cases could never be
+    // granted Apprentice, and any milestone reached while the RPC was missing
+    // was lost for good. The function decides what has actually been earned and
+    // skips badges already held, so asking for all of them is idempotent.
+    await Promise.all(
+      AUTO_BADGES.map((name) => awardBadge(args.userId, name, "", "")),
+    );
   }
 }
+
+/**
+ * Badges whose conditions `award_badge_if_earned` can verify from stored data.
+ *
+ * Not listed: "Cold Chain Guardian", "FEFO Expert" and "Drug Encyclopedia",
+ * which depend on in-case events that are never persisted, so the server has no
+ * way to confirm them.
+ */
+const AUTO_BADGES = [
+  "First Case",
+  "Apprentice",
+  "Pharmacist",
+  "Streak Master",
+  "High Roller",
+  "Perfect Score",
+  "Speed Demon",
+  "First Prescription",
+  "OTC Expert",
+  "Batch Perfectionist",
+  "Master Manufacturer",
+] as const;
 
 export async function awardBadge(_userId: string, name: string, _description: string, _icon: string) {
   // Server-side validation via SECURITY DEFINER RPC; client cannot self-award.

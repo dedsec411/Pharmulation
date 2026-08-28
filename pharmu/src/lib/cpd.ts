@@ -2,7 +2,17 @@ export function cpdHoursFromCases(totalCases: number) {
   return Math.floor(totalCases / 10);
 }
 
-export const CPD_MILESTONES = [10, 25, 50, 75, 100];
+/**
+ * CPD hours at which a certificate can be claimed.
+ *
+ * One hour is earned per 10 completed cases, which is a defensible rate for
+ * time-based CPD. The milestones were not: the first certificate sat at 10
+ * hours, so it needed 100 completed cases and the last needed 1,000. Nobody
+ * ever reached one, and the certificates tab looked broken rather than locked.
+ * Rescaled so the first is reachable in a sitting and the ladder still runs a
+ * long way.
+ */
+export const CPD_MILESTONES = [1, 5, 10, 25, 50];
 
 export function nextCpdMilestone(hours: number) {
   return CPD_MILESTONES.find((m) => m > hours) ?? null;

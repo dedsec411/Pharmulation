@@ -165,14 +165,14 @@ function LeaderboardPage() {
             return (
               <motion.div key={p.user_id}
                 initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: idx * 0.1 }}
-                className={`rounded-2xl border border-cyan-200/15 bg-gradient-to-b ${color} p-5 ${height} text-center flex flex-col justify-end shadow-[0_22px_60px_-38px_oklch(0.74_0.14_180)]`}>
+                className={`min-w-0 rounded-2xl border border-cyan-200/15 bg-gradient-to-b ${color} p-3 sm:p-5 ${height} text-center flex flex-col justify-end shadow-[0_22px_60px_-38px_oklch(0.74_0.14_180)]`}>
                 {idx === 0 && <Crown className="h-6 w-6 text-amber-300 mx-auto mb-2" />}
                 <div className="h-12 w-12 mx-auto rounded-xl border border-primary/35 bg-primary/15 text-primary grid place-items-center font-bold shadow-[0_0_20px_-8px_oklch(0.74_0.14_180)]">
                   {playerInitial(p.full_name)}
                 </div>
-                <div className="mt-2 font-bold text-sm truncate">{cleanPlayerName(p.full_name)}</div>
-                <div className="text-xs text-muted-foreground">{tierFor(p.xp ?? 0).title}</div>
-                <div className="text-primary font-bold mt-1">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
+                <div className="mt-2 truncate text-sm font-bold">{cleanPlayerName(p.full_name)}</div>
+                <div className="truncate text-[11px] text-muted-foreground">{tierFor(p.xp ?? 0).title}</div>
+                <div className="mt-1 truncate font-bold text-primary">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
                 <div className="text-xs text-muted-foreground">#{idx + 1}</div>
               </motion.div>
             );
@@ -192,16 +192,16 @@ function LeaderboardPage() {
               <motion.div key={p.user_id}
                 layout
                 initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                className={`flex items-center gap-4 border-b border-cyan-300/10 p-4 font-mono transition hover:bg-cyan-300/[0.04] ${isMe ? "bg-primary/10 shadow-[inset_4px_0_0_oklch(0.74_0.14_180)]" : ""}`}>
-                <div className="w-10 rounded-md border border-cyan-300/15 bg-cyan-300/[0.06] py-1 text-center text-xs font-black text-primary">{rank}</div>
-                <div className="grid h-10 w-10 place-items-center rounded-lg border border-primary/30 bg-primary/15 text-primary">
+                className={`flex items-center gap-3 border-b border-cyan-300/10 p-3 sm:gap-4 sm:p-4 font-mono transition hover:bg-cyan-300/[0.04] ${isMe ? "bg-primary/10 shadow-[inset_4px_0_0_oklch(0.74_0.14_180)]" : ""}`}>
+                <div className="w-10 shrink-0 rounded-md border border-cyan-300/15 bg-cyan-300/[0.06] py-1 text-center text-xs font-black tabular-nums text-primary">{rank}</div>
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-primary/30 bg-primary/15 text-primary">
                   <UserRound className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold tracking-wide">{cleanPlayerName(p.full_name)} {isMe && <span className="text-xs text-primary">(you)</span>}</div>
-                  <div className="text-xs text-muted-foreground capitalize">{tierFor(p.xp ?? 0).title} | {p.total_cases_completed ?? 0} cases | {p.accuracy_rate ?? 0}% acc</div>
+                  <div className="truncate text-xs text-muted-foreground capitalize">{tierFor(p.xp ?? 0).title} · {p.total_cases_completed ?? 0} cases · {p.accuracy_rate ?? 0}% acc</div>
                 </div>
-                <div className="rounded-md bg-primary/10 px-3 py-1 text-right font-bold text-primary">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
+                <div className="shrink-0 rounded-md bg-primary/10 px-3 py-1 text-right font-bold tabular-nums text-primary">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
               </motion.div>
             );
           })}
@@ -212,8 +212,8 @@ function LeaderboardPage() {
       {myRank && myRank > 20 && (
         <div className="mt-4 rounded-2xl border border-primary/40 bg-primary/10 p-4 flex items-center gap-4 shadow-[0_0_35px_-22px_oklch(0.74_0.14_180)]">
           <div className="w-8 text-center font-bold text-primary">{myRank}</div>
-          <div className="flex-1 font-semibold">Your rank - {cleanPlayerName(me?.full_name)}</div>
-          <div className="text-primary font-bold">{me?.xp} {filter === "all" ? "XP" : "pts"}</div>
+          <div className="min-w-0 flex-1 truncate font-semibold">Your rank - {cleanPlayerName(me?.full_name)}</div>
+          <div className="shrink-0 font-bold tabular-nums text-primary">{me?.xp} {filter === "all" ? "XP" : "pts"}</div>
         </div>
       )}
     </main>

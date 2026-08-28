@@ -74,6 +74,9 @@ function ProfilePage() {
   const prog = xpProgress(profile.xp);
   const cpdHours = cpdHoursFromCases(profile.total_cases_completed);
   const nextMs = nextCpdMilestone(cpdHours);
+  // Track the top of the ladder rather than a hardcoded 100, so the bar stays
+  // honest if the milestones are retuned.
+  const cpdTarget = CPD_MILESTONES[CPD_MILESTONES.length - 1];
 
   const earnedMap = new Map(earnedBadges.map((b: any) => [b.badge_id, b.earned_at]));
 
@@ -188,10 +191,10 @@ function ProfilePage() {
                   <h3 className="font-bold">CPD Hours</h3>
                   <p className="text-xs text-muted-foreground">1 hour earned per 10 cases completed.</p>
                 </div>
-                <div className="text-3xl font-extrabold text-primary">{cpdHours} / 100</div>
+                <div className="text-3xl font-extrabold text-primary">{cpdHours} / {cpdTarget}</div>
               </div>
               <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-primary to-cyan-400" style={{ width: `${Math.min(100, cpdHours)}%` }} />
+                <div className="h-full bg-gradient-to-r from-primary to-cyan-400" style={{ width: `${Math.min(100, (cpdHours / cpdTarget) * 100)}%` }} />
               </div>
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {CPD_MILESTONES.map((m) => {
