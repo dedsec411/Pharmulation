@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, ShieldAlert, User, XCircle } from "lucide-react";
 import { GameHeader } from "@/components/game/GameHeader";
@@ -10,12 +11,16 @@ import { useGameExit } from "@/lib/game/useGameExit";
 import { useAuthStore } from "@/lib/auth-store";
 import { gradeConsultation, type ConsultationGrade } from "@/lib/api/chat.functions";
 import { pickOtcCase, type OtcCase } from "@/lib/game/otc-cases";
+import { DispensingShelf, LabelForm } from "@/components/game/dispensing";
+import { prepareDrugCatalog } from "@/lib/drug-catalog";
+import { supabase } from "@/integrations/supabase/client";
+import { unwrapList } from "@/lib/supabase-query";
 import {
   computeScore, liveScore, submitScore, toastScore, SCORE_WEIGHTS,
   retryRewardFactor, type Difficulty,
 } from "@/lib/game/shared";
 
-type Step = "consult" | "grading" | "drug" | "dose" | "counselling" | "done";
+type Step = "consult" | "grading" | "dispense" | "label" | "done";
 
 /** Points for each WWHAM item the pharmacist actually elicited. */
 const WWHAM_POINTS = 12;
@@ -65,6 +70,16 @@ export function OtcConsultation({
   // until the right one is chosen, so these are struck through to show what is
   // ruled out without letting the same mistake be re-scored.
   const [tried, setTried] = useState<string[]>([]);
+  const [dispensed, setDispensed] = useState<{ drug: string; brand: string } | null>(null);
+
+  // The shelf is stocked from the same catalogue Rx uses, so both modes are
+  // dispensing from one inventory rather than two.
+  const { data: shelfDrugs = [] } = useQuery({
+    queryKey: ["otc-shelf"],
+    queryFn: async () => prepareDrugCatalog(
+      unwrapList(await supabase.from("drugs").select("*").order("name"), "the medicine shelf"),
+    ) as any[],
+  });
 
   const timer = useTimer(limit, () => step !== "done" && finish(true));
   const errPanel = useErrorPanel({
@@ -116,7 +131,7 @@ export function OtcConsultation({
       setGradeError("Could not grade the consultation.");
     } finally {
       timer.setExternalPaused(false);
-      setStep("drug");
+      setStep("dispense");
     }
   }
 
@@ -141,60 +156,77 @@ export function OtcConsultation({
     return factor;
   }
 
-  function pickDrug(option: string) {
-    if (otcCase.recommendation.correct.includes(option)) {
-      awardCorrect("drug", SCORE_WEIGHTS.correctDrug, "correct recommendation");
-      advance("dose");
+  /** Chose a medicine off the shelf and picked a brand. */
+  function dispense(drug: { name: string }, brand: string) {
+    // Matched on the explicit shelf names, not on the teaching prose in
+    // `correct` - "Oral rehydration salts" would never match the stocked "ORS".
+    const accepted = otcCase.recommendation.dispenseNames ?? [];
+    const isCorrect = otcCase.outcome === "treat"
+      && accepted.some((name) => name.toLowerCase() === drug.name.toLowerCase());
+
+    if (isCorrect) {
+      awardCorrect("drug", SCORE_WEIGHTS.correctDrug, "correct medicine");
+      setDispensed({ drug: drug.name, brand });
+      advance("label");
       return;
     }
+
     setWrong((n) => n + 1);
-    setTried((current) => [...current, option]);
-    toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong recommendation");
+    setTried((current) => [...current, drug.name]);
+    toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong medicine");
     errPanel.logError({
-      errorType: otcCase.outcome === "refer" ? "Sold when referral was needed" : "Wrong OTC recommendation",
-      wrongChoice: option,
+      errorType: otcCase.outcome === "refer" ? "Sold when referral was needed" : "Wrong OTC medicine",
+      wrongChoice: `${brand} (${drug.name})`,
       correctChoice: otcCase.recommendation.correct.join(" or "),
       whyWrong: otcCase.outcome === "refer"
-        ? "This patient has findings that need medical assessment. Supplying an OTC product here delays diagnosis."
-        : `${option} is not appropriate for this patient given their symptoms, medicines or circumstances.`,
+        ? "This patient has findings that need medical assessment. Supplying anything here delays diagnosis."
+        : `${drug.name} is not appropriate for this patient given their symptoms, medicines or circumstances.`,
       whatToKnow: otcCase.explanation,
     });
   }
 
-  function pickDose(option: string) {
-    if (option === otcCase.recommendation.dose) {
-      awardCorrect("drug", SCORE_WEIGHTS.correctDrug, "correct dose");
-      advance("counselling");
+  /** Declined to sell and referred instead. */
+  function refer() {
+    if (otcCase.outcome === "refer") {
+      awardCorrect("drug", SCORE_WEIGHTS.correctDrug, "correctly referred");
+      // Nothing is dispensed, so there is no label to write.
+      finish(false, 0);
       return;
     }
     setWrong((n) => n + 1);
-    setTried((current) => [...current, option]);
-    toastScore(-SCORE_WEIGHTS.wrongDrug, "wrong dose");
+    toastScore(-SCORE_WEIGHTS.wrongDrug, "referral not needed");
     errPanel.logError({
-      errorType: "Wrong dose or direction",
-      wrongChoice: option,
-      correctChoice: otcCase.recommendation.dose,
-      whyWrong: "That is outside the safe or effective regimen for this patient.",
+      errorType: "Referred a treatable patient",
+      wrongChoice: "Referred to a doctor",
+      correctChoice: otcCase.recommendation.correct.join(" or "),
+      whyWrong: "This patient could safely be treated over the counter. Referring everything is as unhelpful as selling everything.",
       whatToKnow: otcCase.explanation,
     });
   }
 
-  function pickCounselling(option: string) {
-    if (option === otcCase.recommendation.counselling) {
-      const earned = awardCorrect("label", SCORE_WEIGHTS.correctLabel, "good counselling");
+  function submitLabel(answer: { frequency: string; timing: string; duration: string }) {
+    const expected = otcCase.recommendation.dose.toLowerCase();
+    // The authored dose text is prose, so the label is judged on whether its
+    // parts are consistent with it rather than by string equality.
+    const ok = expected.includes(answer.frequency.split(" ")[0])
+      || expected.includes(answer.frequency);
+
+    if (ok) {
+      const earned = awardCorrect("label", SCORE_WEIGHTS.correctLabel, "label correct");
       finish(false, earned);
       return;
     }
+
     setWrong((n) => n + 1);
-    setTried((current) => [...current, option]);
-    toastScore(-SCORE_WEIGHTS.wrongLabel, "incomplete counselling");
+    toastScore(-SCORE_WEIGHTS.wrongLabel, "label off");
     errPanel.logError({
-      errorType: "Incomplete counselling",
-      wrongChoice: option,
-      correctChoice: otcCase.recommendation.counselling,
-      whyWrong: "That advice is incomplete or misleading for this scenario.",
-      whatToKnow: "Counselling should cover how to take it, what to watch for, and when to seek further help.",
+      errorType: "Wrong label instructions",
+      wrongChoice: `${answer.frequency} · ${answer.timing} · ${answer.duration}`,
+      correctChoice: otcCase.recommendation.dose,
+      whyWrong: "The directions on the label do not match the recommended regimen for this medicine.",
+      whatToKnow: otcCase.recommendation.counselling,
     });
+    finish(false, 0);
   }
 
   async function finish(timedOut: boolean, earnedLabelCredit = 0) {
@@ -239,6 +271,7 @@ export function OtcConsultation({
     setWrong(0);
     setHints(0);
     setTried([]);
+    setDispensed(null);
     setResult(null);
     errPanel.reset();
     next();
@@ -353,86 +386,37 @@ export function OtcConsultation({
               </p>
             )}
 
-            {step === "drug" && (
-              <Chooser
-                title="What do you recommend?"
-                hint={otcCase.outcome === "refer" ? "Selling something is not always the right answer." : undefined}
-                options={otcCase.recommendation.options}
-                tried={tried}
-                onPick={pickDrug}
-              />
+            {step === "dispense" && (
+              <>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
+                  What do you hand over?
+                </p>
+                {tried.length > 0 && (
+                  <p className="mb-3 rounded-lg border border-amber-400/35 bg-amber-400/10 px-3 py-1.5 text-xs text-amber-500">
+                    Not that one. Already ruled out: {tried.join(", ")}
+                  </p>
+                )}
+                <DispensingShelf
+                  drugs={shelfDrugs}
+                  onDispense={dispense}
+                  onRefer={refer}
+                  referLabel="This needs a doctor - do not sell"
+                />
+              </>
             )}
-            {step === "dose" && (
-              <Chooser
-                title="Dose and directions"
-                options={otcCase.recommendation.doseOptions}
-                tried={tried}
-                onPick={pickDose}
-              />
-            )}
-            {step === "counselling" && (
-              <Chooser
-                title="What do you tell the patient?"
-                options={otcCase.recommendation.counsellingOptions}
-                tried={tried}
-                onPick={pickCounselling}
-              />
+
+            {step === "label" && dispensed && (
+              <>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
+                  Label the medicine
+                </p>
+                <LabelForm drug={dispensed.drug} brand={dispensed.brand} onSubmit={submitLabel} />
+              </>
             )}
           </motion.div>
         </section>
       </main>
       {errPanel.panel}
-    </>
-  );
-}
-
-function Chooser({
-  title,
-  hint,
-  options,
-  tried,
-  onPick,
-}: {
-  title: string;
-  hint?: string;
-  options: string[];
-  tried: string[];
-  onPick: (option: string) => void;
-}) {
-  // Shuffled once per mount so the correct answer isn't always first. Stable
-  // across retries, so the list does not reorder under the player.
-  const shuffled = useMemo(
-    () => [...options].sort(() => Math.random() - 0.5),
-    [options],
-  );
-  return (
-    <>
-      <p className="text-xs font-semibold uppercase tracking-wider text-primary">{title}</p>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-      {tried.length > 0 && (
-        <p className="mt-2 rounded-lg border border-amber-400/35 bg-amber-400/10 px-3 py-1.5 text-xs text-amber-500">
-          Not quite — try again.
-        </p>
-      )}
-      <div className="mt-3 grid gap-2">
-        {shuffled.map((option) => {
-          const ruledOut = tried.includes(option);
-          return (
-            <button
-              key={option}
-              onClick={() => onPick(option)}
-              disabled={ruledOut}
-              className={
-                ruledOut
-                  ? "rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-left text-sm text-muted-foreground line-through opacity-60"
-                  : "rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm transition hover:border-primary/50 hover:bg-primary/10"
-              }
-            >
-              {option}
-            </button>
-          );
-        })}
-      </div>
     </>
   );
 }

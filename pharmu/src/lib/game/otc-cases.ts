@@ -46,6 +46,13 @@ export type OtcCase = {
   recommendation: {
     /** Acceptable answers. For `refer` cases this is the referral action. */
     correct: string[];
+    /**
+     * Exact medicine names on the dispensing shelf that count as correct.
+     * Kept separate from `correct`, which is teaching prose: "Oral rehydration
+     * salts" reads better in feedback than "ORS", but only "ORS" is stocked.
+     * Absent on referral cases, where nothing should be handed over.
+     */
+    dispenseNames?: string[];
     options: string[];
     dose: string;
     doseOptions: string[];
@@ -80,6 +87,7 @@ export const OTC_CASES: OtcCase[] = [
     outcome: "treat",
     recommendation: {
       correct: ["Paracetamol"],
+      dispenseNames: ["Paracetamol"],
       options: ["Paracetamol", "Co-codamol", "Sumatriptan", "Amoxicillin"],
       dose: "1 g (two 500 mg tablets) up to four times daily, max 4 g in 24 hours",
       doseOptions: [
@@ -122,6 +130,7 @@ export const OTC_CASES: OtcCase[] = [
     outcome: "treat",
     recommendation: {
       correct: ["Paracetamol"],
+      dispenseNames: ["Paracetamol"],
       options: ["Paracetamol", "Ibuprofen", "Aspirin", "Naproxen"],
       dose: "1 g (two 500 mg tablets) up to four times daily, max 4 g in 24 hours, for the shortest time needed",
       doseOptions: [
@@ -211,6 +220,7 @@ export const OTC_CASES: OtcCase[] = [
     outcome: "treat",
     recommendation: {
       correct: ["Alginate antacid"],
+      dispenseNames: ["Aluminium Hydroxide", "Magnesium Hydroxide", "Calcium Carbonate"],
       options: ["Alginate antacid", "Loperamide", "Ibuprofen", "Oral rehydration salts"],
       dose: "10-20 mL after meals and at bedtime, up to four times daily",
       doseOptions: [
@@ -308,6 +318,7 @@ export const OTC_CASES: OtcCase[] = [
     outcome: "treat",
     recommendation: {
       correct: ["Paracetamol"],
+      dispenseNames: ["Paracetamol"],
       options: ["Paracetamol", "Oral ibuprofen", "Aspirin", "Naproxen"],
       dose: "1 g (two 500 mg tablets) up to four times daily, max 4 g in 24 hours",
       doseOptions: [
@@ -350,6 +361,7 @@ export const OTC_CASES: OtcCase[] = [
     outcome: "treat",
     recommendation: {
       correct: ["Non-sedating antihistamine (loratadine or cetirizine)"],
+      dispenseNames: ["Loratadine", "Cetirizine", "Fexofenadine"],
       options: [
         "Non-sedating antihistamine (loratadine or cetirizine)",
         "Sedating antihistamine (chlorphenamine)",
@@ -395,6 +407,7 @@ export const OTC_CASES: OtcCase[] = [
     outcome: "treat",
     recommendation: {
       correct: ["Oral rehydration salts"],
+      dispenseNames: ["ORS"],
       options: ["Oral rehydration salts", "Loperamide alone", "Antibiotics", "Codeine"],
       dose: "One sachet in 200 mL water after each loose stool",
       doseOptions: [
@@ -440,6 +453,7 @@ export const OTC_CASES: OtcCase[] = [
     outcome: "treat",
     recommendation: {
       correct: ["Paracetamol oral suspension for children"],
+      dispenseNames: ["Paracetamol"],
       options: [
         "Paracetamol oral suspension for children",
         "Adult paracetamol tablets halved",
@@ -487,6 +501,7 @@ export const OTC_CASES: OtcCase[] = [
     outcome: "treat",
     recommendation: {
       correct: ["Topical clotrimazole"],
+      dispenseNames: ["Clotrimazole cream"],
       options: ["Topical clotrimazole", "Hydrocortisone cream", "Oral antibiotics", "Emollient only"],
       dose: "Apply thinly two to three times daily and continue for two weeks after the skin clears",
       doseOptions: [
@@ -588,6 +603,7 @@ export const OTC_CASES: OtcCase[] = [
     outcome: "treat",
     recommendation: {
       correct: ["Stimulant laxative (senna) with lifestyle advice"],
+      dispenseNames: ["Senna", "Bisacodyl"],
       options: [
         "Stimulant laxative (senna) with lifestyle advice",
         "Bulk-forming laxative alone",

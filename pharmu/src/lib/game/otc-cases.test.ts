@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { OTC_CASES, getOtcCaseById, pickOtcCase } from "./otc-cases";
+import { prepareDrugCatalog, RX_DRUG_CATEGORIES } from "@/lib/drug-catalog";
 
 /**
  * These guard the clinical content rather than the code. An authoring slip -
@@ -86,5 +87,34 @@ describe("case selection", () => {
   it("still returns a case once everything has been seen", () => {
     const all = OTC_CASES.map((c) => c.id);
     expect(pickOtcCase(all)).toBeTruthy();
+  });
+});
+
+describe("dispensing", () => {
+  // The consultation ends by picking the medicine off the shelf, so every
+  // treatable case must name a medicine that is actually stocked. Without this
+  // guard, a case whose answer is worded differently from the catalogue entry
+  // ("Oral rehydration salts" vs the stocked "ORS") is simply unwinnable.
+  const shelf = new Set(
+    (prepareDrugCatalog([]) as Array<{ name: string; category?: string | null }>)
+      .filter((d) => RX_DRUG_CATEGORIES.includes(String(d.category)))
+      .map((d) => d.name.toLowerCase()),
+  );
+
+  it.each(OTC_CASES.filter((c) => c.outcome === "treat").map((c) => [c.id, c] as const))(
+    "%s can be dispensed from the shelf",
+    (_id, c) => {
+      const names = c.recommendation.dispenseNames ?? [];
+      expect(names.length, "treatable case needs dispenseNames").toBeGreaterThan(0);
+      for (const name of names) {
+        expect(shelf.has(name.toLowerCase()), `"${name}" is not on any shelf`).toBe(true);
+      }
+    },
+  );
+
+  it("referral cases offer nothing to dispense", () => {
+    for (const c of OTC_CASES.filter((x) => x.outcome === "refer")) {
+      expect(c.recommendation.dispenseNames ?? []).toHaveLength(0);
+    }
   });
 });

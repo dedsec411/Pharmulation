@@ -1,5 +1,24 @@
-export const RX_DRUG_CATEGORIES = ["Antibiotic", "Cardiovascular", "Analgesic", "Antidiabetic", "GI", "Respiratory"];
-const TARGET_CATALOG_SIZE = 200;
+// Shelves shown when dispensing. Topical, Antihistamine, Ophthalmic, Nasal and
+// Supplement were stocked in the catalogue but had no shelf, so those medicines
+// could not be dispensed at all - athlete's foot had no reachable answer.
+export const RX_DRUG_CATEGORIES = [
+  "Antibiotic",
+  "Cardiovascular",
+  "Analgesic",
+  "Antidiabetic",
+  "GI",
+  "Respiratory",
+  "Antihistamine",
+  "Topical",
+  "Ophthalmic",
+  "Nasal",
+  "Supplement",
+];
+// Cap on the synthetic catalogue. It truncates by list order, so a category
+// seeded near the end used to be dropped entirely - the topical shelf vanished
+// and athlete's foot had no dispensable answer. Kept above the seed count so
+// every category survives; raise it alongside any new seeds.
+const TARGET_CATALOG_SIZE = 320;
 
 type DrugLike = {
   id?: string;
@@ -180,6 +199,15 @@ const catalogSeeds: CatalogSeed[] = [
   ]),
   ...makeSeeds("Respiratory", "Leukotriene / cough and cold", ["Asthma", "Allergic rhinitis", "Cough symptoms"], "Use according to product directions", [
     "Montelukast", "Zafirlukast", "Ambroxol", "Bromhexine", "Guaifenesin", "Dextromethorphan", "Pseudoephedrine", "Phenylephrine", "Oxymetazoline", "Xylometazoline", "Fluticasone/Salmeterol", "Budesonide/Formoterol", "Ipratropium/Salbutamol",
+  ]),
+  // Topical shelf. Stocked here rather than relying on a database row, so an
+  // OTC case whose answer is a cream stays winnable regardless of what the
+  // `drugs` table happens to contain.
+  ...makeSeeds("Topical", "Topical antifungal", ["Athlete's foot", "Fungal skin infection"], "Apply thinly two to three times daily", [
+    "Clotrimazole cream", "Miconazole cream", "Terbinafine cream", "Ketoconazole cream",
+  ]),
+  ...makeSeeds("Topical", "Topical corticosteroid / antibiotic", ["Skin inflammation", "Localised skin infection"], "Apply thinly as directed", [
+    "Hydrocortisone cream", "Betamethasone cream", "Mupirocin", "Fusidic Acid cream",
   ]),
 ];
 
