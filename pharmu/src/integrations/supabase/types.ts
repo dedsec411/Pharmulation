@@ -158,31 +158,23 @@ export type Database = {
       drug_bookmarks: {
         Row: {
           created_at: string
-          drug_id: string
+          drug_ref: string
           id: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          drug_id: string
+          drug_ref: string
           id?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          drug_id?: string
+          drug_ref?: string
           id?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "drug_bookmarks_drug_id_fkey"
-            columns: ["drug_id"]
-            isOneToOne: false
-            referencedRelation: "drugs"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       drugs: {
         Row: {

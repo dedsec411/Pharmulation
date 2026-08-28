@@ -57,29 +57,34 @@ function DrugsPage() {
     queryFn: async () => {
       if (!userId) return [];
       const data = unwrapList(
-        await supabase.from("drug_bookmarks").select("drug_id").eq("user_id", userId),
+        await supabase.from("drug_bookmarks").select("drug_ref").eq("user_id", userId),
         "your bookmarks",
       );
-      return data.map((b: any) => b.drug_id as string);
+      return data.map((b: any) => b.drug_ref as string);
     },
     enabled: !!userId,
   });
 
   const toggleBookmark = useMutation({
+    // Every catalogue entry is bookmarkable now, generated or not: drug_ref is
+    // text, so it holds a real drug's uuid or a "catalog-..." key equally.
     mutationFn: async (drug: Drug) => {
       if (!userId) return;
-      if (drug.id.startsWith("catalog-")) {
-        toast.info("Training catalog medicines can be studied from the card, but are not bookmarkable yet.");
-        return;
-      }
       if (bookmarks.includes(drug.id)) {
-        await supabase.from("drug_bookmarks").delete()
-          .eq("user_id", userId).eq("drug_id", drug.id);
+        const { error } = await supabase.from("drug_bookmarks").delete()
+          .eq("user_id", userId).eq("drug_ref", drug.id);
+        if (error) throw error;
       } else {
-        await supabase.from("drug_bookmarks").insert({ user_id: userId, drug_id: drug.id });
+        const { error } = await supabase.from("drug_bookmarks")
+          .insert({ user_id: userId, drug_ref: drug.id });
+        if (error) throw error;
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["bookmarks", userId] }),
+    onError: (error) => {
+      console.error("[supabase] bookmark toggle failed:", error);
+      toast.error("Could not update your study list.");
+    },
   });
 
   const categories = useMemo(
@@ -162,9 +167,7 @@ function DrugsPage() {
                     layout key={d.id} onClick={() => setSelected(d)}
                     whileHover={{ y: -2 }}
                     className="glass-card p-5 text-left hover:border-primary/40 transition relative">
-                    {/* Catalog entries cannot be bookmarked, so no control is
-                        offered for them rather than one that refuses. */}
-                    {!d.id.startsWith("catalog-") && (
+                    {(
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleBookmark.mutate(d); }}
                         title={bookmarked ? `Remove ${d.name} from your study list` : `Save ${d.name} to your study list`}
