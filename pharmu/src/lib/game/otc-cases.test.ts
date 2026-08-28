@@ -118,3 +118,25 @@ describe("dispensing", () => {
     }
   });
 });
+
+describe("clinical completeness", () => {
+  // Every medicine an OTC case can dispense must carry real clinical detail.
+  // Four of these previously existed only as generated catalogue entries and
+  // so shared the same invented side effects, which is worse than useless in
+  // a training product.
+  const REQUIRED_IN_DB = [
+    "Paracetamol", "Loratadine", "Cetirizine", "Fexofenadine", "ORS",
+    "Senna", "Bisacodyl", "Clotrimazole cream",
+    "Aluminium Hydroxide", "Magnesium Hydroxide", "Calcium Carbonate",
+  ];
+
+  it("covers every medicine the case bank can dispense", () => {
+    const referenced = new Set(
+      OTC_CASES.flatMap((c) => c.recommendation.dispenseNames ?? []),
+    );
+    for (const name of referenced) {
+      expect(REQUIRED_IN_DB, `${name} is dispensable but not on the verified list`)
+        .toContain(name);
+    }
+  });
+});
