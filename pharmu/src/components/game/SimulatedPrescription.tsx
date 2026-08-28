@@ -1,19 +1,10 @@
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
+import { buildClinicalPicture } from "@/lib/game/clinical-picture";
 
 type SimulatedPrescriptionProps = {
   caseData: any;
   department?: string;
-};
-
-const DEFAULT_VITALS = {
-  bp: "118/76",
-  pulse: "82",
-  spo2: "98",
-  resp_rate: "16",
-  temp: "98.6",
-  gcs: "15",
-  rbs: "104",
 };
 
 function valueFrom(patient: any, keys: string[], fallback = "") {
@@ -93,11 +84,25 @@ export function SimulatedPrescription({
   const prescriber = rx.prescriber ?? patient.doctor ?? "Dr. Singh";
   const now = new Date();
   const date = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
-  const caseId = String(caseData?.id ?? "training").slice(0, 8);
-  const complaint = valueFrom(patient, ["complaint", "symptoms", "presenting_complaint"], caseData?.title ?? "Patient presenting complaint");
-  const examination = valueFrom(patient, ["examination", "injuries"], `Allergies: ${patient.allergies ?? "N/A"}`);
-  const diagnosis = valueFrom(patient, ["diagnosis", "provisional_diagnosis"], caseData?.diagnosis ?? caseData?.title ?? "Minor ailment assessment");
-  const tests = valueFrom(patient, ["test_advised", "tests"], "CBC if symptoms persist; follow up if fever or red flags develop");
+
+  // Derived once per case rather than per render: these are the patient's
+  // observations, and a re-render must not quietly change their blood pressure.
+  const picture = useMemo(() => buildClinicalPicture({
+    seed: String(caseData?.id ?? "training"),
+    title: String(caseData?.title ?? ""),
+    age: Number(patient.age) || 40,
+    gender: patient.gender,
+    allergies: patient.allergies,
+  }), [caseData?.id, caseData?.title, patient.age, patient.gender, patient.allergies]);
+
+  // Anything the case states explicitly still wins; the picture fills the gaps.
+  const complaint = valueFrom(patient, ["complaint", "symptoms", "presenting_complaint"], picture.complaint);
+  const examination = valueFrom(patient, ["examination", "injuries"], picture.examination);
+  const diagnosis = valueFrom(patient, ["diagnosis", "provisional_diagnosis"], picture.diagnosis);
+  const tests = valueFrom(patient, ["test_advised", "tests"], picture.testAdvised);
+  const referTo = valueFrom(patient, ["refer_to", "referral"], picture.referTo);
+  const advice = valueFrom(patient, ["advice", "follow_up"], picture.advice);
+  const arrival = valueFrom(patient, ["arrival_time"], picture.arrivalTime);
   const medicationLines = buildMedicationLines(caseData);
   const handwriting = {
     fontFamily: '"Segoe Print", "Comic Sans MS", cursive',
@@ -105,13 +110,13 @@ export function SimulatedPrescription({
   };
 
   const vitals = {
-    bp: valueFrom(patient, ["bp", "blood_pressure"], DEFAULT_VITALS.bp),
-    pulse: valueFrom(patient, ["pulse", "heart_rate"], DEFAULT_VITALS.pulse),
-    spo2: valueFrom(patient, ["spo2", "sp_o2"], DEFAULT_VITALS.spo2),
-    resp_rate: valueFrom(patient, ["resp_rate", "respiratory_rate"], DEFAULT_VITALS.resp_rate),
-    temp: valueFrom(patient, ["temp", "temperature"], DEFAULT_VITALS.temp),
-    gcs: valueFrom(patient, ["gcs"], DEFAULT_VITALS.gcs),
-    rbs: valueFrom(patient, ["rbs", "blood_glucose"], DEFAULT_VITALS.rbs),
+    bp: valueFrom(patient, ["bp", "blood_pressure"], picture.vitals.bp),
+    pulse: valueFrom(patient, ["pulse", "heart_rate"], picture.vitals.pulse),
+    spo2: valueFrom(patient, ["spo2", "sp_o2"], picture.vitals.spo2),
+    resp_rate: valueFrom(patient, ["resp_rate", "respiratory_rate"], picture.vitals.respRate),
+    temp: valueFrom(patient, ["temp", "temperature"], picture.vitals.temp),
+    gcs: valueFrom(patient, ["gcs"], picture.vitals.gcs),
+    rbs: valueFrom(patient, ["rbs", "blood_glucose"], picture.vitals.rbs),
   };
 
   return (
@@ -156,20 +161,22 @@ export function SimulatedPrescription({
               <InfoRow label="Age:" value={patient.age} />
               <div className="flex gap-2">
                 <div className="min-w-0 flex-1"><InfoRow label="Gender:" value={patient.gender} /></div>
-                <div className="min-w-0 flex-1"><InfoRow label="Weight:" value={patient.weight} unit="kg" /></div>
+                <div className="min-w-0 flex-1"><InfoRow label="Weight:" value={patient.weight ?? picture.weightKg} unit="kg" /></div>
               </div>
-              <InfoRow label="BMI:" value={patient.bmi} unit="kg/m2" />
+              <InfoRow label="BMI:" value={patient.bmi ?? picture.bmi} unit="kg/m2" />
               <InfoRow label="Doctor Name:" value={prescriber} />
             </div>
             <div>
-              <InfoRow label="M.R. No.:" value={`TR-${caseId}`} />
-              <InfoRow label="Slip No.:" value={caseId} />
-              <InfoRow label="Arrival Date/Time:" value={date} />
-              <InfoRow label="Contact:" value={patient.contact} />
+              <InfoRow label="M.R. No.:" value={picture.mrNo} />
+              <InfoRow label="Slip No.:" value={picture.slipNo} />
+              <InfoRow label="Arrival Date/Time:" value={`${date} ${arrival}`} />
+              <InfoRow label="Contact:" value={patient.contact ?? picture.contact} />
               <div className="mt-1 flex gap-4">
-                {["Smoker", "Non-Smoker"].map((label) => (
+                {([["Smoker", picture.smoker], ["Non-Smoker", !picture.smoker]] as const).map(([label, ticked]) => (
                   <span key={label} className="flex items-center gap-1 text-[10px] font-bold">
-                    <span className="inline-block h-[11px] w-[11px] border border-slate-950" /> {label}
+                    <span className="grid h-[11px] w-[11px] place-items-center border border-slate-950 text-[10px] font-black leading-none">
+                      {ticked ? "✓" : ""}
+                    </span> {label}
                   </span>
                 ))}
               </div>
@@ -201,7 +208,9 @@ export function SimulatedPrescription({
                 <p className="max-w-full break-words text-[13px] leading-[22px]" style={handwriting}>{diagnosis}</p>
               </WritingBox>
               <div className="mb-1 mt-2 text-[11px] font-bold underline">REFER TO</div>
-              <WritingBox minHeight="44px" />
+              <WritingBox minHeight="44px">
+                <p className="max-w-full break-words text-[12px] leading-[22px]" style={handwriting}>{referTo}</p>
+              </WritingBox>
             </div>
           </div>
 
@@ -236,7 +245,9 @@ export function SimulatedPrescription({
 
           <div className="mt-2 flex gap-1 border-t-2 border-slate-950 pt-1">
             <span className="shrink-0 text-[10px] font-bold">Advise / Follow-Up:-</span>
-            <WritingBox minHeight="44px" className="flex-1" />
+            <WritingBox minHeight="44px" className="flex-1">
+              <p className="max-w-full break-words text-[12px] leading-[22px]" style={handwriting}>{advice}</p>
+            </WritingBox>
           </div>
         </div>
       </div>
