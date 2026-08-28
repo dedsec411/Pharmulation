@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Gauge, ShieldAlert } from "lucide-react";
+import { Activity, ArrowLeft, Gauge, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import {
@@ -40,7 +41,12 @@ function storageKey(mode: Mode) {
   return `pharmulation:${mode}:difficulty`;
 }
 
-export function useDifficultyChoice(mode: Mode) {
+/**
+ * @param onCancel where to go if the player backs out. Defaults to the mode
+ *   list; Community passes its own so Back returns to the Rx/OTC picker.
+ */
+export function useDifficultyChoice(mode: Mode, onCancel?: () => void) {
+  const navigate = useNavigate();
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [open, setOpen] = useState(true);
 
@@ -55,6 +61,11 @@ export function useDifficultyChoice(mode: Mode) {
     setOpen(false);
   }
 
+  function cancel() {
+    if (onCancel) onCancel();
+    else navigate({ to: "/modes" });
+  }
+
   return {
     difficulty,
     difficultyModal: (
@@ -62,6 +73,7 @@ export function useDifficultyChoice(mode: Mode) {
         mode={mode}
         open={open}
         onChoose={choose}
+        onCancel={cancel}
       />
     ),
   };
@@ -71,14 +83,26 @@ function DifficultySelectModal({
   mode,
   open,
   onChoose,
+  onCancel,
 }: {
   mode: Mode;
   open: boolean;
   onChoose: (difficulty: Difficulty) => void;
+  onCancel: () => void;
 }) {
   const { profile } = useAuthStore();
   const [lastDifficulty, setLastDifficulty] = useState<Difficulty | null>(null);
   const [lastScore, setLastScore] = useState<number | null>(null);
+
+  // Escape backs out, the same as the Back button and the backdrop.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onCancel]);
 
   useEffect(() => {
     if (!open) return;
@@ -113,6 +137,7 @@ function DifficultySelectModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[80] grid place-items-end bg-black/70 p-4 backdrop-blur-sm sm:place-items-center"
+          onClick={onCancel}
         >
           <motion.div
             initial={{ y: 32, opacity: 0, scale: 0.96 }}
@@ -120,9 +145,17 @@ function DifficultySelectModal({
             exit={{ y: 32, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 24 }}
             className="w-full max-w-2xl rounded-2xl border border-border/40 bg-card p-5 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+                >
+                  <ArrowLeft className="size-3.5" /> Back
+                </button>
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary">
                   {MODE_LABEL[mode]}
                 </p>

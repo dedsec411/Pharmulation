@@ -284,7 +284,7 @@ function CommunityGame() {
     return <CommunityModePicker onPick={setActiveMode} />;
   }
 
-  return <CommunityRun activeMode={activeMode} />;
+  return <CommunityRun activeMode={activeMode} onBack={() => setActiveMode(null)} />;
 }
 
 function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void }) {
@@ -357,8 +357,10 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void 
   );
 }
 
-function CommunityRun({ activeMode }: { activeMode: "rx" | "otc" }) {
-  const { difficulty, difficultyModal } = useDifficultyChoice(activeMode);
+function CommunityRun({ activeMode, onBack }: { activeMode: "rx" | "otc"; onBack: () => void }) {
+  // Backing out of the difficulty modal returns to the Rx/OTC choice, which is
+  // one step back, rather than dropping the player out to the mode list.
+  const { difficulty, difficultyModal } = useDifficultyChoice(activeMode, onBack);
   const rxLoader = useCaseLoader("rx", difficulty);
   const [seenOtcIds, setSeenOtcIds] = useState<string[]>([]);
 
