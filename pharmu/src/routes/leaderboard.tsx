@@ -160,7 +160,12 @@ function LeaderboardPage() {
           {[1, 0, 2].map((idx) => {
             const p = top3[idx];
             if (!p) return <div key={idx} />;
-            const height = idx === 0 ? "h-44" : idx === 1 ? "h-36" : "h-32";
+            // min-h, not h: the step is a floor to sit on, not a ceiling to
+            // clip against. Fixed heights were shorter than the avatar, name,
+            // tier, score and rank stacked together, and `justify-end` pushed
+            // the overflow up out of the card, so the name rendered over the
+            // top border. A card now grows instead of spilling.
+            const height = idx === 0 ? "min-h-56" : idx === 1 ? "min-h-48" : "min-h-44";
             const color = idx === 0 ? "from-amber-400/40 to-amber-500/10" : idx === 1 ? "from-slate-300/30 to-slate-400/10" : "from-orange-600/30 to-orange-700/10";
             return (
               <motion.div key={p.user_id}
