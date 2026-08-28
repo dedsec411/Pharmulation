@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
 import { unwrapList } from "@/lib/supabase-query";
 import { drugTagColor } from "@/lib/drug-colors";
-import { flashcardFacts } from "@/lib/drug-study";
+import { flashcardFacts, hasStudyContent } from "@/lib/drug-study";
 import { DrugQuiz } from "@/components/game/DrugQuiz";
 
 export const Route = createFileRoute("/_authenticated/drugs")({
@@ -110,9 +110,14 @@ function DrugsPage() {
   // unimplemented rather than unstarted.
   const bookmarkedDrugs = catalogDrugs.filter((d) => bookmarks.includes(d.id));
   const studyDrugs = useMemo(() => {
-    if (studySource === "bookmarks") return bookmarkedDrugs;
-    if (studySource === "all") return catalogDrugs;
-    return catalogDrugs.filter((d) => d.category === studySource);
+    const source =
+      studySource === "bookmarks" ? bookmarkedDrugs
+      : studySource === "all" ? catalogDrugs
+      : catalogDrugs.filter((d) => d.category === studySource);
+    // A drug still awaiting its clinical detail has nothing to put on a card or
+    // build a question from, so it stays on the dispensing shelf and out of the
+    // study tools rather than showing up as a row of blank fields.
+    return source.filter(hasStudyContent);
   }, [studySource, catalogDrugs, bookmarks]);
 
   return (
@@ -252,8 +257,16 @@ function DrugsPage() {
                 {studyDrugs.map((d) => (
                   <div key={d.id} className="glass-card p-5">
                     <div className="font-bold">{d.name}</div>
-                    <div className="text-xs text-muted-foreground">{d.generic_name}</div>
-                    <div className="mt-2 text-xs">Indications: {d.indications?.join(", ") || "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {d.generic_name && d.generic_name !== d.name ? d.generic_name : d.drug_class}
+                    </div>
+                    {/* Show the facts this drug actually has. Hardcoding
+                        indications meant a drug without them rendered a dash. */}
+                    {flashcardFacts(d).slice(0, 2).map((f) => (
+                      <div key={f.label} className="mt-2 line-clamp-2 text-xs">
+                        <span className="text-muted-foreground">{f.label}: </span>{f.value}
+                      </div>
+                    ))}
                     <button onClick={() => toggleBookmark.mutate(d)} className="mt-3 text-xs text-rose-400 hover:underline">Remove</button>
                   </div>
                 ))}

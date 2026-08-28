@@ -211,3 +211,15 @@ export function flashcardFacts(drug: StudyDrug) {
     { label: "Interactions", value: drug.interactions?.join(", ") || undefined },
   ].filter((f): f is { label: string; value: string } => Boolean(f.value));
 }
+
+/**
+ * Whether a drug has anything to teach.
+ *
+ * A row with a name and nothing else renders as a card of empty labels and
+ * cannot produce a single quiz question, so it is shelf stock rather than study
+ * material. Filtering here rather than at each call site means a future
+ * half-loaded row degrades to "not shown" instead of "shown blank".
+ */
+export function hasStudyContent(drug: StudyDrug): boolean {
+  return flashcardFacts(drug).length > 0;
+}

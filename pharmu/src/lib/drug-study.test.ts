@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildQuiz, flashcardFacts, type StudyDrug } from "./drug-study";
+import { buildQuiz, flashcardFacts, hasStudyContent, type StudyDrug } from "./drug-study";
 import { prepareDrugCatalog } from "./drug-catalog";
 
 const catalogue = prepareDrugCatalog([]) as StudyDrug[];
@@ -89,5 +89,26 @@ describe("question validity", () => {
         }
       }
     }
+  });
+});
+
+describe("hasStudyContent", () => {
+  // The book-derived drugs were seeded with a class and brand but no clinical
+  // detail, so the Study list showed cards reading "Indications: —".
+  it("rejects a drug carrying nothing but a name", () => {
+    expect(hasStudyContent({ id: "x", name: "Unreviewed drug" })).toBe(false);
+    expect(hasStudyContent({
+      id: "y", name: "Unreviewed drug",
+      indications: [], side_effects: [], contraindications: [], dosage: null,
+    })).toBe(false);
+  });
+
+  it("accepts a drug with even one usable fact", () => {
+    expect(hasStudyContent({ id: "z", name: "Atenolol", drug_class: "Beta-blocker" })).toBe(true);
+  });
+
+  it("keeps the great majority of the catalogue as study material", () => {
+    const usable = catalogue.filter(hasStudyContent);
+    expect(usable.length).toBeGreaterThan(catalogue.length * 0.8);
   });
 });
