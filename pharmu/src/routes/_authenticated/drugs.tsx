@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
 import { unwrapList } from "@/lib/supabase-query";
 import { drugTagColor } from "@/lib/drug-colors";
+import { buildQuiz, flashcardFacts } from "@/lib/drug-study";
 
 export const Route = createFileRoute("/_authenticated/drugs")({
   head: () => ({ meta: [{ title: "Drug Database - Pharmulation" }] }),
@@ -39,6 +40,7 @@ function DrugsPage() {
   const [category, setCategory] = useState("");
   const [drugClass, setDrugClass] = useState("");
   const [selected, setSelected] = useState<Drug | null>(null);
+  const [studySource, setStudySource] = useState<string>("all");
 
   const { data: drugs = [] } = useQuery({
     queryKey: ["drugs"],
@@ -97,7 +99,15 @@ function DrugsPage() {
     );
   });
 
-  const studyDrugs = catalogDrugs.filter((d) => bookmarks.includes(d.id));
+  // What the study tools draw from. Previously hardcoded to bookmarks, so all
+  // three tabs sat empty until four drugs had been bookmarked - which read as
+  // unimplemented rather than unstarted.
+  const bookmarkedDrugs = catalogDrugs.filter((d) => bookmarks.includes(d.id));
+  const studyDrugs = useMemo(() => {
+    if (studySource === "bookmarks") return bookmarkedDrugs;
+    if (studySource === "all") return catalogDrugs;
+    return catalogDrugs.filter((d) => d.category === studySource);
+  }, [studySource, catalogDrugs, bookmarks]);
 
   return (
     <>
@@ -192,12 +202,46 @@ function DrugsPage() {
           </>
         )}
 
+        {tab !== "all" && (
+          <div className="mt-6 flex flex-wrap items-center gap-2 rounded-2xl border border-border/40 bg-card/40 p-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Studying</span>
+            <button
+              onClick={() => setStudySource("all")}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                studySource === "all" ? "border-primary bg-primary/15 text-primary" : "border-border/40 text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              Whole catalogue ({catalogDrugs.length})
+            </button>
+            <button
+              onClick={() => setStudySource("bookmarks")}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                studySource === "bookmarks" ? "border-primary bg-primary/15 text-primary" : "border-border/40 text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              My saved ({bookmarkedDrugs.length})
+            </button>
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => setStudySource(c)}
+                style={studySource === c ? drugTagColor(c) : undefined}
+                className={`rounded-full border px-3 py-1 text-xs transition ${
+                  studySource === c ? "" : "border-border/40 text-muted-foreground hover:border-primary/40"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+
         {tab === "study" && (
           <div className="mt-6">
             {studyDrugs.length === 0 ? (
               <div className="glass-card p-10 text-center text-muted-foreground">
                 <BookOpen className="h-8 w-8 mx-auto mb-2 text-primary" />
-                No drugs in your study list yet. Bookmark drugs from the All tab.
+                Nothing to study in this selection. Pick another source above.
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -301,11 +345,16 @@ function Flashcards({ drugs }: { drugs: Drug[] }) {
             <div className="text-xs text-muted-foreground mt-4">Click to flip</div>
           </div>
         ) : (
-          <div className="text-left w-full">
-            <div className="text-xs uppercase text-primary font-semibold mb-1">Indications</div>
-            <div className="text-sm">{d.indications?.join(", ") || "—"}</div>
-            <div className="text-xs uppercase text-primary font-semibold mt-3 mb-1">Side effects</div>
-            <div className="text-sm">{d.side_effects?.join(", ") || "—"}</div>
+          <div className="w-full text-left">
+            {flashcardFacts(d).map((fact) => (
+              <div key={fact.label} className="mb-3 last:mb-0">
+                <div className="text-xs font-semibold uppercase text-primary">{fact.label}</div>
+                <div className="text-sm">{fact.value}</div>
+              </div>
+            ))}
+            {flashcardFacts(d).length === 0 && (
+              <p className="text-sm text-muted-foreground">No detail recorded for this medicine yet.</p>
+            )}
           </div>
         )}
       </div>
@@ -319,20 +368,38 @@ function Flashcards({ drugs }: { drugs: Drug[] }) {
 }
 
 function Quiz({ drugs, pool }: { drugs: Drug[]; pool: Drug[] }) {
-  const [questions] = useState(() => buildQuiz(drugs, pool, 10));
+  const [round, setRound] = useState(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const questions = useMemo(() => buildQuiz(drugs, pool, 10), [drugs, pool, round]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [done, setDone] = useState(false);
 
-  if (drugs.length < 4)
-    return <div className="mt-6 glass-card p-10 text-center text-muted-foreground">Bookmark at least 4 drugs to generate a quiz.</div>;
+  if (questions.length === 0) {
+    return (
+      <div className="mt-6 glass-card p-10 text-center text-muted-foreground">
+        Not enough detail in this selection to build a quiz. Try the whole catalogue.
+      </div>
+    );
+  }
 
-  const score = questions.reduce((s, q, i) => s + (answers[i] === q.correct ? 1 : 0), 0);
+  const score = questions.reduce((total, q, i) => total + (answers[i] === q.correct ? 1 : 0), 0);
+
+  function restart() {
+    setAnswers({});
+    setDone(false);
+    setRound((r) => r + 1);
+  }
 
   return (
     <div className="mt-6 max-w-2xl mx-auto space-y-4">
       {questions.map((q, i) => (
-        <div key={i} className="glass-card p-5">
-          <div className="text-xs text-primary font-semibold uppercase">Q{i + 1}</div>
+        <div key={q.id} className="glass-card p-5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase text-primary">Q{i + 1}</span>
+            <span className="rounded-full border border-border/40 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+              {q.kind === "sideEffect" ? "side effect" : q.kind}
+            </span>
+          </div>
           <div className="font-bold mt-1">{q.question}</div>
           <div className="mt-3 grid sm:grid-cols-2 gap-2">
             {q.options.map((o) => {
@@ -351,6 +418,12 @@ function Quiz({ drugs, pool }: { drugs: Drug[]; pool: Drug[] }) {
               );
             })}
           </div>
+          {/* Shown after submitting, so a wrong answer still teaches. */}
+          {done && (
+            <p className="mt-3 rounded-xl border border-border/40 bg-background/40 p-3 text-xs text-muted-foreground">
+              {q.explanation}
+            </p>
+          )}
         </div>
       ))}
       {!done ? (
@@ -361,29 +434,15 @@ function Quiz({ drugs, pool }: { drugs: Drug[]; pool: Drug[] }) {
       ) : (
         <div className="glass-card p-5 text-center">
           <div className="text-3xl font-bold text-primary">{score} / {questions.length}</div>
-          <div className="text-sm text-muted-foreground">Quiz complete.</div>
+          <div className="text-sm text-muted-foreground">
+            {score === questions.length ? "Perfect round." : "Review the explanations above."}
+          </div>
+          <button onClick={restart}
+            className="mt-4 rounded-full border border-primary/40 px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10">
+            New questions
+          </button>
         </div>
       )}
     </div>
   );
-}
-
-function buildQuiz(drugs: Drug[], pool: Drug[], n: number) {
-  const out: { question: string; options: string[]; correct: string }[] = [];
-  const ds = [...drugs].sort(() => Math.random() - 0.5).slice(0, n);
-  for (const d of ds) {
-    const ind = d.indications?.[0];
-    if (!ind) continue;
-    const wrongs = pool
-      .filter((p) => p.id !== d.id && p.indications?.[0])
-      .map((p) => p.name)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
-    out.push({
-      question: `Which drug is indicated for ${ind}?`,
-      options: [...wrongs, d.name].sort(() => Math.random() - 0.5),
-      correct: d.name,
-    });
-  }
-  return out;
 }
