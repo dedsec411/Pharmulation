@@ -11,7 +11,8 @@ import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
 import { unwrapList } from "@/lib/supabase-query";
 import { drugTagColor } from "@/lib/drug-colors";
-import { buildQuiz, flashcardFacts } from "@/lib/drug-study";
+import { flashcardFacts } from "@/lib/drug-study";
+import { DrugQuiz } from "@/components/game/DrugQuiz";
 
 export const Route = createFileRoute("/_authenticated/drugs")({
   head: () => ({ meta: [{ title: "Drug Database - Pharmulation" }] }),
@@ -259,7 +260,7 @@ function DrugsPage() {
         )}
 
         {tab === "flashcards" && <Flashcards drugs={studyDrugs} />}
-        {tab === "quiz" && <Quiz drugs={studyDrugs} pool={catalogDrugs} />}
+        {tab === "quiz" && <DrugQuiz drugs={studyDrugs} pool={catalogDrugs} />}
       </main>
 
       <AnimatePresence>
@@ -363,86 +364,6 @@ function Flashcards({ drugs }: { drugs: Drug[] }) {
         <div className="text-muted-foreground self-center">{(i % drugs.length) + 1} / {drugs.length}</div>
         <button onClick={() => { setI((p) => (p + 1) % drugs.length); setFlipped(false); }} className="rounded-full glass px-4 py-2">Next →</button>
       </div>
-    </div>
-  );
-}
-
-function Quiz({ drugs, pool }: { drugs: Drug[]; pool: Drug[] }) {
-  const [round, setRound] = useState(0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const questions = useMemo(() => buildQuiz(drugs, pool, 10), [drugs, pool, round]);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [done, setDone] = useState(false);
-
-  if (questions.length === 0) {
-    return (
-      <div className="mt-6 glass-card p-10 text-center text-muted-foreground">
-        Not enough detail in this selection to build a quiz. Try the whole catalogue.
-      </div>
-    );
-  }
-
-  const score = questions.reduce((total, q, i) => total + (answers[i] === q.correct ? 1 : 0), 0);
-
-  function restart() {
-    setAnswers({});
-    setDone(false);
-    setRound((r) => r + 1);
-  }
-
-  return (
-    <div className="mt-6 max-w-2xl mx-auto space-y-4">
-      {questions.map((q, i) => (
-        <div key={q.id} className="glass-card p-5">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase text-primary">Q{i + 1}</span>
-            <span className="rounded-full border border-border/40 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-              {q.kind === "sideEffect" ? "side effect" : q.kind}
-            </span>
-          </div>
-          <div className="font-bold mt-1">{q.question}</div>
-          <div className="mt-3 grid sm:grid-cols-2 gap-2">
-            {q.options.map((o) => {
-              const sel = answers[i] === o;
-              const correct = done && o === q.correct;
-              const wrong = done && sel && o !== q.correct;
-              return (
-                <button key={o} disabled={done} onClick={() => setAnswers((a) => ({ ...a, [i]: o }))}
-                  className={`text-left text-sm rounded-xl px-4 py-2.5 border transition ${
-                    correct ? "border-emerald-400 bg-emerald-400/10" :
-                    wrong ? "border-rose-400 bg-rose-400/10" :
-                    sel ? "border-primary bg-primary/10" : "border-white/10 hover:border-white/30"
-                  }`}>
-                  {o}
-                </button>
-              );
-            })}
-          </div>
-          {/* Shown after submitting, so a wrong answer still teaches. */}
-          {done && (
-            <p className="mt-3 rounded-xl border border-border/40 bg-background/40 p-3 text-xs text-muted-foreground">
-              {q.explanation}
-            </p>
-          )}
-        </div>
-      ))}
-      {!done ? (
-        <button onClick={() => setDone(true)}
-          className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground">
-          Submit ({Object.keys(answers).length}/{questions.length})
-        </button>
-      ) : (
-        <div className="glass-card p-5 text-center">
-          <div className="text-3xl font-bold text-primary">{score} / {questions.length}</div>
-          <div className="text-sm text-muted-foreground">
-            {score === questions.length ? "Perfect round." : "Review the explanations above."}
-          </div>
-          <button onClick={restart}
-            className="mt-4 rounded-full border border-primary/40 px-5 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10">
-            New questions
-          </button>
-        </div>
-      )}
     </div>
   );
 }
