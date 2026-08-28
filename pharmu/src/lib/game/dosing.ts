@@ -17,14 +17,55 @@
 
 export const LABEL_FREQUENCIES = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"] as const;
 export const LABEL_TIMINGS = ["morning", "with food", "before sleep", "as needed"] as const;
-export const LABEL_DURATIONS = ["3 days", "5 days", "7 days", "14 days", "4 weeks", "ongoing"] as const;
+/**
+ * Duration is a number of days, not a bucket.
+ *
+ * It used to be a fixed list, and the two label forms had drifted to different
+ * lists - one offering 3/5/7/14 days, the other only 7/14 days. Stored cases
+ * meanwhile ask for "5 days", "4 weeks" and "long-term", so a correct answer
+ * frequently could not be selected at all on the community slider.
+ */
+export const MAX_COURSE_DAYS = 30;
+export const ONGOING = "ongoing";
+
+/** "1 day", "7 days" - the singular matters on a dispensing label. */
+export function formatDuration(days: number): string {
+  return `${days} ${days === 1 ? "day" : "days"}`;
+}
+
+/**
+ * Days in a duration, or null when it has no fixed end.
+ *
+ * Accepts the older bucket wording so cases written as "4 weeks" or
+ * "long-term" still grade against a slider that speaks in days.
+ */
+export function durationDays(value: string): number | null {
+  const text = String(value ?? "").trim().toLowerCase();
+  if (!text) return null;
+  if (/ongoing|long[- ]?term|continuous|indefinite|as directed|repeat/.test(text)) return null;
+  const weeks = text.match(/^(\d+)\s*weeks?$/);
+  if (weeks) return Number(weeks[1]) * 7;
+  const months = text.match(/^(\d+)\s*months?$/);
+  if (months) return Number(months[1]) * 28;
+  const days = text.match(/^(\d+)\s*d(?:ays?)?$/);
+  if (days) return Number(days[1]);
+  const bare = text.match(/^(\d+)$/);
+  return bare ? Number(bare[1]) : null;
+}
+
+/** One spelling for a duration, so "4 weeks" and "28 days" compare equal. */
+export function normalizeDuration(value: string): string {
+  const days = durationDays(value);
+  return days === null ? ONGOING : formatDuration(days);
+}
 
 export type Regimen = {
   /** e.g. "100 mg" - empty when the source text carries no parsable strength. */
   strength: string;
   frequency: (typeof LABEL_FREQUENCIES)[number];
   timing: (typeof LABEL_TIMINGS)[number];
-  duration: (typeof LABEL_DURATIONS)[number];
+  /** "7 days" or "ongoing" - normalised, so it compares by value. */
+  duration: string;
 };
 
 export type DosableDrug = {
@@ -92,19 +133,6 @@ function parseTiming(text: string, frequency: Regimen["frequency"]): Regimen["ti
   return "morning";
 }
 
-const DURATION_DAYS: readonly [number, Regimen["duration"]][] = [
-  [3, "3 days"], [5, "5 days"], [7, "7 days"], [14, "14 days"], [28, "4 weeks"],
-];
-
-/** Snap a day count onto the nearest option the label form offers. */
-function snapDuration(days: number): Regimen["duration"] {
-  let best = DURATION_DAYS[0];
-  for (const entry of DURATION_DAYS) {
-    if (Math.abs(entry[0] - days) < Math.abs(best[0] - days)) best = entry;
-  }
-  return best[1];
-}
-
 function isCourse(drug: DosableDrug): boolean {
   const text = `${drug.drug_class ?? ""} ${drug.category ?? ""}`.toLowerCase();
   return /antibiotic|penicillin|macrolide|tetracycline|cephalosporin|quinolone|antifungal|antiviral/.test(text);
@@ -114,14 +142,12 @@ function parseDuration(text: string, drug: DosableDrug): Regimen["duration"] {
   // "x 7d", "x 7-14d", "for 5 days" - the lower bound of a range is the
   // conservative choice for a first supply.
   const match = text.match(/(?:x|for)\s*(\d+)\s*(?:-\s*\d+\s*)?(d\b|days?)/i);
-  if (match) return snapDuration(Number(match[1]));
-  if (/\bweeks?\b/i.test(text)) {
-    const weeks = text.match(/(\d+)\s*weeks?/i);
-    if (weeks) return snapDuration(Number(weeks[1]) * 7);
-  }
+  if (match) return formatDuration(Math.min(Number(match[1]), MAX_COURSE_DAYS));
+  const weeks = text.match(/(\d+)\s*weeks?/i);
+  if (weeks) return formatDuration(Math.min(Number(weeks[1]) * 7, MAX_COURSE_DAYS));
   // An antibiotic is a finite course even when the text does not say so; a
   // long-term medicine is not.
-  return isCourse(drug) ? "7 days" : "ongoing";
+  return isCourse(drug) ? "7 days" : ONGOING;
 }
 
 /**
@@ -149,6 +175,6 @@ export function regimenForDrug(drug: DosableDrug): Regimen | null {
 /** The regimen written the way it appears on a prescription. */
 export function regimenSig(regimen: Regimen): string {
   const parts = [regimen.strength, regimen.frequency, regimen.timing];
-  if (regimen.duration !== "ongoing") parts.push(`for ${regimen.duration}`);
+  if (normalizeDuration(regimen.duration) !== ONGOING) parts.push(`for ${regimen.duration}`);
   return parts.filter(Boolean).join(", ");
 }

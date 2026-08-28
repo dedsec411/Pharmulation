@@ -22,6 +22,11 @@ import {
   ArrowLeft, FileText, Pill, Check, X as XIcon,
   Tags, Trash2, User, ShoppingBag, ClipboardList,
 } from "lucide-react";
+// The one duration control, shared with OTC. This route had a second copy that
+// had drifted to a shorter list, so the same step offered different answers
+// depending on which mode you reached it from.
+import { DurationSlider } from "@/components/game/dispensing";
+import { formatDuration, normalizeDuration } from "@/lib/game/dosing";
 
 // ─── Route ───────────────────────────────────────────────────────────────────
 export const Route = createFileRoute("/_authenticated/game/community")({
@@ -38,7 +43,6 @@ export const Route = createFileRoute("/_authenticated/game/community")({
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FREQS     = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"];
 const TIMINGS   = ["morning", "with food", "before sleep", "as needed"];
-const DURATIONS = ["7 days", "14 days", "4 weeks", "ongoing"];
 
 function CommunityFloatingPills({ className = "" }: { className?: string }) {
   return (
@@ -559,7 +563,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     const ok = correctAns &&
       ans.frequency === correctAns.frequency &&
       ans.timing === correctAns.timing &&
-      ans.duration === correctAns.duration;
+      normalizeDuration(ans.duration) === normalizeDuration(correctAns.duration);
     if (ok) {
       // Worth less for each attempt it took to get the label right.
       const factor = retryRewardFactor(labelTries[drug] ?? 0);
@@ -579,7 +583,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
         const fields: string[] = [];
         if (ans.frequency !== correctAns.frequency) fields.push(`frequency`);
         if (ans.timing    !== correctAns.timing)    fields.push(`timing`);
-        if (ans.duration  !== correctAns.duration)  fields.push(`duration`);
+        if (normalizeDuration(ans.duration) !== normalizeDuration(correctAns.duration)) fields.push(`duration`);
         errPanel.logError({
           errorType: "Wrong label",
           wrongChoice: `${drug}: ${ans.frequency} · ${ans.timing} · ${ans.duration}`,
@@ -1344,7 +1348,7 @@ function InfoSection({ label, items }: { label: string; items?: string[] | null 
 function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
   const [freq, setFreq]       = useState("");
   const [timing, setTiming]   = useState("");
-  const [duration, setDuration] = useState(DURATIONS[0]);
+  const [duration, setDuration] = useState(formatDuration(7));
 
   if (previous) {
     return (
@@ -1398,37 +1402,6 @@ function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
   );
 }
 
-function DurationSlider({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  const index = Math.max(0, DURATIONS.indexOf(value));
-
-  return (
-    <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Duration</p>
-        <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-          {value}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={DURATIONS.length - 1}
-        step={1}
-        value={index}
-        onChange={(event) => onChange(DURATIONS[Number(event.target.value)])}
-        aria-label="Duration"
-        className="mt-4 w-full accent-primary"
-      />
-      <div className="mt-2 grid grid-cols-4 gap-1 text-center text-[10px] font-semibold text-muted-foreground">
-        {DURATIONS.map((durationOption) => (
-          <span key={durationOption} className={durationOption === value ? "text-primary" : ""}>
-            {durationOption}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function OptionPicker({ label, options, value, onChange }: any) {
   return (

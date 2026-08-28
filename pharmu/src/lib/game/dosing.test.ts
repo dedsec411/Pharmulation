@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  LABEL_DURATIONS, LABEL_FREQUENCIES, LABEL_TIMINGS,
-  regimenForDrug, regimenSig,
+  LABEL_FREQUENCIES, LABEL_TIMINGS, MAX_COURSE_DAYS, ONGOING,
+  durationDays, formatDuration, normalizeDuration, regimenForDrug, regimenSig,
 } from "./dosing";
 
 // The dosage strings exactly as they are stored in the drugs table.
@@ -71,7 +71,11 @@ describe("regimenForDrug", () => {
       const r = regimenForDrug(drug)!;
       expect(LABEL_FREQUENCIES).toContain(r.frequency);
       expect(LABEL_TIMINGS).toContain(r.timing);
-      expect(LABEL_DURATIONS).toContain(r.duration);
+      const days = durationDays(r.duration);
+      if (days !== null) {
+        expect(days).toBeGreaterThanOrEqual(1);
+        expect(days).toBeLessThanOrEqual(MAX_COURSE_DAYS);
+      }
     }
   });
 
@@ -90,5 +94,44 @@ describe("regimenSig", () => {
 
   it("leaves the duration off an ongoing medicine", () => {
     expect(regimenSig(regimenForDrug(REAL.amlodipine)!)).not.toContain("ongoing");
+  });
+});
+
+
+describe("duration as a day count", () => {
+  it("reads a plain day count", () => {
+    expect(durationDays("7 days")).toBe(7);
+    expect(durationDays("1 day")).toBe(1);
+    expect(durationDays("10 days")).toBe(10);
+  });
+
+  // Stored cases were written against the old bucket list, so those spellings
+  // have to keep grading against a slider that now speaks in days.
+  it("understands the older bucket wording", () => {
+    expect(durationDays("4 weeks")).toBe(28);
+    expect(durationDays("2 weeks")).toBe(14);
+    expect(durationDays("ongoing")).toBeNull();
+    expect(durationDays("long-term")).toBeNull();
+  });
+
+  it("makes equivalent durations compare equal", () => {
+    expect(normalizeDuration("4 weeks")).toBe(normalizeDuration("28 days"));
+    expect(normalizeDuration("long-term")).toBe(normalizeDuration("ongoing"));
+    expect(normalizeDuration("ongoing")).toBe(ONGOING);
+  });
+
+  it("gets the singular right on a one-day supply", () => {
+    expect(formatDuration(1)).toBe("1 day");
+    expect(formatDuration(2)).toBe("2 days");
+  });
+
+  it("keeps every stored duration reachable on the slider", () => {
+    // These are the distinct values the live cases table actually holds.
+    for (const stored of ["5 days", "7 days", "14 days", "4 weeks", "ongoing", "long-term"]) {
+      const days = durationDays(stored);
+      if (days === null) continue;
+      expect(days, `${stored} is off the slider`).toBeGreaterThanOrEqual(1);
+      expect(days, `${stored} is off the slider`).toBeLessThanOrEqual(MAX_COURSE_DAYS);
+    }
   });
 });

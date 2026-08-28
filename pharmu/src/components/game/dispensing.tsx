@@ -5,7 +5,10 @@ import { RX_DRUG_CATEGORIES, getBrandsForDrug, setRealBrands } from "@/lib/drug-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { unwrapList } from "@/lib/supabase-query";
-import { LABEL_DURATIONS, LABEL_FREQUENCIES, LABEL_TIMINGS } from "@/lib/game/dosing";
+import {
+  LABEL_FREQUENCIES, LABEL_TIMINGS,
+  MAX_COURSE_DAYS, ONGOING, durationDays, formatDuration,
+} from "@/lib/game/dosing";
 
 /**
  * The dispensing controls shared by Rx and OTC.
@@ -18,7 +21,7 @@ import { LABEL_DURATIONS, LABEL_FREQUENCIES, LABEL_TIMINGS } from "@/lib/game/do
 // Defined alongside the dose parser that has to emit values from these lists,
 // so the two can never drift apart. Re-exported here because this is where the
 // label UI has always imported them from.
-export { LABEL_FREQUENCIES, LABEL_TIMINGS, LABEL_DURATIONS } from "@/lib/game/dosing";
+export { LABEL_FREQUENCIES, LABEL_TIMINGS } from "@/lib/game/dosing";
 
 export type LabelAnswer = { frequency: string; timing: string; duration: string };
 
@@ -49,30 +52,58 @@ export function OptionPicker({
 }
 
 export function DurationSlider({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  const index = Math.max(0, (LABEL_DURATIONS as readonly string[]).indexOf(value));
+  // A course is a number of days, so the control is a day count rather than a
+  // pick from four buckets. The buckets could not express "5 days" or "10 days"
+  // at all, and stored cases ask for both.
+  const days = durationDays(value);
+  const ongoing = days === null;
+  const sliderDays = days ?? 7;
+
   return (
     <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">Duration</p>
         <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-          {value}
+          {ongoing ? "Ongoing" : formatDuration(sliderDays)}
         </span>
       </div>
+
       <input
         type="range"
-        min={0}
-        max={LABEL_DURATIONS.length - 1}
+        min={1}
+        max={MAX_COURSE_DAYS}
         step={1}
-        value={index}
-        onChange={(event) => onChange(LABEL_DURATIONS[Number(event.target.value)])}
-        aria-label="Duration"
-        className="mt-4 w-full accent-primary"
+        value={sliderDays}
+        disabled={ongoing}
+        onChange={(event) => onChange(formatDuration(Number(event.target.value)))}
+        aria-label="Duration in days"
+        className="mt-4 w-full accent-primary disabled:opacity-40"
       />
-      <div className="mt-2 grid grid-cols-6 gap-1 text-center text-[9px] font-semibold text-muted-foreground">
-        {LABEL_DURATIONS.map((option) => (
-          <span key={option} className={option === value ? "text-primary" : ""}>{option}</span>
+
+      {/* Every day is selectable; only a few are labelled, so the scale stays
+          readable rather than printing thirty numbers. */}
+      <div className="mt-1 flex justify-between text-[9px] font-semibold text-muted-foreground">
+        {[1, 7, 14, 21, MAX_COURSE_DAYS].map((mark) => (
+          <span key={mark} className={!ongoing && mark === sliderDays ? "text-primary" : ""}>{mark}</span>
         ))}
       </div>
+
+      {/* A long-term medicine has no day count, so it cannot live on the scale.
+          Without this, every "ongoing" answer would be unreachable. */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={ongoing}
+        onClick={() => onChange(ongoing ? formatDuration(7) : ONGOING)}
+        className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+          ongoing
+            ? "border-primary bg-primary/15 text-primary"
+            : "border-border/40 text-muted-foreground hover:border-primary/40"
+        }`}
+      >
+        <span className={`inline-block size-2 rounded-full ${ongoing ? "bg-primary" : "bg-muted-foreground/40"}`} />
+        Ongoing - no fixed end date
+      </button>
     </div>
   );
 }
@@ -83,7 +114,7 @@ export function LabelForm({
 }: { drug: string; brand?: string | null; onSubmit: (answer: LabelAnswer) => void }) {
   const [frequency, setFrequency] = useState("");
   const [timing, setTiming] = useState("");
-  const [duration, setDuration] = useState<string>(LABEL_DURATIONS[2]);
+  const [duration, setDuration] = useState<string>(formatDuration(7));
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
