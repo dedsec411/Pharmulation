@@ -3,6 +3,7 @@ import { fetchRandomCase, type Difficulty, type Mode } from "@/lib/game/shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useActiveCaseStore } from "@/lib/active-case-store";
+import { regimenForDrug } from "@/lib/game/dosing";
 
 export function useCaseLoader(mode: Mode, difficulty?: Difficulty | null) {
   const { profile } = useAuthStore();
@@ -145,10 +146,16 @@ function buildGeneratedCase(template: TemplateRow, patientRule: any, correctDrug
     allergies: normalizeAllergies(patientRule).join(", ") || "none",
     ...(base.patient_info_json ?? {}),
   };
-  const dose = randomDose(template.variation_rules?.dose_range);
+  // The drug's own verified regimen, falling back to the template's range only
+  // when a drug has no dosage recorded. The range alone produced strengths and
+  // frequencies that did not belong to the drug on the slip.
+  const regimen = regimenForDrug(correctDrug);
+  const dose = regimen?.strength ?? randomDose(template.variation_rules?.dose_range);
   const distractors = pickDistractors(correctDrug, allDrugs, 3).map((drug) => drug.name);
   const drugOptions = shuffle([correctDrug.name, ...distractors]);
-  const label = labelForDrug(correctDrug, dose);
+  const label = regimen
+    ? { frequency: regimen.frequency, timing: regimen.timing, duration: regimen.duration }
+    : labelForDrug(correctDrug, dose);
   const correctAnswer = buildCorrectAnswer(template.mode, base.correct_answer_json ?? {}, correctDrug, drugOptions, label, dose);
   const rxItems = base.electronic_prescription_json?.items?.length
     ? base.electronic_prescription_json.items
@@ -335,7 +342,13 @@ function structuredCloneSafe<T>(value: T): T {
 
 function interpolateObject<T>(value: T, vars: Record<string, string>): T {
   if (typeof value === "string") {
-    return value.replace(/\{(\w+)\}/g, (_, key) => vars[key] ?? `{${key}}`) as T;
+    // Both {token} and {{token}}: the seeded templates use the doubled form, and
+    // matching only the single one replaced the inner token while leaving the
+    // outer braces behind, printing "{Sana Yousaf} - bacterial infection".
+    return value.replace(/\{\{(\w+)\}\}|\{(\w+)\}/g, (whole, doubled, single) => {
+      const key = doubled ?? single;
+      return vars[key] ?? whole;
+    }) as T;
   }
   if (Array.isArray(value)) return value.map((item) => interpolateObject(item, vars)) as T;
   if (value && typeof value === "object") {
