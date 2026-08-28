@@ -5,6 +5,7 @@ import { RX_DRUG_CATEGORIES, getBrandsForDrug, setRealBrands } from "@/lib/drug-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { unwrapList } from "@/lib/supabase-query";
+import { LABEL_DURATIONS, LABEL_FREQUENCIES, LABEL_TIMINGS } from "@/lib/game/dosing";
 
 /**
  * The dispensing controls shared by Rx and OTC.
@@ -14,15 +15,16 @@ import { unwrapList } from "@/lib/supabase-query";
  * OTC growing its own parallel copy.
  */
 
-export const LABEL_FREQUENCIES = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"];
-export const LABEL_TIMINGS = ["morning", "with food", "before sleep", "as needed"];
-export const LABEL_DURATIONS = ["3 days", "5 days", "7 days", "14 days", "4 weeks", "ongoing"];
+// Defined alongside the dose parser that has to emit values from these lists,
+// so the two can never drift apart. Re-exported here because this is where the
+// label UI has always imported them from.
+export { LABEL_FREQUENCIES, LABEL_TIMINGS, LABEL_DURATIONS } from "@/lib/game/dosing";
 
 export type LabelAnswer = { frequency: string; timing: string; duration: string };
 
 export function OptionPicker({
   label, options, value, onChange,
-}: { label: string; options: string[]; value: string; onChange: (value: string) => void }) {
+}: { label: string; options: readonly string[]; value: string; onChange: (value: string) => void }) {
   return (
     <div className="mt-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">{label}</p>
@@ -47,7 +49,7 @@ export function OptionPicker({
 }
 
 export function DurationSlider({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  const index = Math.max(0, LABEL_DURATIONS.indexOf(value));
+  const index = Math.max(0, (LABEL_DURATIONS as readonly string[]).indexOf(value));
   return (
     <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
       <div className="flex items-center justify-between gap-3">
@@ -81,7 +83,7 @@ export function LabelForm({
 }: { drug: string; brand?: string | null; onSubmit: (answer: LabelAnswer) => void }) {
   const [frequency, setFrequency] = useState("");
   const [timing, setTiming] = useState("");
-  const [duration, setDuration] = useState(LABEL_DURATIONS[2]);
+  const [duration, setDuration] = useState<string>(LABEL_DURATIONS[2]);
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
