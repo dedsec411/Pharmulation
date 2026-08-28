@@ -1,8 +1,9 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Trophy, RotateCw, Home, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import type { ErrorEntry } from "./ErrorExplanationPanel";
+import { CaseCelebration } from "./CaseCelebration";
 
 type Drug = { name: string; correct: boolean; info?: string };
 
@@ -21,6 +22,9 @@ type Props = {
 };
 
 export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanation, drugs = [], breakdown = [], errors = [], onNext, children }: Props) {
+  // Every mode renders its results through here, so the celebration lives here
+  // too rather than being wired into five routes separately.
+  const [celebrating, setCelebrating] = useState(true);
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     const start = performance.now();
@@ -37,6 +41,17 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
+      <AnimatePresence>
+        {celebrating && (
+          <CaseCelebration
+            score={score}
+            xpGain={xpGain}
+            errorCount={errors.length}
+            onDone={() => setCelebrating(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
