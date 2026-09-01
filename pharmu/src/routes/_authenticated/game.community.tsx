@@ -25,7 +25,7 @@ import {
 // The one duration control, shared with OTC. This route had a second copy that
 // had drifted to a shorter list, so the same step offered different answers
 // depending on which mode you reached it from.
-import { DurationSlider } from "@/components/game/dispensing";
+import { DurationSlider, InstructionPicker } from "@/components/game/dispensing";
 import { formatDuration, normalizeDuration } from "@/lib/game/dosing";
 
 // ─── Route ───────────────────────────────────────────────────────────────────
@@ -558,7 +558,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     else setPhase("label");
   }
 
-  function submitLabel(drug: string, ans: { frequency: string; timing: string; duration: string }) {
+  function submitLabel(drug: string, ans: { frequency: string; timing: string; duration: string; instruction?: string }) {
     const correctAns = caseData?.correct_answer_json?.labels?.[drug];
     const ok = correctAns &&
       ans.frequency === correctAns.frequency &&
@@ -586,7 +586,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
         if (normalizeDuration(ans.duration) !== normalizeDuration(correctAns.duration)) fields.push(`duration`);
         errPanel.logError({
           errorType: "Wrong label",
-          wrongChoice: `${drug}: ${ans.frequency} · ${ans.timing} · ${ans.duration}`,
+          wrongChoice: `${drug}: ${[ans.frequency, ans.timing, ans.duration, ans.instruction].filter(Boolean).join(" · ")}`,
           correctChoice: `${correctAns.frequency} · ${correctAns.timing} · ${correctAns.duration}`,
           whyWrong: `Your label for ${drug} is off on ${fields.join(", ")}.`,
           whatToKnow: `Label instructions for ${drug} are based on its half-life, food interactions, and recommended course duration.`,
@@ -966,16 +966,20 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                 </button>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
-                {getBrandsForDrug(brandDrug).map((brand) => (
+                {getBrandsForDrug(brandDrug).map((option) => (
                   <motion.button
-                    key={brand}
+                    key={option.brand}
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => selectBrand(brandDrug, brand)}
+                    onClick={() => selectBrand(brandDrug, option.brand)}
                     className="rounded-xl border border-border/40 bg-card/60 p-4 text-left transition hover:border-primary/50 hover:bg-primary/5"
                   >
-                    <p className="font-semibold">{brand}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Dispense this brand</p>
+                    <p className="font-semibold">{option.brand}</p>
+                    {/* Who makes it, not filler text: the company is part of
+                        recognising a brand at the counter. */}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {option.company ?? "Dispense this brand"}
+                    </p>
                   </motion.button>
                 ))}
               </div>
@@ -1006,7 +1010,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
           caseData={caseData}
           previous={labelAnswers[correctDrugs[labelIdx]]}
           count={`${labelIdx + 1} / ${correctDrugs.length}`}
-          onSubmit={(a: { frequency: string; timing: string; duration: string }) =>
+          onSubmit={(a: { frequency: string; timing: string; duration: string; instruction?: string }) =>
             submitLabel(correctDrugs[labelIdx], a)}
         />
       )}
@@ -1349,6 +1353,7 @@ function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
   const [freq, setFreq]       = useState("");
   const [timing, setTiming]   = useState("");
   const [duration, setDuration] = useState(formatDuration(7));
+  const [instruction, setInstruction] = useState("");
 
   if (previous) {
     return (
@@ -1390,9 +1395,10 @@ function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
         <OptionPicker label="Frequency" options={FREQS}     value={freq}     onChange={setFreq} />
         <OptionPicker label="Timing"    options={TIMINGS}   value={timing}   onChange={setTiming} />
         <DurationSlider value={duration} onChange={setDuration} />
+        <InstructionPicker value={instruction} onChange={setInstruction} />
         <button
           disabled={!freq || !timing}
-          onClick={() => onSubmit({ frequency: freq, timing, duration })}
+          onClick={() => onSubmit({ frequency: freq, timing, duration, instruction: instruction.trim() || undefined })}
           className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
           Submit label
         </button>

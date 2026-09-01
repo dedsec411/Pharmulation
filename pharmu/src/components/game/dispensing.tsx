@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Pill, ShieldAlert, X as XIcon } from "lucide-react";
-import { RX_DRUG_CATEGORIES, getBrandsForDrug, setRealBrands } from "@/lib/drug-catalog";
+import { RX_DRUG_CATEGORIES, getBrandsForDrug, setRealBrands, type BrandOption } from "@/lib/drug-catalog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { unwrapList } from "@/lib/supabase-query";
 import {
   LABEL_FREQUENCIES, LABEL_TIMINGS,
-  MAX_COURSE_DAYS, ONGOING, durationDays, formatDuration,
+  LABEL_INSTRUCTIONS, MAX_COURSE_DAYS, ONGOING, durationDays, formatDuration,
 } from "@/lib/game/dosing";
 
 /**
@@ -21,9 +21,15 @@ import {
 // Defined alongside the dose parser that has to emit values from these lists,
 // so the two can never drift apart. Re-exported here because this is where the
 // label UI has always imported them from.
-export { LABEL_FREQUENCIES, LABEL_TIMINGS } from "@/lib/game/dosing";
+export { LABEL_FREQUENCIES, LABEL_TIMINGS, LABEL_INSTRUCTIONS } from "@/lib/game/dosing";
 
-export type LabelAnswer = { frequency: string; timing: string; duration: string };
+export type LabelAnswer = {
+  frequency: string;
+  timing: string;
+  duration: string;
+  /** Auxiliary label line. Optional - many supplies need none. */
+  instruction?: string;
+};
 
 export function OptionPicker({
   label, options, value, onChange,
@@ -108,6 +114,66 @@ export function DurationSlider({ value, onChange }: { value: string; onChange: (
   );
 }
 
+/**
+ * The cautionary line on the label.
+ *
+ * Presets cover the labels that come up constantly; "Other" exists because the
+ * useful instruction is often specific to the patient - a missed dose rule, a
+ * device to bring back, a review date - and a fixed list cannot hold those.
+ */
+export function InstructionPicker({
+  value, onChange,
+}: { value: string; onChange: (value: string) => void }) {
+  const [custom, setCustom] = useState(false);
+  const preset = (LABEL_INSTRUCTIONS as readonly string[]).includes(value);
+
+  return (
+    <div className="mt-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+        Other / special instruction <span className="text-muted-foreground">(optional)</span>
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {LABEL_INSTRUCTIONS.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => { setCustom(false); onChange(value === option ? "" : option); }}
+            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+              !custom && value === option
+                ? "border-primary bg-primary/15 text-primary"
+                : "border-border/40 text-muted-foreground hover:border-primary/40"
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => { setCustom(true); if (preset) onChange(""); }}
+          className={`rounded-full border px-3 py-1.5 text-xs transition ${
+            custom
+              ? "border-primary bg-primary/15 text-primary"
+              : "border-border/40 text-muted-foreground hover:border-primary/40"
+          }`}
+        >
+          Other...
+        </button>
+      </div>
+
+      {custom && (
+        <input
+          autoFocus
+          value={preset ? "" : value}
+          onChange={(event) => onChange(event.target.value)}
+          maxLength={120}
+          placeholder="Write the instruction as it should read on the label"
+          className="mt-2 w-full rounded-xl border border-border/40 bg-background/50 px-3 py-2 text-sm outline-none focus:border-primary/60"
+        />
+      )}
+    </div>
+  );
+}
+
 /** Write the dispensing label for one medicine. */
 export function LabelForm({
   drug, brand, onSubmit,
@@ -115,6 +181,7 @@ export function LabelForm({
   const [frequency, setFrequency] = useState("");
   const [timing, setTiming] = useState("");
   const [duration, setDuration] = useState<string>(formatDuration(7));
+  const [instruction, setInstruction] = useState("");
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
@@ -123,10 +190,11 @@ export function LabelForm({
       <OptionPicker label="Frequency" options={LABEL_FREQUENCIES} value={frequency} onChange={setFrequency} />
       <OptionPicker label="Timing" options={LABEL_TIMINGS} value={timing} onChange={setTiming} />
       <DurationSlider value={duration} onChange={setDuration} />
+      <InstructionPicker value={instruction} onChange={setInstruction} />
       <button
         type="button"
         disabled={!frequency || !timing}
-        onClick={() => onSubmit({ frequency, timing, duration })}
+        onClick={() => onSubmit({ frequency, timing, duration, instruction: instruction.trim() || undefined })}
         className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
       >
         Submit label
@@ -162,14 +230,14 @@ export function DispensingShelf({
     queryKey: ["drug-brands"],
     queryFn: async () => {
       const rows = unwrapList(
-        await supabase.from("drug_brands").select("brand, market, drugs(name, generic_name)"),
+        await supabase.from("drug_brands").select("brand, market, manufacturer, drugs(name, generic_name)"),
         "medicine brands",
       );
-      const byGeneric: Record<string, string[]> = {};
+      const byGeneric: Record<string, BrandOption[]> = {};
       for (const row of rows as any[]) {
         const key = String(row.drugs?.generic_name || row.drugs?.name || "").toLowerCase().trim();
         if (!key) continue;
-        (byGeneric[key] ??= []).push(row.brand);
+        (byGeneric[key] ??= []).push({ brand: row.brand, company: row.manufacturer });
       }
       setRealBrands(byGeneric);
       return byGeneric;
@@ -295,14 +363,19 @@ export function DispensingShelf({
               </button>
             </div>
             <div className="mt-4 grid gap-2">
-              {getBrandsForDrug(brandDrug).map((brand: string) => (
+              {getBrandsForDrug(brandDrug).map((option) => (
                 <button
-                  key={brand}
+                  key={option.brand}
                   type="button"
-                  onClick={() => { onDispense(brandDrug, brand); setBrandDrug(null); }}
-                  className="rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm transition hover:border-primary/50 hover:bg-primary/10"
+                  onClick={() => { onDispense(brandDrug, option.brand); setBrandDrug(null); }}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-muted/20 p-3 text-left text-sm transition hover:border-primary/50 hover:bg-primary/10"
                 >
-                  {brand}
+                  <span className="font-semibold">{option.brand}</span>
+                  {/* The company matters at the counter: a learner is choosing
+                      between the originator and the generics beside it. */}
+                  {option.company && (
+                    <span className="shrink-0 text-xs text-muted-foreground">{option.company}</span>
+                  )}
                 </button>
               ))}
             </div>
