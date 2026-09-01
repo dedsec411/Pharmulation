@@ -17,11 +17,13 @@ type Props = {
   breakdown?: { label: string; delta: number }[];
   errors?: ErrorEntry[];
   onNext: () => void;
+  /** Named in the celebration where the mode produces something. */
+  product?: { name: string; detail?: string };
   /** Extra mode-specific review, rendered above the actions. */
   children?: ReactNode;
 };
 
-export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanation, drugs = [], breakdown = [], errors = [], onNext, children }: Props) {
+export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanation, drugs = [], breakdown = [], errors = [], onNext, product, children }: Props) {
   // Every mode renders its results through here, so the celebration lives here
   // too rather than being wired into five routes separately.
   const [celebrating, setCelebrating] = useState(true);
@@ -47,6 +49,7 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
             score={score}
             xpGain={xpGain}
             errorCount={errors.length}
+            product={product}
             onDone={() => setCelebrating(false)}
           />
         )}

@@ -77,11 +77,13 @@ const TIER_STYLE: Record<CelebrationTier["key"], { ring: string; text: string; g
 };
 
 export function CaseCelebration({
-  score, xpGain, errorCount, onDone,
+  score, xpGain, errorCount, product, onDone,
 }: {
   score: number;
   xpGain: number;
   errorCount: number;
+  /** What the run actually produced, where a mode makes something. */
+  product?: { name: string; detail?: string };
   onDone: () => void;
 }) {
   const reduced = useReducedMotion();
@@ -162,6 +164,16 @@ export function CaseCelebration({
 
         <p className={`mt-4 text-2xl font-black tracking-tight ${style.text}`}>{tier.title}</p>
         <p className="mt-1 text-sm text-muted-foreground">{tier.blurb}</p>
+
+        {/* Manufacturing ends with a thing in your hands, so the celebration
+            names it rather than showing a score alone. */}
+        {product && (
+          <div className="mt-4 rounded-xl border border-border/50 bg-background/50 px-4 py-2.5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">You made</p>
+            <p className="mt-0.5 font-bold leading-tight">{product.name}</p>
+            {product.detail && <p className="text-xs text-muted-foreground">{product.detail}</p>}
+          </div>
+        )}
 
         <p className="mt-5 text-5xl font-black tabular-nums">{count}</p>
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">points</p>
