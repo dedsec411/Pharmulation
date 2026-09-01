@@ -17,6 +17,8 @@
  * computed from height and BMI so the three can never contradict each other.
  */
 
+import { between, intBetween, makeRng, pick } from "./seeded-random";
+
 export type Vitals = {
   bp: string;
   pulse: string;
@@ -45,37 +47,6 @@ export type ClinicalPicture = {
   testAdvised: string;
   advice: string;
 };
-
-/* ------------------------------------------------------------------ *
- * Deterministic randomness
- * ------------------------------------------------------------------ */
-
-/** xmur3: string -> 32-bit seed. */
-function hashSeed(str: string): number {
-  let h = 1779033703 ^ str.length;
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-    h = (h << 13) | (h >>> 19);
-  }
-  return h >>> 0;
-}
-
-/** mulberry32: seed -> repeatable [0,1) sequence. */
-function makeRng(seed: string) {
-  let a = hashSeed(seed);
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-type Rng = () => number;
-const between = (rng: Rng, min: number, max: number) => min + rng() * (max - min);
-const intBetween = (rng: Rng, min: number, max: number) => Math.round(between(rng, min, max));
-const pick = <T>(rng: Rng, items: readonly T[]): T => items[Math.floor(rng() * items.length) % items.length];
 
 /* ------------------------------------------------------------------ *
  * Conditions
