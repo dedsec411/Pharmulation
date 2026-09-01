@@ -59,6 +59,13 @@
 :root {
   --radius: 1rem;
 
+  /* Native controls follow the dark theme.
+     Without this the browser paints select popups, scrollbars and date pickers
+     from the OS light palette, while the options inside inherit the page's
+     near-white foreground - so the Drug Database class and category menus
+     rendered near-white text on a white popup and could not be read. */
+  color-scheme: dark;
+
   /* Hospital board navy with a dark health-green shade */
   --background: oklch(0.13 0.05 190);
   --foreground: oklch(0.97 0.01 240);
@@ -115,6 +122,16 @@
 @layer base {
   * {
     border-color: var(--color-border);
+  }
+
+  /* A select carries a gradient background, which its popup cannot inherit, and
+     Chrome on Windows does not always take option colours from color-scheme
+     alone. Give options a solid colour of their own so the menu is legible
+     whichever engine draws it. */
+  option,
+  optgroup {
+    background-color: var(--color-popover);
+    color: var(--color-popover-foreground);
   }
 
   html, body {
