@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
+import { CaseFileSlides } from "@/components/game/CaseFileSlides";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
@@ -50,78 +51,12 @@ function ClinicalEkgFloor() {
   );
 }
 
-type ChartTab = "vitals" | "meds" | "labs" | "order";
 
 function toFiniteNumber(value: unknown, fallback: number) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
 
-function bpPercent(value: string) {
-  const systolic = Number(value.match(/\d+/)?.[0]);
-  if (!Number.isFinite(systolic)) return 70;
-  return Math.max(35, Math.min(100, ((systolic - 80) / 80) * 100));
-}
-
-function VitalWave({ label, value, pct, tone = "primary" }: { label: string; value: string; pct: number; tone?: "primary" | "red" | "sky" }) {
-  const theme = tone === "red"
-    ? {
-      wrap: "border-red-400/35 bg-red-500/10 shadow-[0_14px_34px_-28px_rgba(239,68,68,0.9)]",
-      label: "text-red-200",
-      value: "text-red-50",
-      track: "bg-red-950/45",
-      fill: "bg-red-500 shadow-[0_0_18px_rgba(239,68,68,0.7)]",
-      stroke: "rgb(239 68 68)",
-      glow: "rgba(239,68,68,0.65)",
-    }
-    : tone === "sky"
-      ? {
-        wrap: "border-sky-300/35 bg-sky-400/10 shadow-[0_14px_34px_-28px_rgba(14,165,233,0.9)]",
-        label: "text-sky-200",
-        value: "text-sky-50",
-        track: "bg-sky-950/45",
-        fill: "bg-sky-500 shadow-[0_0_18px_rgba(14,165,233,0.7)]",
-        stroke: "rgb(14 165 233)",
-        glow: "rgba(14,165,233,0.65)",
-      }
-      : {
-        wrap: "border-emerald-300/35 bg-emerald-400/10 shadow-[0_14px_34px_-28px_rgba(16,185,129,0.9)]",
-        label: "text-emerald-200",
-        value: "text-emerald-50",
-        track: "bg-emerald-950/45",
-        fill: "bg-emerald-500 shadow-[0_0_18px_rgba(16,185,129,0.7)]",
-        stroke: "rgb(16 185 129)",
-        glow: "rgba(16,185,129,0.65)",
-      };
-  const safePct = Math.max(8, Math.min(100, Number.isFinite(pct) ? pct : 72));
-  return (
-    <div className={`relative overflow-hidden rounded-xl border p-2.5 ${theme.wrap}`}>
-      <div className="pointer-events-none absolute inset-0 opacity-45"
-        style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)", backgroundSize: "12px 12px" }} />
-      <div className="relative flex items-center gap-3">
-        <div className="w-10 font-mono text-[10px] font-black uppercase tracking-wider">
-          <span className={theme.label}>{label}</span>
-        </div>
-        <svg viewBox="0 0 150 34" className="h-9 min-w-0 flex-1" preserveAspectRatio="none" aria-hidden="true">
-          <polyline
-            points="0,19 18,19 24,19 30,10 36,26 43,19 58,19 64,19 70,5 77,31 84,19 101,19 110,14 118,24 126,19 150,19"
-            fill="none"
-            stroke={theme.stroke}
-            strokeWidth="2.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="vital-ecg-line"
-            style={{ filter: `drop-shadow(0 0 5px ${theme.glow})` }}
-          />
-        </svg>
-        <div className={`w-16 text-right font-mono text-xs font-black tabular-nums ${theme.value}`}>{value}</div>
-      </div>
-      <div className={`relative mt-1.5 h-1.5 overflow-hidden rounded-full ${theme.track}`}>
-        <div className={`h-full rounded-full ${theme.fill}`} style={{ width: `${safePct}%`, transition: "width 0.7s ease" }} />
-      </div>
-    </div>
-  );
-}
 
 function ClinicalAlarmBanner({ message }: { message: string | null }) {
   if (!message) return null;
@@ -222,7 +157,6 @@ export function HospitalGame({ mode }: { mode: Mode }) {
   const [result, setResult] = useState<any>(null);
   const [done, setDone] = useState(false);
   const [alarm, setAlarm] = useState<string | null>(null);
-  const [chartTab, setChartTab] = useState<ChartTab>("vitals");
 
   const timer = useTimer(LIMIT, () => !done && finish(true));
   const errPanel = useErrorPanel({
@@ -235,7 +169,7 @@ export function HospitalGame({ mode }: { mode: Mode }) {
   useEffect(() => {
     supabase.from("drugs").select("*").then(({ data }) => setAllDrugs(data ?? []));
   }, []);
-  useEffect(() => { setOrders([]); setHints(0); setResult(null); setDone(false); setSearch(""); setAlarm(null); setChartTab("vitals"); }, [caseData?.id]);
+  useEffect(() => { setOrders([]); setHints(0); setResult(null); setDone(false); setSearch(""); setAlarm(null); }, [caseData?.id]);
   useEffect(() => {
     if (!alarm) return;
     const id = window.setTimeout(() => setAlarm(null), 4600);
@@ -357,10 +291,6 @@ export function HospitalGame({ mode }: { mode: Mode }) {
   const patient = caseData.patient_info_json ?? {};
   const clinicalChart = buildClinicalChart(caseData, patient);
   const currentMeds = clinicalChart.currentMeds;
-  const vitals = patient.vitals ?? {};
-  const hr = toFiniteNumber(vitals.hr ?? vitals.heartRate ?? vitals.pulse, 82);
-  const bp = String(vitals.bp ?? vitals.BP ?? "124/78");
-  const o2 = toFiniteNumber(vitals.o2 ?? vitals.spo2 ?? vitals.SpO2, 97);
   return (
     <>
       {difficultyModal}
@@ -376,82 +306,14 @@ export function HospitalGame({ mode }: { mode: Mode }) {
       <main className="relative z-10 mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.3fr]">
         <aside className="relative rounded-2xl border border-indigo-300/20 bg-slate-900/55 p-4 text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl">
           <div className="absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-indigo-200/20 bg-slate-700/70 shadow-inner backdrop-blur" />
-          <div className="rounded-xl border border-indigo-200/20 bg-slate-950/45 p-4 shadow-inner backdrop-blur-xl">
-          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-indigo-200"><ClipboardList className="h-3.5 w-3.5" /> Patient file</p>
-          <h2 className="mt-1 text-xl font-black">{patient.name ?? "Clinical Patient"}</h2>
-          <p className="border-b border-indigo-200/15 pb-3 text-sm text-slate-300">Age {patient.age ?? "-"} | {patient.diagnosis ?? patient.condition ?? "Assessment pending"}</p>
-          <div className="mt-3 flex gap-1 border-b border-indigo-200/15 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            {(["vitals", "meds", "labs", "order"] as ChartTab[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setChartTab(tab)}
-                className={`rounded-t-md px-3 py-1 transition ${
-                  chartTab === tab
-                    ? "bg-indigo-500/90 text-white shadow-[0_8px_18px_-12px_rgba(99,102,241,0.9)]"
-                    : "bg-white/5 hover:bg-indigo-400/15 hover:text-indigo-100"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          <div className="min-h-52 pt-3">
-            {chartTab === "vitals" && (
-              <div className="grid gap-2">
-                <VitalWave label="HR" value={`${hr} bpm`} pct={Math.min(100, hr)} tone={hr > 100 ? "red" : "primary"} />
-                <VitalWave label="BP" value={bp} pct={bpPercent(bp)} tone="sky" />
-                <VitalWave label="O2" value={`${o2}%`} pct={o2} tone={o2 < 94 ? "red" : "primary"} />
-                {patient.allergies && (
-                  <div className="rounded-lg border border-amber-300/35 bg-amber-400/10 px-3 py-2 text-sm text-amber-50">
-                    <span className="text-xs font-black uppercase tracking-wider text-amber-200">Allergies:</span> {String(patient.allergies)}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {chartTab === "meds" && (
-              <div className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-200">Medication reconciliation</p>
-                  <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-100">Auto-filled</span>
-                </div>
-                <ul className="mt-3 space-y-2 text-sm text-slate-100">
-                  {currentMeds.map((m, i) => (
-                    <li key={i} className="flex items-start gap-2 rounded-lg border border-emerald-300/20 bg-slate-950/45 px-3 py-2">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.75)]" />
-                      <span>{m}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-3 rounded-lg border border-indigo-300/20 bg-indigo-400/10 px-3 py-2 text-xs text-indigo-50">
-                  Check allergies, renal function, and interaction risk before building the medication order.
-                </div>
-              </div>
-            )}
-
-            {chartTab === "labs" && (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Labs</p>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                  {Object.entries(clinicalChart.labs).map(([k, v]) => (
-                    <div key={k} className="rounded-lg border border-sky-300/25 bg-sky-400/10 px-3 py-2 text-xs text-sky-50">
-                      <b className="text-sky-200">{k}:</b> {String(v)}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {chartTab === "order" && (
-              <div className="rounded-lg border border-indigo-300/25 bg-indigo-400/10 p-3 text-sm text-indigo-50">
-                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Physician order</p>
-                <p className="mt-2">{clinicalChart.physicianOrder}</p>
-              </div>
-            )}
-          </div>
-          </div>
+          <CaseFileSlides
+            caseId={String(caseData.id ?? "case")}
+            caseTitle={String(caseData.title ?? "Clinical case")}
+            patient={patient}
+            currentMeds={currentMeds}
+            labs={clinicalChart.labs}
+            physicianOrder={clinicalChart.physicianOrder}
+          />
         </aside>
 
         <section className="space-y-3">
