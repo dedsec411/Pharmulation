@@ -21,9 +21,12 @@ function buildMedicationLines(caseData: any) {
   const items = Array.isArray(rx.items) ? rx.items : [];
 
   if (items.length) {
-    return items.map((it: any) =>
-      [it.drug ?? "Medication", it.strength, it.sig].filter(Boolean).join(" ").trim()
-    );
+    // Community prescriptions are written for a brand, with the generic beside
+    // it - that pairing is the whole point of the brand step that follows.
+    return items.map((it: any) => {
+      const name = it.brand ? `${it.brand} (${it.drug})` : it.drug ?? "Medication";
+      return [name, it.strength, it.sig].filter(Boolean).join(" ").trim();
+    });
   }
 
   const otcLine = [ans.correct_drug, ans.correct_dose].filter(Boolean).join(" ");

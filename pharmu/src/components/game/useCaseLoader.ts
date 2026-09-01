@@ -117,13 +117,24 @@ async function generateCaseFromTemplate(template: TemplateRow, seenSeeds: Set<st
   if (allDrugErr) console.error("[supabase] failed to load drugs for distractors:", allDrugErr);
   const allDrugs = (allDrugData ?? []) as DrugRow[];
 
+  // A community prescription is written for a brand, not a generic, so the slip
+  // needs one. Non-fatal: without it the prescription falls back to the generic
+  // name, which is how it read before.
+  const { data: brandRows, error: brandErr } = await supabase
+    .from("drug_brands").select("drug_id, brand").in("drug_id", drugIds);
+  if (brandErr) console.error("[supabase] failed to load brands for prescription:", brandErr);
+  const brandsByDrug: Record<string, string[]> = {};
+  for (const row of (brandRows ?? []) as any[]) {
+    (brandsByDrug[row.drug_id] ??= []).push(row.brand);
+  }
+
   for (let attempt = 0; attempt < 18; attempt += 1) {
     const patient = randomItem(patients);
     const correctDrug = chooseCorrectDrug(drugs, patient, rules);
     if (!correctDrug) continue;
     const seed = buildSeed(patient, correctDrug);
     if (seenSeeds.has(`${template.id}:${seed}`)) continue;
-    const generated = buildGeneratedCase(template, patient, correctDrug, allDrugs, seed);
+    const generated = buildGeneratedCase(template, patient, correctDrug, allDrugs, seed, brandsByDrug);
     await rememberGeneratedCase(userId, template, seed);
     return generated;
   }
@@ -131,12 +142,12 @@ async function generateCaseFromTemplate(template: TemplateRow, seenSeeds: Set<st
   const patient = randomItem(patients);
   const correctDrug = chooseCorrectDrug(drugs, patient, rules) ?? randomItem(drugs);
   const seed = buildSeed(patient, correctDrug);
-  const generated = buildGeneratedCase(template, patient, correctDrug, allDrugs, seed);
+  const generated = buildGeneratedCase(template, patient, correctDrug, allDrugs, seed, brandsByDrug);
   await rememberGeneratedCase(userId, template, seed);
   return generated;
 }
 
-function buildGeneratedCase(template: TemplateRow, patientRule: any, correctDrug: DrugRow, allDrugs: DrugRow[], seed: string) {
+function buildGeneratedCase(template: TemplateRow, patientRule: any, correctDrug: DrugRow, allDrugs: DrugRow[], seed: string, brandsByDrug: Record<string, string[]> = {}) {
   const base = structuredCloneSafe(template.base_scenario ?? {});
   const age = randomAge(patientRule?.age_range);
   const patient = {
@@ -159,7 +170,13 @@ function buildGeneratedCase(template: TemplateRow, patientRule: any, correctDrug
   const correctAnswer = buildCorrectAnswer(template.mode, base.correct_answer_json ?? {}, correctDrug, drugOptions, label, dose);
   const rxItems = base.electronic_prescription_json?.items?.length
     ? base.electronic_prescription_json.items
-    : [{ drug: correctDrug.name, strength: dose ? `${dose}` : correctDrug.dosage ?? "", sig: `${label.frequency}, ${label.timing}, ${label.duration}` }];
+    : [{
+        drug: correctDrug.name,
+        // Stable per case: the same seed must not represcribe a different brand.
+        brand: pickBrand(brandsByDrug[correctDrug.id] ?? [], seed),
+        strength: dose ? `${dose}` : correctDrug.dosage ?? "",
+        sig: `${label.frequency}, ${label.timing}, ${label.duration}`,
+      }];
 
   return interpolateObject({
     id: `generated:${template.id}:${seed}`,
@@ -303,6 +320,14 @@ function labelForDrug(drug: DrugRow, dose: string) {
     timing: text.includes("food") ? "with food" : "morning",
     duration: drug.category?.toLowerCase().includes("antibiotic") || drug.drug_class?.toLowerCase().includes("antibiotic") ? "7 days" : "ongoing",
   };
+}
+
+/** One brand per case, chosen by seed so it never changes under the learner. */
+function pickBrand(brands: string[], seed: string): string | null {
+  if (!brands.length) return null;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return [...brands].sort()[hash % brands.length];
 }
 
 function buildSeed(patient: any, drug: DrugRow) {
