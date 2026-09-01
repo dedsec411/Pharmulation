@@ -165,7 +165,7 @@ function LeaderboardPage() {
             // tier, score and rank stacked together, and `justify-end` pushed
             // the overflow up out of the card, so the name rendered over the
             // top border. A card now grows instead of spilling.
-            const height = idx === 0 ? "min-h-56" : idx === 1 ? "min-h-48" : "min-h-44";
+            const height = idx === 0 ? "min-h-64" : idx === 1 ? "min-h-56" : "min-h-52";
             const color = idx === 0 ? "from-amber-400/40 to-amber-500/10" : idx === 1 ? "from-slate-300/30 to-slate-400/10" : "from-orange-600/30 to-orange-700/10";
             return (
               <motion.div key={p.user_id}
@@ -175,10 +175,20 @@ function LeaderboardPage() {
                 <div className="h-12 w-12 mx-auto rounded-xl border border-primary/35 bg-primary/15 text-primary grid place-items-center font-bold shadow-[0_0_20px_-8px_oklch(0.74_0.14_180)]">
                   {playerInitial(p.full_name)}
                 </div>
-                <div className="mt-2 truncate text-sm font-bold">{cleanPlayerName(p.full_name)}</div>
-                <div className="truncate text-[11px] text-muted-foreground">{tierFor(p.xp ?? 0).title}</div>
-                <div className="mt-1 truncate font-bold text-primary">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
-                <div className="text-xs text-muted-foreground">#{idx + 1}</div>
+                {/* Wraps rather than truncating: a cut-off name is exactly as
+                    unreadable as a small one. line-clamp caps it at two lines so
+                    an unusually long name cannot stretch the podium, and the
+                    card's min-h lets it grow into that second line instead of
+                    spilling over the border. Sized up only from `sm`: the grid
+                    stays three-across on phones, where a card is ~110px wide. */}
+                <div className={`mt-3 break-words font-black leading-tight line-clamp-2 ${
+                  idx === 0 ? "text-lg sm:text-2xl" : "text-base sm:text-xl"
+                }`}>
+                  {cleanPlayerName(p.full_name)}
+                </div>
+                <div className="mt-1 truncate text-[11px] sm:text-xs text-muted-foreground">{tierFor(p.xp ?? 0).title}</div>
+                <div className="mt-1.5 text-base sm:text-lg font-black text-primary">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
+                <div className="mt-0.5 text-xs font-semibold text-muted-foreground">#{idx + 1}</div>
               </motion.div>
             );
           })}
@@ -203,7 +213,7 @@ function LeaderboardPage() {
                   <UserRound className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold tracking-wide">{cleanPlayerName(p.full_name)} {isMe && <span className="text-xs text-primary">(you)</span>}</div>
+                  <div className="truncate text-base sm:text-lg font-bold tracking-wide">{cleanPlayerName(p.full_name)} {isMe && <span className="text-xs text-primary">(you)</span>}</div>
                   <div className="truncate text-xs text-muted-foreground capitalize">{tierFor(p.xp ?? 0).title} · {p.total_cases_completed ?? 0} cases · {p.accuracy_rate ?? 0}% acc</div>
                 </div>
                 <div className="shrink-0 rounded-md bg-primary/10 px-3 py-1 text-right font-bold tabular-nums text-primary">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
@@ -217,7 +227,7 @@ function LeaderboardPage() {
       {myRank && myRank > 20 && (
         <div className="mt-4 rounded-2xl border border-primary/40 bg-primary/10 p-4 flex items-center gap-4 shadow-[0_0_35px_-22px_oklch(0.74_0.14_180)]">
           <div className="w-8 text-center font-bold text-primary">{myRank}</div>
-          <div className="min-w-0 flex-1 truncate font-semibold">Your rank - {cleanPlayerName(me?.full_name)}</div>
+          <div className="min-w-0 flex-1 truncate text-base sm:text-lg font-bold">Your rank - {cleanPlayerName(me?.full_name)}</div>
           <div className="shrink-0 font-bold tabular-nums text-primary">{me?.xp} {filter === "all" ? "XP" : "pts"}</div>
         </div>
       )}
