@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
+import { BatchBooklet } from "@/components/game/BatchBooklet";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
@@ -438,6 +439,59 @@ function IndustrialGauge({ icon: Icon, label, value, unit, range }: any) {
   );
 }
 
+/**
+ * A room control with its acceptable band drawn on the track.
+ *
+ * Showing where the safe range sits turns the slider into the instrument it is
+ * meant to be: the operator is aiming at a target, not guessing a number and
+ * being told afterwards whether it was allowed.
+ */
+function EnvSlider({
+  label, unit, value, onChange, min, max, step, range,
+}: {
+  label: string; unit: string; value: number; onChange: (value: number) => void;
+  min: number; max: number; step: number; range: [number, number];
+}) {
+  const span = Math.max(1, max - min);
+  const left = ((range[0] - min) / span) * 100;
+  const width = ((range[1] - range[0]) / span) * 100;
+  const inRange = value >= range[0] && value <= range[1];
+
+  return (
+    <div className="mt-3 first:mt-0">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">{label}</p>
+        <span className={`rounded-full border px-3 py-1 text-xs font-bold ${
+          inRange
+            ? "border-emerald-400/45 bg-emerald-400/10 text-emerald-200"
+            : "border-amber-400/45 bg-amber-400/10 text-amber-200"
+        }`}>
+          {value}{unit}
+        </span>
+      </div>
+
+      <div className="relative mt-3">
+        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="absolute h-full rounded-full bg-emerald-400/40"
+            style={{ left: `${left}%`, width: `${width}%` }}
+          />
+        </div>
+        <input
+          type="range"
+          min={min} max={max} step={step} value={value}
+          onChange={(event) => onChange(Number(event.target.value))}
+          aria-label={label}
+          className="relative w-full accent-primary"
+        />
+      </div>
+      <p className="mt-1 text-[10px] text-muted-foreground">
+        Acceptable {range[0]}-{range[1]}{unit}
+      </p>
+    </div>
+  );
+}
+
 function IndustryGame() {
   const [productChoice, setProductChoice] = useState<ProductChoice | null>(null);
 
@@ -523,6 +577,13 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   const { caseData, loading, next } = useCaseLoader("industry", difficulty);
   const f = useMemo(() => buildIndustryFormula(productChoice), [productChoice.form, productChoice.type]);
   const batchProduct = productChoice.type;
+  // Derived from the product so it is stable across renders; a batch number
+  // that changed mid-run would undermine the record it appears on.
+  const batchNumber = useMemo(() => {
+    let hash = 0;
+    for (const ch of `${productChoice.form}:${productChoice.type}`) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    return `B${String(hash % 900000 + 100000)}`;
+  }, [productChoice.form, productChoice.type]);
   const [phase, setPhase] = useState<Phase>("formula");
   const baseBatchCount = useMemo(() => parseBatchCount(f?.batchSize), [f?.batchSize]);
   const [batchCount, setBatchCount] = useState(0);
@@ -543,6 +604,8 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   // env
   const [temp, setTemp] = useState(0);
   const [humidity, setHumidity] = useState(0);
+  // Whether the operator has opened the room controls rather than proceeding.
+  const [adjusting, setAdjusting] = useState(false);
   const [envFixed, setEnvFixed] = useState(false);
 
   // process
@@ -564,7 +627,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   });
 
   useEffect(() => {
-    setPhase("formula"); setPoints(0); setErrors(0); setQcErrors(0); setContaminated(false);
+    setPhase("formula"); setPoints(0); setErrors(0); setQcErrors(0); setContaminated(false); setAdjusting(false);
     setHints(0); setWeighed({}); setActive(null); setSlider(0);
     setEnvFixed(false); setStageIdx(0); setStageResults({} as any); setQcAnswers({});
     setResult(null); setReleaseFlash(null);
@@ -681,53 +744,73 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
 
   const allWeighed = ingredients.every((i: any) => weighed[i.name]?.ok);
 
-  function fixEnvironment(action: string) {
-    const okNeeded = temp > f.env.tempRange[1] || temp < f.env.tempRange[0]
-      || humidity > f.env.humidityRange[1] || humidity < f.env.humidityRange[0];
-    const correct = (action === "dehumidifier" && humidity > f.env.humidityRange[1])
-      || (action === "hvac" && (temp > f.env.tempRange[1] || temp < f.env.tempRange[0]))
-      || (action === "delay" && okNeeded);
-    if (!okNeeded) {
-      toast("Conditions already within range.");
-      setEnvFixed(true);
-      setPoints((p) => p + 20);
-      toastScore(20, "Env check OK");
-      setPhase("weighing");
-      return;
-    }
-    if (correct) {
-      setTemp(Math.round((f.env.tempRange[0] + f.env.tempRange[1]) / 2));
-      setHumidity(Math.round((f.env.humidityRange[0] + f.env.humidityRange[1]) / 2));
-      setEnvFixed(true);
-      setPoints((p) => p + 20);
-      toastScore(20, "Conditions normalized");
-      setPhase("weighing");
-    } else {
-      setErrors((e) => e + 1);
-      setPoints((p) => p - 10);
-      toastScore(-10, "Wrong corrective action");
-      errPanel.logError({
-        errorType: "Wrong environmental corrective action",
-        wrongChoice: action,
-        correctChoice: humidity > f.env.humidityRange[1] ? "Activate dehumidifier" : "Adjust HVAC temperature",
-        whyWrong: `${action} doesn't address the actual deviation (temp ${temp} deg C, humidity ${humidity}%). Wrong correction wastes time and risks the batch.`,
-        whatToKnow: "Match the corrective action to the deviation: dehumidifier for high humidity, HVAC for temperature, delay if both are unstable.",
-      });
-    }
+  /** Which way each reading is out, so the feedback can name it. */
+  function envDeviation() {
+    const tempOut = temp < f.env.tempRange[0] || temp > f.env.tempRange[1];
+    const humidityOut = humidity < f.env.humidityRange[0] || humidity > f.env.humidityRange[1];
+    return { tempOut, humidityOut, any: tempOut || humidityOut };
   }
 
-  function ignoreEnv() {
+  function passEnvironment() {
+    setEnvFixed(true);
+    setPoints((p) => p + 20);
+    toastScore(20, "Room within specification");
+    setAdjusting(false);
+    setPhase("weighing");
+  }
+
+  /**
+   * Proceed without touching anything.
+   *
+   * Correct when the room is already in spec, and a contaminated batch when it
+   * is not - which is the whole lesson of the step. GMP has no "continue
+   * anyway": out-of-spec conditions mean hold and investigate.
+   */
+  function proceedEnvironment() {
+    if (!envDeviation().any) {
+      passEnvironment();
+      return;
+    }
     setContaminated(true);
     setEnvFixed(true);
-    toast.error("Batch contamination risk - proceeding anyway.");
+    setErrors((e) => e + 1);
+    toast.error("Batch contamination risk - proceeded out of specification.");
     errPanel.logError({
-      errorType: "Environmental check ignored",
-      wrongChoice: `Proceeded at temp ${temp} deg C / humidity ${humidity}%`,
-      correctChoice: `Hold batch until temp ${f.env.tempRange[0]}-${f.env.tempRange[1]} deg C, humidity ${f.env.humidityRange[0]}-${f.env.humidityRange[1]}%`,
-      whyWrong: "Proceeding outside the safe range will degrade moisture-sensitive APIs and fail GMP requirements. The batch is now at risk.",
-      whatToKnow: "GMP requires strict environmental controls during manufacture. Out-of-spec conditions mandate hold + investigation, not 'continue anyway'.",
+      errorType: "Proceeded outside environmental specification",
+      wrongChoice: `Proceeded at ${temp} deg C / ${humidity}% RH`,
+      correctChoice: `Adjust to ${f.env.tempRange[0]}-${f.env.tempRange[1]} deg C and ${f.env.humidityRange[0]}-${f.env.humidityRange[1]}% RH first`,
+      whyWrong: "Manufacturing outside the specified range degrades moisture-sensitive material and breaches GMP. The batch is now at risk.",
+      whatToKnow: "Out-of-spec room conditions mandate correction and investigation, not proceeding. Condition the room, then weigh into it.",
     });
+    setAdjusting(false);
     setPhase("weighing");
+  }
+
+  /**
+   * Commit the slider settings.
+   *
+   * Confirming while still out of range does not advance: the step is not
+   * finished until the room actually meets specification.
+   */
+  function confirmEnvironment() {
+    const deviation = envDeviation();
+    if (!deviation.any) {
+      passEnvironment();
+      return;
+    }
+    setErrors((e) => e + 1);
+    setPoints((p) => p - 10);
+    toastScore(-10, "Still out of specification");
+    errPanel.logError({
+      errorType: "Environment confirmed while out of specification",
+      wrongChoice: [
+        deviation.tempOut ? `Temperature ${temp} deg C` : "",
+        deviation.humidityOut ? `Humidity ${humidity}%` : "",
+      ].filter(Boolean).join(" and "),
+      correctChoice: `${f.env.tempRange[0]}-${f.env.tempRange[1]} deg C, ${f.env.humidityRange[0]}-${f.env.humidityRange[1]}% RH`,
+      whyWrong: "The reading is still outside the range this formulation requires, so the room is not yet fit to weigh into.",
+      whatToKnow: "Bring every parameter inside its range before confirming. A partial correction is still a deviation.",
+    });
   }
 
   function chooseStage(stage: Stage, ok: boolean) {
@@ -837,6 +920,10 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
           { label: "Contaminated batch", delta: contaminated ? -30 : 0 },
         ]}
         errors={errPanel.errors}
+        product={{
+          name: batchProduct,
+          detail: `${batchSizeLabel} · Batch ${batchNumber}${contaminated ? " · quarantined" : ""}`,
+        }}
         onNext={next}
       >
         <BatchCelebration
@@ -875,6 +962,22 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
             <IndustrialGauge icon={Droplets} label="Humidity" value={humidity} unit="%" range={f.env.humidityRange} />
             <InfoChip label="Batch" value={batchSizeLabel} />
             <InfoChip label="Errors" value={String(errors)} />
+          </div>
+        )}
+
+        {/* The record stays reachable at every phase - a production pharmacist
+            works from it rather than from memory. */}
+        {phase !== "formula" && (
+          <div className="mb-4 flex justify-end">
+            <BatchBooklet
+              product={batchProduct}
+              batchSize={batchSizeLabel}
+              batchNumber={batchNumber}
+              ingredients={ingredients}
+              env={f.env}
+              stages={STAGES.map((stage) => ({ key: stage, label: f.stageLabels?.[stage] ?? stage }))}
+              qc={f.qc}
+            />
           </div>
         )}
 
@@ -1044,20 +1147,89 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
             <p className="mt-1 text-sm text-muted-foreground">
               Safe range: {f.env.tempRange[0]}-{f.env.tempRange[1]} deg C, {f.env.humidityRange[0]}-{f.env.humidityRange[1]}% RH
             </p>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <button onClick={() => fixEnvironment("dehumidifier")} className="rounded-xl border border-border/40 p-3 text-left text-sm hover:border-primary/40">
-                Activate dehumidifier
-              </button>
-              <button onClick={() => fixEnvironment("hvac")} className="rounded-xl border border-border/40 p-3 text-left text-sm hover:border-primary/40">
-                Adjust HVAC temperature
-              </button>
-              <button onClick={() => fixEnvironment("delay")} className="rounded-xl border border-border/40 p-3 text-left text-sm hover:border-primary/40">
-                Delay batch until conditions stabilize
-              </button>
-              <button onClick={ignoreEnv} className="rounded-xl border border-destructive/40 p-3 text-left text-sm text-destructive hover:bg-destructive/10">
-                Ignore and proceed (risky)
-              </button>
-            </div>
+            {/* The decision, stated plainly. The four opaque corrective-action
+                buttons that used to sit here asked which equipment to reach for
+                without ever saying what was wrong with the room. */}
+            {(() => {
+              const deviation = envDeviation();
+              return (
+                <>
+                  <div className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+                    deviation.any
+                      ? "border-amber-400/45 bg-amber-400/10 text-amber-100"
+                      : "border-emerald-400/40 bg-emerald-400/10 text-emerald-100"
+                  }`}>
+                    <p className="font-bold">
+                      {deviation.any ? "Room is out of specification" : "Room is within specification"}
+                    </p>
+                    <p className="mt-0.5 opacity-90">
+                      {deviation.any
+                        ? [
+                            deviation.tempOut ? `temperature ${temp} deg C` : "",
+                            deviation.humidityOut ? `humidity ${humidity}% RH` : "",
+                          ].filter(Boolean).join(" and ") + " outside the range for this formulation."
+                        : `${temp} deg C and ${humidity}% RH. Safe to weigh into.`}
+                    </p>
+                  </div>
+
+                  {!adjusting ? (
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                      <button
+                        onClick={() => setAdjusting(true)}
+                        className="rounded-xl border border-primary/45 bg-primary/10 p-3 text-left text-sm font-semibold text-primary transition hover:bg-primary/15"
+                      >
+                        Change conditions
+                        <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                          Open the room controls and set temperature and humidity
+                        </span>
+                      </button>
+                      <button
+                        onClick={proceedEnvironment}
+                        className={`rounded-xl border p-3 text-left text-sm font-semibold transition ${
+                          deviation.any
+                            ? "border-destructive/45 text-destructive hover:bg-destructive/10"
+                            : "border-border/40 hover:border-primary/40"
+                        }`}
+                      >
+                        Proceed to weighing
+                        <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                          {deviation.any ? "Manufacture at the current readings" : "Conditions already meet specification"}
+                        </span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-xl border border-primary/25 bg-primary/5 p-4">
+                      <EnvSlider
+                        label="Temperature" unit=" deg C"
+                        value={temp} onChange={setTemp}
+                        min={f.env.tempRange[0] - 8} max={f.env.tempRange[1] + 8}
+                        step={1} range={f.env.tempRange}
+                      />
+                      <EnvSlider
+                        label="Relative humidity" unit="% RH"
+                        value={humidity} onChange={setHumidity}
+                        min={Math.max(0, f.env.humidityRange[0] - 20)} max={f.env.humidityRange[1] + 25}
+                        step={1} range={f.env.humidityRange}
+                      />
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button
+                          onClick={confirmEnvironment}
+                          className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+                        >
+                          Confirm and weigh
+                        </button>
+                        <button
+                          onClick={() => setAdjusting(false)}
+                          className="rounded-full border border-border/50 px-5 py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
+                        >
+                          Back
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </section>
         )}
 
