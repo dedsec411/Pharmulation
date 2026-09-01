@@ -1,6 +1,13 @@
-// Shelves shown when dispensing. Topical, Antihistamine, Ophthalmic, Nasal and
-// Supplement were stocked in the catalogue but had no shelf, so those medicines
-// could not be dispensed at all - athlete's foot had no reachable answer.
+/**
+ * The shelves a learner can open when dispensing.
+ *
+ * This list, not the database, decides what appears: the shelf builds its
+ * categories by walking these names. Five categories the drugs table actually
+ * uses were missing from it - Immunology, Psychiatric, Oncology, Emergency and
+ * Anesthetic - which left fifty real medicines with no shelf to be found on,
+ * including every antidepressant and all the emergency drugs. Anything added to
+ * `drugs.category` has to be added here too or it simply will not show.
+ */
 export const RX_DRUG_CATEGORIES = [
   "Antibiotic",
   "Cardiovascular",
@@ -9,6 +16,11 @@ export const RX_DRUG_CATEGORIES = [
   "GI",
   "Respiratory",
   "Antihistamine",
+  "Psychiatric",
+  "Immunology",
+  "Oncology",
+  "Emergency",
+  "Anesthetic",
   "Topical",
   "Ophthalmic",
   "Nasal",
@@ -277,30 +289,44 @@ export function normalizeDrugKey(value?: string | null) {
  * brands where they exist, and fall back to generated training names where
  * they do not. Kept module-level rather than threaded through every shelf.
  */
-let realBrands: Record<string, string[]> = {};
+/** A brand as it is dispensed: the name on the box and who makes it. */
+export type BrandOption = { brand: string; company?: string | null };
 
-export function setRealBrands(byGeneric: Record<string, string[]>) {
+/**
+ * How many brands a learner chooses between.
+ *
+ * Three is the brief, and it is also about right: enough that recognising the
+ * brand is a real decision, few enough that it is not a memory test.
+ */
+export const MAX_BRANDS_PER_DRUG = 3;
+
+let realBrands: Record<string, BrandOption[]> = {};
+
+export function setRealBrands(byGeneric: Record<string, BrandOption[]>) {
   realBrands = byGeneric;
 }
 
-export function getBrandsForDrug(drug: DrugLike) {
+export function getBrandsForDrug(drug: DrugLike): BrandOption[] {
   // A real brand beats a generated one wherever we have it.
   const generic = String(drug?.generic_name || drug?.name || "").toLowerCase().trim();
-  if (realBrands[generic]?.length) return realBrands[generic];
+  if (realBrands[generic]?.length) return realBrands[generic].slice(0, MAX_BRANDS_PER_DRUG);
 
   const candidates = [
     normalizeDrugKey(drug?.generic_name),
     normalizeDrugKey(drug?.name),
     normalizeDrugKey(String(drug?.name ?? "").split("+")[0]),
   ].filter(Boolean);
+  const named = (names: string[]): BrandOption[] =>
+    names.slice(0, MAX_BRANDS_PER_DRUG).map((brand) => ({ brand }));
+
   const direct = candidates.find((key) => BRAND_LIBRARY[key]);
-  if (direct) return BRAND_LIBRARY[direct];
+  if (direct) return named(BRAND_LIBRARY[direct]);
   const partial = Object.keys(BRAND_LIBRARY).find((key) =>
     candidates.some((candidate) => candidate.includes(key) || key.includes(candidate)),
   );
-  if (partial) return BRAND_LIBRARY[partial];
+  if (partial) return named(BRAND_LIBRARY[partial]);
   const baseName = drug?.generic_name || drug?.name || "Medicine";
-  return [`${baseName} Generic`, `${baseName} Pharma`, `${baseName} Plus`, `${baseName} Care`];
+  return named([`${baseName} Generic`, `${baseName} Pharma`, `${baseName} Plus`]);
 }
 
 function makeSeeds(
