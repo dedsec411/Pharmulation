@@ -17,6 +17,27 @@
 
 export const LABEL_FREQUENCIES = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"] as const;
 export const LABEL_TIMINGS = ["morning", "with food", "before sleep", "as needed"] as const;
+
+/**
+ * Auxiliary label instructions - the cautionary line under the directions.
+ *
+ * These are the standard warnings a dispensing label carries alongside the dose,
+ * and choosing the right one is part of the counselling the label does on the
+ * pharmacist's behalf. Not graded: a case does not declare which auxiliary
+ * label it expects, so scoring one would make steps unwinnable on cases that
+ * never specified it. It is recorded on the label and shown back in review.
+ */
+export const LABEL_INSTRUCTIONS = [
+  "Take with or after food",
+  "Take with a full glass of water",
+  "Swallow whole - do not chew or crush",
+  "Complete the full course",
+  "May cause drowsiness - do not drive",
+  "Do not drink alcohol",
+  "Shake well before use",
+  "Avoid direct sunlight",
+  "For external use only",
+] as const;
 /**
  * Duration is a number of days, not a bucket.
  *
