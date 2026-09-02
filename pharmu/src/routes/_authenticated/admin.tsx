@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { Users, FlaskConical, Pill, BarChart3 } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
-import { promoteUserToAdmin, deleteCaseById } from "@/lib/api/admin.functions";
+import { promoteUserToAdmin, promoteUserToEducator, deleteCaseById } from "@/lib/api/admin.functions";
 import { unwrapList } from "@/lib/supabase-query";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -87,15 +87,22 @@ function AdminPage() {
     ? Math.round((scoresToday.reduce((s: number, x: any) => s + x.accuracy, 0) / scoresToday.length) * 100)
     : 0;
 
-  async function promoteUser(uid: string) {
-    setPendingId(uid);
+  /**
+   * Both promotions, keyed so the two buttons on a row can be told apart -
+   * a single pending id would grey out whichever one was not clicked.
+   */
+  async function promoteUser(uid: string, role: "admin" | "educator") {
+    setPendingId(`${uid}:${role}`);
     try {
-      const result = await promoteUserToAdmin({ data: { userId: uid } });
+      const promote = role === "admin" ? promoteUserToAdmin : promoteUserToEducator;
+      const result = await promote({ data: { userId: uid } });
       if (!result.ok) {
         toast.error(result.message);
         return;
       }
-      toast.success("User promoted to admin.");
+      toast.success(role === "admin"
+        ? "User promoted to admin."
+        : "User is now an educator. They can reach the faculty panel at /educator.");
       await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     } catch (error) {
       console.error(error);
@@ -198,14 +205,23 @@ function AdminPage() {
                     <td className="p-3 capitalize">{u.role}</td>
                     <td className="p-3 text-right">{u.level}</td>
                     <td className="p-3 text-right">{u.total_cases_completed}</td>
-                    <td className="p-3 text-right">
+                    <td className="p-3 text-right whitespace-nowrap">
+                      {u.role !== "educator" && u.role !== "admin" && (
+                        <button
+                          onClick={() => promoteUser(u.user_id, "educator")}
+                          disabled={pendingId === `${u.user_id}:educator`}
+                          className="text-xs text-sky-400 hover:underline disabled:opacity-50"
+                        >
+                          {pendingId === `${u.user_id}:educator` ? "Promoting..." : "Make educator"}
+                        </button>
+                      )}
                       {u.role !== "admin" && (
                         <button
-                          onClick={() => promoteUser(u.user_id)}
-                          disabled={pendingId === u.user_id}
-                          className="text-xs text-primary hover:underline disabled:opacity-50"
+                          onClick={() => promoteUser(u.user_id, "admin")}
+                          disabled={pendingId === `${u.user_id}:admin`}
+                          className="ml-4 text-xs text-primary hover:underline disabled:opacity-50"
                         >
-                          {pendingId === u.user_id ? "Promoting..." : "Promote"}
+                          {pendingId === `${u.user_id}:admin` ? "Promoting..." : "Promote to admin"}
                         </button>
                       )}
                     </td>

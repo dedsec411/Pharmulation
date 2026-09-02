@@ -66,6 +66,44 @@ export const promoteUserToAdmin = createServerFn({ method: "POST" })
     }
   });
 
+/**
+ * Grant someone the faculty role.
+ *
+ * Same shape as promoting an admin, and deliberately a separate function
+ * rather than one that takes the role as a parameter: a validator that accepts
+ * any role is one typo away from an endpoint that can hand out `admin`, and
+ * these two are the only promotions the panel offers.
+ *
+ * The role is written through the service-role client, which is what makes it
+ * stick - the trigger on `profiles` reverts a role change made by anyone who
+ * is not already an admin, so a user cannot promote themselves by editing
+ * their own row from the browser.
+ */
+export const promoteUserToEducator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({ userId: z.string().uuid() }))
+  .handler(async ({ data, context }): Promise<AdminActionResult> => {
+    try {
+      const denied = await adminCheckFailure(context.userId);
+      if (denied) return { ok: false, message: denied };
+
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        // `educator` postdates the generated types, so the enum they declare
+        // has no such member. Cast until they are regenerated.
+        .update({ role: "educator" as never })
+        .eq("user_id", data.userId);
+
+      if (error) {
+        console.error("Promote to educator failed", error);
+        return { ok: false, message: "Could not make this user an educator." };
+      }
+      return { ok: true };
+    } catch (error) {
+      return serviceRoleFailure(error);
+    }
+  });
+
 export const deleteCaseById = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(z.object({ caseId: z.string().uuid() }))
