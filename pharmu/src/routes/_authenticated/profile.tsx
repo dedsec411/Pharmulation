@@ -10,6 +10,7 @@ import { tierFor, xpProgress } from "@/lib/levels";
 import { bandFor, examinerByKey } from "@/lib/game/examiner";
 import { WeaknessHeatmap } from "@/components/game/WeaknessHeatmap";
 import { PeerBenchmark } from "@/components/game/PeerBenchmark";
+import { ClassMembership } from "@/components/game/ClassMembership";
 import { useWeaknessMap } from "@/lib/game/useWeaknessMap";
 import { hasEnoughHistory } from "@/lib/game/weakness";
 import { cpdHoursFromCases, CPD_MILESTONES, generateCertificatePdf, nextCpdMilestone } from "@/lib/cpd";
@@ -248,6 +249,10 @@ function ProfilePage() {
 
             <div className="mt-6">
               <PeerBenchmark userId={userId} />
+            </div>
+
+            <div className="mt-6">
+              <ClassMembership userId={userId} />
             </div>
 
             <div className="mt-6 glass-card p-6">

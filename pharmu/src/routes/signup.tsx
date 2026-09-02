@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { signInWithGoogle } from "@/lib/auth-oauth";
 import { BackButton } from "@/components/BackButton";
+import { joinCodeProblem, normaliseJoinCode } from "@/lib/educator/codes";
+import { redeemJoinCode, stashJoinCode } from "@/lib/educator/join";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Sign up - Pharmulation" }] }),
@@ -17,13 +19,18 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"student" | "graduate">("student");
+  const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const codeProblem = joinCodeProblem(joinCode);
+
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
+    if (codeProblem) return toast.error(codeProblem);
+
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -33,6 +40,24 @@ function SignupPage() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
+
+    // The class is joined only if sign-up produced a session. Where the
+    // project requires email confirmation it does not, so the code is kept
+    // and redeemed the first time they reach the dashboard signed in - a
+    // wrong code must never be what stops an account being created.
+    const code = normaliseJoinCode(joinCode);
+    if (code) {
+      if (data.session) {
+        const joined = await redeemJoinCode(code);
+        if (joined.ok) toast.success(`You joined ${joined.className}`);
+        else toast.error("That join code did not match a class", {
+          description: "Your account is ready. Ask your lecturer for the current code.",
+        });
+      } else {
+        stashJoinCode(code);
+      }
+    }
+
     toast.success("Welcome to Pharmulation!");
     navigate({ to: "/dashboard" });
   }
@@ -107,6 +132,23 @@ function SignupPage() {
             <option value="student" className="bg-card">Pharmacy Student</option>
             <option value="graduate" className="bg-card">Graduate Pharmacist</option>
           </select>
+          <div>
+            <input
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              placeholder="Class join code (optional)"
+              maxLength={8}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              className={`w-full rounded-xl px-4 py-3 font-mono tracking-[0.2em] outline-none glass ${
+                codeProblem ? "border-rose-400/60" : "focus:border-primary"
+              }`}
+            />
+            <p className={`mt-1.5 px-1 text-xs ${codeProblem ? "text-rose-400" : "text-muted-foreground"}`}>
+              {codeProblem ?? "Have one from your university? Enter it to join your class."}
+            </p>
+          </div>
           <button
             disabled={loading}
             className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground transition hover:scale-[1.02] disabled:opacity-60"

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { WeeklyReportBanner } from "@/components/game/WeeklyReportBanner";
 import { RecommendedCases } from "@/components/game/RecommendedCases";
+import { AssignedWork } from "@/components/game/AssignedWork";
 import { useWeaknessMap, useWeeklyTotals } from "@/lib/game/useWeaknessMap";
 import { hasEnoughHistory } from "@/lib/game/weakness";
 import { motion } from "framer-motion";
@@ -371,6 +372,9 @@ function Dashboard() {
           accuracyThisWeek={weekly?.accuracyThisWeek ?? null}
           accuracyLastWeek={weekly?.accuracyLastWeek ?? null}
         />
+
+        {/* Renders nothing unless a lecturer has set this student work. */}
+        <AssignedWork userId={userId} />
 
         {weaknessMap && hasEnoughHistory(weaknessMap) && (
           <RecommendedCases map={weaknessMap} />
