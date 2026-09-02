@@ -283,6 +283,11 @@ export function HospitalGame({ mode }: { mode: Mode }) {
           correct: !!orders.find((x) => x.drug.toLowerCase() === o.drug.toLowerCase()),
         }))}
         errors={errPanel.errors}
+        examiner={{
+          caseRef: String(caseData?.id ?? "case"),
+          caseTitle: String(caseData?.title ?? "Clinical case"),
+          mode: String(caseData?.mode ?? mode),
+        }}
         onNext={next}
       />
     );

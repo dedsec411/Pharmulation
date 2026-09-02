@@ -445,6 +445,11 @@ function WarehouseGame() {
           { label: "Contaminated stock", delta: contaminated ? -30 : 0 },
         ]}
         errors={errPanel.errors}
+        examiner={{
+          caseRef: String(caseData?.id ?? "case"),
+          caseTitle: String(caseData?.title ?? "Clinical case"),
+          mode: String(caseData?.mode ?? "warehousing"),
+        }}
         onNext={next}
       />
     );

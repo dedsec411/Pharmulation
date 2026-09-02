@@ -297,6 +297,11 @@ export function OtcConsultation({
             : []),
         ] : []}
         errors={errPanel.errors}
+        examiner={{
+          caseRef: String(otcCase.id ?? "otc"),
+          caseTitle: otcCase.title,
+          mode: "otc",
+        }}
         onNext={playNext}
       >
         <ConsultationReview grade={grade} otcCase={otcCase} messages={messages} />

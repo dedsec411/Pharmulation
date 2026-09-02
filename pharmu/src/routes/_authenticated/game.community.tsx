@@ -717,6 +717,11 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
         mentorTip={caseData.mentor_tip} explanation={caseData.explanation}
         drugs={collected.map((c) => ({ name: c, correct: required.includes(c) }))}
         errors={errPanel.errors}
+        examiner={{
+          caseRef: String(caseData?.id ?? "case"),
+          caseTitle: String(caseData?.title ?? "Community case"),
+          mode: String(caseData?.mode ?? "community"),
+        }}
         breakdown={[
           { label: "Correct drugs",   delta: correct * 20 },
           { label: "Wrong drugs",     delta: -wrong * 15 },

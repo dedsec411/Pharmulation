@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { Trophy, RotateCw, Home, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Trophy, RotateCw, Home, CheckCircle2, XCircle, AlertCircle, GraduationCap } from "lucide-react";
 import type { ErrorEntry } from "./ErrorExplanationPanel";
 import { CaseCelebration } from "./CaseCelebration";
+import { ClinicalExaminer } from "./ClinicalExaminer";
+import { hasExaminableContext, type ExaminerCaseContext } from "@/lib/game/examiner";
 
 type Drug = { name: string; correct: boolean; info?: string };
 
@@ -19,14 +21,42 @@ type Props = {
   onNext: () => void;
   /** Named in the celebration where the mode produces something. */
   product?: { name: string; detail?: string };
+  /**
+   * Enables the optional viva. Omitted, the button simply does not appear and
+   * nothing else about this screen changes.
+   */
+  examiner?: { caseRef: string; caseTitle: string; mode: string };
   /** Extra mode-specific review, rendered above the actions. */
   children?: ReactNode;
 };
 
-export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanation, drugs = [], breakdown = [], errors = [], onNext, product, children }: Props) {
+export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanation, drugs = [], breakdown = [], errors = [], onNext, product, examiner, children }: Props) {
   // Every mode renders its results through here, so the celebration lives here
   // too rather than being wired into five routes separately.
   const [celebrating, setCelebrating] = useState(true);
+  const [examining, setExamining] = useState(false);
+
+  // Everything the examiner asks about comes from what the modes already track:
+  // the case, the medicines handled, and the in-game error log.
+  const examinerContext: ExaminerCaseContext | null = examiner
+    ? {
+        caseRef: examiner.caseRef,
+        caseTitle: examiner.caseTitle,
+        mode: examiner.mode,
+        score,
+        timeTakenSec: Math.round(timeTaken),
+        errors: errors.map((e) => ({
+          errorType: e.errorType,
+          wrongChoice: e.wrongChoice,
+          correctChoice: e.correctChoice,
+          whyWrong: e.whyWrong,
+        })),
+        drugs: drugs.map((d) => ({ name: d.name, correct: d.correct })),
+      }
+    : null;
+  // A case with nothing specific to ask about would produce a generic viva,
+  // which is worse than not offering one.
+  const canExamine = examinerContext !== null && hasExaminableContext(examinerContext);
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     const start = performance.now();
@@ -134,11 +164,27 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
           <button onClick={onNext} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
             <RotateCw className="size-4" /> Next case
           </button>
+          {/* Sits beside Next case rather than in front of it: skipping the
+              examiner costs the learner nothing at all. */}
+          {canExamine && (
+            <button
+              onClick={() => setExamining(true)}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/45 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/15"
+            >
+              <GraduationCap className="size-4" /> Face the Examiner
+            </button>
+          )}
           <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-full border border-border/50 px-5 py-2.5 text-sm font-semibold hover:bg-muted">
             <Home className="size-4" /> Dashboard
           </Link>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {examining && examinerContext && (
+          <ClinicalExaminer context={examinerContext} onClose={() => setExamining(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

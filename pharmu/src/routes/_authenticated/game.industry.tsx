@@ -920,6 +920,11 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
           { label: "Contaminated batch", delta: contaminated ? -30 : 0 },
         ]}
         errors={errPanel.errors}
+        examiner={{
+          caseRef: String(caseData?.id ?? "batch"),
+          caseTitle: `${batchProduct} batch`,
+          mode: "industry",
+        }}
         product={{
           name: batchProduct,
           detail: `${batchSizeLabel} · Batch ${batchNumber}${contaminated ? " · quarantined" : ""}`,

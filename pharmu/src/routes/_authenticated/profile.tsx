@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Award, Flame, Target, Clock, Download, Lock, Trophy } from "lucide-react";
+import { Award, Flame, Target, Clock, Download, Lock, Trophy, GraduationCap } from "lucide-react";
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { tierFor, xpProgress } from "@/lib/levels";
+import { bandFor, examinerByKey } from "@/lib/game/examiner";
 import { cpdHoursFromCases, CPD_MILESTONES, generateCertificatePdf, nextCpdMilestone } from "@/lib/cpd";
 import { PUBLIC_MODE_GROUPS, publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { toast } from "sonner";
@@ -34,6 +35,22 @@ function ProfilePage() {
         "your scores",
       );
     }, enabled: !!userId,
+  });
+
+  const { data: examinerSessions = [] } = useQuery({
+    queryKey: ["examiner-sessions", userId],
+    enabled: !!userId,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await (supabase as unknown as { from: (t: string) => any })
+        .from("examiner_sessions")
+        .select("cri, examiner, case_title, created_at")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as { cri: number; examiner: string; case_title: string | null; created_at: string }[];
+    },
   });
 
   const { data: allBadges = [] } = useQuery({
@@ -161,6 +178,15 @@ function ProfilePage() {
                 { icon: Award, label: "Accuracy", value: `${Math.round(profile.accuracy_rate)}%` },
                 { icon: Clock, label: "Avg time / case", value: `${Math.round(profile.avg_time_per_case)}s` },
                 { icon: Flame, label: "Streak", value: `${profile.streak_days} days` },
+                ...(examinerSessions.length
+                  ? [{
+                      icon: GraduationCap,
+                      label: "Clinical Reasoning",
+                      value: `${Math.round(
+                        examinerSessions.reduce((sum, x) => sum + (x.cri ?? 0), 0) / examinerSessions.length,
+                      )}/100`,
+                    }]
+                  : []),
               ].map((s) => (
                 <div key={s.label} className="glass-card p-5 text-center">
                   <s.icon className="mx-auto h-5 w-5 text-primary mb-2" />
@@ -169,6 +195,44 @@ function ProfilePage() {
                 </div>
               ))}
             </div>
+
+            {examinerSessions.length > 0 && (
+              <div className="mt-6 glass-card p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-bold">Clinical reasoning</h3>
+                  <span className="text-xs text-muted-foreground">
+                    {examinerSessions.length} viva{examinerSessions.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+                {(() => {
+                  const average = Math.round(
+                    examinerSessions.reduce((sum, x) => sum + (x.cri ?? 0), 0) / examinerSessions.length,
+                  );
+                  const band = bandFor(average);
+                  return (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      <b className="text-primary">{band.label}.</b> {band.note}
+                    </p>
+                  );
+                })()}
+                <div className="mt-4 space-y-2">
+                  {examinerSessions.slice(0, 6).map((session, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-40 truncate text-sm text-muted-foreground">
+                        {session.case_title ?? "Case"}
+                      </div>
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-full bg-primary" style={{ width: `${session.cri}%` }} />
+                      </div>
+                      <div className="w-16 shrink-0 text-right text-xs text-muted-foreground">
+                        {examinerByKey(session.examiner).name.replace("Dr. ", "")}
+                      </div>
+                      <div className="w-8 text-right text-sm font-bold tabular-nums">{session.cri}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mt-6 glass-card p-6">
               <h3 className="font-bold mb-4">Cases by mode</h3>
