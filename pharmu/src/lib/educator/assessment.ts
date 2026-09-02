@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const db = () => supabase as unknown as {
   from: (table: string) => any;
+  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
 };
 
 export type Sitting = {
@@ -175,42 +176,30 @@ export async function startSitting(
 }
 
 /**
- * Close a sitting and record what was done inside it.
+ * Close a sitting.
  *
- * The result is read back from the score rows written during the window, so it
- * is the same evidence the rest of the app grades from - there is no second,
- * assessment-only scoring path that could disagree with the first.
+ * The marks are computed in the database from the score rows the game wrote
+ * during the window, not sent up from here: a browser that could post its own
+ * score and accuracy is the one thing a graded assessment cannot allow. The
+ * function is idempotent, so a retry after a dropped connection returns the
+ * stored result rather than recomputing against a longer window.
  */
-export async function submitSitting(sitting: Sitting, userId: string) {
-  const until = new Date(Math.min(Date.now(), sitting.endsAt)).toISOString();
+export async function submitSitting(sitting: Sitting) {
+  const { data, error } = await db().rpc("submit_assessment_sitting", {
+    session_id: sitting.sessionId,
+  });
+  if (error) throw error;
 
-  const { data: rows } = await db().from("scores")
-    .select("score, accuracy")
-    .eq("user_id", userId)
-    .eq("mode", sitting.mode)
-    .gte("completed_at", sitting.startedAt)
-    .lte("completed_at", until)
-    .limit(50);
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | { cases_done: number; score: number; accuracy: number }
+    | undefined;
 
-  const scored = ((rows ?? []) as { score: number; accuracy: number }[])
-    .slice(0, sitting.caseCount);
-
-  const total = scored.reduce((sum, r) => sum + Number(r.score ?? 0), 0);
-  const accuracy = scored.length
-    ? scored.reduce((sum, r) => sum + Number(r.accuracy ?? 0), 0) / scored.length
-    : 0;
-
-  await db().from("assessment_sessions")
-    .update({
-      submitted_at: new Date().toISOString(),
-      score: Math.round(total),
-      // The column is a percentage to two decimal places, not a fraction.
-      accuracy: Math.round(accuracy * 10000) / 100,
-      cases_done: scored.length,
-    })
-    .eq("id", sitting.sessionId);
-
-  return { cases: scored.length, score: Math.round(total), accuracy };
+  return {
+    cases: Number(row?.cases_done ?? 0),
+    score: Number(row?.score ?? 0),
+    // The column is a percentage; callers render a fraction.
+    accuracy: Number(row?.accuracy ?? 0) / 100,
+  };
 }
 
 /** Cases completed so far in the live sitting, for the progress readout. */

@@ -52,7 +52,7 @@ export function SittingBar() {
     if (!active || !profile?.user_id || submitting.current) return;
     submitting.current = true;
     try {
-      const result = await submitSitting(active, profile.user_id);
+      const result = await submitSitting(active);
       clear();
       queryClient.invalidateQueries({ queryKey: ["my-assessments"] });
       toast[reason === "time" ? "warning" : "success"](

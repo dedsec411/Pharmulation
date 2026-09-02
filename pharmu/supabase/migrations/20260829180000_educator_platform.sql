@@ -109,11 +109,18 @@ CREATE INDEX IF NOT EXISTS assessment_sessions_student_idx ON public.assessment_
 -- function breaks that cycle, which is the same reason is_admin exists.
 -- ---------------------------------------------------------------------------
 
+-- role::text, not role = 'educator'. A LANGUAGE sql body is parsed when the
+-- function is created, and resolving the literal against the enum in the same
+-- transaction that added the value fails with "unsafe use of new value". The
+-- text comparison never touches the enum, so the whole file can be run in one
+-- go - which is how it is actually applied, pasted into the SQL editor.
 CREATE OR REPLACE FUNCTION public.is_educator(uid uuid)
 RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
 AS $$
-  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE user_id = uid AND role = 'educator');
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles WHERE user_id = uid AND role::text = 'educator'
+  );
 $$;
 
 /** Whether this educator owns the class. Ownership, not role, grants access. */
@@ -150,7 +157,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.classes TO authenticated;
 GRANT SELECT, INSERT, DELETE ON public.class_enrollments TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.class_assignments TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.assessments TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON public.assessment_sessions TO authenticated;
+-- No UPDATE: a sitting is closed by submit_assessment_sitting(), never by the
+-- student writing their own marks.
+GRANT SELECT, INSERT ON public.assessment_sessions TO authenticated;
 GRANT ALL ON public.institutions, public.classes, public.class_enrollments,
               public.class_assignments, public.assessments, public.assessment_sessions
   TO service_role;
@@ -239,9 +248,12 @@ DROP POLICY IF EXISTS assessment_sessions_start ON public.assessment_sessions;
 CREATE POLICY assessment_sessions_start ON public.assessment_sessions
   FOR INSERT WITH CHECK (auth.uid() = student_id);
 
+-- Deliberately no UPDATE policy. A student who could update their own sitting
+-- could write their own score and accuracy into it, which is the one thing a
+-- graded assessment cannot allow. Submission goes through
+-- submit_assessment_sitting() below, which derives the result from the score
+-- rows the game actually wrote.
 DROP POLICY IF EXISTS assessment_sessions_finish ON public.assessment_sessions;
-CREATE POLICY assessment_sessions_finish ON public.assessment_sessions
-  FOR UPDATE USING (auth.uid() = student_id) WITH CHECK (auth.uid() = student_id);
 
 -- ---------------------------------------------------------------------------
 -- 5. Reading student work
@@ -297,3 +309,67 @@ $$;
 
 REVOKE ALL ON FUNCTION public.join_class_by_code(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.join_class_by_code(text) TO authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 7. Closing a sitting
+--
+-- The marks are computed here, from the score rows the game wrote during the
+-- window, rather than sent up by the browser. Same evidence the rest of the
+-- app grades from, and nothing the student can author.
+--
+-- Cases are taken in the order they were completed, capped at the number the
+-- assessment asked for, and only up to the deadline - so overrunning the clock
+-- cannot add a case, and neither can playing extra ones.
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.submit_assessment_sitting(session_id uuid)
+RETURNS TABLE (cases_done integer, score integer, accuracy numeric)
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  sitting public.assessment_sessions;
+  exam public.assessments;
+  window_end timestamptz;
+BEGIN
+  SELECT * INTO sitting FROM public.assessment_sessions WHERE id = session_id;
+  IF NOT FOUND OR sitting.student_id IS DISTINCT FROM auth.uid() THEN
+    RAISE EXCEPTION 'Not your sitting';
+  END IF;
+
+  -- Idempotent: a retry after a dropped connection returns the stored result
+  -- rather than recomputing it against a later, longer window.
+  IF sitting.submitted_at IS NOT NULL THEN
+    RETURN QUERY SELECT sitting.cases_done, sitting.score, sitting.accuracy;
+    RETURN;
+  END IF;
+
+  SELECT * INTO exam FROM public.assessments WHERE id = sitting.assessment_id;
+  window_end := least(now(), sitting.started_at + make_interval(secs => exam.time_limit_sec));
+
+  WITH counted AS (
+    SELECT s.score AS case_score, s.accuracy AS case_accuracy
+    FROM public.scores s
+    WHERE s.user_id = sitting.student_id
+      AND s.mode = exam.mode
+      AND s.completed_at >= sitting.started_at
+      AND s.completed_at <= window_end
+    ORDER BY s.completed_at
+    LIMIT exam.case_count
+  )
+  UPDATE public.assessment_sessions t
+  SET submitted_at = now(),
+      cases_done   = (SELECT count(*) FROM counted),
+      score        = COALESCE((SELECT round(sum(case_score)) FROM counted), 0),
+      -- scores.accuracy is a fraction; this column is a percentage.
+      accuracy     = COALESCE((SELECT round(avg(case_accuracy) * 100, 2) FROM counted), 0)
+  WHERE t.id = session_id;
+
+  RETURN QUERY
+    SELECT t.cases_done, t.score, t.accuracy
+    FROM public.assessment_sessions t
+    WHERE t.id = session_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.submit_assessment_sitting(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.submit_assessment_sitting(uuid) TO authenticated;
