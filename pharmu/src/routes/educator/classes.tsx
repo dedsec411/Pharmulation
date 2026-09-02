@@ -4,11 +4,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, RefreshCw, Archive, ArchiveRestore, ChevronDown, Loader2,
+  Building2, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/auth-store";
 import { generateJoinCode } from "@/lib/educator/codes";
-import { educatorDb, useClassRoster, useMyClasses, type ClassRow } from "@/lib/educator/queries";
+import {
+  educatorDb, saveInstitution, useClassRoster, useMyClasses, useMyInstitution,
+  type ClassRow, type Institution,
+} from "@/lib/educator/queries";
 
 export const Route = createFileRoute("/educator/classes")({
   head: () => ({ meta: [{ title: "Classes - Pharmulation" }] }),
@@ -23,10 +27,19 @@ export const Route = createFileRoute("/educator/classes")({
  * code rather than an error in front of a lecturer. Postgres reports a unique
  * violation as 23505; anything else is a real failure and is rethrown.
  */
-async function createClass(educatorId: string, name: string): Promise<ClassRow> {
+async function createClass(
+  educatorId: string,
+  name: string,
+  institutionId: string | null
+): Promise<ClassRow> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const { data, error } = await educatorDb().from("classes")
-      .insert({ educator_id: educatorId, name: name.trim(), join_code: generateJoinCode() })
+      .insert({
+        educator_id: educatorId,
+        institution_id: institutionId,
+        name: name.trim(),
+        join_code: generateJoinCode(),
+      })
       .select("id, name, join_code, archived, created_at")
       .single();
     if (!error) return data as ClassRow;
@@ -104,10 +117,100 @@ function Roster({ classId }: { classId: string }) {
   );
 }
 
+/**
+ * The institution a lecturer teaches for.
+ *
+ * Asked for once and then out of the way: it names the classes created after
+ * it and appears in the faculty header, so a university running a cohort sees
+ * itself rather than a generic product. Optional - a class works without one.
+ */
+function InstitutionCard({
+  educatorId, institution, onSaved,
+}: {
+  educatorId?: string;
+  institution: Institution | null;
+  onSaved: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    if (!educatorId || !name.trim() || saving) return;
+    setSaving(true);
+    try {
+      await saveInstitution(educatorId, name, institution);
+      setEditing(false);
+      onSaved();
+      toast.success(institution ? "Institution renamed" : `${name.trim()} added`);
+    } catch {
+      toast.error("Could not save the institution");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <div className="glass-card mt-6 flex flex-wrap items-center gap-3 p-4">
+        <Building2 className="size-4 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate text-sm">
+          {institution
+            ? <><span className="text-muted-foreground">Institution: </span><b>{institution.name}</b></>
+            : <span className="text-muted-foreground">
+                No institution set. Classes still work without one.
+              </span>}
+        </span>
+        <button
+          type="button"
+          onClick={() => { setName(institution?.name ?? ""); setEditing(true); }}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3.5 py-1.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+        >
+          <Pencil className="size-3.5" /> {institution ? "Rename" : "Add institution"}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={save} className="glass-card mt-6 flex flex-wrap items-end gap-3 p-4">
+      <label className="min-w-[220px] flex-1">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Institution
+        </span>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="University of Karachi, Faculty of Pharmacy"
+          maxLength={120}
+          autoFocus
+          className="mt-1.5 w-full rounded-xl border border-border/50 bg-background/60 px-4 py-2.5 text-sm outline-none focus:border-primary"
+        />
+      </label>
+      <button
+        type="submit"
+        disabled={!name.trim() || saving}
+        className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50"
+      >
+        {saving && <Loader2 className="size-4 animate-spin" />} Save
+      </button>
+      <button
+        type="button"
+        onClick={() => setEditing(false)}
+        className="rounded-xl border border-border/50 px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
+      >
+        Cancel
+      </button>
+    </form>
+  );
+}
+
 function ClassesPage() {
   const { profile } = useAuthStore();
   const queryClient = useQueryClient();
   const { data: classes = [], isLoading } = useMyClasses(profile?.user_id);
+  const { data: institution } = useMyInstitution(profile?.user_id);
 
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -121,7 +224,7 @@ function ClassesPage() {
     if (!profile?.user_id || !name.trim() || creating) return;
     setCreating(true);
     try {
-      const created = await createClass(profile.user_id, name);
+      const created = await createClass(profile.user_id, name, institution?.id ?? null);
       setName("");
       setOpen(created.id);
       refresh();
@@ -179,7 +282,13 @@ function ClassesPage() {
         </p>
       </div>
 
-      <form onSubmit={onCreate} className="glass-card mt-6 flex flex-wrap items-end gap-3 p-5">
+      <InstitutionCard
+        educatorId={profile?.user_id}
+        institution={institution ?? null}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-institution"] })}
+      />
+
+      <form onSubmit={onCreate} className="glass-card mt-4 flex flex-wrap items-end gap-3 p-5">
         <label className="min-w-[240px] flex-1">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             New class name

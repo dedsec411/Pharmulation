@@ -67,6 +67,55 @@ export type AssessmentRow = {
   created_at: string;
 };
 
+export type Institution = { id: string; name: string };
+
+/**
+ * The institution this educator teaches for.
+ *
+ * One per educator, which is what the product actually needs: a lecturer
+ * belongs to a university, and their classes belong to it through them. A
+ * shared institution several educators join is a bigger idea - it needs
+ * invitations and an owner who is not simply whoever typed the name first -
+ * and nothing here is waiting on it.
+ */
+export function useMyInstitution(educatorId?: string) {
+  return useQuery<Institution | null>({
+    queryKey: ["my-institution", educatorId],
+    enabled: !!educatorId,
+    queryFn: async (): Promise<Institution | null> => {
+      const { data, error } = await db().from("institutions")
+        .select("id, name")
+        .eq("created_by", educatorId!)
+        .order("created_at")
+        .limit(1);
+      if (error) throw error;
+      const row = (data ?? [])[0];
+      return row ? { id: String(row.id), name: String(row.name) } : null;
+    },
+  });
+}
+
+/** Create it, or rename the one that exists. Returns its id either way. */
+export async function saveInstitution(
+  educatorId: string,
+  name: string,
+  existing?: Institution | null
+): Promise<string> {
+  const trimmed = name.trim();
+  if (existing) {
+    const { error } = await db().from("institutions")
+      .update({ name: trimmed }).eq("id", existing.id);
+    if (error) throw error;
+    return existing.id;
+  }
+  const { data, error } = await db().from("institutions")
+    .insert({ name: trimmed, created_by: educatorId })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return String(data.id);
+}
+
 export function useMyClasses(educatorId?: string) {
   return useQuery<ClassRow[]>({
     queryKey: ["educator-classes", educatorId],

@@ -1,6 +1,8 @@
 import { createFileRoute, Link, Outlet, redirect, useLocation } from "@tanstack/react-router";
 import { GraduationCap, LayoutDashboard, Users, ClipboardList, BarChart3, Timer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/lib/auth-store";
+import { useMyInstitution } from "@/lib/educator/queries";
 
 /**
  * The faculty side of the product.
@@ -44,6 +46,8 @@ const NAV = [
 
 function EducatorShell() {
   const { pathname } = useLocation();
+  const { profile } = useAuthStore();
+  const { data: institution } = useMyInstitution(profile?.user_id);
 
   return (
     // Faculty blue rather than the student teal. Same glass surfaces and
@@ -69,6 +73,14 @@ function EducatorShell() {
               Faculty
             </span>
           </Link>
+
+          {/* Named once on the Classes page. A university running a cohort
+              sees itself here rather than a generic product. */}
+          {institution && (
+            <span className="hidden min-w-0 max-w-[22ch] truncate border-l border-border/40 pl-3 text-sm text-muted-foreground sm:block">
+              {institution.name}
+            </span>
+          )}
 
           <nav className="ml-auto flex flex-wrap gap-1">
             {NAV.map((item) => {
