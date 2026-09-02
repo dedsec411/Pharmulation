@@ -37,16 +37,20 @@ const ROLE_LABEL: Record<string, string> = {
  */
 const CROWD = 20;
 
-function standing(pct: number, peers: number): string {
+export function standing(pct: number, peers: number): string {
   if (peers < CROWD) {
-    const rank = Math.max(1, peers - Math.round((pct / 100) * peers) + 1);
+    // Clamped at both ends. The bottom of the cohort scores 0, which the
+    // formula turns into peers + 1 - so the last learner of five was told
+    // they were "6th of 5".
+    const raw = peers - Math.round((pct / 100) * peers) + 1;
+    const rank = Math.min(peers, Math.max(1, raw));
     return `${ordinal(rank)} of ${peers}`;
   }
   if (pct >= 50) return `top ${Math.max(1, 100 - pct)}%`;
   return `bottom ${Math.max(1, pct)}%`;
 }
 
-function ordinal(n: number): string {
+export function ordinal(n: number): string {
   const rest = n % 100;
   if (rest >= 11 && rest <= 13) return `${n}th`;
   return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
