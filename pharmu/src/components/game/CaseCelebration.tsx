@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Trophy, Sparkles, CheckCircle2 } from "lucide-react";
-import { celebrationTier, type CelebrationTier } from "@/lib/game/celebration";
+import { Trophy, Sparkles, CheckCircle2, ShieldAlert } from "lucide-react";
+import { celebrationTier, type CaseResult, type CelebrationTier } from "@/lib/game/celebration";
 
 /**
  * The moment a case is finished, before the review.
@@ -74,20 +74,23 @@ const TIER_STYLE: Record<CelebrationTier["key"], { ring: string; text: string; g
   flawless: { ring: "border-amber-300/60", text: "text-amber-300", glow: "shadow-[0_0_80px_-10px_oklch(0.85_0.16_90/0.55)]" },
   strong:   { ring: "border-primary/60",   text: "text-primary",   glow: "shadow-[0_0_80px_-10px_oklch(0.74_0.14_180/0.5)]" },
   steady:   { ring: "border-border/60",    text: "text-foreground", glow: "" },
+  // A failure has to look like one at a glance, before a word is read.
+  failed:   { ring: "border-rose-500/70",  text: "text-rose-300",  glow: "shadow-[0_0_90px_-10px_oklch(0.62_0.22_20/0.6)]" },
 };
 
 export function CaseCelebration({
-  score, xpGain, errorCount, product, onDone,
+  score, xpGain, result, product, onDone,
 }: {
   score: number;
   xpGain: number;
-  errorCount: number;
+  /** What the case produced - decides whether this is a celebration at all. */
+  result: CaseResult;
   /** What the run actually produced, where a mode makes something. */
   product?: { name: string; detail?: string };
   onDone: () => void;
 }) {
   const reduced = useReducedMotion();
-  const tier = celebrationTier(errorCount);
+  const tier = celebrationTier(result);
   const style = TIER_STYLE[tier.key];
   const [count, setCount] = useState(0);
 
@@ -133,7 +136,11 @@ export function CaseCelebration({
     return () => cancelAnimationFrame(raf);
   }, [score, reduced]);
 
-  const Icon = tier.key === "flawless" ? Trophy : tier.key === "strong" ? Sparkles : CheckCircle2;
+  const failed = tier.key === "failed";
+  const Icon = failed ? ShieldAlert
+    : tier.key === "flawless" ? Trophy
+    : tier.key === "strong" ? Sparkles
+    : CheckCircle2;
 
   return (
     <motion.div
@@ -143,7 +150,9 @@ export function CaseCelebration({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25 }}
-      className="fixed inset-0 z-[90] grid place-items-center bg-background/80 backdrop-blur-md"
+      className={`fixed inset-0 z-[90] grid place-items-center backdrop-blur-md ${
+        failed ? "bg-rose-950/55" : "bg-background/80"
+      }`}
     >
       {!reduced && tier.confetti > 0 && <Confetti count={tier.confetti} />}
 
@@ -178,11 +187,17 @@ export function CaseCelebration({
         <p className="mt-5 text-5xl font-black tabular-nums">{count}</p>
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">points</p>
 
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">
+        <div className={`mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-bold ${
+          failed
+            ? "border-rose-400/40 bg-rose-400/10 text-rose-200"
+            : "border-primary/30 bg-primary/10 text-primary"
+        }`}>
           +{xpGain} XP
         </div>
 
-        <p className="mt-5 text-[11px] text-muted-foreground">Tap anywhere to see the breakdown</p>
+        <p className="mt-5 text-[11px] text-muted-foreground">
+          {failed ? "Tap anywhere to see what went wrong" : "Tap anywhere to see the breakdown"}
+        </p>
       </motion.div>
     </motion.div>
   );

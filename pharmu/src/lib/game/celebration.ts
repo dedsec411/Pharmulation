@@ -1,23 +1,38 @@
 /**
- * How much to celebrate finishing a case.
+ * How to greet a finished case.
  *
- * Every mode shows the celebration - finishing a case should feel like
- * finishing something wherever you did it - but the amount of noise it makes is
- * earned. Confetti over a case someone got badly wrong reads as "that went
- * well", and the screen immediately underneath it is a list of their mistakes.
- * The two would be telling them opposite things.
+ * Every mode ends here, and the screen has to tell the truth about what just
+ * happened. Confetti over a case someone failed reads as "that went well", and
+ * the breakdown directly underneath says otherwise - the two would be telling
+ * the learner opposite things.
  *
- * Mistakes rather than score decide the tier: score scales differently per mode
- * and difficulty, so a "good" number in Warehousing is not a good number in
- * Community, while an error is an error anywhere.
+ * This used to key on mistakes alone, which was wrong in a way that only showed
+ * up in play: a learner who ran out of time having achieved nothing logged no
+ * mistakes at all, so a case scoring the bare difficulty base was congratulated
+ * as flawless. What was earned matters as much as what was got wrong.
  */
 
 export type CelebrationTier = {
-  key: "flawless" | "strong" | "steady";
+  key: "flawless" | "strong" | "steady" | "failed";
   title: string;
   blurb: string;
   /** Confetti pieces; zero means the result did not earn any. */
   confetti: number;
+};
+
+/**
+ * What the case actually produced.
+ *
+ * `earned` is the positive credit from the score breakdown. `hasBreakdown`
+ * distinguishes "earned nothing" from "this mode does not report a breakdown",
+ * which are very different and would otherwise both read as zero.
+ */
+export type CaseResult = {
+  errors: number;
+  earned: number;
+  hasBreakdown: boolean;
+  correctDrugs: number;
+  wrongDrugs: number;
 };
 
 const FLAWLESS: CelebrationTier = {
@@ -41,8 +56,43 @@ const STEADY: CelebrationTier = {
   confetti: 0,
 };
 
-export function celebrationTier(errorCount: number): CelebrationTier {
-  if (errorCount <= 0) return FLAWLESS;
-  if (errorCount <= 2) return STRONG;
+const FAILED: CelebrationTier = {
+  key: "failed",
+  title: "Case failed",
+  blurb: "This one did not go well. The breakdown below shows where it went wrong.",
+  confetti: 0,
+};
+
+/**
+ * Whether the case was failed outright.
+ *
+ * Three ways, any of which is enough: nothing was earned at all, no medicine
+ * was handled correctly, or the mistakes piled up past recovery.
+ */
+export function isFailure(result: CaseResult): boolean {
+  if (result.hasBreakdown && result.earned <= 0) return true;
+  if (result.correctDrugs + result.wrongDrugs > 0 && result.correctDrugs === 0) return true;
+  return result.errors >= 4;
+}
+
+export function celebrationTier(result: CaseResult): CelebrationTier {
+  if (isFailure(result)) return FAILED;
+  if (result.errors <= 0) return FLAWLESS;
+  if (result.errors <= 2) return STRONG;
   return STEADY;
+}
+
+/** Build the result from what FeedbackScreen is already given. */
+export function caseResultFrom(
+  errors: number,
+  breakdown: { delta: number }[],
+  drugs: { correct: boolean }[],
+): CaseResult {
+  return {
+    errors,
+    earned: breakdown.reduce((sum, b) => sum + Math.max(0, b.delta), 0),
+    hasBreakdown: breakdown.length > 0,
+    correctDrugs: drugs.filter((d) => d.correct).length,
+    wrongDrugs: drugs.filter((d) => !d.correct).length,
+  };
 }
