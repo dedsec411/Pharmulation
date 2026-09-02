@@ -5,6 +5,8 @@ import { Trophy, RotateCw, Home, CheckCircle2, XCircle, AlertCircle, GraduationC
 import type { ErrorEntry } from "./ErrorExplanationPanel";
 import { CaseCelebration } from "./CaseCelebration";
 import { ClinicalExaminer } from "./ClinicalExaminer";
+import { FailureDebrief } from "./FailureDebrief";
+import { caseResultFrom, isFailure } from "@/lib/game/celebration";
 import { hasExaminableContext, type ExaminerCaseContext } from "@/lib/game/examiner";
 
 type Drug = { name: string; correct: boolean; info?: string };
@@ -34,6 +36,10 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
   // Every mode renders its results through here, so the celebration lives here
   // too rather than being wired into five routes separately.
   const [celebrating, setCelebrating] = useState(true);
+  // What the case actually produced, which decides both the tone of the
+  // celebration and whether a debrief or a viva follows it.
+  const result = caseResultFrom(errors.length, breakdown, drugs);
+  const failed = isFailure(result);
   const [examining, setExamining] = useState(false);
   // Whether this case's viva has been sat. Also gates the mandatory auto-open,
   // so closing a finished viva does not immediately reopen it.
@@ -67,6 +73,10 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
   useEffect(() => {
     if (canExamine && !celebrating && !examinerDone) setExamining(true);
   }, [canExamine, celebrating, examinerDone]);
+
+  // A failed case gets the debrief instead of the viva. Being examined on
+  // reasoning you have just been told was wrong is the wrong conversation, and
+  // making someone sit both would turn a bad case into a long one.
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     const start = performance.now();
@@ -88,7 +98,7 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
           <CaseCelebration
             score={score}
             xpGain={xpGain}
-            errorCount={errors.length}
+            result={result}
             product={product}
             onDone={() => setCelebrating(false)}
           />
@@ -176,8 +186,9 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
           </button>
           {/* Sits beside Next case rather than in front of it: skipping the
               examiner costs the learner nothing at all. */}
-          {/* The viva opens on its own; this reopens it for another go. */}
-          {canExamine && examinerDone && (
+          {/* The viva opens on its own; this reopens it for another go. Not
+              offered after a failed case, which had a debrief instead. */}
+          {canExamine && examinerDone && !failed && (
             <button
               onClick={() => setExamining(true)}
               className="inline-flex items-center gap-2 rounded-full border border-primary/45 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/15"
@@ -193,10 +204,17 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
 
       <AnimatePresence>
         {examining && examinerContext && (
-          <ClinicalExaminer
-            context={examinerContext}
-            onClose={() => { setExamining(false); setExaminerDone(true); }}
-          />
+          failed ? (
+            <FailureDebrief
+              context={examinerContext}
+              onClose={() => { setExamining(false); setExaminerDone(true); }}
+            />
+          ) : (
+            <ClinicalExaminer
+              context={examinerContext}
+              onClose={() => { setExamining(false); setExaminerDone(true); }}
+            />
+          )
         )}
       </AnimatePresence>
     </div>
