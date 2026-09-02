@@ -21,11 +21,17 @@ function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Welcome back!");
-    navigate({ to: "/dashboard" });
+
+    // A lecturer signing in wants their classes, not the student dashboard.
+    // Read here rather than waiting on the auth store, which fills in after
+    // this navigation has already happened.
+    const { data: profile } = await supabase
+      .from("profiles").select("role").eq("user_id", data.user.id).maybeSingle();
+    navigate({ to: String(profile?.role) === "educator" ? "/educator/dashboard" : "/dashboard" });
   }
 
   async function handleGoogle() {

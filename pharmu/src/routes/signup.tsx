@@ -18,12 +18,15 @@ function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"student" | "graduate">("student");
+  const [role, setRole] = useState<"student" | "graduate" | "educator">("student");
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const codeProblem = joinCodeProblem(joinCode);
+  const isEducator = role === "educator";
+  // An educator creates classes rather than joining one, so a code they left
+  // in the box before switching role must not be validated or redeemed.
+  const codeProblem = isEducator ? null : joinCodeProblem(joinCode);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +48,7 @@ function SignupPage() {
     // project requires email confirmation it does not, so the code is kept
     // and redeemed the first time they reach the dashboard signed in - a
     // wrong code must never be what stops an account being created.
-    const code = normaliseJoinCode(joinCode);
+    const code = isEducator ? "" : normaliseJoinCode(joinCode);
     if (code) {
       if (data.session) {
         const joined = await redeemJoinCode(code);
@@ -59,7 +62,8 @@ function SignupPage() {
     }
 
     toast.success("Welcome to Pharmulation!");
-    navigate({ to: "/dashboard" });
+    // Faculty land on their own side of the product, not the student one.
+    navigate({ to: isEducator ? "/educator/dashboard" : "/dashboard" });
   }
 
   async function handleGoogle() {
@@ -131,24 +135,31 @@ function SignupPage() {
           >
             <option value="student" className="bg-card">Pharmacy Student</option>
             <option value="graduate" className="bg-card">Graduate Pharmacist</option>
+            <option value="educator" className="bg-card">Educator / Faculty</option>
           </select>
-          <div>
-            <input
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              placeholder="Class join code (optional)"
-              maxLength={8}
-              autoCapitalize="characters"
-              autoCorrect="off"
-              spellCheck={false}
-              className={`w-full rounded-xl px-4 py-3 font-mono tracking-[0.2em] outline-none glass ${
-                codeProblem ? "border-rose-400/60" : "focus:border-primary"
-              }`}
-            />
-            <p className={`mt-1.5 px-1 text-xs ${codeProblem ? "text-rose-400" : "text-muted-foreground"}`}>
-              {codeProblem ?? "Have one from your university? Enter it to join your class."}
+          {isEducator ? (
+            <p className="rounded-xl border border-primary/25 bg-primary/8 px-4 py-3 text-xs text-muted-foreground">
+              You will be able to create classes and hand out join codes as soon as you sign in.
             </p>
-          </div>
+          ) : (
+            <div>
+              <input
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="Class join code (optional)"
+                maxLength={8}
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                className={`w-full rounded-xl px-4 py-3 font-mono tracking-[0.2em] outline-none glass ${
+                  codeProblem ? "border-rose-400/60" : "focus:border-primary"
+                }`}
+              />
+              <p className={`mt-1.5 px-1 text-xs ${codeProblem ? "text-rose-400" : "text-muted-foreground"}`}>
+                {codeProblem ?? "Have one from your university? Enter it to join your class."}
+              </p>
+            </div>
+          )}
           <button
             disabled={loading}
             className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground transition hover:scale-[1.02] disabled:opacity-60"
