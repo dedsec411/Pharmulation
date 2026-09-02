@@ -135,15 +135,25 @@ function ClassesPage() {
     }
   }
 
-  /** A new code locks out anyone holding the old one, which is the point. */
+  /**
+   * A new code locks out anyone holding the old one, which is the point.
+   *
+   * Retries a collision the way creation does. The column is UNIQUE, and
+   * without this the one time two codes clashed the lecturer was told the
+   * change had failed when another press would have worked.
+   */
   async function rotateCode(row: ClassRow) {
-    const { error } = await educatorDb().from("classes")
-      .update({ join_code: generateJoinCode() }).eq("id", row.id);
-    if (error) toast.error("Could not change the code");
-    else {
-      refresh();
-      toast.success("New join code issued", { description: "The old code no longer works." });
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { error } = await educatorDb().from("classes")
+        .update({ join_code: generateJoinCode() }).eq("id", row.id);
+      if (!error) {
+        refresh();
+        toast.success("New join code issued", { description: "The old code no longer works." });
+        return;
+      }
+      if ((error as { code?: string }).code !== "23505") break;
     }
+    toast.error("Could not change the code");
   }
 
   async function setArchived(row: ClassRow, archived: boolean) {
