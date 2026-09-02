@@ -12,8 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as EducatorRouteRouteImport } from './routes/educator/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EducatorIndexRouteImport } from './routes/educator/index'
+import { Route as EducatorDashboardRouteImport } from './routes/educator/dashboard'
+import { Route as EducatorClassesRouteImport } from './routes/educator/classes'
+import { Route as EducatorAssignRouteImport } from './routes/educator/assign'
+import { Route as EducatorAssessmentRouteImport } from './routes/educator/assessment'
+import { Route as EducatorAnalyticsRouteImport } from './routes/educator/analytics'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
@@ -41,6 +48,11 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
   path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EducatorRouteRoute = EducatorRouteRouteImport.update({
+  id: '/educator',
+  path: '/educator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -49,6 +61,36 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const EducatorIndexRoute = EducatorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => EducatorRouteRoute,
+} as any)
+const EducatorDashboardRoute = EducatorDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => EducatorRouteRoute,
+} as any)
+const EducatorClassesRoute = EducatorClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => EducatorRouteRoute,
+} as any)
+const EducatorAssignRoute = EducatorAssignRouteImport.update({
+  id: '/assign',
+  path: '/assign',
+  getParentRoute: () => EducatorRouteRoute,
+} as any)
+const EducatorAssessmentRoute = EducatorAssessmentRouteImport.update({
+  id: '/assessment',
+  path: '/assessment',
+  getParentRoute: () => EducatorRouteRoute,
+} as any)
+const EducatorAnalyticsRoute = EducatorAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => EducatorRouteRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
@@ -112,6 +154,7 @@ const AuthenticatedGameCommunityRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/educator': typeof EducatorRouteRouteWithChildren
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -122,6 +165,12 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/educator/analytics': typeof EducatorAnalyticsRoute
+  '/educator/assessment': typeof EducatorAssessmentRoute
+  '/educator/assign': typeof EducatorAssignRoute
+  '/educator/classes': typeof EducatorClassesRoute
+  '/educator/dashboard': typeof EducatorDashboardRoute
+  '/educator/': typeof EducatorIndexRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
   '/game/hospital': typeof AuthenticatedGameHospitalRoute
   '/game/industry': typeof AuthenticatedGameIndustryRoute
@@ -139,6 +188,12 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/educator/analytics': typeof EducatorAnalyticsRoute
+  '/educator/assessment': typeof EducatorAssessmentRoute
+  '/educator/assign': typeof EducatorAssignRoute
+  '/educator/classes': typeof EducatorClassesRoute
+  '/educator/dashboard': typeof EducatorDashboardRoute
+  '/educator': typeof EducatorIndexRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
   '/game/hospital': typeof AuthenticatedGameHospitalRoute
   '/game/industry': typeof AuthenticatedGameIndustryRoute
@@ -148,6 +203,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/educator': typeof EducatorRouteRouteWithChildren
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -158,6 +214,12 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/educator/analytics': typeof EducatorAnalyticsRoute
+  '/educator/assessment': typeof EducatorAssessmentRoute
+  '/educator/assign': typeof EducatorAssignRoute
+  '/educator/classes': typeof EducatorClassesRoute
+  '/educator/dashboard': typeof EducatorDashboardRoute
+  '/educator/': typeof EducatorIndexRoute
   '/_authenticated/game/community': typeof AuthenticatedGameCommunityRoute
   '/_authenticated/game/hospital': typeof AuthenticatedGameHospitalRoute
   '/_authenticated/game/industry': typeof AuthenticatedGameIndustryRoute
@@ -167,6 +229,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/educator'
     | '/leaderboard'
     | '/login'
     | '/signup'
@@ -177,6 +240,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/auth/callback'
+    | '/educator/analytics'
+    | '/educator/assessment'
+    | '/educator/assign'
+    | '/educator/classes'
+    | '/educator/dashboard'
+    | '/educator/'
     | '/game/community'
     | '/game/hospital'
     | '/game/industry'
@@ -194,6 +263,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/auth/callback'
+    | '/educator/analytics'
+    | '/educator/assessment'
+    | '/educator/assign'
+    | '/educator/classes'
+    | '/educator/dashboard'
+    | '/educator'
     | '/game/community'
     | '/game/hospital'
     | '/game/industry'
@@ -202,6 +277,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/educator'
     | '/leaderboard'
     | '/login'
     | '/signup'
@@ -212,6 +288,12 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/settings'
     | '/auth/callback'
+    | '/educator/analytics'
+    | '/educator/assessment'
+    | '/educator/assign'
+    | '/educator/classes'
+    | '/educator/dashboard'
+    | '/educator/'
     | '/_authenticated/game/community'
     | '/_authenticated/game/hospital'
     | '/_authenticated/game/industry'
@@ -221,6 +303,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  EducatorRouteRoute: typeof EducatorRouteRouteWithChildren
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
@@ -250,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/educator': {
+      id: '/educator'
+      path: '/educator'
+      fullPath: '/educator'
+      preLoaderRoute: typeof EducatorRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -263,6 +353,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/educator/': {
+      id: '/educator/'
+      path: '/'
+      fullPath: '/educator/'
+      preLoaderRoute: typeof EducatorIndexRouteImport
+      parentRoute: typeof EducatorRouteRoute
+    }
+    '/educator/dashboard': {
+      id: '/educator/dashboard'
+      path: '/dashboard'
+      fullPath: '/educator/dashboard'
+      preLoaderRoute: typeof EducatorDashboardRouteImport
+      parentRoute: typeof EducatorRouteRoute
+    }
+    '/educator/classes': {
+      id: '/educator/classes'
+      path: '/classes'
+      fullPath: '/educator/classes'
+      preLoaderRoute: typeof EducatorClassesRouteImport
+      parentRoute: typeof EducatorRouteRoute
+    }
+    '/educator/assign': {
+      id: '/educator/assign'
+      path: '/assign'
+      fullPath: '/educator/assign'
+      preLoaderRoute: typeof EducatorAssignRouteImport
+      parentRoute: typeof EducatorRouteRoute
+    }
+    '/educator/assessment': {
+      id: '/educator/assessment'
+      path: '/assessment'
+      fullPath: '/educator/assessment'
+      preLoaderRoute: typeof EducatorAssessmentRouteImport
+      parentRoute: typeof EducatorRouteRoute
+    }
+    '/educator/analytics': {
+      id: '/educator/analytics'
+      path: '/analytics'
+      fullPath: '/educator/analytics'
+      preLoaderRoute: typeof EducatorAnalyticsRouteImport
+      parentRoute: typeof EducatorRouteRoute
     }
     '/auth/callback': {
       id: '/auth/callback'
@@ -373,9 +505,32 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface EducatorRouteRouteChildren {
+  EducatorAnalyticsRoute: typeof EducatorAnalyticsRoute
+  EducatorAssessmentRoute: typeof EducatorAssessmentRoute
+  EducatorAssignRoute: typeof EducatorAssignRoute
+  EducatorClassesRoute: typeof EducatorClassesRoute
+  EducatorDashboardRoute: typeof EducatorDashboardRoute
+  EducatorIndexRoute: typeof EducatorIndexRoute
+}
+
+const EducatorRouteRouteChildren: EducatorRouteRouteChildren = {
+  EducatorAnalyticsRoute: EducatorAnalyticsRoute,
+  EducatorAssessmentRoute: EducatorAssessmentRoute,
+  EducatorAssignRoute: EducatorAssignRoute,
+  EducatorClassesRoute: EducatorClassesRoute,
+  EducatorDashboardRoute: EducatorDashboardRoute,
+  EducatorIndexRoute: EducatorIndexRoute,
+}
+
+const EducatorRouteRouteWithChildren = EducatorRouteRoute._addFileChildren(
+  EducatorRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  EducatorRouteRoute: EducatorRouteRouteWithChildren,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,

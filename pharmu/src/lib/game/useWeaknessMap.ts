@@ -16,8 +16,15 @@ import { buildWeaknessMap, type DrugIndex, type WeaknessMap } from "./weakness";
  * one case and read after another - to solve a cost that has not appeared. The
  * column exists in the migration for when it does.
  */
-export function useWeaknessMap(userId?: string) {
-  const { data: drugIndex = {} } = useQuery({
+/**
+ * Drug name to category, for resolving which class an error was about.
+ *
+ * Shared rather than inlined because the faculty analytics build the same map
+ * over a whole cohort, and one query key means the catalogue is fetched once
+ * per session however many maps are derived from it.
+ */
+export function useDrugIndex() {
+  return useQuery<DrugIndex>({
     queryKey: ["drug-class-index"],
     staleTime: 30 * 60 * 1000,
     queryFn: async () => {
@@ -30,6 +37,10 @@ export function useWeaknessMap(userId?: string) {
       return index;
     },
   });
+}
+
+export function useWeaknessMap(userId?: string) {
+  const { data: drugIndex = {} } = useDrugIndex();
 
   return useQuery<WeaknessMap | null>({
     queryKey: ["weakness-map", userId],
