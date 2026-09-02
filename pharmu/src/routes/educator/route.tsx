@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useMyInstitution } from "@/lib/educator/queries";
 import { useThemeStore } from "@/lib/theme-store";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 /**
  * The faculty side of the product.
@@ -114,6 +115,7 @@ function EducatorShell() {
             >
               Student view
             </Link>
+            <ThemeToggle className="ml-2" />
           </nav>
         </div>
       </header>

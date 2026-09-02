@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { signInWithGoogle } from "@/lib/auth-oauth";
 import { BackButton } from "@/components/BackButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { joinCodeProblem, normaliseJoinCode } from "@/lib/educator/codes";
 import { redeemJoinCode, stashJoinCode } from "@/lib/educator/join";
 
@@ -79,6 +80,9 @@ function SignupPage() {
     <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
       <div className="fixed left-4 top-4 z-10">
         <BackButton to="/" />
+      </div>
+      <div className="fixed right-4 top-4 z-10">
+        <ThemeToggle />
       </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}

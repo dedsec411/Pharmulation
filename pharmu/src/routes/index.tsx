@@ -7,6 +7,7 @@ import {
   Factory,
 } from "lucide-react";
 import { PillBackground } from "@/components/PillBackground";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogoVideo } from "@/components/LogoVideo";
 import { useThemeStore } from "@/lib/theme-store";
 
@@ -63,6 +64,9 @@ export default function Landing() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden">
+      <div className="absolute right-4 top-4 z-30 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
       {/* HERO */}
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center px-4 py-10 text-center sm:min-h-[92vh] sm:px-6 sm:py-0">
         <PillBackground />

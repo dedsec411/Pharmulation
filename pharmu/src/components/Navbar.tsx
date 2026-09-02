@@ -1,11 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/lib/auth-store";
-import { useThemeStore } from "@/lib/theme-store";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, LogOut, Moon, Sun, User } from "lucide-react";
+import { GraduationCap, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { LogoVideo } from "@/components/LogoVideo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function cleanPlayerName(value?: string | null) {
   const raw = String(value ?? "").trim();
@@ -33,8 +33,6 @@ export function Navbar() {
   const displayName = cleanPlayerName(profile?.full_name ?? profile?.email);
   const initials = displayName
     .split(" ").map((s: string) => s[0]).join("").slice(0, 2).toUpperCase();
-  const theme = useThemeStore((s) => s.theme);
-  const toggleTheme = useThemeStore((s) => s.toggle);
   const role = String(profile?.role ?? "");
   const isAdmin = role === "admin";
   // Admins get the link too, so the faculty side can be supported without a
@@ -62,7 +60,10 @@ export function Navbar() {
             </Link>
           ))}
         </div>
-        <div className="relative">
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+
+          <div className="relative">
           <button onClick={() => setOpen((o) => !o)}
             className="flex items-center gap-2 rounded-full glass px-3 py-1.5 transition duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]">
             <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground grid place-items-center text-xs font-bold">{initials}</div>
@@ -76,17 +77,6 @@ export function Navbar() {
               <Link to="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-[0_12px_28px_-22px_oklch(0.74_0.14_180/0.8)]">
                 ⚙️ Settings
               </Link>
-              {/* Stays open: switching theme is something people try, look at,
-                  and switch straight back. Closing the menu each time makes
-                  comparing the two a chore. */}
-              <button
-                onClick={toggleTheme}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary text-left"
-              >
-                {theme === "dark"
-                  ? <><Sun className="h-4 w-4" /> Light theme</>
-                  : <><Moon className="h-4 w-4" /> Dark theme</>}
-              </button>
               {isFaculty && (
                 <Link to="/educator/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-sky-400/10 hover:text-sky-700 dark:text-sky-300 text-sky-400">
                   <GraduationCap className="h-4 w-4" /> Faculty
@@ -102,6 +92,7 @@ export function Navbar() {
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
     </nav>
