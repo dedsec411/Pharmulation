@@ -8,7 +8,12 @@ export function LogoVideo({ className = "" }: LogoVideoProps) {
   const [isLooping, setIsLooping] = useState(false);
 
   return (
-    <span className={`inline-flex items-center ${className}`}>
+    // The dark ground is baked into the video frames, so on a light page it
+    // lands as a stray dark rectangle. It cannot be keyed out - blend modes
+    // either wash the artwork to white or keep the ground - so the light theme
+    // makes it deliberate instead: a brand plaque in the Green Cross dark, the
+    // way a logo with its own background is set on stationery.
+    <span className={`logo-plaque inline-flex items-center ${className}`}>
       <video
         key={isLooping ? "logo-loop" : "logo-reveal"}
         aria-hidden="true"

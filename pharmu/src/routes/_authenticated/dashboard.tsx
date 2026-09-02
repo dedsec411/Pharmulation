@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { CalendarDays, Flame, Trophy, Factory, Package, Hospital, FileText, Lightbulb, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { useAuthStore } from "@/lib/auth-store";
+import { useThemeStore } from "@/lib/theme-store";
 import { supabase } from "@/integrations/supabase/client";
 import { publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { unwrapList } from "@/lib/supabase-query";
@@ -23,14 +24,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   notFoundComponent: () => <div className="p-8">Not found</div>,
 });
 
-const MODE_META: Record<string, { icon: any; label: string; tag: string; accent: string; glow: string; tint: string; to: string; modes: readonly string[] }> = {
+const MODE_META: Record<string, { icon: any; label: string; tag: string; accent: string; ink: string; glow: string; tint: string; to: string; modes: readonly string[] }> = {
   rx: {
     icon: FileText,
     label: "Community Pharmacy",
     tag: "Beginner-friendly",
     accent: "oklch(0.74 0.14 180)",
+    ink: "oklch(0.48 0.12 180)",
     glow: "oklch(0.74 0.14 180 / 0.9)",
-    tint: "linear-gradient(135deg, oklch(0.74 0.14 180 / 0.24), oklch(0.72 0.16 165 / 0.1) 48%, oklch(1 0 0 / 0.045))",
+    tint: "linear-gradient(135deg, oklch(0.74 0.14 180 / 0.24), oklch(0.72 0.16 165 / 0.1) 48%, rgb(var(--hairline) / calc(0.045 * var(--hairline-boost, 1))))",
     to: "/game/community",
     modes: ["rx", "otc"],
   },
@@ -39,8 +41,9 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     label: "Clinical",
     tag: "Medium",
     accent: "oklch(0.60 0.20 270)",
+    ink: "oklch(0.45 0.18 270)",
     glow: "oklch(0.60 0.20 270 / 0.9)",
-    tint: "linear-gradient(135deg, oklch(0.62 0.19 240 / 0.22), oklch(0.60 0.20 270 / 0.16) 50%, oklch(1 0 0 / 0.04))",
+    tint: "linear-gradient(135deg, oklch(0.62 0.19 240 / 0.22), oklch(0.60 0.20 270 / 0.16) 50%, rgb(var(--hairline) / calc(0.04 * var(--hairline-boost, 1))))",
     to: "/game/hospital",
     modes: ["hospital"],
   },
@@ -49,8 +52,9 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     label: "Industry",
     tag: "Medium",
     accent: "oklch(0.78 0.16 75)",
+    ink: "oklch(0.50 0.13 70)",
     glow: "oklch(0.78 0.16 75 / 0.9)",
-    tint: "linear-gradient(135deg, oklch(0.78 0.16 75 / 0.25), oklch(0.70 0.14 55 / 0.12) 52%, oklch(1 0 0 / 0.04))",
+    tint: "linear-gradient(135deg, oklch(0.78 0.16 75 / 0.25), oklch(0.70 0.14 55 / 0.12) 52%, rgb(var(--hairline) / calc(0.04 * var(--hairline-boost, 1))))",
     to: "/game/industry",
     modes: ["industry"],
   },
@@ -59,8 +63,9 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
     label: "Warehousing",
     tag: "Medium",
     accent: "oklch(0.60 0.18 220)",
+    ink: "oklch(0.45 0.15 220)",
     glow: "oklch(0.60 0.18 220 / 0.9)",
-    tint: "linear-gradient(135deg, oklch(0.60 0.18 220 / 0.25), oklch(0.72 0.13 210 / 0.12) 52%, oklch(1 0 0 / 0.04))",
+    tint: "linear-gradient(135deg, oklch(0.60 0.18 220 / 0.25), oklch(0.72 0.13 210 / 0.12) 52%, rgb(var(--hairline) / calc(0.04 * var(--hairline-boost, 1))))",
     to: "/game/warehousing",
     modes: ["warehousing"],
   },
@@ -212,6 +217,7 @@ function MentorTipBanner({ tip }: { tip: string }) {
 
 function Dashboard() {
   const { profile } = useAuthStore();
+  const theme = useThemeStore((s) => s.theme);
   const userId = profile?.user_id;
   const { data: weaknessMap } = useWeaknessMap(userId);
   const { data: weekly } = useWeeklyTotals(userId);
@@ -307,7 +313,7 @@ function Dashboard() {
                   {Math.round(xpPct)}%
                 </span>
               </div>
-              <div className="relative h-7 overflow-hidden rounded-lg border border-foreground/10 bg-black/25 shadow-inner">
+              <div className="relative h-7 overflow-hidden rounded-lg border border-foreground/10 bg-slate-900/[0.04] dark:bg-black/25 shadow-inner">
                 <div className="absolute inset-x-2 top-1 flex justify-between">
                   {Array.from({ length: 11 }).map((_, i) => (
                     <span key={i} className={`w-px rounded-full bg-foreground/35 ${i % 5 === 0 ? "h-5" : "h-3"}`} />
@@ -327,7 +333,7 @@ function Dashboard() {
                   />
                 </motion.div>
                 <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-b from-foreground/20 to-transparent" />
-                <div className="pointer-events-none absolute inset-x-2 bottom-0.5 flex justify-between font-mono text-[8px] font-bold tabular-nums text-white/45">
+                <div className="pointer-events-none absolute inset-x-2 bottom-0.5 flex justify-between font-mono text-[8px] font-bold tabular-nums text-slate-900/45 dark:text-white/45">
                   <span>0</span>
                   <span>25</span>
                   <span>50</span>
@@ -399,14 +405,14 @@ function Dashboard() {
                   className="group relative overflow-hidden rounded-2xl border p-5 shadow-lg backdrop-blur-xl transition duration-300"
                   style={{
                     background: m.tint,
-                    borderColor: "oklch(1 0 0 / 0.12)",
+                    borderColor: "rgb(var(--hairline) / calc(0.12 * var(--hairline-boost, 1)))",
                   }}
                   onMouseEnter={(event) => {
                     event.currentTarget.style.borderColor = m.accent;
                     event.currentTarget.style.boxShadow = `0 22px 55px -28px ${m.glow}`;
                   }}
                   onMouseLeave={(event) => {
-                    event.currentTarget.style.borderColor = "oklch(1 0 0 / 0.12)";
+                    event.currentTarget.style.borderColor = "rgb(var(--hairline) / calc(0.12 * var(--hairline-boost, 1)))";
                     event.currentTarget.style.boxShadow = "";
                   }}
                 >
@@ -416,17 +422,17 @@ function Dashboard() {
                   <div className="relative flex items-start justify-between">
                     <div
                       className="relative grid h-10 w-10 place-items-center rounded-xl transition duration-300 group-hover:scale-110 group-hover:rotate-3"
-                      style={{ backgroundColor: m.glow.replace("0.9", "0.15"), color: m.accent }}
+                      style={{ backgroundColor: m.glow.replace("0.9", "0.15"), color: theme === "light" ? m.ink : m.accent }}
                     >
                       <Icon className="h-5 w-5 transition duration-300 group-hover:-translate-y-0.5" />
                     </div>
                     <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full bg-foreground/10 px-2 py-1">{m.tag}</span>
                   </div>
-                  <div className="relative mt-4 text-base font-bold transition duration-300 group-hover:brightness-125" style={{ color: m.accent }}>{m.label}</div>
+                  <div className="relative mt-4 text-base font-bold transition duration-300 group-hover:brightness-125" style={{ color: theme === "light" ? m.ink : m.accent }}>{m.label}</div>
                   <div className="relative text-xs text-muted-foreground mt-0.5">{publicModeCount(counts as Record<string, number>, m.modes)} cases completed</div>
                   <Link to={m.to as any}
                     className="relative mt-4 flex items-center justify-center gap-1 w-full rounded-full py-2 text-center text-sm font-semibold text-background transition duration-300 hover:brightness-110"
-                    style={{ backgroundColor: m.accent, boxShadow: `0 12px 28px -18px ${m.glow}` }}>
+                    style={{ backgroundColor: theme === "light" ? m.ink : m.accent, boxShadow: `0 12px 28px -18px ${m.glow}` }}>
                     Play <ChevronRight className="h-3.5 w-3.5 transition duration-300 group-hover:translate-x-0.5" />
                   </Link>
                 </motion.div>
@@ -456,7 +462,7 @@ function Dashboard() {
                     <li key={s.id} className="flex items-center gap-3 rounded-xl border border-border/35 bg-foreground/[0.03] px-3 py-2.5 text-sm transition hover:border-primary/30 hover:bg-primary/5">
                       <div
                         className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
-                        style={{ backgroundColor: meta.glow.replace("0.9", "0.14"), color: meta.accent }}
+                        style={{ backgroundColor: meta.glow.replace("0.9", "0.14"), color: theme === "light" ? meta.ink : meta.accent }}
                       >
                         <ActivityIcon className="h-4.5 w-4.5" />
                       </div>
@@ -485,7 +491,7 @@ function Dashboard() {
               boxShadow: "0 26px 70px -36px oklch(0.74 0.14 180 / 0.95)",
             }}
             whileTap={{ scale: 0.99 }}
-            className="group relative overflow-hidden rounded-2xl border border-primary/25 bg-slate-950/55 p-5 shadow-[0_24px_80px_-54px_oklch(0.74_0.14_180/0.85)] backdrop-blur-xl transition duration-300 hover:border-primary/45"
+            className="group relative overflow-hidden rounded-2xl border border-primary/25 bg-white/70 dark:bg-slate-950/55 p-5 shadow-[0_24px_80px_-54px_oklch(0.74_0.14_180/0.85)] backdrop-blur-xl transition duration-300 hover:border-primary/45"
           >
             <div className="pointer-events-none absolute inset-0 opacity-70"
               style={{
@@ -531,7 +537,7 @@ function Dashboard() {
                     initial={{ opacity: 0, x: 18 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.08 + i * 0.045 }}
-                    className="relative flex items-center gap-3 overflow-hidden rounded-xl border border-foreground/10 bg-black/20 px-3 py-2.5 transition hover:border-primary/35 hover:bg-primary/7"
+                    className="relative flex items-center gap-3 overflow-hidden rounded-xl border border-foreground/10 bg-slate-900/[0.035] dark:bg-black/20 px-3 py-2.5 transition hover:border-primary/35 hover:bg-primary/7"
                   >
                     <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border font-mono text-xs font-black ${podium}`}>
                       {i + 1}

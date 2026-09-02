@@ -132,7 +132,7 @@ function LeaderboardPage() {
         </div>
       </div>
 
-      <div className="mt-5 flex gap-2 flex-wrap rounded-2xl border border-cyan-300/10 bg-black/20 p-2 shadow-inner">
+      <div className="mt-5 flex gap-2 flex-wrap rounded-2xl border border-cyan-300/10 bg-slate-900/[0.035] dark:bg-black/20 p-2 shadow-inner">
         {FILTERS.map((item) => (
           <button key={item.key} onClick={() => setFilter(item.key)}
             className={`text-xs rounded-full px-3 py-1.5 transition ${
@@ -143,9 +143,9 @@ function LeaderboardPage() {
         ))}
       </div>
 
-      <section className="relative mt-8 overflow-hidden rounded-3xl border border-cyan-300/20 bg-black/35 p-4 shadow-[0_0_70px_-34px_oklch(0.74_0.14_180),inset_0_0_50px_-30px_oklch(0.74_0.14_180)] backdrop-blur-xl">
+      <section className="relative mt-8 overflow-hidden rounded-3xl border border-cyan-300/20 bg-slate-900/[0.05] dark:bg-black/35 p-4 shadow-[0_0_70px_-34px_oklch(0.74_0.14_180),inset_0_0_50px_-30px_oklch(0.74_0.14_180)] backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-0 opacity-30"
-          style={{ backgroundImage: "linear-gradient(oklch(1 0 0 / 0.05) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.035) 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
+          style={{ backgroundImage: "linear-gradient(rgb(var(--hairline) / calc(0.05 * var(--hairline-boost, 1))) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--hairline) / calc(0.035 * var(--hairline-boost, 1))) 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
         <div className="vital-monitor-scan pointer-events-none absolute inset-y-0 w-24 bg-gradient-to-r from-transparent via-cyan-200/10 to-transparent" />
         <div className="relative flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.04] px-4 py-3">
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-primary">
@@ -166,7 +166,7 @@ function LeaderboardPage() {
             // the overflow up out of the card, so the name rendered over the
             // top border. A card now grows instead of spilling.
             const height = idx === 0 ? "min-h-64" : idx === 1 ? "min-h-56" : "min-h-52";
-            const color = idx === 0 ? "from-amber-400/40 to-amber-500/10" : idx === 1 ? "from-slate-300/30 to-slate-400/10" : "from-orange-600/30 to-orange-700/10";
+            const color = idx === 0 ? "from-amber-400/40 to-amber-500/10" : idx === 1 ? "from-slate-400/35 dark:from-slate-300/30 to-slate-500/15 dark:to-slate-400/10" : "from-orange-600/30 to-orange-700/10";
             return (
               <motion.div key={p.user_id}
                 initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: idx * 0.1 }}
@@ -195,7 +195,7 @@ function LeaderboardPage() {
         </div>
       )}
 
-      <div className="relative mt-5 overflow-hidden rounded-2xl border border-cyan-300/15 bg-slate-950/55">
+      <div className="relative mt-5 overflow-hidden rounded-2xl border border-cyan-300/15 bg-white/70 dark:bg-slate-950/55">
         {players.length === 0 && (
           <div className="p-10 text-center text-muted-foreground">No data for this filter yet. Be the first!</div>
         )}

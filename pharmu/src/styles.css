@@ -89,6 +89,11 @@
 
   --brand-gradient: linear-gradient(135deg, oklch(0.82 0.14 180), oklch(0.65 0.16 195));
 
+  /* Grid overlays and scan lines drawn in inline styles, where a dark:
+     variant cannot reach. White over near-black; ink over near-white. */
+  --hairline: 255 255 255;
+  --hairline-boost: 1;
+
   /* Hospital board navy with a dark health-green shade */
   --background: oklch(0.13 0.05 190);
   --foreground: oklch(0.97 0.01 240);
@@ -218,6 +223,11 @@
   --glass-card-bloom: rgb(14 122 71 / 0.07);
 
   --brand-gradient: linear-gradient(135deg, #0E7A47, #10603C);
+
+  /* Ink at the alpha tuned for white-on-black is invisible, so light keeps
+     each line's relative weight and lifts them all together. */
+  --hairline: 19 42 29;
+  --hairline-boost: 2.6;
 
   --shadow-glow: 0 0 40px -10px rgb(14 122 71 / 0.3);
   --shadow-glow-lg: 0 10px 60px -15px rgb(14 122 71 / 0.35);
@@ -433,6 +443,15 @@ body.mode-industry [data-slot="card"] {
 body.mode-warehousing [data-slot="card"] {
   background: linear-gradient(180deg, rgba(10,28,46,0.85), rgba(4,14,26,0.85)) !important;
   border-radius: 4px !important;
+}
+
+/* See LogoVideo: the mark carries its own dark ground in the video frames, so
+   on light it is set as a plaque rather than left to float. */
+:root[data-theme="light"] .logo-plaque {
+  background: #0C1710;
+  border-radius: 0.85rem;
+  padding: 0 0.5rem;
+  box-shadow: 0 8px 24px -18px rgb(19 42 29 / 0.55);
 }
 
 /* Mode accents are picked to glow against near-black - industry's amber is

@@ -35,7 +35,7 @@ export function BatchBooklet(props: BookletInput) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-[80] grid place-items-center bg-slate-900/[0.08] dark:bg-black/70 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[80] grid place-items-center bg-slate-900/40 dark:bg-black/70 p-4 backdrop-blur-sm"
           >
             <motion.div
               initial={{ y: 24, opacity: 0, scale: 0.98 }}

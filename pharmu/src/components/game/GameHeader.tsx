@@ -128,11 +128,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
         <div className="order-3 flex min-w-0 justify-center md:order-none">
           <div
-            className="relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-foreground/10 bg-black/30 px-3 py-2 shadow-inner backdrop-blur-xl md:min-w-[310px] md:max-w-none md:px-4"
+            className="relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-foreground/10 bg-slate-900/[0.04] dark:bg-black/30 px-3 py-2 shadow-inner backdrop-blur-xl md:min-w-[310px] md:max-w-none md:px-4"
             style={{ boxShadow: `inset 0 0 26px oklch(0 0 0 / 0.35), 0 0 24px -14px ${state.glowColor}` }}
           >
             <div className="pointer-events-none absolute inset-0 opacity-35"
-              style={{ backgroundImage: "linear-gradient(oklch(1 0 0 / 0.045) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.035) 1px, transparent 1px)", backgroundSize: "14px 14px" }} />
+              style={{ backgroundImage: "linear-gradient(rgb(var(--hairline) / calc(0.045 * var(--hairline-boost, 1))) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--hairline) / calc(0.035 * var(--hairline-boost, 1))) 1px, transparent 1px)", backgroundSize: "14px 14px" }} />
             <div className="vital-monitor-scan pointer-events-none absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-foreground/12 to-transparent" />
             <div className="relative flex items-center justify-between gap-3 md:gap-4">
               <div className="min-w-[64px] md:min-w-[82px]">

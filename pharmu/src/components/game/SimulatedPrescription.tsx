@@ -128,7 +128,7 @@ export function SimulatedPrescription({
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
-      className="flex justify-center rounded-lg border border-border/40 bg-slate-950/30 px-2 py-5 sm:px-5"
+      className="flex justify-center rounded-lg border border-border/40 bg-slate-900/[0.04] dark:bg-slate-950/30 px-2 py-5 sm:px-5"
     >
       <div className="relative w-full max-w-[680px] -rotate-[0.35deg] bg-white px-5 py-4 text-slate-950 shadow-[0_24px_55px_rgba(0,0,0,0.45)]">
         <div className="pointer-events-none absolute inset-0 grid place-items-center overflow-hidden">

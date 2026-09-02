@@ -5,6 +5,7 @@ import { FileText, Pill, Hospital, Microscope, Sparkles, Siren, Lock, Clock, Fac
 import { Navbar } from "@/components/Navbar";
 import { BackButton } from "@/components/BackButton";
 import { useAuthStore } from "@/lib/auth-store";
+import { useThemeStore } from "@/lib/theme-store";
 import { supabase } from "@/integrations/supabase/client";
 import { MODE_TIMERS } from "@/lib/game/shared";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/modes")({
 type ModeCard = {
   slug: string; to: string; label: string; desc: string;
   icon: any; emoji: string; tag: string;
-  accent: string; tint: string;
+  accent: string; ink: string; tint: string;
   gated?: boolean;
 };
 const MODES: ModeCard[] = [
@@ -31,16 +32,17 @@ const MODES: ModeCard[] = [
   icon: Pill,
   emoji: "💊🏪",
   tag: "Beginner",
-  accent: "#00BFA5",
+  accent: "#00BFA5", ink: "#0A7A6B",
   tint: "from-teal-500/25 to-cyan-500/10",
 },
-  { slug: "hospital", to: "/game/hospital", label: "Clinical", desc: "Build medication orders, check interactions.", icon: Hospital, emoji: "🏥", tag: "Medium", accent: "#6366F1", tint: "from-[#6366F1]/25 to-[#A78BFA]/10" },
-  { slug: "industry", to: "/game/industry", label: "Industry", desc: "Run a tablet batch from formula to release.", icon: Factory, emoji: "🏭", tag: "Medium", accent: "#F59E0B", tint: "from-[#F59E0B]/25 to-[#FBBF24]/10" },
-  { slug: "warehousing", to: "/game/warehousing", label: "Warehousing", desc: "Receive stock, FEFO, cold chain & reconciliation.", icon: Package, emoji: "📦", tag: "Medium", accent: "#0EA5E9", tint: "from-[#0EA5E9]/25 to-[#38BDF8]/10" },
+  { slug: "hospital", to: "/game/hospital", label: "Clinical", desc: "Build medication orders, check interactions.", icon: Hospital, emoji: "🏥", tag: "Medium", accent: "#6366F1", ink: "#4038B8", tint: "from-[#6366F1]/25 to-[#A78BFA]/10" },
+  { slug: "industry", to: "/game/industry", label: "Industry", desc: "Run a tablet batch from formula to release.", icon: Factory, emoji: "🏭", tag: "Medium", accent: "#F59E0B", ink: "#9A5B06", tint: "from-[#F59E0B]/25 to-[#FBBF24]/10" },
+  { slug: "warehousing", to: "/game/warehousing", label: "Warehousing", desc: "Receive stock, FEFO, cold chain & reconciliation.", icon: Package, emoji: "📦", tag: "Medium", accent: "#0EA5E9", ink: "#0A6C99", tint: "from-[#0EA5E9]/25 to-[#38BDF8]/10" },
 ];
 
 function Modes() {
   const { profile } = useAuthStore();
+  const theme = useThemeStore((s) => s.theme);
   const { data: count = 0 } = useQuery({
     queryKey: ["all-cases-count", profile?.user_id],
     queryFn: async () => {
@@ -74,11 +76,11 @@ function Modes() {
                 <ModeAmbientLayer mode={m.slug} intensity="card" />
                 <div className="relative flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <Icon className="size-5" style={{ color: m.accent }} />
+                    <Icon className="size-5" style={{ color: theme === "light" ? m.ink : m.accent }} />
                   </div>
                   <span className="rounded-full bg-background/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur">{m.tag}</span>
                 </div>
-                <h3 className="relative mt-4 text-lg font-bold" style={{ color: m.accent }}>{m.label}</h3>
+                <h3 className="relative mt-4 text-lg font-bold" style={{ color: theme === "light" ? m.ink : m.accent }}>{m.label}</h3>
                 <p className="relative mt-1 text-sm text-muted-foreground">{m.desc}</p>
                 <div className="relative mt-4 flex items-center justify-between text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1"><Clock className="size-3" /> {MODE_TIMERS[m.slug as keyof typeof MODE_TIMERS]}s</span>
