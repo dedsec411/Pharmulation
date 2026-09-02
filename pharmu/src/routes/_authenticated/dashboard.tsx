@@ -500,7 +500,7 @@ function Dashboard() {
                 animation: "ekg-scroll 5.5s linear infinite",
                 backgroundSize: "220% 100%",
               }} />
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.055)_1px,transparent_1px)] bg-[length:100%_9px] opacity-25" />
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgb(var(--hairline)/calc(0.055*var(--hairline-boost,1)))_1px,transparent_1px)] bg-[length:100%_9px] opacity-25" />
             <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/12 blur-3xl transition duration-300 group-hover:bg-primary/18" />
 
             <div className="relative mb-4 flex items-start justify-between gap-3">

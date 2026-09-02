@@ -3,6 +3,7 @@ import { GraduationCap, LayoutDashboard, Users, ClipboardList, BarChart3, Timer 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useMyInstitution } from "@/lib/educator/queries";
+import { useThemeStore } from "@/lib/theme-store";
 
 /**
  * The faculty side of the product.
@@ -48,6 +49,12 @@ function EducatorShell() {
   const { pathname } = useLocation();
   const { profile } = useAuthStore();
   const { data: institution } = useMyInstitution(profile?.user_id);
+  const theme = useThemeStore((s) => s.theme);
+
+  // The faculty blue is set for a near-black ground. At L=0.62 on white it
+  // lands near 4:1, which is under the bar for the small labels this accent
+  // is mostly used on, so light takes a deeper blue of the same hue.
+  const accent = theme === "light" ? "oklch(0.45 0.15 250)" : "oklch(0.62 0.16 250)";
 
   return (
     // Faculty blue rather than the student teal. Same glass surfaces and
@@ -56,10 +63,12 @@ function EducatorShell() {
     <div
       className="min-h-screen"
       style={{
-        ["--primary" as string]: "oklch(0.62 0.16 250)",
-        ["--accent" as string]: "oklch(0.62 0.16 250)",
-        ["--ring" as string]: "oklch(0.62 0.16 250)",
-        ["--border" as string]: "oklch(0.62 0.16 250 / 20%)",
+        ["--primary" as string]: accent,
+        ["--accent" as string]: accent,
+        ["--ring" as string]: accent,
+        ["--border" as string]: theme === "light"
+          ? "oklch(0.45 0.15 250 / 26%)"
+          : "oklch(0.62 0.16 250 / 20%)",
       }}
     >
       <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">

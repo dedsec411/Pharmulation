@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
 import { unwrapList } from "@/lib/supabase-query";
 import { drugTagColor } from "@/lib/drug-colors";
+import { useThemeStore } from "@/lib/theme-store";
 import { flashcardFacts, hasStudyContent } from "@/lib/drug-study";
 import { DrugQuiz } from "@/components/game/DrugQuiz";
 
@@ -34,6 +35,7 @@ type Drug = {
 
 function DrugsPage() {
   const { profile } = useAuthStore();
+  const theme = useThemeStore((s) => s.theme);
   const userId = profile?.user_id;
   const qc = useQueryClient();
   const [tab, setTab] = useState<"all" | "study" | "flashcards" | "quiz">("all");
@@ -193,13 +195,13 @@ function DrugsPage() {
                       {d.drug_class && (
                         <span
                           className="rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider"
-                          style={drugTagColor(d.drug_class)}
+                          style={drugTagColor(d.drug_class, theme)}
                         >{d.drug_class}</span>
                       )}
                       {d.category && (
                         <span
                           className="rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider"
-                          style={drugTagColor(d.category)}
+                          style={drugTagColor(d.category, theme)}
                         >{d.category}</span>
                       )}
                     </div>
@@ -234,7 +236,7 @@ function DrugsPage() {
               <button
                 key={c}
                 onClick={() => setStudySource(c)}
-                style={studySource === c ? drugTagColor(c) : undefined}
+                style={studySource === c ? drugTagColor(c, theme) : undefined}
                 className={`rounded-full border px-3 py-1 text-xs transition ${
                   studySource === c ? "" : "border-border/40 text-muted-foreground hover:border-primary/40"
                 }`}
@@ -297,7 +299,7 @@ function DrugsPage() {
                     {selected.drug_class && (
                       <span
                         className="ml-2 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider"
-                        style={drugTagColor(selected.drug_class)}
+                        style={drugTagColor(selected.drug_class, theme)}
                       >{selected.drug_class}</span>
                     )}
                   </div>

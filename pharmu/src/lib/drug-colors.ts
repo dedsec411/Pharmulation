@@ -7,7 +7,10 @@
  * appears. That is what makes the colour informative rather than decorative.
  *
  * Hue varies; lightness and chroma are fixed, so the set stays harmonious and
- * legible against the app's dark glass surfaces.
+ * legible against the surface behind it. Which lightness that is depends on
+ * the theme: a tag's fill is the same translucent wash either way, so on dark
+ * the text has to be pale and on light it has to be deep. Carrying the dark
+ * value across turned every tag into pale-on-pale.
  */
 
 /** Deterministic hash -> hue. Small string, so a simple rolling hash is fine. */
@@ -23,10 +26,22 @@ function hueFor(value: string) {
 
 export type DrugTagColor = { background: string; color: string; borderColor: string };
 
-export function drugTagColor(name?: string | null): DrugTagColor | undefined {
+export function drugTagColor(
+  name?: string | null,
+  theme: "dark" | "light" = "dark"
+): DrugTagColor | undefined {
   const key = String(name ?? "").trim().toLowerCase();
   if (!key) return undefined;
   const h = hueFor(key);
+
+  if (theme === "light") {
+    return {
+      background: `oklch(0.62 0.15 ${h} / 0.13)`,
+      // Deep enough to clear 4.5:1 against the wash over a white card.
+      color: `oklch(0.42 0.14 ${h})`,
+      borderColor: `oklch(0.52 0.13 ${h} / 0.4)`,
+    };
+  }
   return {
     background: `oklch(0.62 0.15 ${h} / 0.16)`,
     color: `oklch(0.84 0.11 ${h})`,

@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { PillBackground } from "@/components/PillBackground";
 import { LogoVideo } from "@/components/LogoVideo";
+import { useThemeStore } from "@/lib/theme-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -58,6 +59,8 @@ const testimonials = [
 ];
 
 export default function Landing() {
+  const theme = useThemeStore((s) => s.theme);
+
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       {/* HERO */}
@@ -71,8 +74,20 @@ export default function Landing() {
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             Built by pharmacists, for pharmacists
           </div>
-          <h1 className="relative z-10 mx-auto -mt-2 -mb-8 flex justify-center sm:-mt-10 sm:-mb-28 md:-mb-36">
-            <LogoVideo className="aspect-video w-[min(116vw,420px)] sm:w-[min(98vw,860px)]" />
+          {/* The negative margins tuck the copy under the video's fading
+              bottom edge. The light wordmark has no such edge - applying them
+              to it would pull the copy straight through the name. */}
+          <h1
+            className={`relative z-10 mx-auto flex justify-center ${
+              theme === "light"
+                ? "mb-5 sm:mb-8"
+                : "-mt-2 -mb-8 sm:-mt-10 sm:-mb-28 md:-mb-36"
+            }`}
+          >
+            <LogoVideo
+              size="hero"
+              className="aspect-video w-[min(116vw,420px)] sm:w-[min(98vw,860px)]"
+            />
           </h1>
           <div className="hero-copy-layer relative z-30 mx-auto max-w-3xl pt-2 sm:pt-0">
             <div className="hero-dust-field" aria-hidden="true" />
