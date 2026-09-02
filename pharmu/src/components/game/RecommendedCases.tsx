@@ -24,9 +24,20 @@ function routeForMode(mode: string): string | null {
   return group ? `/game/${group.key}` : null;
 }
 
+/**
+ * Named down to the flow, not just the mode.
+ *
+ * Rx and OTC are both reached through Community Pharmacy, so labelling by mode
+ * alone made three different gaps read as three identical instructions. The
+ * flow is the part that tells the learner what to actually do when they get
+ * there.
+ */
 const MODE_LABEL: Record<string, string> = {
-  rx: "Community Pharmacy", otc: "Community Pharmacy", community: "Community Pharmacy",
-  hospital: "Clinical", oncology: "Clinical",
+  rx: "Community Pharmacy · Rx",
+  otc: "Community Pharmacy · OTC",
+  community: "Community Pharmacy",
+  hospital: "Clinical",
+  oncology: "Clinical",
 };
 
 export function RecommendedCases({ map }: { map: WeaknessMap }) {

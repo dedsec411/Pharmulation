@@ -27,13 +27,32 @@ const ROLE_LABEL: Record<string, string> = {
   admin: "peers",
 };
 
-/** Reads as a position, not a bare number: "top 12%" beats "88th". */
-function standing(pct: number): string {
+/**
+ * How a standing is worded.
+ *
+ * A percentile needs a crowd to mean anything. Best of five came out as "top
+ * 1%", which is arithmetically what the formula says and completely misleading
+ * - so a small cohort is reported as a rank instead, which is both honest and
+ * more use to the learner.
+ */
+const CROWD = 20;
+
+function standing(pct: number, peers: number): string {
+  if (peers < CROWD) {
+    const rank = Math.max(1, peers - Math.round((pct / 100) * peers) + 1);
+    return `${ordinal(rank)} of ${peers}`;
+  }
   if (pct >= 50) return `top ${Math.max(1, 100 - pct)}%`;
   return `bottom ${Math.max(1, pct)}%`;
 }
 
-function Bar({ label, pct }: { label: string; pct: number | null }) {
+function ordinal(n: number): string {
+  const rest = n % 100;
+  if (rest >= 11 && rest <= 13) return `${n}th`;
+  return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+}
+
+function Bar({ label, pct, peers }: { label: string; pct: number | null; peers: number }) {
   if (pct === null) {
     return (
       <div className="flex items-center gap-3">
@@ -49,7 +68,7 @@ function Bar({ label, pct }: { label: string; pct: number | null }) {
         <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
       </div>
       <span className="w-24 shrink-0 text-right text-xs font-bold tabular-nums">
-        {standing(pct)}
+        {standing(pct, peers)}
       </span>
     </div>
   );
@@ -81,12 +100,13 @@ export function PeerBenchmark({ userId }: { userId?: string }) {
       </h3>
       <p className="mt-0.5 text-xs text-muted-foreground">
         Against {data.peers - 1} other {role} on Pharmulation.
+        {data.peers < CROWD && " Shown as a rank until the cohort is large enough for percentiles to mean anything."}
       </p>
 
       <div className="mt-4 space-y-3">
-        <Bar label="Accuracy" pct={data.accuracy_pct} />
-        <Bar label="Cases completed" pct={data.cases_pct} />
-        <Bar label="Clinical Reasoning Index" pct={data.cri_pct} />
+        <Bar label="Accuracy" pct={data.accuracy_pct} peers={data.peers} />
+        <Bar label="Cases completed" pct={data.cases_pct} peers={data.peers} />
+        <Bar label="Clinical Reasoning Index" pct={data.cri_pct} peers={data.peers} />
       </div>
     </div>
   );

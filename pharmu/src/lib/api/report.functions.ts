@@ -46,6 +46,8 @@ Write five things:
 
 RULES:
 - Every number you use must come from the figures given. Never invent a statistic.
+- The ONLY modes that exist are: Community Pharmacy, Clinical, Industry, Warehousing. Name one of those four exactly. There is no calculation mode, no revision mode and no practice mode - recommending one sends the trainee looking for something that is not there.
+- Do not invent clinical specifics the figures do not support. "Watch for conversion errors in paediatric dosing" is fabricated detail unless the figures say so; "check every dose against the label before you submit" is not.
 - A skill with fewer than 3 attempts has not been measured. Do not describe it as a strength or a weakness.
 - Address the trainee as "you". No headings, no bullet characters, no markdown.
 - Keep each field to two sentences at most.

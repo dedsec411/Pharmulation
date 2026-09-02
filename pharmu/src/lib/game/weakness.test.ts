@@ -233,3 +233,26 @@ describe("modesForSkill", () => {
     }
   });
 });
+
+describe("where a gap sends you", () => {
+  // Taking the first mode that merely mentions a skill sent every
+  // recommendation to the same place, because rx exercises almost all of them.
+  it("sends each skill to the mode that most specifically tests it", () => {
+    expect(modesForSkill("counselling")[0]).toBe("otc");
+    expect(modesForSkill("renal")[0]).toBe("hospital");
+    expect(modesForSkill("interactions")[0]).toBe("hospital");
+    expect(modesForSkill("labeling")[0]).toBe("rx");
+  });
+
+  it("still lists every mode that exercises the skill", () => {
+    const dosing = modesForSkill("dosing");
+    expect(dosing).toContain("rx");
+    expect(dosing).toContain("otc");
+    expect(dosing).toContain("hospital");
+  });
+
+  it("gives three different gaps somewhere useful to go", () => {
+    const homes = (["counselling", "renal", "labeling"] as const).map((s) => modesForSkill(s)[0]);
+    expect(new Set(homes).size).toBe(3);
+  });
+});
