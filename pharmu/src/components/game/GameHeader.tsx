@@ -109,11 +109,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             onClick={handleExit}
             className="
               group inline-flex shrink-0 items-center gap-2
-              rounded-xl border border-white/15 bg-white/[0.07]
+              rounded-xl border border-foreground/15 bg-foreground/[0.07]
               px-3 py-2 text-xs font-semibold text-foreground/90
               shadow-[0_8px_30px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]
               backdrop-blur-2xl transition-all duration-150
-              hover:border-white/25 hover:bg-white/[0.12] hover:text-foreground
+              hover:border-foreground/25 hover:bg-foreground/[0.12] hover:text-foreground
               sm:px-4 sm:text-sm
             "
             aria-label="Back"
@@ -128,12 +128,12 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
         <div className="order-3 flex min-w-0 justify-center md:order-none">
           <div
-            className="relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-white/10 bg-black/30 px-3 py-2 shadow-inner backdrop-blur-xl md:min-w-[310px] md:max-w-none md:px-4"
+            className="relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-foreground/10 bg-black/30 px-3 py-2 shadow-inner backdrop-blur-xl md:min-w-[310px] md:max-w-none md:px-4"
             style={{ boxShadow: `inset 0 0 26px oklch(0 0 0 / 0.35), 0 0 24px -14px ${state.glowColor}` }}
           >
             <div className="pointer-events-none absolute inset-0 opacity-35"
               style={{ backgroundImage: "linear-gradient(oklch(1 0 0 / 0.045) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.035) 1px, transparent 1px)", backgroundSize: "14px 14px" }} />
-            <div className="vital-monitor-scan pointer-events-none absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-white/12 to-transparent" />
+            <div className="vital-monitor-scan pointer-events-none absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-foreground/12 to-transparent" />
             <div className="relative flex items-center justify-between gap-3 md:gap-4">
               <div className="min-w-[64px] md:min-w-[82px]">
                 <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground">
@@ -156,7 +156,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 />
               </svg>
             </div>
-            <div className="relative mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="relative mt-1 h-1.5 overflow-hidden rounded-full bg-foreground/10">
               <div
                 className="h-full rounded-full"
                 style={{

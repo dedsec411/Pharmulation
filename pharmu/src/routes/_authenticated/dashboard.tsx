@@ -307,10 +307,10 @@ function Dashboard() {
                   {Math.round(xpPct)}%
                 </span>
               </div>
-              <div className="relative h-7 overflow-hidden rounded-lg border border-white/10 bg-black/25 shadow-inner">
+              <div className="relative h-7 overflow-hidden rounded-lg border border-foreground/10 bg-black/25 shadow-inner">
                 <div className="absolute inset-x-2 top-1 flex justify-between">
                   {Array.from({ length: 11 }).map((_, i) => (
-                    <span key={i} className={`w-px rounded-full bg-white/35 ${i % 5 === 0 ? "h-5" : "h-3"}`} />
+                    <span key={i} className={`w-px rounded-full bg-foreground/35 ${i % 5 === 0 ? "h-5" : "h-3"}`} />
                   ))}
                 </div>
                 <motion.div
@@ -320,13 +320,13 @@ function Dashboard() {
                   transition={{ duration: 0.9, ease: "easeOut" }}
                 >
                   <motion.div
-                    className="absolute inset-y-0 w-20 -skew-x-12 bg-white/35 blur-sm"
+                    className="absolute inset-y-0 w-20 -skew-x-12 bg-foreground/35 blur-sm"
                     initial={{ x: "-120%" }}
                     animate={{ x: ["-120%", "260%"] }}
                     transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 0.8, ease: "easeInOut" }}
                   />
                 </motion.div>
-                <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-b from-white/20 to-transparent" />
+                <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-b from-foreground/20 to-transparent" />
                 <div className="pointer-events-none absolute inset-x-2 bottom-0.5 flex justify-between font-mono text-[8px] font-bold tabular-nums text-white/45">
                   <span>0</span>
                   <span>25</span>
@@ -420,7 +420,7 @@ function Dashboard() {
                     >
                       <Icon className="h-5 w-5 transition duration-300 group-hover:-translate-y-0.5" />
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full bg-white/10 px-2 py-1">{m.tag}</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full bg-foreground/10 px-2 py-1">{m.tag}</span>
                   </div>
                   <div className="relative mt-4 text-base font-bold transition duration-300 group-hover:brightness-125" style={{ color: m.accent }}>{m.label}</div>
                   <div className="relative text-xs text-muted-foreground mt-0.5">{publicModeCount(counts as Record<string, number>, m.modes)} cases completed</div>
@@ -453,7 +453,7 @@ function Dashboard() {
                   const meta = activityMeta(s.mode);
                   const ActivityIcon = meta.icon;
                   return (
-                    <li key={s.id} className="flex items-center gap-3 rounded-xl border border-border/35 bg-white/[0.03] px-3 py-2.5 text-sm transition hover:border-primary/30 hover:bg-primary/5">
+                    <li key={s.id} className="flex items-center gap-3 rounded-xl border border-border/35 bg-foreground/[0.03] px-3 py-2.5 text-sm transition hover:border-primary/30 hover:bg-primary/5">
                       <div
                         className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
                         style={{ backgroundColor: meta.glow.replace("0.9", "0.14"), color: meta.accent }}
@@ -524,14 +524,14 @@ function Dashboard() {
                       ? "border-sky-300/35 bg-sky-300/10 text-sky-200"
                       : i === 2
                         ? "border-amber-300/35 bg-amber-300/10 text-amber-200"
-                        : "border-white/10 bg-white/[0.045] text-muted-foreground";
+                        : "border-foreground/10 bg-foreground/[0.045] text-muted-foreground";
                 return (
                   <motion.li
                     key={p.user_id}
                     initial={{ opacity: 0, x: 18 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.08 + i * 0.045 }}
-                    className="relative flex items-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 transition hover:border-primary/35 hover:bg-primary/7"
+                    className="relative flex items-center gap-3 overflow-hidden rounded-xl border border-foreground/10 bg-black/20 px-3 py-2.5 transition hover:border-primary/35 hover:bg-primary/7"
                   >
                     <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border font-mono text-xs font-black ${podium}`}>
                       {i + 1}

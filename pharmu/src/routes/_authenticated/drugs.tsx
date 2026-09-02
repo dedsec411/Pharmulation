@@ -181,7 +181,7 @@ function DrugsPage() {
                         className={`absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition ${
                           bookmarked
                             ? "bg-rose-500/20 text-rose-400"
-                            : "bg-white/5 text-muted-foreground hover:bg-rose-500/15 hover:text-rose-400"
+                            : "bg-foreground/5 text-muted-foreground hover:bg-rose-500/15 hover:text-rose-400"
                         }`}>
                         <Heart className="h-3.5 w-3.5" fill={bookmarked ? "currentColor" : "none"} />
                         {bookmarked ? "Saved" : "Save"}
@@ -302,7 +302,7 @@ function DrugsPage() {
                     )}
                   </div>
                 </div>
-                <button onClick={() => setSelected(null)} className="p-2 hover:bg-white/5 rounded-full"><X className="h-4 w-4" /></button>
+                <button onClick={() => setSelected(null)} className="p-2 hover:bg-foreground/5 rounded-full"><X className="h-4 w-4" /></button>
               </div>
               <Section title="Dosage & administration" body={selected.dosage} />
               <ListSection title="Indications" items={selected.indications} />

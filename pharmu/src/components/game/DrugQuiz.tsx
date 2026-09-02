@@ -94,7 +94,7 @@ export function DrugQuiz({ drugs, pool }: { drugs: StudyDrug[]; pool: StudyDrug[
           <p className="mt-2 text-sm text-muted-foreground">
             {pct === 100 ? "Every one right." : pct >= 70 ? "Solid round - review what slipped." : "Worth another pass through these."}
           </p>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-foreground/10">
             <motion.div
               className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-400"
               initial={{ width: 0 }}
@@ -140,7 +140,7 @@ export function DrugQuiz({ drugs, pool }: { drugs: StudyDrug[]; pool: StudyDrug[
         </p>
         <p className="text-xs font-semibold tabular-nums text-primary">{score} correct</p>
       </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-foreground/10">
         <motion.div
           className="h-full rounded-full bg-primary"
           animate={{ width: `${(index / questions.length) * 100}%` }}

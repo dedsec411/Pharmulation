@@ -136,7 +136,7 @@ function LeaderboardPage() {
         {FILTERS.map((item) => (
           <button key={item.key} onClick={() => setFilter(item.key)}
             className={`text-xs rounded-full px-3 py-1.5 transition ${
-              filter === item.key ? "bg-primary/20 text-primary border border-primary/40 shadow-[0_0_18px_-8px_oklch(0.74_0.14_180)]" : "bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08]"
+              filter === item.key ? "bg-primary/20 text-primary border border-primary/40 shadow-[0_0_18px_-8px_oklch(0.74_0.14_180)]" : "bg-foreground/[0.04] text-muted-foreground hover:bg-foreground/[0.08]"
             }`}>
             {item.label}
           </button>

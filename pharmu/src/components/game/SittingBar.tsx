@@ -86,33 +86,28 @@ export function SittingBar() {
   const urgent = left < 120_000;
 
   return (
+    // Deliberately one look in both themes. An exam banner is an interruption,
+    // not part of the page, and a saturated ground with its own light text is
+    // legible whichever theme the rest of the app is wearing.
     <div
-      className={`sticky top-0 z-50 border-b backdrop-blur-xl ${
-        urgent
-          ? "border-rose-500/40 bg-rose-950/70"
-          : "border-sky-500/30 bg-sky-950/60"
-      }`}
+      className={`sticky top-0 z-50 text-white ${urgent ? "bg-rose-700" : "bg-sky-800"}`}
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 text-sm">
         <span className="inline-flex items-center gap-2 font-bold">
           <Lock className="size-4" /> {active.title}
         </span>
-        <span className="text-muted-foreground">
+        <span className="text-white/75">
           Assessment in progress · no hints · {done} of {active.caseCount} cases
         </span>
 
-        <span
-          className={`ml-auto inline-flex items-center gap-2 font-mono text-base font-black tabular-nums ${
-            urgent ? "text-rose-300" : "text-sky-200"
-          }`}
-        >
+        <span className="ml-auto inline-flex items-center gap-2 font-mono text-base font-black tabular-nums">
           <Timer className="size-4" /> {clock(left)}
         </span>
 
         <button
           type="button"
           onClick={() => finish("manual")}
-          className="rounded-full border border-white/25 px-3.5 py-1 text-xs font-semibold transition hover:bg-white/10"
+          className="rounded-full border border-white/35 px-3.5 py-1 text-xs font-semibold transition hover:bg-white/15"
         >
           Submit now
         </button>

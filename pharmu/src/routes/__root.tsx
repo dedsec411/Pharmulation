@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { TutorialBot } from "@/components/TutorialBot";
 import { useInitAuth } from "@/lib/use-init-auth";
+import { THEME_BOOT_SCRIPT, useThemeStore, useThemeSync } from "@/lib/theme-store";
 
 function NotFoundComponent() {
   return (
@@ -107,8 +108,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
+    // data-theme is stamped by the inline script below rather than rendered
+    // here: the server does not know which theme this visitor chose, and
+    // guessing means every light-theme user watches the app flash from black
+    // to white before React catches up.
     <html lang="en" className="dark">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
@@ -126,12 +132,17 @@ function AuthBootstrap() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const theme = useThemeStore((s) => s.theme);
+  useThemeSync();
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthBootstrap />
       <Outlet />
       <TutorialBot />
-      <Toaster position="top-right" theme="dark" richColors />
+      {/* Toasts are drawn by sonner outside our stylesheet, so the theme has
+          to be handed to it explicitly or they stay dark on a light page. */}
+      <Toaster position="top-right" theme={theme} richColors />
     </QueryClientProvider>
   );
 }

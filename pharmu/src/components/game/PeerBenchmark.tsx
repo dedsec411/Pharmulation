@@ -64,7 +64,7 @@ function Bar({ label, pct, peers }: { label: string; pct: number | null; peers: 
   return (
     <div className="flex items-center gap-3">
       <span className="w-40 shrink-0 text-sm text-muted-foreground">{label}</span>
-      <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+      <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-foreground/10">
         <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
       </div>
       <span className="w-24 shrink-0 text-right text-xs font-bold tabular-nums">

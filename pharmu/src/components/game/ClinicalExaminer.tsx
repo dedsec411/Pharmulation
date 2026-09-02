@@ -337,7 +337,7 @@ export function ClinicalExaminer({
                   {SCORE_AXES.map((axis) => (
                     <div key={axis.key} className="flex items-center gap-3">
                       <span className="w-36 shrink-0 text-xs text-muted-foreground">{axis.label}</span>
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-foreground/10">
                         <motion.div
                           className="h-full rounded-full bg-primary"
                           initial={{ width: 0 }}

@@ -73,7 +73,7 @@ export function BatchBooklet(props: BookletInput) {
                     className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                       s.key === section.key
                         ? "bg-amber-400/20 text-amber-100"
-                        : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                        : "text-slate-400 hover:bg-foreground/5 hover:text-slate-200"
                     }`}
                   >
                     {s.title}

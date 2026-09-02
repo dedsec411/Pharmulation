@@ -109,7 +109,7 @@ function Toggle({ label, desc, checked, onChange }: { label: string; desc: strin
         <div className="text-xs text-muted-foreground">{desc}</div>
       </div>
       <button onClick={() => onChange(!checked)}
-        className={`relative w-11 h-6 rounded-full transition ${checked ? "bg-primary" : "bg-white/15"}`}>
+        className={`relative w-11 h-6 rounded-full transition ${checked ? "bg-primary" : "bg-foreground/15"}`}>
         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${checked ? "left-5" : "left-0.5"}`} />
       </button>
     </div>

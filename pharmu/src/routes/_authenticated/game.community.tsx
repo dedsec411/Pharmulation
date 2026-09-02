@@ -47,11 +47,11 @@ const TIMINGS   = ["morning", "with food", "before sleep", "as needed"];
 function CommunityFloatingPills({ className = "" }: { className?: string }) {
   return (
     <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden="true">
-      <span className="floating-pill absolute left-[5%] top-[14%] h-3 w-12 rounded-full bg-gradient-to-r from-primary to-white/80 shadow-[0_0_22px_oklch(0.74_0.14_180/0.4)]" />
+      <span className="floating-pill absolute left-[5%] top-[14%] h-3 w-12 rounded-full bg-gradient-to-r from-primary to-foreground/80 shadow-[0_0_22px_oklch(0.74_0.14_180/0.4)]" />
       <span className="floating-pill absolute right-[10%] top-[22%] h-4 w-14 rounded-full bg-gradient-to-r from-cyan-300 to-primary [animation-delay:-2.5s]" />
-      <span className="floating-pill absolute bottom-[18%] left-[16%] h-3 w-10 rounded-full bg-gradient-to-r from-white/85 to-emerald-300 [animation-delay:-5s]" />
+      <span className="floating-pill absolute bottom-[18%] left-[16%] h-3 w-10 rounded-full bg-gradient-to-r from-foreground/85 to-emerald-300 [animation-delay:-5s]" />
       <span className="floating-pill absolute bottom-[10%] right-[28%] h-3.5 w-12 rounded-full bg-gradient-to-r from-primary to-sky-200 [animation-delay:-7s]" />
-      <span className="floating-pill absolute left-[52%] top-[44%] h-3 w-9 rounded-full bg-gradient-to-r from-emerald-300 to-white/75 [animation-delay:-9s]" />
+      <span className="floating-pill absolute left-[52%] top-[44%] h-3 w-9 rounded-full bg-gradient-to-r from-emerald-300 to-foreground/75 [animation-delay:-9s]" />
     </div>
   );
 }
@@ -817,7 +817,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
               layout
               className="sticky top-20 z-30 rounded-2xl border border-primary/40 bg-gradient-to-b from-card/95 to-background/90 p-3 shadow-[0_20px_55px_-22px_oklch(0.74_0.14_180/0.85),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-xl"
             >
-              <div className="pointer-events-none absolute inset-x-5 top-1 h-px bg-white/20" />
+              <div className="pointer-events-none absolute inset-x-5 top-1 h-px bg-foreground/20" />
               <p className="mb-2 flex items-center justify-between gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <ClipboardList className="h-3.5 w-3.5 text-primary" /> Dispensing tray
@@ -829,7 +829,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
               {collected.length === 0 ? (
                 <p className="py-3 text-center text-sm text-muted-foreground">Tap drugs below to add</p>
               ) : (
-                <motion.ul layout className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-white/10 bg-black/15 p-2 pr-1 shadow-inner">
+                <motion.ul layout className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-foreground/10 bg-black/15 p-2 pr-1 shadow-inner">
                   <AnimatePresence initial={false}>
                   {collected.map((c) => (
                     <motion.li
@@ -1098,7 +1098,7 @@ function CompoundStep({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         className="relative z-10 overflow-hidden rounded-3xl border border-primary/35 bg-gradient-to-br from-card/80 via-background/85 to-emerald-950/55 p-5 shadow-[0_28px_80px_-45px_oklch(0.74_0.14_180/0.9)] backdrop-blur-xl"
       >
-        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-white/25" />
+        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-foreground/25" />
         <div className="mb-5 rounded-2xl border border-primary/25 bg-primary/10 p-4">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-primary">{typeLabel}</p>
           <h2 className="mt-2 text-2xl font-black">This strength is not commercially available.</h2>

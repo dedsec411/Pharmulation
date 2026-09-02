@@ -103,7 +103,7 @@ export function OnboardingModal() {
               {step > 0 && (
                 <button
                   onClick={() => setStep(step - 1)}
-                  className="rounded-full border border-border px-5 py-2 text-sm hover:bg-white/5"
+                  className="rounded-full border border-border px-5 py-2 text-sm hover:bg-foreground/5"
                 >
                   Back
                 </button>

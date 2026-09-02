@@ -31,11 +31,11 @@ export function BackButton({ to, label = "Back", className = "" }: BackButtonPro
         px-4 py-2
         text-sm font-semibold
         text-foreground/90
-        border border-white/15
-        bg-white/[0.07]
+        border border-foreground/15
+        bg-foreground/[0.07]
         backdrop-blur-2xl
         shadow-[0_8px_30px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]
-        hover:bg-white/[0.12] hover:border-white/25 hover:text-foreground
+        hover:bg-foreground/[0.12] hover:border-foreground/25 hover:text-foreground
         transition-all duration-150
         ${className}
       `}
@@ -79,11 +79,11 @@ export function FloatingBackButton({ to, label = "Exit", onBeforeNavigate }: Flo
         px-4 py-2
         text-sm font-semibold
         text-foreground/90
-        border border-white/15
-        bg-white/[0.07]
+        border border-foreground/15
+        bg-foreground/[0.07]
         backdrop-blur-2xl
         shadow-[0_8px_30px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]
-        hover:bg-white/10 hover:border-white/25 hover:text-foreground
+        hover:bg-foreground/10 hover:border-foreground/25 hover:text-foreground
         transition-all duration-150
         group
       "

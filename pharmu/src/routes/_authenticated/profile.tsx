@@ -152,7 +152,7 @@ function ProfilePage() {
             <p className="text-sm text-muted-foreground">{profile.email}</p>
             <div className="mt-2 flex flex-wrap gap-2 justify-center md:justify-start">
               <span className="text-xs rounded-full bg-primary/20 text-primary px-3 py-1 font-semibold">{tier.title}</span>
-              <span className="text-xs rounded-full bg-white/10 px-3 py-1 capitalize">{profile.role}</span>
+              <span className="text-xs rounded-full bg-foreground/10 px-3 py-1 capitalize">{profile.role}</span>
             </div>
           </div>
           <div className="text-center md:text-right">
@@ -160,7 +160,7 @@ function ProfilePage() {
             <div className="text-xs text-muted-foreground">
               {prog.next ? `${prog.next.min - profile.xp} XP to ${prog.next.title}` : "Max tier reached"}
             </div>
-            <div className="mt-2 h-2 w-48 rounded-full bg-white/10 overflow-hidden">
+            <div className="mt-2 h-2 w-48 rounded-full bg-foreground/10 overflow-hidden">
               <motion.div className="h-full bg-gradient-to-r from-primary to-cyan-400"
                 initial={{ width: 0 }} animate={{ width: `${prog.pct}%` }} transition={{ duration: 1 }} />
             </div>
@@ -228,7 +228,7 @@ function ProfilePage() {
                       <div className="w-40 truncate text-sm text-muted-foreground">
                         {session.case_title ?? "Case"}
                       </div>
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-foreground/10">
                         <div className="h-full bg-primary" style={{ width: `${session.cri}%` }} />
                       </div>
                       <div className="w-16 shrink-0 text-right text-xs text-muted-foreground">
@@ -261,7 +261,7 @@ function ProfilePage() {
                 {modeGroupCounts.map((group) => (
                   <div key={group.key} className="flex items-center gap-3">
                     <div className="w-32 text-sm text-muted-foreground">{group.label}</div>
-                    <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div className="flex-1 h-2 rounded-full bg-foreground/10 overflow-hidden">
                       <div className="h-full bg-primary" style={{ width: `${(group.count / maxMode) * 100}%` }} />
                     </div>
                     <div className="w-8 text-right text-sm">{group.count}</div>
@@ -278,7 +278,7 @@ function ProfilePage() {
                 </div>
                 <div className="text-3xl font-extrabold text-primary">{cpdHours} / {cpdTarget}</div>
               </div>
-              <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="mt-3 h-2 rounded-full bg-foreground/10 overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-primary to-cyan-400" style={{ width: `${Math.min(100, (cpdHours / cpdTarget) * 100)}%` }} />
               </div>
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -288,7 +288,7 @@ function ProfilePage() {
                   return (
                     <button key={m} disabled={!unlocked} onClick={() => claimCertificate(m)}
                       className={`text-xs rounded-xl py-3 transition ${
-                        unlocked ? "bg-primary/20 text-primary hover:bg-primary/30" : "bg-white/5 text-muted-foreground"
+                        unlocked ? "bg-primary/20 text-primary hover:bg-primary/30" : "bg-foreground/5 text-muted-foreground"
                       }`}>
                       <div className="font-bold text-base">{m}h</div>
                       <div>{claimed ? "📜 Download" : unlocked ? "🎓 Claim" : <Lock className="h-3 w-3 inline" />}</div>
@@ -331,7 +331,7 @@ function ProfilePage() {
               </thead>
               <tbody>
                 {scores.map((s: any) => (
-                  <tr key={s.id} className="border-b border-border/50 hover:bg-white/5">
+                  <tr key={s.id} className="border-b border-border/50 hover:bg-foreground/5">
                     <td className="p-3">{new Date(s.completed_at).toLocaleDateString()}</td>
                     <td className="p-3">{publicModeLabel(s.mode)}</td>
                     <td className="p-3 text-right font-bold text-primary">{s.score}</td>

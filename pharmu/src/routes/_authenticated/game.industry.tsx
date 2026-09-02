@@ -397,15 +397,15 @@ function BalanceScale({ value, max, min, target, unit, ok }: { value: number; ma
   const angle = -54 + pct * 1.08;
   return (
     <div className={`rounded-2xl border p-4 ${ok ? "border-emerald-300/40 bg-emerald-950/20" : "border-red-400/45 bg-red-950/20"}`}>
-      <div className="relative mx-auto h-36 max-w-xs rounded-t-full border border-white/10 bg-black/45 shadow-inner">
-        <div className="absolute inset-4 rounded-t-full border-t border-x border-white/10" />
+      <div className="relative mx-auto h-36 max-w-xs rounded-t-full border border-foreground/10 bg-black/45 shadow-inner">
+        <div className="absolute inset-4 rounded-t-full border-t border-x border-foreground/10" />
         <div className="absolute bottom-4 left-1/2 h-24 w-1 origin-bottom rounded-full bg-current transition-transform duration-150"
           style={{ transform: `translateX(-50%) rotate(${angle}deg)`, color: ok ? "rgb(16 185 129)" : "rgb(239 68 68)", boxShadow: `0 0 18px ${ok ? "rgba(16,185,129,.65)" : "rgba(239,68,68,.65)"}` }} />
-        <div className="absolute bottom-3 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border border-white/20 bg-slate-900" />
+        <div className="absolute bottom-3 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border border-foreground/20 bg-slate-900" />
         <div className="absolute bottom-3 left-5 text-[10px] font-bold text-muted-foreground">0</div>
         <div className="absolute bottom-3 right-5 text-[10px] font-bold text-muted-foreground">{displayWeight(max, unit)}</div>
         {min !== undefined && target !== undefined && (
-          <div className="absolute inset-x-8 bottom-9 h-1 rounded-full bg-white/10">
+          <div className="absolute inset-x-8 bottom-9 h-1 rounded-full bg-foreground/10">
             <div className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full bg-emerald-400/80"
               style={{ left: `${Math.max(0, (min / max) * 100)}%`, width: `${Math.max(4, ((target - min) / max) * 200)}%` }} />
           </div>
@@ -427,7 +427,7 @@ function IndustrialGauge({ icon: Icon, label, value, unit, range }: any) {
     <div className={`relative overflow-hidden rounded-2xl border p-3 text-xs ${ok ? "border-emerald-400/35 bg-emerald-500/5" : "border-red-400/45 bg-red-500/10"}`}>
       <div className="flex items-center gap-1.5 text-muted-foreground"><Icon className="size-3.5" /> {label}</div>
       <div className="relative mx-auto mt-2 h-24 w-28">
-        <div className="absolute inset-x-0 top-0 h-24 rounded-t-full border border-white/15 bg-black/35 shadow-inner" />
+        <div className="absolute inset-x-0 top-0 h-24 rounded-t-full border border-foreground/15 bg-black/35 shadow-inner" />
         <div className="absolute right-2 top-8 h-8 w-8 rounded-full border border-red-400/30 bg-red-500/10" />
         <div className="absolute bottom-2 left-1/2 h-16 w-1 origin-bottom rounded-full bg-amber-300 transition-transform"
           style={{ transform: `translateX(-50%) rotate(${angle}deg)`, boxShadow: "0 0 12px rgba(251,191,36,0.65)" }} />
@@ -471,7 +471,7 @@ function EnvSlider({
       </div>
 
       <div className="relative mt-3">
-        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-full bg-white/10">
+        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-full bg-foreground/10">
           <div
             className="absolute h-full rounded-full bg-emerald-400/40"
             style={{ left: `${left}%`, width: `${width}%` }}
@@ -996,7 +996,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                   <h2 className="text-2xl font-black uppercase tracking-tight">{batchProduct}</h2>
                   <p className="text-sm font-semibold text-slate-300">{productChoice.form} dosage form - Batch size: {batchSizeLabel}</p>
                 </div>
-                <div className="rounded border border-amber-200/25 bg-white/5 px-3 py-2 font-mono text-xs text-slate-200 backdrop-blur">
+                <div className="rounded border border-amber-200/25 bg-foreground/5 px-3 py-2 font-mono text-xs text-slate-200 backdrop-blur">
                   <p>BMR No. PHM-{caseData.id?.slice?.(0, 5) ?? "00001"}</p>
                   <p>Revision 01</p>
                 </div>
@@ -1023,7 +1023,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                     onChange={(e) => updateBatchCount(Number(e.target.value))}
                     className="h-10 w-36 rounded border border-amber-200/25 bg-slate-950/60 px-3 text-right font-mono text-sm tabular-nums text-slate-100 outline-none focus:border-amber-400"
                   />
-                  <span className="rounded border border-amber-200/20 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300">
+                  <span className="rounded border border-amber-200/20 bg-foreground/5 px-3 py-2 text-xs font-bold text-slate-300">
                     {batchScale.toFixed(2)}x
                   </span>
                 </div>
@@ -1402,7 +1402,7 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
             <h3 className="mt-1 text-lg font-black leading-tight">{batchProduct}</h3>
             <p className="mt-0.5 text-xs text-slate-400">{productChoice.form} dosage form</p>
           </div>
-          <span className="rounded border border-amber-200/20 bg-white/5 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-300">
+          <span className="rounded border border-amber-200/20 bg-foreground/5 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-300">
             {batchSizeLabel}
           </span>
         </div>
@@ -1431,17 +1431,17 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-          <div className="rounded-lg border border-amber-200/20 bg-white/5 p-2">
+          <div className="rounded-lg border border-amber-200/20 bg-foreground/5 p-2">
             <p className="text-[10px] uppercase tracking-wider text-slate-400">Temp</p>
             <p className="mt-1 font-bold">{f.env.tempRange[0]}-{f.env.tempRange[1]}C</p>
           </div>
-          <div className="rounded-lg border border-amber-200/20 bg-white/5 p-2">
+          <div className="rounded-lg border border-amber-200/20 bg-foreground/5 p-2">
             <p className="text-[10px] uppercase tracking-wider text-slate-400">Humidity</p>
             <p className="mt-1 font-bold">{f.env.humidityRange[0]}-{f.env.humidityRange[1]}%</p>
           </div>
         </div>
 
-        <div className="mt-3 rounded-lg border border-amber-200/20 bg-white/5 p-3">
+        <div className="mt-3 rounded-lg border border-amber-200/20 bg-foreground/5 p-3">
           <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Process map</p>
           <div className="flex flex-wrap gap-1">
             {STAGES.map((stage, i) => (
@@ -1450,7 +1450,7 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
                 className={`rounded px-2 py-1 text-[10px] capitalize ${
                   phase === "process" && i === stageIdx
                     ? "bg-amber-500 text-slate-950"
-                    : "bg-white/5 text-slate-400"
+                    : "bg-foreground/5 text-slate-400"
                 }`}
               >
                 {f.stageLabels?.[stage] ?? stage}
@@ -1465,11 +1465,11 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
               </span>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="rounded-md bg-white/5 p-2">
+              <div className="rounded-md bg-foreground/5 p-2">
                 <p className="text-[9px] uppercase tracking-wider text-slate-500">Speed</p>
                 <p className="mt-0.5 font-mono text-sm font-bold text-slate-100">{mixingProfile.speed}</p>
               </div>
-              <div className="rounded-md bg-white/5 p-2">
+              <div className="rounded-md bg-foreground/5 p-2">
                 <p className="text-[9px] uppercase tracking-wider text-slate-500">Time</p>
                 <p className="mt-0.5 font-mono text-sm font-bold text-slate-100">{mixingProfile.time}</p>
               </div>

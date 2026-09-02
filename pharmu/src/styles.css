@@ -59,12 +59,32 @@
 :root {
   --radius: 1rem;
 
-  /* Native controls follow the dark theme.
+  /* Native controls follow the page theme.
      Without this the browser paints select popups, scrollbars and date pickers
-     from the OS light palette, while the options inside inherit the page's
-     near-white foreground - so the Drug Database class and category menus
+     from the OS palette, while the options inside inherit the page's own
+     foreground - so on dark the Drug Database class and category menus
      rendered near-white text on a white popup and could not be read. */
   color-scheme: dark;
+
+  /* The painted surfaces, held as variables rather than written into the
+     utilities below. A theme cannot be swapped by overriding tokens alone if
+     the glass panels and the page wash have their colours baked in. */
+  --app-wash:
+    radial-gradient(ellipse 78% 48% at 50% -12%, oklch(0.68 0.16 155 / 0.19), transparent 62%),
+    radial-gradient(ellipse 65% 52% at 100% 0%, oklch(0.74 0.14 180 / 0.1), transparent 62%),
+    radial-gradient(ellipse 70% 58% at 0% 95%, oklch(0.46 0.13 150 / 0.14), transparent 68%),
+    linear-gradient(180deg, oklch(0.16 0.06 185) 0%, oklch(0.125 0.05 195) 50%, oklch(0.095 0.04 220) 100%);
+
+  --glass-fill: linear-gradient(180deg, oklch(0.19 0.065 175 / 0.74), oklch(0.12 0.048 205 / 0.8));
+  --glass-card-fill: linear-gradient(180deg, oklch(0.19 0.065 175 / 0.84), oklch(0.12 0.048 205 / 0.9));
+  --glass-line: oklch(0.68 0.16 155 / 0.2);
+  --glass-card-line: oklch(0.68 0.16 155 / 0.22);
+  --glass-sheen: oklch(1 0 0 / 0.055);
+  --glass-drop: oklch(0.68 0.16 155 / 0.74);
+  --glass-card-drop: oklch(0.68 0.16 155 / 0.84);
+  --glass-card-bloom: oklch(0.68 0.16 155 / 0.3);
+
+  --brand-gradient: linear-gradient(135deg, oklch(0.82 0.14 180), oklch(0.65 0.16 195));
 
   /* Hospital board navy with a dark health-green shade */
   --background: oklch(0.13 0.05 190);
@@ -114,6 +134,92 @@
   --sidebar-ring: oklch(0.74 0.14 180);
 }
 
+/* ---------------------------------------------------------------------------
+   Green Cross - the light theme.
+
+   The green cross that hangs outside pharmacies across Europe, South Asia and
+   Latin America, which is the most widely understood pharmacy signal there is.
+   Its primary is a deep #0E7A47 rather than the dark theme's bright teal:
+   the teal is legible against a near-black ground and turns to glare against a
+   near-white one, so the accent darkens as the ground lightens instead of
+   being carried across unchanged.
+
+   Only tokens and the painted-surface variables are redefined here. No
+   component rule is duplicated for light, which is what keeps the two themes
+   from drifting apart.
+   --------------------------------------------------------------------------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --background: #EFF5F0;
+  --foreground: #132A1D;
+
+  --card: #FFFFFF;
+  --card-foreground: #132A1D;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #132A1D;
+
+  --primary: #0E7A47;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #E2EEE6;
+  --secondary-foreground: #132A1D;
+
+  --muted: #E4EDE7;
+  --muted-foreground: #5B6F62;
+
+  --accent: #E2EEE6;
+  --accent-foreground: #0E5C36;
+
+  /* The flag red from the same study, dark enough to read on white. */
+  --destructive: #9E2222;
+  --destructive-foreground: #FFFFFF;
+
+  --warning: #A85B08;
+  --warning-foreground: #FFFFFF;
+
+  --success: #0E7A47;
+  --success-foreground: #FFFFFF;
+
+  --border: #D3E3D7;
+  --input: #D3E3D7;
+  --ring: #0E7A47;
+
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #132A1D;
+  --sidebar-primary: #0E7A47;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E2EEE6;
+  --sidebar-accent-foreground: #0E5C36;
+  --sidebar-border: #D3E3D7;
+  --sidebar-ring: #0E7A47;
+
+  /* Far quieter than the dark wash. On a near-white ground the same strength
+     of colour reads as a stain rather than as depth. */
+  --app-wash:
+    radial-gradient(ellipse 78% 48% at 50% -12%, rgb(14 122 71 / 0.07), transparent 62%),
+    radial-gradient(ellipse 65% 52% at 100% 0%, rgb(14 122 71 / 0.05), transparent 62%),
+    radial-gradient(ellipse 70% 58% at 0% 95%, rgb(14 122 71 / 0.06), transparent 68%),
+    linear-gradient(180deg, #F4F9F5 0%, #EFF5F0 55%, #E8F1EB 100%);
+
+  /* Glass on light is a white panel with a green-tinted edge, not a darker
+     pane: a translucent dark fill over a pale ground reads as dirt. */
+  --glass-fill: linear-gradient(180deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.7));
+  --glass-card-fill: linear-gradient(180deg, rgb(255 255 255 / 0.95), rgb(250 253 251 / 0.92));
+  --glass-line: rgb(14 122 71 / 0.16);
+  --glass-card-line: rgb(14 122 71 / 0.18);
+  --glass-sheen: rgb(255 255 255 / 0.9);
+  --glass-drop: rgb(19 42 29 / 0.16);
+  --glass-card-drop: rgb(19 42 29 / 0.18);
+  --glass-card-bloom: rgb(14 122 71 / 0.07);
+
+  --brand-gradient: linear-gradient(135deg, #0E7A47, #10603C);
+
+  --shadow-glow: 0 0 40px -10px rgb(14 122 71 / 0.3);
+  --shadow-glow-lg: 0 10px 60px -15px rgb(14 122 71 / 0.35);
+}
+
 .dark {
   --background: oklch(0.13 0.05 190);
   --foreground: oklch(0.97 0.01 240);
@@ -149,11 +255,7 @@
   body {
     min-height: 100vh;
     overscroll-behavior-y: none;
-    background-image:
-      radial-gradient(ellipse 78% 48% at 50% -12%, oklch(0.68 0.16 155 / 0.19), transparent 62%),
-      radial-gradient(ellipse 65% 52% at 100% 0%, oklch(0.74 0.14 180 / 0.1), transparent 62%),
-      radial-gradient(ellipse 70% 58% at 0% 95%, oklch(0.46 0.13 150 / 0.14), transparent 68%),
-      linear-gradient(180deg, oklch(0.16 0.06 185) 0%, oklch(0.125 0.05 195) 50%, oklch(0.095 0.04 220) 100%);
+    background-image: var(--app-wash);
     background-attachment: fixed;
   }
 
@@ -173,25 +275,23 @@
 }
 
 @utility glass {
-  background:
-    linear-gradient(180deg, oklch(0.19 0.065 175 / 0.74), oklch(0.12 0.048 205 / 0.8));
+  background: var(--glass-fill);
   backdrop-filter: blur(16px);
-  border: 1px solid oklch(0.68 0.16 155 / 0.2);
+  border: 1px solid var(--glass-line);
   box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.055),
-    0 18px 55px -42px oklch(0.68 0.16 155 / 0.74);
+    inset 0 1px 0 var(--glass-sheen),
+    0 18px 55px -42px var(--glass-drop);
 }
 
 @utility glass-card {
-  background:
-    linear-gradient(180deg, oklch(0.19 0.065 175 / 0.84), oklch(0.12 0.048 205 / 0.9));
+  background: var(--glass-card-fill);
   backdrop-filter: blur(20px);
-  border: 1px solid oklch(0.68 0.16 155 / 0.22);
+  border: 1px solid var(--glass-card-line);
   border-radius: 1rem;
   box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.055),
-    inset 0 -36px 70px -60px oklch(0.68 0.16 155 / 0.3),
-    0 24px 80px -56px oklch(0.68 0.16 155 / 0.84);
+    inset 0 1px 0 var(--glass-sheen),
+    inset 0 -36px 70px -60px var(--glass-card-bloom),
+    0 24px 80px -56px var(--glass-card-drop);
   animation: soft-open 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
@@ -200,7 +300,7 @@
 }
 
 @utility text-gradient-teal {
-  background: linear-gradient(135deg, oklch(0.82 0.14 180), oklch(0.65 0.16 195));
+  background: var(--brand-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
