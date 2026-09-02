@@ -12,18 +12,19 @@
 /**
  * Ordered by measured latency and reliability against this project's key.
  *
- * gemini-2.0-flash leads because the examiner feature specifies it. The rest
- * stay behind it as fallbacks rather than being replaced: this chain was tuned
- * against real failures and a model that is fine today can answer 503
- * tomorrow, which is exactly what happened to `gemini-flash-latest` - it is
- * deliberately absent because it answers 503 after ~10s, or burns 30s and
- * returns no text, stalling the whole chain.
+ * gemini-2.0-flash is deliberately absent despite being the model the examiner
+ * feature named: Google retired it, and it now answers every request with a
+ * 404 telling you to move to gemini-3.6-flash. Leaving it at the head of the
+ * chain cost a wasted round trip on every single call.
+ *
+ * `gemini-flash-latest` is absent for a different reason - it answers 503 after
+ * ~10s, or burns 30s and returns no text, stalling the whole chain.
  */
 export function modelCandidates() {
   return [
     process.env.GEMINI_MODEL,
-    "gemini-2.0-flash",
     "gemini-flash-lite-latest",
+    "gemini-3.6-flash",
     "gemini-3.5-flash-lite",
     "gemini-3.5-flash",
   ].filter((model, index, models): model is string =>

@@ -214,11 +214,28 @@ function stripFence(text: string): string {
   return text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
 }
 
+/**
+ * The list out of a JSON response, however the model chose to wrap it.
+ *
+ * Asking for {"questions":[...]} does not guarantee getting it: the same prompt
+ * returns a bare [...] often enough that requiring the wrapper rejected good
+ * answers and made every examiner look broken. Accepts the named key, a bare
+ * array, or a single-array object under any key.
+ */
+function listFrom(parsed: unknown, key: string): unknown[] {
+  if (Array.isArray(parsed)) return parsed;
+  if (!parsed || typeof parsed !== "object") return [];
+  const record = parsed as Record<string, unknown>;
+  if (Array.isArray(record[key])) return record[key] as unknown[];
+  const arrays = Object.values(record).filter(Array.isArray) as unknown[][];
+  return arrays.length === 1 ? arrays[0] : [];
+}
+
 function parseQuestions(text: string): ExaminerQuestion[] {
   try {
-    const raw = JSON.parse(stripFence(text)) as { questions?: unknown };
-    if (!Array.isArray(raw.questions)) return [];
-    return raw.questions
+    const items = listFrom(JSON.parse(stripFence(text)), "questions");
+    if (!items.length) return [];
+    return items
       .slice(0, QUESTIONS_PER_SESSION)
       .map((q, i) => {
         const item = (q ?? {}) as Record<string, unknown>;
@@ -241,9 +258,12 @@ function parseQuestions(text: string): ExaminerQuestion[] {
 function parseGrading(text: string, questionIds: string[]):
   { answers: GradedAnswer[]; overall: string } | null {
   try {
-    const raw = JSON.parse(stripFence(text)) as Record<string, unknown>;
-    if (!Array.isArray(raw.answers)) return null;
-    const marks = raw.answers as unknown[];
+    const parsed = JSON.parse(stripFence(text));
+    const marks = listFrom(parsed, "answers");
+    if (!marks.length) return null;
+    const raw = (parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {}) as Record<string, unknown>;
 
     const answers: GradedAnswer[] = questionIds.map((questionId, i) => {
       const item = (marks[i] ?? {}) as Record<string, unknown>;
