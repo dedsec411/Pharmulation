@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MIN_ATTEMPTS, MODE_SKILL_WEIGHTS, SKILLS, bandFor, buildWeaknessMap, describeGap,
   hasEnoughHistory, modesForSkill, skillForError, weakestAreas,
-  type ScoreRow,
+  type ScoreRow, type WeaknessMap,
 } from "./weakness";
 
 const DRUGS = {
@@ -181,6 +181,13 @@ describe("bandFor", () => {
   });
 });
 
+/** Every skill unmeasured, so a test only states the ones it cares about. */
+function emptySkills(): WeaknessMap["bySkill"] {
+  const out = {} as WeaknessMap["bySkill"];
+  for (const s of SKILLS) out[s.key] = { attempts: 0, errors: 0, accuracy: null };
+  return out;
+}
+
 describe("weakestAreas", () => {
   it("ranks the worst first", () => {
     const map = buildWeaknessMap([
@@ -208,6 +215,49 @@ describe("weakestAreas", () => {
     const worst = weakestAreas(map);
     expect(worst.length).toBeGreaterThan(0);
     expect(worst[0].drugClass).toBeNull();
+  });
+
+  // The regression this was written for: one well-measured strength used to
+  // suppress every skill-level gap behind it, so the learner was sent to
+  // practise the thing they were best at.
+  it("does not let a strong class cell hide a weak skill total", () => {
+    const map: WeaknessMap = {
+      cells: [
+        { drugClass: "Antibiotic", skill: "labeling", attempts: 12, errors: 1, accuracy: 0.92 },
+      ],
+      classes: ["Antibiotic"],
+      bySkill: {
+        ...emptySkills(),
+        dosing: { attempts: 61, errors: 33, accuracy: 0.46 },
+        labeling: { attempts: 12, errors: 1, accuracy: 0.92 },
+      },
+      unmappedErrors: 0,
+      totalCases: 40,
+      generatedAt: new Date().toISOString(),
+    };
+
+    const worst = weakestAreas(map, 3);
+    expect(worst[0].skill).toBe("dosing");
+    expect(worst[0].accuracy).toBeCloseTo(0.46);
+  });
+
+  // The cell says the same thing as its skill total but more precisely, so
+  // both appearing would spend two of three slots on one weakness.
+  it("keeps the class-level gap and drops the duplicate skill total", () => {
+    const map: WeaknessMap = {
+      cells: [
+        { drugClass: "Antibiotic", skill: "dosing", attempts: 20, errors: 12, accuracy: 0.4 },
+      ],
+      classes: ["Antibiotic"],
+      bySkill: { ...emptySkills(), dosing: { attempts: 61, errors: 33, accuracy: 0.46 } },
+      unmappedErrors: 0,
+      totalCases: 40,
+      generatedAt: new Date().toISOString(),
+    };
+
+    const worst = weakestAreas(map, 3);
+    expect(worst.filter((g) => g.skill === "dosing")).toHaveLength(1);
+    expect(worst[0].drugClass).toBe("Antibiotic");
   });
 
   it("describes a gap in a sentence a learner can act on", () => {
