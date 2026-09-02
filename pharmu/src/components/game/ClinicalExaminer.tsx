@@ -14,11 +14,17 @@ import {
 import { generateExaminerQuestions, gradeExaminerSession } from "@/lib/api/examiner.functions";
 
 /**
- * The viva that can follow a case.
+ * The viva that follows a case.
  *
- * Entirely optional and entirely additive: it opens over the feedback screen,
- * and closing it at any point returns the learner exactly where they were with
- * nothing lost. A learner who never opens it sees no difference anywhere.
+ * Mandatory: it opens itself once the case is scored and does not close until
+ * the three questions have been answered. There is no dismiss control and the
+ * backdrop is inert.
+ *
+ * The one exception is an examiner that cannot run at all - no API key, model
+ * unreachable, nothing parseable coming back. A required step that is also
+ * broken would trap the learner on the feedback screen with no way to the next
+ * case, so a failure that survives a retry offers a way past. Mandatory when it
+ * works, never a dead end when it does not.
  *
  * examiner_sessions is newer than the checked-in Supabase types, which are
  * generated from the live schema, so the table is reached through one narrow
@@ -28,7 +34,7 @@ const examinerTable = () => (supabase as unknown as {
   from: (table: string) => any;
 }).from("examiner_sessions");
 
-type Stage = "choose" | "loading" | "asking" | "marking" | "result";
+type Stage = "choose" | "loading" | "asking" | "marking" | "result" | "unavailable";
 
 const ACCENT: Record<string, { ring: string; text: string; chip: string }> = {
   rose: { ring: "border-rose-400/50", text: "text-rose-300", chip: "bg-rose-400/10" },
@@ -40,6 +46,7 @@ export function ClinicalExaminer({
   context, onClose,
 }: {
   context: ExaminerCaseContext;
+  /** Called only once the viva is finished, or once it has proven unavailable. */
   onClose: () => void;
 }) {
   const { profile } = useAuthStore();
@@ -51,6 +58,8 @@ export function ClinicalExaminer({
   const [draft, setDraft] = useState("");
   const [graded, setGraded] = useState<GradedAnswer[]>([]);
   const [overall, setOverall] = useState("");
+  const [failures, setFailures] = useState(0);
+  const [problem, setProblem] = useState("");
 
   const chosen = examinerByKey(examiner);
   const accent = ACCENT[chosen.accent] ?? ACCENT.primary;
@@ -60,10 +69,16 @@ export function ClinicalExaminer({
     setStage("loading");
     const result = await generateExaminerQuestions({ data: { examiner: key, context } });
     if (!result.ok || !result.questions.length) {
-      toast.error(result.error ?? "The examiner is unavailable right now.");
-      setStage("choose");
+      const attempts = failures + 1;
+      setFailures(attempts);
+      setProblem(result.error ?? "The examiner is unavailable right now.");
+      // First failure is worth another try; a second means it is genuinely
+      // down, and a required step that cannot run must not block the case.
+      setStage(attempts >= 2 ? "unavailable" : "choose");
+      if (attempts < 2) toast.error(result.error ?? "The examiner is unavailable right now.");
       return;
     }
+    setFailures(0);
     setQuestions(result.questions);
     setAnswers([]);
     setIndex(0);
@@ -158,14 +173,16 @@ export function ClinicalExaminer({
               </p>
               <h2 className="mt-1 text-xl font-bold">{context.caseTitle}</h2>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Leave the examiner"
-              className="rounded-full border border-border/50 p-1.5 text-muted-foreground transition hover:text-foreground"
-            >
-              <XIcon className="size-4" />
-            </button>
+            {stage === "result" && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close the examiner"
+                className="rounded-full border border-border/50 p-1.5 text-muted-foreground transition hover:text-foreground"
+              >
+                <XIcon className="size-4" />
+              </button>
+            )}
           </div>
 
           <AnimatePresence mode="wait">
@@ -197,13 +214,7 @@ export function ClinicalExaminer({
                     );
                   })}
                 </div>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="mt-4 w-full rounded-full border border-border/50 px-5 py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
-                >
-                  Not now
-                </button>
+
               </motion.div>
             )}
 
@@ -252,12 +263,60 @@ export function ClinicalExaminer({
                     {index + 1 === questions.length ? "Submit for marking" : "Next question"}
                     <ArrowRight className="size-4" />
                   </button>
+                  <span className="text-xs text-muted-foreground">
+                    All {questions.length} questions must be answered.
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {stage === "unavailable" && (
+              <motion.div key="unavailable" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-10 text-center">
+                <p className="text-sm font-semibold">The examiner cannot be reached.</p>
+                <p className="mx-auto mt-2 max-w-md text-xs text-muted-foreground">{problem}</p>
+                <p className="mx-auto mt-3 max-w-md text-xs text-muted-foreground">
+                  The viva is normally required, but it will not hold up your case when it is down.
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
                   <button
                     type="button"
-                    onClick={submitAnswer}
-                    className="rounded-full border border-border/50 px-4 py-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+                    onClick={() => { setFailures(0); setStage("choose"); }}
+                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
                   >
-                    Skip this one
+                    <RotateCw className="size-4" /> Try again
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-full border border-border/50 px-5 py-2.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
+                  >
+                    Continue without it
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {stage === "unavailable" && (
+              <motion.div key="unavailable" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-10 text-center">
+                <p className="text-sm font-semibold">The examiner cannot be reached.</p>
+                <p className="mx-auto mt-2 max-w-md text-xs text-muted-foreground">{problem}</p>
+                <p className="mx-auto mt-3 max-w-md text-xs text-muted-foreground">
+                  The viva is normally required, but it will not hold up your case when it is down.
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setFailures(0); setStage("choose"); }}
+                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+                  >
+                    <RotateCw className="size-4" /> Try again
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-full border border-border/50 px-5 py-2.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
+                  >
+                    Continue without it
                   </button>
                 </div>
               </motion.div>
@@ -345,7 +404,7 @@ export function ClinicalExaminer({
 
           {stage === "choose" && (
             <p className="mt-3 text-center text-[11px] text-muted-foreground">
-              Optional. {QUESTIONS_PER_SESSION} questions, about two minutes.
+              Required. {QUESTIONS_PER_SESSION} questions, about two minutes.
             </p>
           )}
         </div>

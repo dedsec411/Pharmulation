@@ -35,6 +35,9 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
   // too rather than being wired into five routes separately.
   const [celebrating, setCelebrating] = useState(true);
   const [examining, setExamining] = useState(false);
+  // Whether this case's viva has been sat. Also gates the mandatory auto-open,
+  // so closing a finished viva does not immediately reopen it.
+  const [examinerDone, setExaminerDone] = useState(false);
 
   // Everything the examiner asks about comes from what the modes already track:
   // the case, the medicines handled, and the in-game error log.
@@ -57,6 +60,13 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
   // A case with nothing specific to ask about would produce a generic viva,
   // which is worse than not offering one.
   const canExamine = examinerContext !== null && hasExaminableContext(examinerContext);
+
+  // The viva is required, so it presents itself rather than waiting to be
+  // chosen. It opens once the celebration is out of the way - two overlays at
+  // once would just hide each other.
+  useEffect(() => {
+    if (canExamine && !celebrating && !examinerDone) setExamining(true);
+  }, [canExamine, celebrating, examinerDone]);
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     const start = performance.now();
@@ -166,12 +176,13 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
           </button>
           {/* Sits beside Next case rather than in front of it: skipping the
               examiner costs the learner nothing at all. */}
-          {canExamine && (
+          {/* The viva opens on its own; this reopens it for another go. */}
+          {canExamine && examinerDone && (
             <button
               onClick={() => setExamining(true)}
               className="inline-flex items-center gap-2 rounded-full border border-primary/45 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/15"
             >
-              <GraduationCap className="size-4" /> Face the Examiner
+              <GraduationCap className="size-4" /> Face the Examiner again
             </button>
           )}
           <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-full border border-border/50 px-5 py-2.5 text-sm font-semibold hover:bg-muted">
@@ -182,7 +193,10 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
 
       <AnimatePresence>
         {examining && examinerContext && (
-          <ClinicalExaminer context={examinerContext} onClose={() => setExamining(false)} />
+          <ClinicalExaminer
+            context={examinerContext}
+            onClose={() => { setExamining(false); setExaminerDone(true); }}
+          />
         )}
       </AnimatePresence>
     </div>
