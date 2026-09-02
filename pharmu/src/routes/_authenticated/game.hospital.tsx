@@ -268,6 +268,10 @@ export function HospitalGame({ mode }: { mode: Mode }) {
       score, timeTaken: timer.taken, errors: wrongDrugs + wrongLabels,
       correctDrugs, totalDrugs: correctOrders.length || 1,
       errorsDetail: errPanel.errors,
+      classAttempts: (result?.correctOrders ?? correctOrders)
+        .map((o: any) => allDrugs.find(
+          (d: any) => d.name?.toLowerCase() === String(o.drug ?? "").toLowerCase())?.category)
+        .filter(Boolean) as string[],
     });
     setResult({ score, xpGain, correctOrders, remove });
   }

@@ -705,6 +705,11 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
       score, timeTaken: timer.taken, errors: wrong + wrongLabels + compoundWrong,
       correctDrugs: correct + compoundCorrect, totalDrugs: required.length + compoundCorrect + compoundWrong,
       errorsDetail: errPanel.errors,
+      // The classes this case examined, so the heatmap has a denominator.
+      classAttempts: required
+        .map((name: string) => catalogDrugs.find(
+          (d: any) => d.name?.toLowerCase() === String(name).toLowerCase())?.category)
+        .filter(Boolean) as string[],
     });
     setResult({ score, xpGain });
     setPhase("done");

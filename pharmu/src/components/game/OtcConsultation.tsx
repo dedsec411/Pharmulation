@@ -255,6 +255,12 @@ export function OtcConsultation({
       correctDrugs: correct,
       totalDrugs: 3,
       errorsDetail: errPanel.errors,
+      // Resolved off the shelf the case dispenses from, so the class axis gets
+      // its denominator without the authored cases having to restate a category.
+      classAttempts: (otcCase.recommendation.dispenseNames ?? [])
+        .map((name) => shelfDrugs.find(
+          (d: any) => String(d.name ?? "").toLowerCase() === name.toLowerCase())?.category)
+        .filter(Boolean) as string[],
     });
     setResult({ score, xpGain });
     setStep("done");

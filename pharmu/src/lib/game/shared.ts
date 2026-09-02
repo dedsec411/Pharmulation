@@ -237,6 +237,13 @@ export async function submitScore(args: {
   correctDrugs: number;
   totalDrugs: number;
   errorsDetail?: any[];
+  /**
+   * Drug categories this case put in front of the learner, whether or not
+   * anything went wrong. The weakness heatmap needs a denominator per class,
+   * and errors_detail only ever records the failures - without this every
+   * class cell would be errors divided by errors.
+   */
+  classAttempts?: string[];
 }) {
   const accuracy = args.totalDrugs > 0 ? args.correctDrugs / args.totalDrugs : 1;
   const xpGain = Math.round(args.score / 2);
@@ -260,7 +267,10 @@ async function persistScore(
 ) {
   const caseId = args.caseId?.startsWith("generated:") ? null : args.caseId;
 
-  const { error: scoreErr } = await supabase.from("scores").insert({
+  // class_attempts is newer than the checked-in Supabase types, which are
+  // generated from the live schema, so the insert is typed loosely until they
+  // are regenerated against the applied migration.
+  const { error: scoreErr } = await (supabase.from("scores") as any).insert({
     user_id: args.userId,
     case_id: caseId,
     mode: args.mode,
@@ -269,6 +279,7 @@ async function persistScore(
     errors_made: args.errors,
     accuracy,
     errors_detail: (args.errorsDetail ?? []) as any,
+    class_attempts: ([...new Set(args.classAttempts ?? [])]) as any,
   });
   if (scoreErr) {
     console.error("[supabase] failed to save score:", scoreErr);
