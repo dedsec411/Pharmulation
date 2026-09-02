@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, User } from "lucide-react";
+import { GraduationCap, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { LogoVideo } from "@/components/LogoVideo";
@@ -32,7 +32,11 @@ export function Navbar() {
   const displayName = cleanPlayerName(profile?.full_name ?? profile?.email);
   const initials = displayName
     .split(" ").map((s: string) => s[0]).join("").slice(0, 2).toUpperCase();
-  const isAdmin = (profile?.role as string) === "admin";
+  const role = String(profile?.role ?? "");
+  const isAdmin = role === "admin";
+  // Admins get the link too, so the faculty side can be supported without a
+  // second account.
+  const isFaculty = role === "educator" || isAdmin;
 
   return (
     <nav className="sticky top-0 z-40 glass border-b border-border">
@@ -69,6 +73,11 @@ export function Navbar() {
               <Link to="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-[0_12px_28px_-22px_oklch(0.74_0.14_180/0.8)]">
                 ⚙️ Settings
               </Link>
+              {isFaculty && (
+                <Link to="/educator/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-sky-400/10 hover:text-sky-300 text-sky-400">
+                  <GraduationCap className="h-4 w-4" /> Faculty
+                </Link>
+              )}
               {isAdmin && (
                 <Link to="/admin" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-[0_12px_28px_-22px_oklch(0.74_0.14_180/0.8)] text-primary">
                   🛡️ Admin

@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { CalendarClock, Check, GraduationCap } from "lucide-react";
+import { CalendarClock, Check, GraduationCap, Lock, Timer } from "lucide-react";
 import { useMyAssignments, useMyEnrollments, useRedeemPendingJoinCode } from "@/lib/educator/join";
 import { MODE_LABEL, PUBLIC_MODE_GROUPS, type Mode } from "@/lib/game/shared";
 import { supabase } from "@/integrations/supabase/client";
+import { useMyAssessments, windowState } from "@/lib/educator/assessment";
 
 /**
  * Work a lecturer has set, on the student's own dashboard.
@@ -60,8 +61,9 @@ export function AssignedWork({ userId }: { userId?: string }) {
     ? assignments.reduce((min, a) => (a.created_at < min ? a.created_at : min), assignments[0].created_at)
     : null;
   const { data: recentScores = [] } = useScoresSince(userId, oldest);
+  const { data: assessments = [] } = useMyAssessments(classes.map((c) => c.id), userId);
 
-  if (!assignments.length) return null;
+  if (!assignments.length && !assessments.length) return null;
 
   const nameFor = (id: string) => classes.find((c) => c.id === id)?.name ?? "Your class";
 
@@ -83,10 +85,64 @@ export function AssignedWork({ userId }: { userId?: string }) {
         <GraduationCap className="size-5 text-primary" /> Set by your class
       </h2>
       <p className="mt-0.5 text-sm text-muted-foreground">
-        {outstanding
-          ? `${outstanding} still to do.`
-          : "Everything set for you is done."}
+        {assignments.length
+          ? outstanding
+            ? `${outstanding} still to do.`
+            : "Everything set for you is done."
+          : "Your timed assessments."}
       </p>
+
+      {/* Assessments first: they have a closing time and one attempt, so
+          burying them under ordinary practice would be the wrong order. */}
+      {assessments.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {assessments.map((a) => {
+            const state = windowState(a);
+            return (
+              <div
+                key={a.id}
+                className={`glass-card flex flex-wrap items-center gap-4 border-sky-400/25 p-4 ${
+                  a.submittedAt ? "opacity-60" : ""
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="inline-flex items-center gap-1.5 truncate font-semibold">
+                    <Lock className="size-3.5 text-sky-300" /> {a.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {nameFor(a.class_id)} · {MODE_LABEL[a.mode as Mode] ?? a.mode} ·{" "}
+                    {a.case_count} {a.case_count === 1 ? "case" : "cases"}
+                  </p>
+                </div>
+
+                <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                  <Timer className="size-3.5" />
+                  {Math.round(a.time_limit_sec / 60)} min · {state.note}
+                </p>
+
+                {a.submittedAt ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 text-xs font-bold text-emerald-300">
+                    <Check className="size-3.5" />
+                    {a.accuracy === null ? "Submitted" : `${Math.round(Number(a.accuracy))}%`}
+                  </span>
+                ) : (
+                  <Link
+                    to="/assessment/$assessmentId"
+                    params={{ assessmentId: a.id }}
+                    className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                      state.open
+                        ? "bg-sky-500 text-white hover:brightness-110"
+                        : "border border-border/50 text-muted-foreground"
+                    }`}
+                  >
+                    {state.open ? "Sit assessment" : "Details"}
+                  </Link>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="mt-3 space-y-2">
         {ordered.map((a, i) => {

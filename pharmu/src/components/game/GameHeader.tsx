@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Activity, Trophy, Zap, ArrowLeft, Pause, Play, AlertTriangle, Lightbulb } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useSittingLock } from "@/lib/educator/assessment";
 
 interface GameHeaderProps {
   score: number;
@@ -75,6 +76,9 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   hideScore = false,
 }) => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  // Withheld here rather than at each of the five call sites, so a mode added
+  // later cannot accidentally offer help during a graded sitting.
+  const sittingLocked = useSittingLock();
   const state = getTimerState(pct);
   const timerIsTicking = remaining > 0 && !paused;
   const desktopWave = buildEcgPoints(pct, 24, [
@@ -197,7 +201,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
         </div>
       </div>
 
-      {onHint && (
+      {onHint && !sittingLocked && (
         <div className="border-t border-border/35 bg-card/35">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-2 sm:px-4">
             <div className="flex min-w-0 items-center gap-2 text-xs sm:text-sm">

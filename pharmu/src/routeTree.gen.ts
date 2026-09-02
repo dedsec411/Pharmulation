@@ -32,6 +32,7 @@ import { Route as AuthenticatedGameWarehousingRouteImport } from './routes/_auth
 import { Route as AuthenticatedGameIndustryRouteImport } from './routes/_authenticated/game.industry'
 import { Route as AuthenticatedGameHospitalRouteImport } from './routes/_authenticated/game.hospital'
 import { Route as AuthenticatedGameCommunityRouteImport } from './routes/_authenticated/game.community'
+import { Route as AuthenticatedAssessmentAssessmentIdRouteImport } from './routes/_authenticated/assessment.$assessmentId'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -151,6 +152,12 @@ const AuthenticatedGameCommunityRoute =
     path: '/game/community',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAssessmentAssessmentIdRoute =
+  AuthenticatedAssessmentAssessmentIdRouteImport.update({
+    id: '/assessment/$assessmentId',
+    path: '/assessment/$assessmentId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/educator/classes': typeof EducatorClassesRoute
   '/educator/dashboard': typeof EducatorDashboardRoute
   '/educator/': typeof EducatorIndexRoute
+  '/assessment/$assessmentId': typeof AuthenticatedAssessmentAssessmentIdRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
   '/game/hospital': typeof AuthenticatedGameHospitalRoute
   '/game/industry': typeof AuthenticatedGameIndustryRoute
@@ -194,6 +202,7 @@ export interface FileRoutesByTo {
   '/educator/classes': typeof EducatorClassesRoute
   '/educator/dashboard': typeof EducatorDashboardRoute
   '/educator': typeof EducatorIndexRoute
+  '/assessment/$assessmentId': typeof AuthenticatedAssessmentAssessmentIdRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
   '/game/hospital': typeof AuthenticatedGameHospitalRoute
   '/game/industry': typeof AuthenticatedGameIndustryRoute
@@ -220,6 +229,7 @@ export interface FileRoutesById {
   '/educator/classes': typeof EducatorClassesRoute
   '/educator/dashboard': typeof EducatorDashboardRoute
   '/educator/': typeof EducatorIndexRoute
+  '/_authenticated/assessment/$assessmentId': typeof AuthenticatedAssessmentAssessmentIdRoute
   '/_authenticated/game/community': typeof AuthenticatedGameCommunityRoute
   '/_authenticated/game/hospital': typeof AuthenticatedGameHospitalRoute
   '/_authenticated/game/industry': typeof AuthenticatedGameIndustryRoute
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/educator/classes'
     | '/educator/dashboard'
     | '/educator/'
+    | '/assessment/$assessmentId'
     | '/game/community'
     | '/game/hospital'
     | '/game/industry'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/educator/classes'
     | '/educator/dashboard'
     | '/educator'
+    | '/assessment/$assessmentId'
     | '/game/community'
     | '/game/hospital'
     | '/game/industry'
@@ -294,6 +306,7 @@ export interface FileRouteTypes {
     | '/educator/classes'
     | '/educator/dashboard'
     | '/educator/'
+    | '/_authenticated/assessment/$assessmentId'
     | '/_authenticated/game/community'
     | '/_authenticated/game/hospital'
     | '/_authenticated/game/industry'
@@ -473,6 +486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGameCommunityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assessment/$assessmentId': {
+      id: '/_authenticated/assessment/$assessmentId'
+      path: '/assessment/$assessmentId'
+      fullPath: '/assessment/$assessmentId'
+      preLoaderRoute: typeof AuthenticatedAssessmentAssessmentIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -483,6 +503,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModesRoute: typeof AuthenticatedModesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedAssessmentAssessmentIdRoute: typeof AuthenticatedAssessmentAssessmentIdRoute
   AuthenticatedGameCommunityRoute: typeof AuthenticatedGameCommunityRoute
   AuthenticatedGameHospitalRoute: typeof AuthenticatedGameHospitalRoute
   AuthenticatedGameIndustryRoute: typeof AuthenticatedGameIndustryRoute
@@ -496,6 +517,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModesRoute: AuthenticatedModesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedAssessmentAssessmentIdRoute:
+    AuthenticatedAssessmentAssessmentIdRoute,
   AuthenticatedGameCommunityRoute: AuthenticatedGameCommunityRoute,
   AuthenticatedGameHospitalRoute: AuthenticatedGameHospitalRoute,
   AuthenticatedGameIndustryRoute: AuthenticatedGameIndustryRoute,
