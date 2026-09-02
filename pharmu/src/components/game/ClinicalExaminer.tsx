@@ -86,6 +86,51 @@ export function ClinicalExaminer({
     setStage("asking");
   }
 
+  /**
+   * Mark a completed set of answers.
+   *
+   * Split out so the unavailable screen can try the marking again rather than
+   * sending the candidate back to question one: by this point they have
+   * written three answers, and throwing those away to retry is worse than the
+   * failure itself.
+   */
+  async function grade(finalAnswers: string[]) {
+    setStage("marking");
+    const result = await gradeExaminerSession({
+      data: {
+        examiner,
+        context,
+        exchanges: questions.map((q, i) => ({
+          questionId: q.id, question: q.question, answer: finalAnswers[i] ?? "",
+        })),
+      },
+    });
+
+    if (!result.ok) {
+      const attempts = failures + 1;
+      setFailures(attempts);
+      setProblem(result.error ?? "Could not mark your answers.");
+
+      // A first failure goes back to the last answer so it can be resubmitted.
+      // A second means the marker is genuinely down, and the candidate must
+      // not be held in a modal they cannot close having already done the work.
+      if (attempts >= 2) {
+        setStage("unavailable");
+      } else {
+        toast.error(result.error ?? "Could not mark your answers.");
+        setStage("asking");
+        setIndex(questions.length - 1);
+      }
+      return;
+    }
+
+    setFailures(0);
+    setGraded(result.answers);
+    setOverall(result.overall);
+    setStage("result");
+    void save(result.answers, result.overall, finalAnswers);
+  }
+
   async function submitAnswer() {
     const next = [...answers, draft.trim()];
     setAnswers(next);
@@ -95,31 +140,7 @@ export function ClinicalExaminer({
       setIndex(index + 1);
       return;
     }
-
-    setStage("marking");
-    const result = await gradeExaminerSession({
-      data: {
-        examiner,
-        context,
-        exchanges: questions.map((q, i) => ({
-          questionId: q.id, question: q.question, answer: next[i] ?? "",
-        })),
-      },
-    });
-
-    if (!result.ok) {
-      toast.error(result.error ?? "Could not mark your answers.");
-      // Back to the last question rather than losing the whole session.
-      setStage("asking");
-      setAnswers(answers);
-      setIndex(questions.length - 1);
-      return;
-    }
-
-    setGraded(result.answers);
-    setOverall(result.overall);
-    setStage("result");
-    void save(result.answers, result.overall, next);
+    await grade(next);
   }
 
   /** Storing the result must never break the screen showing it. */
@@ -280,33 +301,16 @@ export function ClinicalExaminer({
                 <div className="mt-5 flex flex-wrap justify-center gap-2">
                   <button
                     type="button"
-                    onClick={() => { setFailures(0); setStage("choose"); }}
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
-                  >
-                    <RotateCw className="size-4" /> Try again
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="rounded-full border border-border/50 px-5 py-2.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
-                  >
-                    Continue without it
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {stage === "unavailable" && (
-              <motion.div key="unavailable" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-10 text-center">
-                <p className="text-sm font-semibold">The examiner cannot be reached.</p>
-                <p className="mx-auto mt-2 max-w-md text-xs text-muted-foreground">{problem}</p>
-                <p className="mx-auto mt-3 max-w-md text-xs text-muted-foreground">
-                  The viva is normally required, but it will not hold up your case when it is down.
-                </p>
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { setFailures(0); setStage("choose"); }}
+                    onClick={() => {
+                      setFailures(0);
+                      // Answers already written are worth more than a fresh
+                      // start, so a marking failure retries the marking.
+                      if (answers.length === questions.length && questions.length > 0) {
+                        void grade(answers);
+                      } else {
+                        setStage("choose");
+                      }
+                    }}
                     className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
                   >
                     <RotateCw className="size-4" /> Try again
