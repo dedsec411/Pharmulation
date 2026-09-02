@@ -22,8 +22,8 @@ import { toast } from "sonner";
  */
 
 const NOTE_KINDS = [
-  { key: "issue", label: "Mistake in the file", icon: AlertTriangle, tone: "text-amber-300 border-amber-300/40 bg-amber-400/10" },
-  { key: "opinion", label: "My reasoning", icon: MessageSquare, tone: "text-sky-300 border-sky-300/40 bg-sky-400/10" },
+  { key: "issue", label: "Mistake in the file", icon: AlertTriangle, tone: "text-amber-700 dark:text-amber-300 border-amber-300/40 bg-amber-400/10" },
+  { key: "opinion", label: "My reasoning", icon: MessageSquare, tone: "text-sky-700 dark:text-sky-300 border-sky-300/40 bg-sky-400/10" },
 ] as const;
 
 type NoteKind = (typeof NOTE_KINDS)[number]["key"];
@@ -48,10 +48,10 @@ const caseNotes = () => (supabase as unknown as {
 }).from("case_notes");
 
 const FLAG_STYLE: Record<LabReading["flag"], string> = {
-  high: "border-rose-400/45 bg-rose-400/10 text-rose-100",
-  low: "border-amber-400/45 bg-amber-400/10 text-amber-100",
+  high: "border-rose-400/45 bg-rose-400/10 text-rose-700 dark:text-rose-100",
+  low: "border-amber-400/45 bg-amber-400/10 text-amber-700 dark:text-amber-100",
   normal: "border-sky-300/25 bg-sky-400/10 text-sky-50",
-  unknown: "border-slate-400/25 bg-slate-400/10 text-slate-200",
+  unknown: "border-slate-300 dark:border-slate-400/25 bg-slate-900/[0.05] dark:bg-slate-400/10 text-slate-800 dark:text-slate-200",
 };
 
 const FLAG_MARK: Record<LabReading["flag"], string> = {
@@ -69,10 +69,10 @@ function SlideBody({ slide }: { slide: Slide }) {
               className={`flex items-baseline justify-between gap-3 rounded-lg border px-3 py-2 text-sm ${
                 row.emphasis === "alert"
                   ? "border-amber-300/45 bg-amber-400/10 text-amber-50"
-                  : "border-indigo-200/15 bg-slate-950/40 text-slate-100"
+                  : "border-indigo-200/15 bg-slate-900/[0.05] dark:bg-slate-950/40 text-slate-900 dark:text-slate-100"
               }`}
             >
-              <dt className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-slate-400">{row.label}</dt>
+              <dt className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{row.label}</dt>
               <dd className="min-w-0 text-right font-semibold">{row.value}</dd>
             </div>
           ))}
@@ -100,7 +100,7 @@ function SlideBody({ slide }: { slide: Slide }) {
       {slide.bullets && (
         <ul className="space-y-1.5">
           {slide.bullets.map((line, i) => (
-            <li key={i} className="flex items-start gap-2 rounded-lg border border-indigo-200/15 bg-slate-950/40 px-3 py-2 text-sm text-slate-100">
+            <li key={i} className="flex items-start gap-2 rounded-lg border border-indigo-200/15 bg-slate-900/[0.05] dark:bg-slate-950/40 px-3 py-2 text-sm text-slate-900 dark:text-slate-100">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-indigo-300" />
               <span>{line}</span>
             </li>
@@ -211,9 +211,9 @@ export function CaseFileSlides({
   });
 
   return (
-    <div className="rounded-xl border border-indigo-200/20 bg-slate-950/45 p-4 shadow-inner backdrop-blur-xl">
+    <div className="rounded-xl border border-indigo-200/20 bg-slate-900/[0.05] dark:bg-slate-950/45 p-4 shadow-inner backdrop-blur-xl">
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-indigo-200">
+        <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-indigo-700 dark:text-indigo-200">
           <ClipboardList className="h-3.5 w-3.5" /> Case file
         </p>
         <button
@@ -221,8 +221,8 @@ export function CaseFileSlides({
           onClick={() => setNotesOpen((open) => !open)}
           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
             notesOpen
-              ? "border-indigo-300/60 bg-indigo-400/20 text-indigo-100"
-              : "border-indigo-200/25 text-indigo-200 hover:bg-indigo-400/10"
+              ? "border-indigo-300/60 bg-indigo-400/20 text-indigo-700 dark:text-indigo-100"
+              : "border-indigo-200/25 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-400/10"
           }`}
         >
           <StickyNote className="h-3 w-3" /> Notes{notes.length > 0 ? ` (${notes.length})` : ""}
@@ -230,12 +230,12 @@ export function CaseFileSlides({
       </div>
 
       <div className="mt-3 flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-black text-slate-50">{slide.title}</h2>
-        <span className="shrink-0 font-mono text-[11px] text-slate-400">
+        <h2 className="text-lg font-black text-slate-900 dark:text-slate-50">{slide.title}</h2>
+        <span className="shrink-0 font-mono text-[11px] text-slate-600 dark:text-slate-400">
           {index + 1} / {file.slides.length}
         </span>
       </div>
-      <p className="mb-3 border-b border-indigo-200/15 pb-2 text-xs text-slate-400">{slide.caption}</p>
+      <p className="mb-3 border-b border-indigo-200/15 pb-2 text-xs text-slate-600 dark:text-slate-400">{slide.caption}</p>
 
       <div className="min-h-56">
         <AnimatePresence mode="wait">
@@ -256,7 +256,7 @@ export function CaseFileSlides({
           type="button"
           onClick={() => go(-1)}
           disabled={index === 0}
-          className="inline-flex items-center gap-1 rounded-full border border-indigo-200/25 px-3 py-1.5 text-xs font-semibold text-indigo-100 transition hover:bg-indigo-400/10 disabled:opacity-30"
+          className="inline-flex items-center gap-1 rounded-full border border-indigo-200/25 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-100 transition hover:bg-indigo-400/10 disabled:opacity-30"
         >
           <ChevronLeft className="h-3.5 w-3.5" /> Back
         </button>
@@ -279,7 +279,7 @@ export function CaseFileSlides({
           type="button"
           onClick={() => go(1)}
           disabled={index === file.slides.length - 1}
-          className="inline-flex items-center gap-1 rounded-full border border-indigo-200/25 px-3 py-1.5 text-xs font-semibold text-indigo-100 transition hover:bg-indigo-400/10 disabled:opacity-30"
+          className="inline-flex items-center gap-1 rounded-full border border-indigo-200/25 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-100 transition hover:bg-indigo-400/10 disabled:opacity-30"
         >
           Next <ChevronRight className="h-3.5 w-3.5" />
         </button>
@@ -295,7 +295,7 @@ export function CaseFileSlides({
           >
             <div className="mt-3 border-t border-indigo-200/15 pt-3">
               {notesUnavailable ? (
-                <p className="rounded-lg border border-amber-300/35 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                <p className="rounded-lg border border-amber-300/35 bg-amber-400/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-100">
                   Notes are not available yet - the case_notes table has not been created on this database.
                 </p>
               ) : (
@@ -307,7 +307,7 @@ export function CaseFileSlides({
                         type="button"
                         onClick={() => setKind(k.key)}
                         className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
-                          kind === k.key ? k.tone : "border-indigo-200/20 text-slate-400 hover:text-slate-200"
+                          kind === k.key ? k.tone : "border-indigo-200/20 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                         }`}
                       >
                         <k.icon className="h-3 w-3" /> {k.label}
@@ -323,7 +323,7 @@ export function CaseFileSlides({
                     placeholder={kind === "issue"
                       ? `What looks wrong on "${slide.title}"?`
                       : `Your reasoning about "${slide.title}"`}
-                    className="mt-2 w-full resize-y rounded-lg border border-indigo-200/25 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-indigo-300/60"
+                    className="mt-2 w-full resize-y rounded-lg border border-indigo-200/25 bg-slate-900/[0.07] dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none placeholder:text-slate-600 dark:placeholder:text-slate-500 focus:border-indigo-300/60"
                   />
                   <button
                     type="button"
@@ -353,7 +353,7 @@ export function CaseFileSlides({
                                 <Trash2 className="h-3 w-3" />
                               </button>
                             </div>
-                            <p className="mt-1 whitespace-pre-wrap text-slate-100">{note.body}</p>
+                            <p className="mt-1 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{note.body}</p>
                           </li>
                         );
                       })}

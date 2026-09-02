@@ -480,7 +480,7 @@ function WarehouseGame() {
         <ModeAmbientLayer mode="warehousing" intensity="screen" />
         {phase === "receiving" && (
           <section className="relative z-10 grid gap-4 lg:grid-cols-[1fr_1.3fr]">
-            <div className="rounded-2xl border border-sky-300/20 bg-slate-950/55 p-4 shadow-[0_24px_80px_-48px_rgba(56,189,248,0.8)] backdrop-blur-xl">
+            <div className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-4 shadow-[0_24px_80px_-48px_rgba(56,189,248,0.8)] backdrop-blur-xl">
               <p className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-sky-200/80"><Package className="size-3.5" /> Incoming manifests</p>
               <ul className="mt-3 space-y-2">
                 {s.shipments.map((sh: any) => {
@@ -493,24 +493,24 @@ function WarehouseGame() {
                         initial={{ x: 34, opacity: 0 }}
                         animate={{ x: 0, y: landedShip === sh.id ? [-18, 7, 0] : 0, scale: landedShip === sh.id ? [1, 1.035, 1] : 1, opacity: 1 }}
                         transition={{ duration: landedShip === sh.id ? 0.42 : 0.35, ease: "easeOut" }}
-                        className={`group relative w-full overflow-hidden rounded-xl border p-3 pl-7 text-left text-sm transition ${active ? "border-sky-300/70 bg-sky-400/15 shadow-[0_18px_48px_-28px_rgba(56,189,248,0.95)]" : done ? "border-sky-300/25 bg-slate-900/35 opacity-65" : "border-sky-300/20 bg-slate-900/45 hover:-translate-y-0.5 hover:border-sky-300/50 hover:bg-sky-400/10 hover:shadow-[0_18px_44px_-30px_rgba(56,189,248,0.9)]"}`}>
-                        <span className="absolute inset-y-3 left-2 flex w-2 items-center justify-center rounded-full bg-slate-950/80">
+                        className={`group relative w-full overflow-hidden rounded-xl border p-3 pl-7 text-left text-sm transition ${active ? "border-sky-300/70 bg-sky-400/15 shadow-[0_18px_48px_-28px_rgba(56,189,248,0.95)]" : done ? "border-sky-300/25 bg-slate-900/[0.04] dark:bg-slate-900/35 opacity-65" : "border-sky-300/20 bg-slate-900/[0.05] dark:bg-slate-900/45 hover:-translate-y-0.5 hover:border-sky-300/50 hover:bg-sky-400/10 hover:shadow-[0_18px_44px_-30px_rgba(56,189,248,0.9)]"}`}>
+                        <span className="absolute inset-y-3 left-2 flex w-2 items-center justify-center rounded-full bg-white/90 dark:bg-slate-950/80">
                           <Barcode className="h-12 w-4 text-sky-200/70" />
                         </span>
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-slate-50">{sh.drug}</span>
+                          <span className="font-semibold text-slate-900 dark:text-slate-50">{sh.drug}</span>
                           <span className="flex items-center gap-2">
                             {excursion && <Thermometer className="size-4 animate-pulse text-red-400" />}
-                            {sh.controlled && <Lock className="size-3.5 text-amber-300" />}
+                            {sh.controlled && <Lock className="size-3.5 text-amber-700 dark:text-amber-300" />}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400">Batch {sh.batch} · exp {sh.expiry}</p>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400">Batch {sh.batch} · exp {sh.expiry}</p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <p className="text-[11px] text-sky-200">{sh.requirement}</p>
+                          <p className="text-[11px] text-sky-700 dark:text-sky-200">{sh.requirement}</p>
                           <span className="rotate-[-4deg] rounded border border-sky-200/35 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-sky-100/80">arrived</span>
                         </div>
                         {sh.tempLog && (
-                          <div className="mt-3 rounded-lg border border-sky-200/15 bg-slate-950/45 p-2">
+                          <div className="mt-3 rounded-lg border border-sky-200/15 bg-slate-900/[0.05] dark:bg-slate-950/45 p-2">
                             <TempLogChart log={sh.tempLog} />
                           </div>
                         )}
@@ -526,24 +526,24 @@ function WarehouseGame() {
               </button>
             </div>
 
-            <div className="rounded-2xl border border-sky-300/20 bg-slate-950/55 p-4 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+            <div className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-4 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
               <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">Warehouse zones</p>
-              {!activeShip && <p className="mt-3 text-sm text-slate-400">Select a manifest, then choose a zone.</p>}
+              {!activeShip && <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">Select a manifest, then choose a zone.</p>}
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {s.zones.map((z: string) => (
                   <motion.button key={z} disabled={!activeShip} onClick={() => placeShipment(z)}
                     whileTap={activeShip ? { y: [0, 8, 0], scale: [1, 0.98, 1] } : undefined}
                     className="rounded-xl border border-sky-300/20 bg-sky-400/5 p-3 text-left text-sm transition hover:border-sky-300/45 hover:bg-sky-400/10 disabled:opacity-40">
                     <p className="font-semibold">{z}</p>
-                    <p className="text-[11px] text-slate-400">Drop the selected shipment here.</p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400">Drop the selected shipment here.</p>
                   </motion.button>
                 ))}
                 <motion.button disabled={!activeShip} onClick={() => placeShipment("quarantine")}
                   whileTap={activeShip ? { y: [0, 8, 0], scale: [1, 0.98, 1] } : undefined}
                   className="rounded-xl border border-amber-400/50 bg-amber-400/10 p-3 text-left text-sm shadow-[0_0_34px_-22px_rgba(251,191,36,0.9)] transition hover:bg-amber-400/15 disabled:opacity-40"
                   style={{ borderImage: "repeating-linear-gradient(45deg, rgba(251,191,36,0.95) 0 10px, rgba(15,23,42,0.95) 10px 20px) 1" }}>
-                  <p className="flex items-center gap-1 font-semibold text-amber-300"><AlertTriangle className="size-3.5 animate-pulse" /> Quarantine - temperature excursion</p>
-                  <p className="text-[11px] text-slate-400">Use if the shipment's temp log shows an excursion.</p>
+                  <p className="flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-300"><AlertTriangle className="size-3.5 animate-pulse" /> Quarantine - temperature excursion</p>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">Use if the shipment's temp log shows an excursion.</p>
                 </motion.button>
               </div>
             </div>
@@ -551,12 +551,12 @@ function WarehouseGame() {
         )}
 
         {phase === "dispatch" && s.dispatch[dispatchIdx] && (
-          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-50px_rgba(56,189,248,0.85)] backdrop-blur-xl">
+          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-50px_rgba(56,189,248,0.85)] backdrop-blur-xl">
             <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">FEFO dispatch {dispatchIdx + 1} / {s.dispatch.length}</p>
             <h3 className="mt-1 text-lg font-bold">Pick a batch of {s.dispatch[dispatchIdx].drug}</h3>
-            <p className="text-sm text-slate-400">Use FEFO - the earliest expiry sits at the front of the shelf.</p>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/35 p-4">
-              <div className="mb-3 h-2 rounded-full bg-gradient-to-r from-sky-300/50 via-slate-700 to-sky-300/30" />
+            <p className="text-sm text-slate-600 dark:text-slate-400">Use FEFO - the earliest expiry sits at the front of the shelf.</p>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/[0.04] dark:bg-slate-900/35 p-4">
+              <div className="mb-3 h-2 rounded-full bg-gradient-to-r from-sky-300/50 via-slate-300 dark:via-slate-700 to-sky-300/30" />
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {[...s.dispatch[dispatchIdx].batches]
                   .sort((a: any, b: any) => String(a.expiry).localeCompare(String(b.expiry)))
@@ -566,7 +566,7 @@ function WarehouseGame() {
                       onClick={() => answerDispatch(b.batch)}
                       whileTap={{ y: 8, scale: 0.98 }}
                       className={`relative min-h-28 rounded-lg border p-3 text-left text-sm shadow-[0_16px_36px_-28px_rgba(56,189,248,0.9)] transition hover:-translate-y-1 hover:border-sky-300/60 hover:bg-sky-400/10 ${
-                        i === 0 ? "border-sky-300/55 bg-sky-400/15" : "border-sky-300/20 bg-slate-950/55"
+                        i === 0 ? "border-sky-300/55 bg-sky-400/15" : "border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55"
                       }`}
                     >
                       <span className="absolute right-3 top-3 rounded border border-sky-200/30 px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-sky-100/70">
@@ -574,7 +574,7 @@ function WarehouseGame() {
                       </span>
                       <Package className="mb-3 size-7 text-sky-200/80" />
                       <p className="font-semibold">{b.batch}</p>
-                      <p className="text-xs text-slate-400">Expires {b.expiry}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Expires {b.expiry}</p>
                     </motion.button>
                   ))}
               </div>
@@ -583,7 +583,7 @@ function WarehouseGame() {
         )}
 
         {phase === "expiry" && (
-          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Expiry management</p>
             <h3 className="mt-1 text-lg font-bold">Items approaching expiry</h3>
             <ul className="mt-3 space-y-2">
@@ -624,7 +624,7 @@ function WarehouseGame() {
 
         {phase === "audit" && auditScenarios[auditIdx] && (
           <section className="relative z-10 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <aside className="rounded-2xl border border-sky-300/20 bg-slate-950/55 p-5 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+            <aside className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-5 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Operations audit</p>
               <h3 className="mt-1 text-lg font-bold">Deviation dashboard</h3>
               <div className="mt-4 space-y-2">
@@ -651,7 +651,7 @@ function WarehouseGame() {
               </div>
             </aside>
 
-            <div className="rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+            <div className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">
                 Audit decision {auditIdx + 1} / {auditScenarios.length}
               </p>
@@ -681,10 +681,10 @@ function WarehouseGame() {
         )}
 
         {phase === "reconcile" && (
-          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.75)] backdrop-blur-xl">
+          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.75)] backdrop-blur-xl">
             <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">Printed stocktake sheet</p>
             <h3 className="mt-1 text-lg font-bold">Check items needing investigation</h3>
-            <table className="mt-4 w-full overflow-hidden rounded-xl border border-sky-300/20 bg-slate-900/40 text-sm">
+            <table className="mt-4 w-full overflow-hidden rounded-xl border border-sky-300/20 bg-slate-900/[0.05] dark:bg-slate-900/40 text-sm">
               <thead className="border-b border-sky-300/20 bg-sky-400/10 text-xs uppercase text-sky-100/75">
                 <tr><th className="p-2 text-left">Item</th><th className="p-2 text-right">Expected</th><th className="p-2 text-right">Actual</th><th className="p-2 text-center">Investigate?</th></tr>
               </thead>
@@ -695,7 +695,7 @@ function WarehouseGame() {
                   <tr key={i} className={`border-t border-sky-300/10 ${discrepancy ? "bg-red-500/10 text-red-50" : ""}`}>
                     <td className="p-2">
                       <span className="inline-flex items-center gap-2">
-                        {discrepancy && <Flag className="size-3.5 text-red-300" />}
+                        {discrepancy && <Flag className="size-3.5 text-red-700 dark:text-red-300" />}
                         {r.item}
                       </span>
                     </td>
@@ -760,10 +760,10 @@ function TempLogChart({ log }: { log: { min: number; max: number; excursion: boo
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em]">
-        <span className={log.excursion ? "text-red-300" : "text-sky-200/80"}>Temp log</span>
-        <span className="text-slate-400">{log.min}-{log.max}C</span>
+        <span className={log.excursion ? "text-red-700 dark:text-red-300" : "text-sky-200/80"}>Temp log</span>
+        <span className="text-slate-600 dark:text-slate-400">{log.min}-{log.max}C</span>
       </div>
-      <svg viewBox="0 0 208 62" className="h-20 w-full overflow-visible rounded-md bg-slate-950/55">
+      <svg viewBox="0 0 208 62" className="h-20 w-full overflow-visible rounded-md bg-slate-900/[0.07] dark:bg-slate-950/55">
         <defs>
           <linearGradient id="warehouseTempLine" x1="0" x2="1" y1="0" y2="0">
             <stop offset="0%" stopColor="rgb(56 189 248)" />

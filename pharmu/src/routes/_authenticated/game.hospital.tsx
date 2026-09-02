@@ -41,7 +41,7 @@ function ClinicalEkgFloor() {
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-indigo-300"
+              className="text-indigo-700 dark:text-indigo-300"
             />
           ))}
         </svg>
@@ -63,7 +63,7 @@ function ClinicalAlarmBanner({ message }: { message: string | null }) {
   return (
     <div className="fixed inset-x-0 top-16 z-[70] mx-auto max-w-4xl px-4">
       <div className="score-toast-wrong flex items-center gap-3 rounded-2xl border border-red-400/60 bg-red-950/95 px-4 py-3 text-sm font-bold text-red-50 shadow-[0_0_45px_-12px_rgba(239,68,68,0.9)]">
-        <AlertTriangle className="h-5 w-5 shrink-0 animate-pulse text-red-200" />
+        <AlertTriangle className="h-5 w-5 shrink-0 animate-pulse text-red-700 dark:text-red-200" />
         <span className="font-mono uppercase tracking-wider">Clinical alert</span>
         <span className="min-w-0 truncate">{message}</span>
       </div>
@@ -313,8 +313,8 @@ export function HospitalGame({ mode }: { mode: Mode }) {
         paused={timer.paused} togglePause={timer.togglePause} score={0} hideScore
         onHint={() => { setHints((n) => n + 1); toastScore(-SCORE_WEIGHTS.hint, "hint used"); toast.info(`Hint: ${caseData.mentor_tip}`); }} />
       <main className="relative z-10 mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.3fr]">
-        <aside className="relative rounded-2xl border border-indigo-300/20 bg-slate-900/55 p-4 text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl">
-          <div className="absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-indigo-200/20 bg-slate-700/70 shadow-inner backdrop-blur" />
+        <aside className="relative rounded-2xl border border-indigo-300/20 bg-slate-900/[0.07] dark:bg-slate-900/55 p-4 text-slate-900 dark:text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl">
+          <div className="absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-indigo-200/20 bg-slate-200 dark:bg-slate-700/70 shadow-inner backdrop-blur" />
           <CaseFileSlides
             caseId={String(caseData.id ?? "case")}
             caseTitle={String(caseData.title ?? "Clinical case")}
@@ -326,35 +326,35 @@ export function HospitalGame({ mode }: { mode: Mode }) {
         </aside>
 
         <section className="space-y-3">
-          <div className="overflow-hidden rounded-2xl border border-indigo-300/25 bg-black/70 p-4 font-mono shadow-[0_18px_60px_-34px_oklch(0.60_0.20_270)] backdrop-blur">
+          <div className="overflow-hidden rounded-2xl border border-indigo-300/25 bg-slate-900/[0.08] dark:bg-black/70 p-4 font-mono shadow-[0_18px_60px_-34px_oklch(0.60_0.20_270)] backdrop-blur">
             <div className="mb-3 flex items-center justify-between gap-3 border-b border-indigo-300/15 pb-2">
-              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-indigo-200">
+              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-200">
                 <Database className="h-4 w-4" /> Hospital formulary
               </p>
-              <span className="flex items-center gap-1 text-[10px] text-emerald-300">
+              <span className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-300">
                 <Terminal className="h-3 w-3" /> DB ONLINE
               </span>
             </div>
-            <label className="text-[10px] uppercase tracking-wider text-indigo-300">Query medication database</label>
-            <div className="mt-2 flex items-center gap-2 rounded-lg border border-indigo-300/25 bg-slate-950 px-3 py-2">
-              <span className="text-emerald-300">&gt;</span>
+            <label className="text-[10px] uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Query medication database</label>
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-indigo-300/25 bg-white dark:bg-slate-950 px-3 py-2">
+              <span className="text-emerald-700 dark:text-emerald-300">&gt;</span>
               <input
                 value={search} onChange={(e) => setSearch(e.target.value)}
                 placeholder="search formulary..."
-                className="w-full bg-transparent text-sm text-emerald-100 outline-none placeholder:text-emerald-100/35"
+                className="w-full bg-transparent text-sm text-emerald-700 dark:text-emerald-100 outline-none placeholder:text-emerald-100/35"
               />
               <span className="h-4 w-2 animate-pulse bg-emerald-300" />
             </div>
             {!search && (
               <div className="mt-3 rounded-lg border border-emerald-300/20 bg-emerald-400/10 p-3">
-                <p className="text-[10px] uppercase tracking-wider text-emerald-200">Case-linked formulary queue</p>
+                <p className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-200">Case-linked formulary queue</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {(caseData.correct_answer_json?.drugs ?? []).slice(0, 4).map((o: any) => (
                     <button
                       key={o.drug}
                       type="button"
                       onClick={() => setSearch(o.drug)}
-                      className="rounded-full border border-emerald-300/25 bg-slate-950/60 px-3 py-1 text-xs text-emerald-100 transition hover:border-emerald-200/60 hover:bg-emerald-400/15"
+                      className="rounded-full border border-emerald-300/25 bg-slate-900/[0.07] dark:bg-slate-950/60 px-3 py-1 text-xs text-emerald-700 dark:text-emerald-100 transition hover:border-emerald-200/60 hover:bg-emerald-400/15"
                     >
                       {o.drug}
                     </button>
@@ -363,12 +363,12 @@ export function HospitalGame({ mode }: { mode: Mode }) {
               </div>
             )}
             {search && (
-              <ul className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-indigo-300/20 bg-slate-950/80">
+              <ul className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-indigo-300/20 bg-white/90 dark:bg-slate-950/80">
                 {filtered.map((d) => (
                   <li key={d.id}>
-                    <button onClick={() => addOrder(d)} className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-indigo-500/15 hover:text-white">
+                    <button onClick={() => addOrder(d)} className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-800 dark:text-slate-200 transition hover:bg-indigo-500/15 hover:text-white">
                       <span>{d.name} <span className="text-xs text-indigo-200/60">[{d.category}]</span></span>
-                      <Plus className="size-4 text-emerald-300" />
+                      <Plus className="size-4 text-emerald-700 dark:text-emerald-300" />
                     </button>
                   </li>
                 ))}
@@ -393,23 +393,23 @@ export function HospitalGame({ mode }: { mode: Mode }) {
                     animate={{ opacity: 1, y: 0, rotateX: 0 }}
                     exit={{ opacity: 0, x: 24, scale: 0.96 }}
                     transition={{ type: "spring", stiffness: 360, damping: 28 }}
-                    className="relative rounded-lg border border-indigo-200/20 bg-slate-950/55 p-3 text-slate-100 shadow-[0_14px_28px_-24px_rgba(79,70,229,0.9)] backdrop-blur before:absolute before:inset-x-3 before:top-0 before:h-px before:bg-indigo-200/25"
+                    className="relative rounded-lg border border-indigo-200/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-3 text-slate-900 dark:text-slate-100 shadow-[0_14px_28px_-24px_rgba(79,70,229,0.9)] backdrop-blur before:absolute before:inset-x-3 before:top-0 before:h-px before:bg-indigo-200/25"
                   >
                     <div className="flex items-center justify-between">
                       <p className="font-mono text-sm font-black uppercase tracking-wide">{o.drug}</p>
-                      <button onClick={() => removeOrder(i)} className="text-slate-400 hover:text-destructive">
+                      <button onClick={() => removeOrder(i)} className="text-slate-600 dark:text-slate-400 hover:text-destructive">
                         <Trash2 className="size-3.5" />
                       </button>
                     </div>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                       <input placeholder="Dose (mg)" value={o.dose} onChange={(e) => updateOrder(i, { dose: e.target.value })}
-                        className="rounded border border-indigo-200/20 bg-slate-900/80 px-2 py-1 text-slate-100" />
+                        className="rounded border border-indigo-200/20 bg-white/90 dark:bg-slate-900/80 px-2 py-1 text-slate-900 dark:text-slate-100" />
                       <select value={o.route} onChange={(e) => updateOrder(i, { route: e.target.value })}
-                        className="rounded border border-indigo-200/20 bg-slate-900/80 px-2 py-1 text-slate-100">
+                        className="rounded border border-indigo-200/20 bg-white/90 dark:bg-slate-900/80 px-2 py-1 text-slate-900 dark:text-slate-100">
                         {ROUTES.map((r) => <option key={r}>{r}</option>)}
                       </select>
                       <select value={o.frequency} onChange={(e) => updateOrder(i, { frequency: e.target.value })}
-                        className="rounded border border-indigo-200/20 bg-slate-900/80 px-2 py-1 text-slate-100">
+                        className="rounded border border-indigo-200/20 bg-white/90 dark:bg-slate-900/80 px-2 py-1 text-slate-900 dark:text-slate-100">
                         {FREQS.map((r) => <option key={r}>{r}</option>)}
                       </select>
                     </div>

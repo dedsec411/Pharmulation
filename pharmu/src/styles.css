@@ -435,6 +435,42 @@ body.mode-warehousing [data-slot="card"] {
   border-radius: 4px !important;
 }
 
+/* Mode accents are picked to glow against near-black - industry's amber is
+   oklch(0.78 0.16 75) - so as text or as a button fill on a white card they
+   wash out. Light mixes the same hue toward ink, keeping the mode's identity
+   while making it readable. Borders keep the bright accent: a rule is not
+   asked to carry contrast. */
+:root[data-theme="light"] body.mode-themed {
+  --mode-ink: color-mix(in oklab, var(--mode-accent) 62%, #06140D);
+}
+:root[data-theme="light"] body.mode-themed .text-primary { color: var(--mode-ink) !important; }
+:root[data-theme="light"] body.mode-themed .bg-primary { background-color: var(--mode-ink) !important; }
+:root[data-theme="light"] body.mode-themed .from-primary { --tw-gradient-from: var(--mode-ink) !important; }
+:root[data-theme="light"] body.mode-themed .to-primary { --tw-gradient-to: var(--mode-ink) !important; }
+:root[data-theme="light"] body.mode-themed .border-primary {
+  border-color: color-mix(in oklab, var(--mode-accent) 45%, #FFFFFF) !important;
+}
+
+/* The mode card fills above are opaque dark gradients set with !important, so
+   in the light theme they would put dark panes behind dark text. One rule
+   replaces all of them: the same accent, tinting white instead of black, so a
+   mode still reads as itself. */
+:root[data-theme="light"] body.mode-themed [data-slot="card"] {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--mode-accent) 4%, #FFFFFF),
+    color-mix(in oklab, var(--mode-accent) 8%, #FFFFFF)
+  ) !important;
+}
+
+/* Industry keeps its hatching - it is what makes the mode look like a plant
+   floor - just drawn dark-on-light rather than light-on-dark. */
+:root[data-theme="light"] body.mode-industry [data-slot="card"] {
+  background:
+    repeating-linear-gradient(135deg, rgb(180 83 9 / 0.06) 0 8px, transparent 8px 16px),
+    linear-gradient(180deg, #FFFDF7, #FFF8EC) !important;
+}
+
 @keyframes emergency-edge {
   0%, 100% { box-shadow: inset 0 0 60px -10px rgba(239,68,68,0.4); }
   50% { box-shadow: inset 0 0 140px -10px rgba(239,68,68,0.75); }
