@@ -88,7 +88,7 @@ export function Navbar() {
                   : <><Moon className="h-4 w-4" /> Dark theme</>}
               </button>
               {isFaculty && (
-                <Link to="/educator/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-sky-400/10 hover:text-sky-300 text-sky-400">
+                <Link to="/educator/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-sky-400/10 hover:text-sky-700 dark:text-sky-300 text-sky-400">
                   <GraduationCap className="h-4 w-4" /> Faculty
                 </Link>
               )}

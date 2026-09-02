@@ -91,29 +91,29 @@ export function ErrorExplanationPanel({ entry, mentorTip, onDismiss }: Props) {
                 </p>
               )}
 
-              <Section title="Why this is wrong" color="text-red-300">
+              <Section title="Why this is wrong" color="text-red-700 dark:text-red-300">
                 {entry.whyWrong}
               </Section>
 
-              <Section title="What you should know" color="text-amber-300">
+              <Section title="What you should know" color="text-amber-700 dark:text-amber-300">
                 {entry.whatToKnow}
               </Section>
 
               {showCorrect && entry.correctChoice && (
                 <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
-                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
                     <CheckCircle2 className="size-3.5" /> Correct answer
                   </p>
-                  <p className="mt-1 text-sm text-emerald-100">{entry.correctChoice}</p>
+                  <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-100">{entry.correctChoice}</p>
                 </div>
               )}
 
               {!showCorrect && entry.hint && (
                 <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-300">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">
                     <Sparkles className="size-3.5" /> Hint (Hard mode)
                   </p>
-                  <p className="mt-1 text-sm text-amber-100">{entry.hint}</p>
+                  <p className="mt-1 text-sm text-amber-700 dark:text-amber-100">{entry.hint}</p>
                 </div>
               )}
 

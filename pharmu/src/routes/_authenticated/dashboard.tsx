@@ -521,9 +521,9 @@ function Dashboard() {
                   i === 0
                     ? "border-primary/50 bg-primary/15 text-primary shadow-[0_0_26px_-14px_oklch(0.74_0.14_180/0.9)]"
                     : i === 1
-                      ? "border-sky-300/35 bg-sky-300/10 text-sky-200"
+                      ? "border-sky-300/35 bg-sky-300/10 text-sky-700 dark:text-sky-200"
                       : i === 2
-                        ? "border-amber-300/35 bg-amber-300/10 text-amber-200"
+                        ? "border-amber-300/35 bg-amber-300/10 text-amber-700 dark:text-amber-200"
                         : "border-foreground/10 bg-foreground/[0.045] text-muted-foreground";
                 return (
                   <motion.li

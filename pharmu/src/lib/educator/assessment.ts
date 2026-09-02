@@ -136,42 +136,29 @@ export function useMyAssessments(classIds: string[], userId?: string) {
 /**
  * Open a sitting.
  *
- * Returns the existing row where one is already open, so a refresh mid-sitting
- * rejoins rather than starting the clock again.
+ * Enrolment, the open/close window and the one-attempt rule are all checked in
+ * the database, not here: this page is not the only thing that can make the
+ * request, so it cannot be the thing that decides. Rejoining an unsubmitted
+ * sitting returns the original started_at, which is what makes a refresh
+ * mid-exam continue the same clock rather than restart it.
  */
-export async function startSitting(
-  a: AssessmentRow,
-  userId: string
-): Promise<Sitting | null> {
-  const { data: existing } = await db().from("assessment_sessions")
-    .select("id, started_at, submitted_at")
-    .eq("assessment_id", a.id)
-    .eq("student_id", userId)
-    .maybeSingle();
+export async function startSitting(a: AssessmentRow): Promise<Sitting> {
+  const { data, error } = await db().rpc("start_assessment_sitting", { assessment: a.id });
+  if (error) throw error;
 
-  if (existing?.submitted_at) return null;
-
-  let sessionId = existing?.id as string | undefined;
-  let startedAt = existing?.started_at as string | undefined;
-
-  if (!sessionId) {
-    const { data, error } = await db().from("assessment_sessions")
-      .insert({ assessment_id: a.id, student_id: userId })
-      .select("id, started_at")
-      .single();
-    if (error) throw error;
-    sessionId = data.id as string;
-    startedAt = data.started_at as string;
-  }
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | { id: string; started_at: string }
+    | undefined;
+  if (!row) throw new Error("Could not open the sitting.");
 
   return {
-    sessionId: sessionId!,
+    sessionId: row.id,
     assessmentId: a.id,
     title: a.title,
     mode: a.mode,
     caseCount: a.case_count,
-    startedAt: startedAt!,
-    endsAt: new Date(startedAt!).getTime() + a.time_limit_sec * 1000,
+    startedAt: row.started_at,
+    endsAt: new Date(row.started_at).getTime() + a.time_limit_sec * 1000,
   };
 }
 

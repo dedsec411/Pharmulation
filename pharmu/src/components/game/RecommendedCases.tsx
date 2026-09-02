@@ -69,7 +69,7 @@ export function RecommendedCases({ map }: { map: WeaknessMap }) {
               className="glass-card flex flex-col p-5"
             >
               <div className="flex items-start justify-between gap-3">
-                <span className="rounded-full border border-rose-400/40 bg-rose-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-rose-300">
+                <span className="rounded-full border border-rose-400/40 bg-rose-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300">
                   {pct}% accuracy
                 </span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

@@ -5,6 +5,7 @@ import { Trophy, RotateCw, Home, CheckCircle2, XCircle, AlertCircle, GraduationC
 import type { ErrorEntry } from "./ErrorExplanationPanel";
 import { CaseCelebration } from "./CaseCelebration";
 import { ClinicalExaminer } from "./ClinicalExaminer";
+import { useSittingLock } from "@/lib/educator/assessment";
 import { FailureDebrief } from "./FailureDebrief";
 import { caseResultFrom, isFailure } from "@/lib/game/celebration";
 import { hasExaminableContext, type ExaminerCaseContext } from "@/lib/game/examiner";
@@ -65,7 +66,14 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
     : null;
   // A case with nothing specific to ask about would produce a generic viva,
   // which is worse than not offering one.
-  const canExamine = examinerContext !== null && hasExaminableContext(examinerContext);
+  //
+  // Never during a timed sitting. The viva is an AI tutor that talks through
+  // the reasoning of the case just played - exactly the coaching an
+  // assessment is meant to withhold - and it would burn the candidate's clock
+  // between cases while it did so.
+  const sittingLocked = useSittingLock();
+  const canExamine =
+    !sittingLocked && examinerContext !== null && hasExaminableContext(examinerContext);
 
   // The viva is required, so it presents itself rather than waiting to be
   // chosen. It opens once the celebration is out of the way - two overlays at
@@ -151,16 +159,16 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
 
         {errors.length > 0 && (
           <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/5 p-4">
-            <p className="flex items-center gap-2 text-sm font-semibold text-red-300">
+            <p className="flex items-center gap-2 text-sm font-semibold text-red-700 dark:text-red-300">
               <AlertCircle className="size-4" /> Your mistakes this case ({errors.length})
             </p>
             <ul className="mt-3 space-y-2">
               {errors.map((e, i) => (
                 <li key={i} className="rounded-lg border border-border/30 bg-background/40 p-3 text-xs">
-                  <p className="font-semibold text-red-300">{e.errorType}: {e.wrongChoice}</p>
+                  <p className="font-semibold text-red-700 dark:text-red-300">{e.errorType}: {e.wrongChoice}</p>
                   <p className="mt-1 text-muted-foreground"><b className="text-foreground">Why:</b> {e.whyWrong}</p>
                   {e.correctChoice && (
-                    <p className="mt-1 text-emerald-300"><b>Correct:</b> {e.correctChoice}</p>
+                    <p className="mt-1 text-emerald-700 dark:text-emerald-300"><b>Correct:</b> {e.correctChoice}</p>
                   )}
                 </li>
               ))}
@@ -168,7 +176,9 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
           </div>
         )}
 
-        {mentorTip && (
+        {/* The assessment briefing promises no mentor tips, so this has to be
+            the thing that honours it, not just the hint button in the header. */}
+        {mentorTip && !sittingLocked && (
           <div className="mt-6 rounded-xl border border-primary/30 bg-primary/10 p-4 text-sm">
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">Mentor tip</p>
             <p className="mt-1">{mentorTip}</p>

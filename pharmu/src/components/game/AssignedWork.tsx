@@ -107,7 +107,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="inline-flex items-center gap-1.5 truncate font-semibold">
-                    <Lock className="size-3.5 text-sky-300" /> {a.title}
+                    <Lock className="size-3.5 text-sky-700 dark:text-sky-300" /> {a.title}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {nameFor(a.class_id)} · {MODE_LABEL[a.mode as Mode] ?? a.mode} ·{" "}
@@ -121,7 +121,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
                 </p>
 
                 {a.submittedAt ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 text-xs font-bold text-emerald-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
                     <Check className="size-3.5" />
                     {a.accuracy === null ? "Submitted" : `${Math.round(Number(a.accuracy))}%`}
                   </span>
@@ -178,7 +178,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
               )}
 
               {a.done ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 text-xs font-bold text-emerald-300">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
                   <Check className="size-3.5" /> Done
                 </span>
               ) : route ? (

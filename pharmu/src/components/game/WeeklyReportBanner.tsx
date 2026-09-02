@@ -108,8 +108,8 @@ export function WeeklyReportBanner({
   if (!report || dismissed) return null;
 
   const lines = [
-    { icon: TrendingUp, label: "What improved", text: report.improved, tone: "text-emerald-300" },
-    { icon: AlertTriangle, label: "Biggest gap", text: report.biggest_gap, tone: "text-amber-300" },
+    { icon: TrendingUp, label: "What improved", text: report.improved, tone: "text-emerald-700 dark:text-emerald-300" },
+    { icon: AlertTriangle, label: "Biggest gap", text: report.biggest_gap, tone: "text-amber-700 dark:text-amber-300" },
     { icon: Target, label: "This week", text: report.recommendation, tone: "text-primary" },
   ].filter((l) => l.text);
 

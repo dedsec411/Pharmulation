@@ -2,7 +2,10 @@
 @source "../src";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* Bound to the theme attribute, not to the .dark class - RootShell puts that
+   class on <html> unconditionally, so `dark:` used to apply in both themes and
+   was therefore useless as a variant. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /*
  * PharmaVerse Design System

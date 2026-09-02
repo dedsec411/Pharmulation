@@ -268,8 +268,8 @@ function SubmodeBadge({ mode }: { mode: "rx" | "otc" }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
       mode === "rx"
-        ? "bg-blue-500/15 text-blue-300 border border-blue-500/30"
-        : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+        ? "bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30"
+        : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
     }`}>
       {mode === "rx" ? <FileText className="h-3 w-3" /> : <ShoppingBag className="h-3 w-3" />}
       {mode === "rx" ? "Rx Cases" : "OTC Consultation"}
@@ -319,10 +319,10 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void 
             className="group rounded-2xl border border-blue-500/25 bg-blue-500/10 p-5 text-left transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-blue-500/15"
           >
             <div className="flex items-center justify-between gap-3">
-              <span className="grid size-12 place-items-center rounded-2xl bg-blue-500/15 text-blue-300">
+              <span className="grid size-12 place-items-center rounded-2xl bg-blue-500/15 text-blue-700 dark:text-blue-300">
                 <FileText className="size-6" />
               </span>
-              <span className="rounded-full border border-blue-400/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-200">
+              <span className="rounded-full border border-blue-400/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-200">
                 Rx
               </span>
             </div>
@@ -330,7 +330,7 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void 
             <p className="mt-2 text-sm text-muted-foreground">
               Read a simulated prescription, collect the required medicines, review drug info, and create labels.
             </p>
-            <span className="mt-5 inline-flex text-sm font-semibold text-blue-200 transition group-hover:translate-x-1">
+            <span className="mt-5 inline-flex text-sm font-semibold text-blue-700 dark:text-blue-200 transition group-hover:translate-x-1">
               Play Rx Cases &rarr;
             </span>
           </button>
@@ -340,10 +340,10 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void 
             className="group rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-5 text-left transition hover:-translate-y-0.5 hover:border-emerald-400/60 hover:bg-emerald-500/15"
           >
             <div className="flex items-center justify-between gap-3">
-              <span className="grid size-12 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-300">
+              <span className="grid size-12 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
                 <ShoppingBag className="size-6" />
               </span>
-              <span className="rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-200">
+              <span className="rounded-full border border-emerald-400/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-200">
                 OTC
               </span>
             </div>
@@ -351,7 +351,7 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void 
             <p className="mt-2 text-sm text-muted-foreground">
               Ask follow-up questions, choose the safest medicine, pick the dose, and counsel the patient.
             </p>
-            <span className="mt-5 inline-flex text-sm font-semibold text-emerald-200 transition group-hover:translate-x-1">
+            <span className="mt-5 inline-flex text-sm font-semibold text-emerald-700 dark:text-emerald-200 transition group-hover:translate-x-1">
               Play OTC &rarr;
             </span>
           </button>

@@ -37,9 +37,9 @@ const examinerTable = () => (supabase as unknown as {
 type Stage = "choose" | "loading" | "asking" | "marking" | "result" | "unavailable";
 
 const ACCENT: Record<string, { ring: string; text: string; chip: string }> = {
-  rose: { ring: "border-rose-400/50", text: "text-rose-300", chip: "bg-rose-400/10" },
+  rose: { ring: "border-rose-400/50", text: "text-rose-700 dark:text-rose-300", chip: "bg-rose-400/10" },
   primary: { ring: "border-primary/50", text: "text-primary", chip: "bg-primary/10" },
-  amber: { ring: "border-amber-400/50", text: "text-amber-300", chip: "bg-amber-400/10" },
+  amber: { ring: "border-amber-400/50", text: "text-amber-700 dark:text-amber-300", chip: "bg-amber-400/10" },
 };
 
 export function ClinicalExaminer({
@@ -373,8 +373,8 @@ export function ClinicalExaminer({
                         {q.focus && <p className="mt-1 text-[11px] text-muted-foreground">Testing: {q.focus}</p>}
                         {mark.feedback && <p className="mt-2 text-xs text-muted-foreground">{mark.feedback}</p>}
                         {mark.modelAnswer && (
-                          <p className="mt-2 rounded-lg border border-emerald-400/30 bg-emerald-400/5 p-2.5 text-xs text-emerald-100">
-                            <b className="text-emerald-300">A good answer:</b> {mark.modelAnswer}
+                          <p className="mt-2 rounded-lg border border-emerald-400/30 bg-emerald-400/5 p-2.5 text-xs text-emerald-700 dark:text-emerald-100">
+                            <b className="text-emerald-700 dark:text-emerald-300">A good answer:</b> {mark.modelAnswer}
                           </p>
                         )}
                       </div>

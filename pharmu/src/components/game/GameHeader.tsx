@@ -256,7 +256,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-5">
-              <div className="flex items-center gap-2 text-amber-300">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
                 <AlertTriangle className="size-5" />
                 <h3 className="text-base font-bold uppercase tracking-wider">Leave this mode?</h3>
               </div>
@@ -278,7 +278,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 <button
                   type="button"
                   onClick={confirmExit}
-                  className="flex-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/15"
+                  className="flex-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-200 hover:bg-amber-500/15"
                 >
                   Leave anyway
                 </button>

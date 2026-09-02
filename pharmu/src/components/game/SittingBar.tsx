@@ -48,12 +48,28 @@ export function SittingBar() {
   // second, and without it an expiry would post the same session repeatedly.
   const submitting = useRef(false);
 
+  /**
+   * When the last automatic attempt failed, and how many have failed.
+   *
+   * Without these, a submit that keeps failing retried once a second for as
+   * long as the tab stayed open: the expiry condition stays true, so clearing
+   * the guard in the catch handed the effect straight back to itself. Now a
+   * failure backs off, and after three the automatic attempts stop and leave
+   * it to the button - a student watching a toast appear every second learns
+   * nothing except that the app is broken.
+   */
+  const failedAt = useRef(0);
+  const failures = useRef(0);
+  const AUTO_RETRY_MS = 20_000;
+  const MAX_AUTO_ATTEMPTS = 3;
+
   async function finish(reason: "time" | "done" | "manual") {
     if (!active || !profile?.user_id || submitting.current) return;
     submitting.current = true;
     try {
       const result = await submitSitting(active);
       clear();
+      failures.current = 0;
       queryClient.invalidateQueries({ queryKey: ["my-assessments"] });
       toast[reason === "time" ? "warning" : "success"](
         reason === "time" ? "Time is up - your work was submitted" : "Assessment submitted",
@@ -64,8 +80,10 @@ export function SittingBar() {
       navigate({ to: "/dashboard" });
     } catch (error) {
       console.error("Could not submit the sitting", error);
+      failedAt.current = Date.now();
+      failures.current += 1;
       toast.error("Could not submit your assessment", {
-        description: "Your cases are saved. Try the submit button again.",
+        description: "Your cases are saved. Use Submit now to try again.",
       });
       submitting.current = false;
     }
@@ -73,6 +91,10 @@ export function SittingBar() {
 
   useEffect(() => {
     if (!active) return;
+    // A manual press always tries; only the automatic path backs off.
+    if (failures.current >= MAX_AUTO_ATTEMPTS) return;
+    if (failedAt.current && Date.now() - failedAt.current < AUTO_RETRY_MS) return;
+
     if (now >= active.endsAt) finish("time");
     else if (done >= active.caseCount) finish("done");
     // finish is stable enough for this: it early-returns unless a sitting is

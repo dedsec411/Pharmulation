@@ -62,16 +62,17 @@ function AssessmentBriefing() {
     if (!data?.assessment || !profile?.user_id || starting) return;
     setStarting(true);
     try {
-      const sitting = await startSitting(data.assessment, profile.user_id);
-      if (!sitting) {
-        toast.error("You have already sat this assessment");
-        return;
-      }
+      const sitting = await startSitting(data.assessment);
       begin(sitting);
       navigate({ to: routeForMode(data.assessment.mode) });
     } catch (error) {
       console.error("Could not start the sitting", error);
-      toast.error("Could not start the assessment", { description: "Please try again." });
+      // The database raises the specific reason - closed, not enrolled,
+      // already sat - and that is more use to the candidate than "try again".
+      const reason = (error as { message?: string })?.message;
+      toast.error("Could not start the assessment", {
+        description: reason && !reason.includes("JSON") ? reason : "Please try again.",
+      });
     } finally {
       setStarting(false);
     }
@@ -105,7 +106,7 @@ function AssessmentBriefing() {
 
           return (
             <div className="glass-card p-8">
-              <p className="inline-flex items-center gap-2 rounded-full border border-sky-400/35 bg-sky-400/10 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-sky-300">
+              <p className="inline-flex items-center gap-2 rounded-full border border-sky-400/35 bg-sky-400/10 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-sky-700 dark:text-sky-300">
                 <Lock className="size-3" /> Timed assessment
               </p>
               <h1 className="mt-4 text-3xl font-extrabold">{a.title}</h1>
@@ -143,7 +144,7 @@ function AssessmentBriefing() {
 
               {submitted ? (
                 <div className="mt-6 rounded-xl border border-emerald-400/40 bg-emerald-400/10 p-4">
-                  <p className="font-bold text-emerald-300">Already submitted</p>
+                  <p className="font-bold text-emerald-700 dark:text-emerald-300">Already submitted</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {data.session.cases_done} of {a.case_count} cases ·{" "}
                     {data.session.accuracy === null

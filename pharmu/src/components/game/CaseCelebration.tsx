@@ -71,11 +71,11 @@ function Confetti({ count }: { count: number }) {
 }
 
 const TIER_STYLE: Record<CelebrationTier["key"], { ring: string; text: string; glow: string }> = {
-  flawless: { ring: "border-amber-300/60", text: "text-amber-300", glow: "shadow-[0_0_80px_-10px_oklch(0.85_0.16_90/0.55)]" },
+  flawless: { ring: "border-amber-300/60", text: "text-amber-700 dark:text-amber-300", glow: "shadow-[0_0_80px_-10px_oklch(0.85_0.16_90/0.55)]" },
   strong:   { ring: "border-primary/60",   text: "text-primary",   glow: "shadow-[0_0_80px_-10px_oklch(0.74_0.14_180/0.5)]" },
   steady:   { ring: "border-border/60",    text: "text-foreground", glow: "" },
   // A failure has to look like one at a glance, before a word is read.
-  failed:   { ring: "border-rose-500/70",  text: "text-rose-300",  glow: "shadow-[0_0_90px_-10px_oklch(0.62_0.22_20/0.6)]" },
+  failed:   { ring: "border-rose-500/70",  text: "text-rose-700 dark:text-rose-300",  glow: "shadow-[0_0_90px_-10px_oklch(0.62_0.22_20/0.6)]" },
 };
 
 export function CaseCelebration({
@@ -189,7 +189,7 @@ export function CaseCelebration({
 
         <div className={`mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-bold ${
           failed
-            ? "border-rose-400/40 bg-rose-400/10 text-rose-200"
+            ? "border-rose-400/40 bg-rose-400/10 text-rose-700 dark:text-rose-200"
             : "border-primary/30 bg-primary/10 text-primary"
         }`}>
           +{xpGain} XP

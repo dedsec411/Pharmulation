@@ -40,7 +40,7 @@ export function ModeAmbientLayer({ mode, intensity = "card" }: Props) {
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-indigo-300/70"
+              className="text-indigo-700 dark:text-indigo-300/70"
             />
             <polyline
               points="480,38 518,38 530,20 544,54 558,38 600,38 612,10 626,62 640,38 698,38 716,28 732,48 748,38 800,38 814,18 830,58 846,38 960,38"
@@ -49,7 +49,7 @@ export function ModeAmbientLayer({ mode, intensity = "card" }: Props) {
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-indigo-300/70"
+              className="text-indigo-700 dark:text-indigo-300/70"
             />
           </svg>
         </div>
@@ -61,9 +61,9 @@ export function ModeAmbientLayer({ mode, intensity = "card" }: Props) {
   if (normalized === "industry") {
     return (
       <div className={`${base} ${screen ? "opacity-30" : "opacity-60"}`} aria-hidden="true">
-        <Gear className="gear-spin absolute -right-5 -top-6 h-28 w-28 text-amber-300/35" />
-        <Gear className="gear-spin absolute -bottom-8 left-8 h-20 w-20 text-amber-200/30 [animation-duration:16s] [animation-direction:reverse]" />
-        <Gear className="gear-spin absolute right-[36%] top-[38%] h-12 w-12 text-yellow-100/20 [animation-duration:12s]" />
+        <Gear className="gear-spin absolute -right-5 -top-6 h-28 w-28 text-amber-700 dark:text-amber-300/35" />
+        <Gear className="gear-spin absolute -bottom-8 left-8 h-20 w-20 text-amber-700 dark:text-amber-200/30 [animation-duration:16s] [animation-direction:reverse]" />
+        <Gear className="gear-spin absolute right-[36%] top-[38%] h-12 w-12 text-yellow-700 dark:text-yellow-100/20 [animation-duration:12s]" />
       </div>
     );
   }

@@ -171,7 +171,7 @@ function LeaderboardPage() {
               <motion.div key={p.user_id}
                 initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: idx * 0.1 }}
                 className={`min-w-0 rounded-2xl border border-cyan-200/15 bg-gradient-to-b ${color} p-3 sm:p-5 ${height} text-center flex flex-col justify-end shadow-[0_22px_60px_-38px_oklch(0.74_0.14_180)]`}>
-                {idx === 0 && <Crown className="h-6 w-6 text-amber-300 mx-auto mb-2" />}
+                {idx === 0 && <Crown className="h-6 w-6 text-amber-700 dark:text-amber-300 mx-auto mb-2" />}
                 <div className="h-12 w-12 mx-auto rounded-xl border border-primary/35 bg-primary/15 text-primary grid place-items-center font-bold shadow-[0_0_20px_-8px_oklch(0.74_0.14_180)]">
                   {playerInitial(p.full_name)}
                 </div>

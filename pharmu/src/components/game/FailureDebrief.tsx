@@ -77,7 +77,7 @@ export function FailureDebrief({
       >
         <div className="glass-card p-6">
           <div className="border-b border-border/40 pb-4">
-            <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-rose-300">
+            <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-rose-700 dark:text-rose-300">
               <Stethoscope className="size-3.5" /> A word with your supervisor
             </p>
             <h2 className="mt-1 text-xl font-bold">{context.caseTitle}</h2>
