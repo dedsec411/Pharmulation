@@ -1,4 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { WeeklyReportBanner } from "@/components/game/WeeklyReportBanner";
+import { RecommendedCases } from "@/components/game/RecommendedCases";
+import { useWeaknessMap, useWeeklyTotals } from "@/lib/game/useWeaknessMap";
+import { hasEnoughHistory } from "@/lib/game/weakness";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -208,6 +212,8 @@ function MentorTipBanner({ tip }: { tip: string }) {
 function Dashboard() {
   const { profile } = useAuthStore();
   const userId = profile?.user_id;
+  const { data: weaknessMap } = useWeaknessMap(userId);
+  const { data: weekly } = useWeeklyTotals(userId);
   const tip =
   MENTOR_TIPS[Math.floor(Math.random() * MENTOR_TIPS.length)];
 
@@ -354,8 +360,24 @@ function Dashboard() {
           </motion.div>
         </div>
 
+        <WeeklyReportBanner
+          userId={userId}
+          map={weaknessMap ?? null}
+          level={profile?.level ?? 1}
+          xp={profile?.xp ?? 0}
+          xpToNextLevel={Math.max(0, ((profile?.level ?? 1) + 1) * 500 - (profile?.xp ?? 0))}
+          casesThisWeek={weekly?.casesThisWeek ?? 0}
+          casesLastWeek={weekly?.casesLastWeek ?? 0}
+          accuracyThisWeek={weekly?.accuracyThisWeek ?? null}
+          accuracyLastWeek={weekly?.accuracyLastWeek ?? null}
+        />
+
+        {weaknessMap && hasEnoughHistory(weaknessMap) && (
+          <RecommendedCases map={weaknessMap} />
+        )}
+
         {/* 4 MODES */}
-        <section>
+        <section className="mt-6">
           <div className="mb-3">
             <h2 className="text-lg font-bold">Pick your training mode</h2>
             <p className="mt-1 text-sm text-muted-foreground">Each session is timed · Earn XP · Unlock badges</p>

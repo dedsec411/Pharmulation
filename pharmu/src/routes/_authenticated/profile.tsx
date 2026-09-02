@@ -8,6 +8,10 @@ import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { tierFor, xpProgress } from "@/lib/levels";
 import { bandFor, examinerByKey } from "@/lib/game/examiner";
+import { WeaknessHeatmap } from "@/components/game/WeaknessHeatmap";
+import { PeerBenchmark } from "@/components/game/PeerBenchmark";
+import { useWeaknessMap } from "@/lib/game/useWeaknessMap";
+import { hasEnoughHistory } from "@/lib/game/weakness";
 import { cpdHoursFromCases, CPD_MILESTONES, generateCertificatePdf, nextCpdMilestone } from "@/lib/cpd";
 import { PUBLIC_MODE_GROUPS, publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { toast } from "sonner";
@@ -36,6 +40,8 @@ function ProfilePage() {
       );
     }, enabled: !!userId,
   });
+
+  const { data: weaknessMap } = useWeaknessMap(userId);
 
   const { data: examinerSessions = [] } = useQuery({
     queryKey: ["examiner-sessions", userId],
@@ -233,6 +239,16 @@ function ProfilePage() {
                 </div>
               </div>
             )}
+
+            {weaknessMap && hasEnoughHistory(weaknessMap) && (
+              <div className="mt-6">
+                <WeaknessHeatmap map={weaknessMap} />
+              </div>
+            )}
+
+            <div className="mt-6">
+              <PeerBenchmark userId={userId} />
+            </div>
 
             <div className="mt-6 glass-card p-6">
               <h3 className="font-bold mb-4">Cases by mode</h3>
