@@ -12,6 +12,22 @@
 /**
  * Ordered by measured latency and reliability against this project's key.
  *
+ * Benchmarked again with a real examiner payload, four calls each, because the
+ * viva was intermittently slow to start:
+ *
+ *   gemini-3.5-flash-lite      1229 1230 1469 1487   median 1.5s
+ *   gemini-flash-lite-latest   1347 1362 2484 12718  median 2.5s
+ *   gemini-3.5-flash           5070 5122 5559 5962   median 5.6s
+ *   gemini-3.6-flash           6643 6879 6909 + fail median 6.9s
+ *
+ * The pinned lite model is both the fastest and the only one with no spread
+ * worth mentioning. `gemini-flash-lite-latest` led this list and is usually
+ * just as quick, but one call in four took twelve seconds - which is precisely
+ * the "sometimes it takes ages to start" the examiner was reported for. A
+ * `-latest` alias floats to whatever Google points it at, so its measured
+ * behaviour has a shelf life; a pinned version does not. It stays as a
+ * fallback, one place down.
+ *
  * gemini-2.0-flash is deliberately absent despite being the model the examiner
  * feature named: Google retired it, and it now answers every request with a
  * 404 telling you to move to gemini-3.6-flash. Leaving it at the head of the
@@ -19,14 +35,19 @@
  *
  * `gemini-flash-latest` is absent for a different reason - it answers 503 after
  * ~10s, or burns 30s and returns no text, stalling the whole chain.
+ *
+ * Note for anyone tempted to trim maxOutputTokens to speed these up: it does
+ * the opposite on the thinking models. At 500 tokens gemini-3.6-flash spent
+ * 38s and returned 89 characters, having burned the budget reasoning before it
+ * started writing.
  */
 export function modelCandidates() {
   return [
     process.env.GEMINI_MODEL,
-    "gemini-flash-lite-latest",
-    "gemini-3.6-flash",
     "gemini-3.5-flash-lite",
+    "gemini-flash-lite-latest",
     "gemini-3.5-flash",
+    "gemini-3.6-flash",
   ].filter((model, index, models): model is string =>
     Boolean(model) && models.indexOf(model) === index
   );

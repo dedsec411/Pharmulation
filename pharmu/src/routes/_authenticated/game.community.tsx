@@ -908,7 +908,14 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                /* The list scrolls inside the card rather than growing the page.
+                   A category like Oncology runs to dozens of medicines, and with
+                   the page carrying that height the shelf name and the way back
+                   to Categories scrolled off the top - so picking the wrong
+                   category meant scrolling all the way back up to leave it. The
+                   header sits outside this box, so it cannot leave the screen.
+                   Same approach the OTC shelf already takes. */
+                <div className="grid max-h-[52vh] grid-cols-2 gap-2 overflow-y-auto p-1.5 sm:grid-cols-3">
                   {filtered.map((d, i) => {
                     const isCollected = collected.includes(d.name);
                     return (
