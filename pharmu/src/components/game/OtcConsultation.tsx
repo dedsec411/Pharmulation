@@ -194,6 +194,11 @@ export function OtcConsultation({
       return;
     }
     setWrong((n) => n + 1);
+    // Counted as a used attempt the same way a wrong drug pick is: refusing
+    // to serve a treatable patient is a real clinical mistake, and without
+    // this the eventual correct dispense kept its full retry-reward factor
+    // no matter how it was reached, unlike every other wrong-attempt path.
+    setTried((current) => [...current, "Referred to a doctor"]);
     toastScore(-SCORE_WEIGHTS.wrongDrug, "referral not needed");
     errPanel.logError({
       errorType: "Referred a treatable patient",
@@ -253,7 +258,15 @@ export function OtcConsultation({
       timeTaken: timer.taken,
       errors: wrong,
       correctDrugs: correct,
-      totalDrugs: 3,
+      // The real number of decisions this case has: a referral is one (refer
+      // or not), a sale is two (medicine, then label). A fixed 3 meant a
+      // perfect treat case scored 2/3 = 67% and a perfect referral scored
+      // 1/3 = 33% - accuracy could never read 100% no matter how well the
+      // consultation went, which fed a permanently deflated figure into
+      // every aggregate that reads scores.accuracy: the weekly report, the
+      // peer percentile, the profile page, the leaderboard, the educator
+      // roster.
+      totalDrugs: otcCase.outcome === "treat" ? 2 : 1,
       errorsDetail: errPanel.errors,
       // Resolved off the shelf the case dispenses from, so the class axis gets
       // its denominator without the authored cases having to restate a category.
@@ -293,15 +306,36 @@ export function OtcConsultation({
         explanation={otcCase.explanation}
         drugs={[{
           name: otcCase.recommendation.correct.join(" or "),
-          correct: true,
+          // Was hardcoded true regardless of outcome, which fed a case that
+          // was clinically wrong - sold to someone who needed a referral,
+          // or labelled incorrectly - straight past the celebration screen's
+          // failure check as if it had gone perfectly. A referral only
+          // counts once refer() actually succeeds; a sale only once the
+          // label is submitted correctly, which is the only path that ever
+          // sets rewardLabels.
+          correct: otcCase.outcome === "refer" ? correct >= 1 : rewardLabels > 0,
           info: otcCase.recommendation.dose,
         }]}
-        breakdown={grade ? [
-          { label: "History taken", delta: Object.values(grade.wwham).filter(Boolean).length * WWHAM_POINTS },
-          ...(grade.redFlagsIdentified.length
-            ? [{ label: "Red flags spotted", delta: grade.redFlagsIdentified.length * RED_FLAG_POINTS }]
+        breakdown={[
+          {
+            label: otcCase.outcome === "refer" ? "Correctly referred" : "Correct medicine",
+            delta: Math.round(rewardDrugs * SCORE_WEIGHTS.correctDrug),
+          },
+          ...(otcCase.outcome === "treat"
+            ? [{ label: "Label", delta: Math.round(rewardLabels * SCORE_WEIGHTS.correctLabel) }]
             : []),
-        ] : []}
+          // Drug and label mistakes share one counter and one weight, same as
+          // the computeScore call below - this line is not a second, looser
+          // accounting of the same wrong attempts.
+          ...(wrong > 0 ? [{ label: "Wrong attempts", delta: -wrong * SCORE_WEIGHTS.wrongDrug }] : []),
+          ...(hints > 0 ? [{ label: "Hints used", delta: -hints * SCORE_WEIGHTS.hint }] : []),
+          ...(grade ? [
+            { label: "History taken", delta: Object.values(grade.wwham).filter(Boolean).length * WWHAM_POINTS },
+            ...(grade.redFlagsIdentified.length
+              ? [{ label: "Red flags spotted", delta: grade.redFlagsIdentified.length * RED_FLAG_POINTS }]
+              : []),
+          ] : []),
+        ]}
         errors={errPanel.errors}
         examiner={{
           caseRef: String(otcCase.id ?? "otc"),

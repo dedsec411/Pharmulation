@@ -424,10 +424,27 @@ function WarehouseGame() {
       timeTakenSec: timer.taken, timeLimitSec: LIMIT, timedOut,
       points: totalPoints,
     });
+    // Every graded decision in the case: one per shipment placed, dispatch
+    // order picked, expiring item actioned, audit scenario answered, and
+    // reconciliation row checked. `errors` already increments exactly once
+    // per wrong decision across all five, so correct = total - errors is a
+    // real accuracy fraction rather than the `totalDrugs: 0` this used to
+    // send, which made `accuracy = correct/total > 0 ? ... : 1` read every
+    // warehousing case as 100% regardless of how many errors were made -
+    // and that inflated figure fed the weekly report, peer percentile,
+    // profile page, leaderboard and educator roster along with everyone
+    // else's real numbers.
+    const totalDecisions =
+      (s.shipments?.length ?? 0) +
+      (s.dispatch?.length ?? 0) +
+      (s.expiring?.length ?? 0) +
+      auditScenarios.length +
+      (s.reconciliation?.length ?? 0);
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "warehousing",
       score: finalScore, timeTaken: timer.taken, errors,
-      correctDrugs: 0, totalDrugs: 0,
+      correctDrugs: Math.max(0, totalDecisions - errors),
+      totalDrugs: totalDecisions || 1,
       errorsDetail: errPanel.errors,
     });
     setResult({ score: finalScore, xpGain });
