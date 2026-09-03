@@ -115,16 +115,22 @@ function DifficultySelectModal({
     setLastScore(null);
 
     if (!profile?.user_id || !safeStored) return;
-    supabase
-      .from("scores")
-      .select("score, cases!inner(difficulty)")
+    // Was `cases!inner(difficulty)`, filtered on the joined column - an inner
+    // join that only ever matched a score whose case_id points at a real row
+    // in `cases`. Most cases are generated on the fly and persist with
+    // case_id null, so on real data that join silently excluded roughly two
+    // thirds of score history and this card read "None" for players with a
+    // full week of play behind them. Difficulty is stored on the score row
+    // itself now, so no join is needed at all.
+    (supabase.from("scores") as any)
+      .select("score")
       .eq("user_id", profile.user_id)
       .eq("mode", mode)
-      .eq("cases.difficulty", safeStored)
+      .eq("difficulty", safeStored)
       .order("completed_at", { ascending: false })
       .limit(1)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: { data: { score: number } | null }) => {
         setLastScore(typeof data?.score === "number" ? data.score : null);
       });
   }, [mode, open, profile?.user_id]);

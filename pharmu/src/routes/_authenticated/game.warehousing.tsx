@@ -442,6 +442,7 @@ function WarehouseGame() {
       (s.reconciliation?.length ?? 0);
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "warehousing",
+      difficulty: caseData?.difficulty,
       score: finalScore, timeTaken: timer.taken, errors,
       correctDrugs: Math.max(0, totalDecisions - errors),
       totalDrugs: totalDecisions || 1,

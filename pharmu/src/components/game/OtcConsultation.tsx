@@ -254,6 +254,7 @@ export function OtcConsultation({
       // Cases live in code, not the cases table, so there is no row to link to.
       caseId: `generated:${otcCase.id}`,
       mode: "otc",
+      difficulty,
       score,
       timeTaken: timer.taken,
       errors: wrong,

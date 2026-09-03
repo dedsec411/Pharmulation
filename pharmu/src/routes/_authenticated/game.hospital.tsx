@@ -265,6 +265,7 @@ export function HospitalGame({ mode }: { mode: Mode }) {
     });
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode,
+      difficulty: caseData?.difficulty,
       score, timeTaken: timer.taken, errors: wrongDrugs + wrongLabels,
       correctDrugs, totalDrugs: correctOrders.length || 1,
       errorsDetail: errPanel.errors,

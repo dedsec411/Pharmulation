@@ -236,6 +236,13 @@ export async function submitScore(args: {
   errors: number;
   correctDrugs: number;
   totalDrugs: number;
+  /**
+   * Recorded on the row itself rather than left to a join to `cases`: most
+   * cases are generated from a template and never get a `cases` row, so a
+   * score for one has no difficulty a join could find. The difficulty picker
+   * needs one to show a player their last score at a given difficulty.
+   */
+  difficulty?: Difficulty | string | null;
   errorsDetail?: any[];
   /**
    * Drug categories this case put in front of the learner, whether or not
@@ -267,9 +274,12 @@ async function persistScore(
 ) {
   const caseId = args.caseId?.startsWith("generated:") ? null : args.caseId;
 
-  // class_attempts is newer than the checked-in Supabase types, which are
-  // generated from the live schema, so the insert is typed loosely until they
-  // are regenerated against the applied migration.
+  // class_attempts and difficulty are newer than the checked-in Supabase
+  // types, which are generated from the live schema, so the insert is typed
+  // loosely until they are regenerated against the applied migration.
+  const difficulty = (args.difficulty === "easy" || args.difficulty === "medium" || args.difficulty === "hard")
+    ? args.difficulty
+    : null;
   const { error: scoreErr } = await (supabase.from("scores") as any).insert({
     user_id: args.userId,
     case_id: caseId,
@@ -278,6 +288,7 @@ async function persistScore(
     time_taken: args.timeTaken,
     errors_made: args.errors,
     accuracy,
+    difficulty,
     errors_detail: (args.errorsDetail ?? []) as any,
     class_attempts: ([...new Set(args.classAttempts ?? [])]) as any,
   });

@@ -702,6 +702,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     });
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "rx",
+      difficulty: caseData?.difficulty,
       score, timeTaken: timer.taken, errors: wrong + wrongLabels + compoundWrong,
       correctDrugs: correct + compoundCorrect, totalDrugs: required.length + compoundCorrect + compoundWrong,
       errorsDetail: errPanel.errors,

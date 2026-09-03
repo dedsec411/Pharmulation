@@ -884,6 +884,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
     });
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "industry",
+      difficulty: caseData?.difficulty,
       score: finalScore, timeTaken: timer.taken, errors,
       correctDrugs: ingredients.filter((i: any) => weighed[i.name]?.ok).length,
       totalDrugs: ingredients.length,
