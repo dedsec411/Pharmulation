@@ -29,6 +29,7 @@ function ProfilePage() {
   const userId = profile?.user_id;
   const [tab, setTab] = useState<"overview" | "badges" | "history" | "certificates">("overview");
   const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
+  const [claimingHours, setClaimingHours] = useState<number | null>(null);
 
   const { data: scores = [] } = useQuery({
     queryKey: ["my-scores", userId],
@@ -114,16 +115,41 @@ function ProfilePage() {
   const maxMode = Math.max(1, ...modeGroupCounts.map((group) => group.count));
 
   async function claimCertificate(hours: number) {
-    if (!userId) return;
+    if (!userId || claimingHours !== null) return;
     const existing = certs.find((c: any) => c.hours_earned === hours);
     if (existing) { await downloadCert(profile!.full_name || "Pharmacist", hours, new Date(existing.issued_at), existing.id); return; }
-    const { data, error } = await supabase.from("cpd_certificates").insert({
-      user_id: userId, hours_earned: hours,
-    }).select("id, issued_at").single();
-    if (error) { toast.error(error.message); return; }
-    toast.success(`🎓 You've earned a ${hours} hour CPD Certificate!`);
-    refetchCerts();
-    await downloadCert(profile!.full_name || "Pharmacist", hours, new Date(data.issued_at), data.id);
+
+    setClaimingHours(hours);
+    try {
+      const { data, error } = await supabase.from("cpd_certificates").insert({
+        user_id: userId, hours_earned: hours,
+      }).select("id, issued_at").single();
+
+      if (error) {
+        // A unique constraint on (user_id, hours_earned) backs up the client
+        // check above: a double-click or a slow connection plus a second
+        // press could both pass that check before either insert had come
+        // back. The second one now fails here instead of creating a
+        // duplicate row - refetch and hand back the certificate that
+        // actually exists rather than surfacing the raw database error.
+        if ((error as { code?: string }).code === "23505") {
+          const { data: fresh } = await refetchCerts();
+          const row = fresh?.find((c: any) => c.hours_earned === hours);
+          if (row) {
+            await downloadCert(profile!.full_name || "Pharmacist", hours, new Date(row.issued_at), row.id);
+            return;
+          }
+        }
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success(`🎓 You've earned a ${hours} hour CPD Certificate!`);
+      refetchCerts();
+      await downloadCert(profile!.full_name || "Pharmacist", hours, new Date(data.issued_at), data.id);
+    } finally {
+      setClaimingHours(null);
+    }
   }
 
   async function downloadCert(name: string, hours: number, issuedAt: Date, certId: string) {
@@ -286,12 +312,14 @@ function ProfilePage() {
                   const unlocked = cpdHours >= m;
                   const claimed = certs.some((c: any) => c.hours_earned === m);
                   return (
-                    <button key={m} disabled={!unlocked} onClick={() => claimCertificate(m)}
-                      className={`text-xs rounded-xl py-3 transition ${
+                    <button key={m} disabled={!unlocked || claimingHours === m} onClick={() => claimCertificate(m)}
+                      className={`text-xs rounded-xl py-3 transition disabled:opacity-70 ${
                         unlocked ? "bg-primary/20 text-primary hover:bg-primary/30" : "bg-foreground/5 text-muted-foreground"
                       }`}>
                       <div className="font-bold text-base">{m}h</div>
-                      <div>{claimed ? "📜 Download" : unlocked ? "🎓 Claim" : <Lock className="h-3 w-3 inline" />}</div>
+                      <div>
+                        {claimingHours === m ? "…" : claimed ? "📜 Download" : unlocked ? "🎓 Claim" : <Lock className="h-3 w-3 inline" />}
+                      </div>
                     </button>
                   );
                 })}

@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const s = useSettings();
-  const { profile } = useAuthStore();
+  const { profile, setProfile } = useAuthStore();
   const [name, setName] = useState(profile?.full_name ?? "");
   const [password, setPassword] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -24,6 +24,12 @@ function SettingsPage() {
     if (!profile) return;
     const { error } = await supabase.from("profiles").update({ full_name: name }).eq("user_id", profile.user_id);
     if (error) return toast.error(error.message);
+    // The store is the only copy of the name the rest of the app reads - the
+    // navbar and the profile header both come from it, not from a fresh
+    // query - so without this the save appeared to work (the toast fired,
+    // the database had the new value) but every other screen kept showing
+    // the old name until the next full sign-in.
+    setProfile({ ...profile, full_name: name });
     toast.success("Display name updated");
   }
   async function changePassword() {
