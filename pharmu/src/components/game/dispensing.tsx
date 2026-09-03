@@ -27,8 +27,8 @@ export type LabelAnswer = {
   frequency: string;
   timing: string;
   duration: string;
-  /** Auxiliary label line. Optional - many supplies need none. */
-  instruction?: string;
+  /** Auxiliary label lines. A label carries as many as the medicine needs. */
+  instruction?: string[];
 };
 
 export function OptionPicker({
@@ -87,11 +87,33 @@ export function DurationSlider({ value, onChange }: { value: string; onChange: (
       />
 
       {/* Every day is selectable; only a few are labelled, so the scale stays
-          readable rather than printing thirty numbers. */}
-      <div className="mt-1 flex justify-between text-[9px] font-semibold text-muted-foreground">
-        {[1, 7, 14, 21, MAX_COURSE_DAYS].map((mark) => (
-          <span key={mark} className={!ongoing && mark === sliderDays ? "text-primary" : ""}>{mark}</span>
-        ))}
+          readable rather than printing thirty numbers.
+
+          Positioned at each mark's real place on the track, not spread evenly.
+          `justify-between` put the five labels at 0/25/50/75/100% of the width,
+          but on a 1-30 range 7 sits at 21% and 14 at 45% - so the handle read
+          8 when it looked like it was on the 7, and 15 on the 14. The value
+          was right the whole time; the numbers under it were in the wrong
+          places.
+
+          The px term corrects for the thumb: its centre travels from half a
+          thumb-width in to half a thumb-width short of the end, so 0% and 100%
+          on the track are not 0% and 100% of the element. */}
+      <div className="relative mt-1 h-3 text-[9px] font-semibold text-muted-foreground">
+        {[1, 7, 14, 21, MAX_COURSE_DAYS].map((mark) => {
+          const pct = ((mark - 1) / (MAX_COURSE_DAYS - 1)) * 100;
+          return (
+            <span
+              key={mark}
+              className={`absolute -translate-x-1/2 tabular-nums ${
+                !ongoing && mark === sliderDays ? "text-primary" : ""
+              }`}
+              style={{ left: `calc(${pct}% + ${((50 - pct) * 0.16).toFixed(2)}px)` }}
+            >
+              {mark}
+            </span>
+          );
+        })}
       </div>
 
       {/* A long-term medicine has no day count, so it cannot live on the scale.
@@ -123,33 +145,61 @@ export function DurationSlider({ value, onChange }: { value: string; onChange: (
  */
 export function InstructionPicker({
   value, onChange,
-}: { value: string; onChange: (value: string) => void }) {
+}: { value: string[]; onChange: (value: string[]) => void }) {
   const [custom, setCustom] = useState(false);
-  const preset = (LABEL_INSTRUCTIONS as readonly string[]).includes(value);
+
+  // A real label carries as many cautionary lines as the medicine needs -
+  // "swallow whole" and "do not drink alcohol" are not alternatives - so these
+  // toggle independently instead of behaving like radio buttons.
+  const isPreset = (item: string) => (LABEL_INSTRUCTIONS as readonly string[]).includes(item);
+  const customText = value.find((item) => !isPreset(item)) ?? "";
+
+  function toggle(option: string) {
+    onChange(value.includes(option)
+      ? value.filter((item) => item !== option)
+      : [...value, option]);
+  }
+
+  /** The free-text line is one more entry, replaced in place as it is typed. */
+  function setCustomText(text: string) {
+    const presets = value.filter(isPreset);
+    onChange(text.trim() ? [...presets, text] : presets);
+  }
 
   return (
     <div className="mt-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-        Other / special instruction <span className="text-muted-foreground">(optional)</span>
+        Other / special instruction{" "}
+        <span className="text-muted-foreground">(optional - choose any that apply)</span>
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
-        {LABEL_INSTRUCTIONS.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => { setCustom(false); onChange(value === option ? "" : option); }}
-            className={`rounded-full border px-3 py-1.5 text-xs transition ${
-              !custom && value === option
-                ? "border-primary bg-primary/15 text-primary"
-                : "border-border/40 text-muted-foreground hover:border-primary/40"
-            }`}
-          >
-            {option}
-          </button>
-        ))}
+        {LABEL_INSTRUCTIONS.map((option) => {
+          const selected = value.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => toggle(option)}
+              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                selected
+                  ? "border-primary bg-primary/15 text-primary"
+                  : "border-border/40 text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
         <button
           type="button"
-          onClick={() => { setCustom(true); if (preset) onChange(""); }}
+          aria-pressed={custom}
+          onClick={() => {
+            // Closing the free-text box drops whatever was in it, so a
+            // half-typed line cannot end up on the label unseen.
+            if (custom) setCustomText("");
+            setCustom(!custom);
+          }}
           className={`rounded-full border px-3 py-1.5 text-xs transition ${
             custom
               ? "border-primary bg-primary/15 text-primary"
@@ -163,8 +213,8 @@ export function InstructionPicker({
       {custom && (
         <input
           autoFocus
-          value={preset ? "" : value}
-          onChange={(event) => onChange(event.target.value)}
+          value={customText}
+          onChange={(event) => setCustomText(event.target.value)}
           maxLength={120}
           placeholder="Write the instruction as it should read on the label"
           className="mt-2 w-full rounded-xl border border-border/40 bg-background/50 px-3 py-2 text-sm outline-none focus:border-primary/60"
@@ -181,7 +231,7 @@ export function LabelForm({
   const [frequency, setFrequency] = useState("");
   const [timing, setTiming] = useState("");
   const [duration, setDuration] = useState<string>(formatDuration(7));
-  const [instruction, setInstruction] = useState("");
+  const [instruction, setInstruction] = useState<string[]>([]);
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
@@ -194,7 +244,7 @@ export function LabelForm({
       <button
         type="button"
         disabled={!frequency || !timing}
-        onClick={() => onSubmit({ frequency, timing, duration, instruction: instruction.trim() || undefined })}
+        onClick={() => onSubmit({ frequency, timing, duration, instruction: instruction.length ? instruction : undefined })}
         className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
       >
         Submit label

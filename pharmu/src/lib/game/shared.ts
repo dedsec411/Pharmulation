@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { applyCaseResult } from "@/lib/supabase-rpc";
+import { useAuthStore } from "@/lib/auth-store";
 import { toast } from "sonner";
 
 export type Mode = "rx" | "otc" | "hospital" | "industry" | "warehousing";
@@ -317,6 +318,14 @@ async function persistScore(
 
   const updated = updatedRows?.[0];
   if (updated) {
+    // The function returns the profile it just wrote, and the store is where
+    // every screen reads XP, level, streak and the case count from - so
+    // without this the navbar and profile kept last case's numbers until the
+    // next full sign-in, and finishing a case appeared to award nothing. The
+    // row is the complete profile, so it replaces the stored one outright
+    // rather than being merged into it.
+    useAuthStore.getState().setProfile(updated);
+
     const newTotal = updated.total_cases_completed;
 
     // Badge triggers

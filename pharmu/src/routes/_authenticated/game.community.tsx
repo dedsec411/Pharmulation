@@ -558,7 +558,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     else setPhase("label");
   }
 
-  function submitLabel(drug: string, ans: { frequency: string; timing: string; duration: string; instruction?: string }) {
+  function submitLabel(drug: string, ans: { frequency: string; timing: string; duration: string; instruction?: string[] }) {
     const correctAns = caseData?.correct_answer_json?.labels?.[drug];
     const ok = correctAns &&
       ans.frequency === correctAns.frequency &&
@@ -586,7 +586,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
         if (normalizeDuration(ans.duration) !== normalizeDuration(correctAns.duration)) fields.push(`duration`);
         errPanel.logError({
           errorType: "Wrong label",
-          wrongChoice: `${drug}: ${[ans.frequency, ans.timing, ans.duration, ans.instruction].filter(Boolean).join(" · ")}`,
+          wrongChoice: `${drug}: ${[ans.frequency, ans.timing, ans.duration, ...(ans.instruction ?? [])].filter(Boolean).join(" · ")}`,
           correctChoice: `${correctAns.frequency} · ${correctAns.timing} · ${correctAns.duration}`,
           whyWrong: `Your label for ${drug} is off on ${fields.join(", ")}.`,
           whatToKnow: `Label instructions for ${drug} are based on its half-life, food interactions, and recommended course duration.`,
@@ -1021,7 +1021,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
           caseData={caseData}
           previous={labelAnswers[correctDrugs[labelIdx]]}
           count={`${labelIdx + 1} / ${correctDrugs.length}`}
-          onSubmit={(a: { frequency: string; timing: string; duration: string; instruction?: string }) =>
+          onSubmit={(a: { frequency: string; timing: string; duration: string; instruction?: string[] }) =>
             submitLabel(correctDrugs[labelIdx], a)}
         />
       )}
@@ -1364,7 +1364,7 @@ function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
   const [freq, setFreq]       = useState("");
   const [timing, setTiming]   = useState("");
   const [duration, setDuration] = useState(formatDuration(7));
-  const [instruction, setInstruction] = useState("");
+  const [instruction, setInstruction] = useState<string[]>([]);
 
   if (previous) {
     return (
@@ -1409,7 +1409,7 @@ function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
         <InstructionPicker value={instruction} onChange={setInstruction} />
         <button
           disabled={!freq || !timing}
-          onClick={() => onSubmit({ frequency: freq, timing, duration, instruction: instruction.trim() || undefined })}
+          onClick={() => onSubmit({ frequency: freq, timing, duration, instruction: instruction.length ? instruction : undefined })}
           className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
           Submit label
         </button>
