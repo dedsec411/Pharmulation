@@ -295,10 +295,19 @@ async function persistScore(
   if (scoreErr) {
     console.error("[supabase] failed to save score:", scoreErr);
     toast.error("Your score could not be saved.");
+    // XP is claimed against the score row that was just written, so with no
+    // row there is nothing to claim - calling anyway would only turn one
+    // failure into two error toasts.
+    return;
   }
 
   // Single atomic UPDATE server-side. Doing this as a read-then-write from
   // here let two concurrent submissions clobber each other's increment.
+  //
+  // The arguments are vestigial: the function claims the score row just
+  // inserted and reads the figures off it, because a call that could name its
+  // own XP could also be made in a loop. They are still passed so an older
+  // deployed build keeps working against the same signature.
   const { data: updatedRows, error: applyErr } = await applyCaseResult(xpGain, accuracy, args.timeTaken);
 
   if (applyErr) {

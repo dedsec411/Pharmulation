@@ -30,8 +30,15 @@ function callRpc<T>(fn: string, args?: Record<string, unknown>) {
  * the case count, recompute level, and fold this case's accuracy and duration
  * into the running averages shown on the profile and leaderboard.
  *
- * @param accuracy fraction correct for this case, 0..1
- * @param timeTakenSec seconds spent on this case
+ * Must be called after the case's `scores` row has been written, because that
+ * row is what the function applies. It claims the caller's most recent
+ * unclaimed one and reads the figures off it, marking it claimed so the same
+ * case cannot be applied twice - a function that took a caller's word for how
+ * much XP it was owed could also be called in a loop.
+ *
+ * The three arguments are therefore vestigial. They are still sent so that a
+ * build deployed before the claim migration keeps working against the same
+ * signature; the values are ignored.
  */
 export function applyCaseResult(xpGain: number, accuracy: number, timeTakenSec: number) {
   return callRpc<ProfileRow[]>("apply_case_result", {
