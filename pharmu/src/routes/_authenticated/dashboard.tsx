@@ -3,6 +3,7 @@ import { WeeklyReportBanner } from "@/components/game/WeeklyReportBanner";
 import { RecommendedCases } from "@/components/game/RecommendedCases";
 import { AssignedWork } from "@/components/game/AssignedWork";
 import { CountUp } from "@/components/CountUp";
+import { LensEntry } from "@/components/lens/LensEntry";
 import { useWeaknessMap, useWeeklyTotals } from "@/lib/game/useWeaknessMap";
 import { hasEnoughHistory } from "@/lib/game/weakness";
 import { motion } from "framer-motion";
@@ -388,6 +389,10 @@ function Dashboard() {
         {weaknessMap && hasEnoughHistory(weaknessMap) && (
           <RecommendedCases map={weaknessMap} />
         )}
+
+        {/* Scanning a document is a thing you do, not a mode you enter, so it
+            sits above the mode grid rather than inside it. */}
+        <LensEntry className="mt-6" />
 
         {/* 4 MODES */}
         <section className="mt-6">

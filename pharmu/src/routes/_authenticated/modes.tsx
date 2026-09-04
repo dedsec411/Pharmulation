@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FileText, Pill, Hospital, Microscope, Sparkles, Siren, Lock, Clock, Factory, Package } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { BackButton } from "@/components/BackButton";
+import { LensEntry } from "@/components/lens/LensEntry";
 import { useAuthStore } from "@/lib/auth-store";
 import { useThemeStore } from "@/lib/theme-store";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,7 +63,12 @@ function Modes() {
         </div>
         <h1 className="text-3xl font-bold">Training Modes</h1>
         <p className="mt-2 text-muted-foreground">Pick a mode - each case has a timer and a mentor tip.</p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+        {/* Above the grid for the same reason it is on the dashboard: it is not
+            a fifth mode, it is a way of bringing your own case. */}
+        <LensEntry className="mt-6" />
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {MODES.map((m) => {
             const Icon = m.icon;
             const locked = m.gated && count < 10;

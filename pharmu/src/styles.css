@@ -386,6 +386,64 @@
    property that the compositor can handle on its own - background-position and
    a clip inset - so a screen that exists only while work is happening does not
    compete with that work for the main thread. */
+/* ---------------------------------------------------------------------------
+   Prescription Lens.
+
+   The scan is meant to read as a medical imaging system working over the page,
+   not as a spinner with a caption. Three layers doing three jobs: a bar
+   travelling down the document, a grid that breathes under it, and corner
+   brackets that hold the frame.
+
+   All three animate transform or opacity only. This runs while a 45-second
+   vision request is in flight on the same device that just had its blur
+   budget cut, so the animation cannot be the expensive thing on screen.
+   --------------------------------------------------------------------------- */
+@keyframes lens-sweep-kf {
+  0%   { transform: translateY(-12%); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translateY(1100%); opacity: 0; }
+}
+
+.lens-sweep {
+  animation: lens-sweep-kf 2.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes lens-grid-kf {
+  0%, 100% { opacity: 0.18; }
+  50%      { opacity: 0.42; }
+}
+
+.lens-grid {
+  background-image:
+    linear-gradient(var(--color-primary) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-primary) 1px, transparent 1px);
+  background-size: 22px 22px;
+  animation: lens-grid-kf 2.1s ease-in-out infinite;
+}
+
+/* The brackets tighten a fraction on each pass, so the frame reads as
+   actively holding the document rather than being drawn over it. */
+@keyframes lens-bracket-kf {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50%      { transform: scale(0.965); opacity: 1; }
+}
+
+.lens-bracket {
+  animation: lens-bracket-kf 2.1s ease-in-out infinite;
+}
+
+/* The entry point's halo. Slow enough to read as ambient rather than as
+   something demanding to be clicked. */
+@keyframes lens-halo-kf {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%      { opacity: 0.7;  transform: scale(1.04); }
+}
+
+.lens-halo {
+  animation: lens-halo-kf 3.4s ease-in-out infinite;
+}
+
 @keyframes shimmer-sweep {
   from { background-position: -160% 0; }
   to   { background-position: 260% 0; }

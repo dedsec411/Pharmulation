@@ -61,12 +61,29 @@ export function geminiKeyProblem(apiKey: string) {
   return null;
 }
 
+/**
+ * A part of a message. Text for every existing caller; inline_data carries an
+ * image for Prescription Lens, which is the only vision user so far.
+ *
+ * Gemini's REST shape is snake_case here while the rest of the body is camel,
+ * which is the API's own inconsistency rather than ours.
+ */
+export type GeminiPart =
+  | { text: string }
+  | { inline_data: { mime_type: string; data: string } };
+
 export type GeminiCallOptions = {
   systemPrompt: string;
-  contents: Array<{ role: string; parts: Array<{ text: string }> }>;
+  contents: Array<{ role: string; parts: GeminiPart[] }>;
   temperature: number;
   maxOutputTokens: number;
   json?: boolean;
+  /**
+   * Overrides the per-model ceiling. Reading an image takes materially longer
+   * than answering from text, and the default would abandon a request that was
+   * going to succeed.
+   */
+  timeoutMs?: number;
 };
 
 /** Per-model ceiling, so one unresponsive upstream cannot hold a request open. */
@@ -90,7 +107,7 @@ export async function callGemini(apiKey: string, options: GeminiCallOptions): Pr
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+          signal: AbortSignal.timeout(options.timeoutMs ?? GEMINI_TIMEOUT_MS),
           body: JSON.stringify({
             system_instruction: { parts: [{ text: options.systemPrompt }] },
             contents: options.contents,

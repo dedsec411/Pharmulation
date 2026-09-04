@@ -7,6 +7,7 @@ import { CaseCelebration } from "./CaseCelebration";
 import { ClinicalExaminer } from "./ClinicalExaminer";
 import { useSittingLock } from "@/lib/educator/assessment";
 import { FailureDebrief } from "./FailureDebrief";
+import { ContributeCase } from "@/components/lens/ContributeCase";
 import { caseResultFrom, isFailure } from "@/lib/game/celebration";
 import { hasExaminableContext, type ExaminerCaseContext } from "@/lib/game/examiner";
 
@@ -189,6 +190,9 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
         )}
 
         {children}
+
+        {/* Renders nothing unless this case came from a scan. */}
+        <ContributeCase />
 
         <div className="mt-6 flex flex-wrap gap-3">
           <button onClick={onNext} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">

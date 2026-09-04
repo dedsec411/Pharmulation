@@ -133,6 +133,23 @@ const FREQUENCY_PATTERNS: readonly [RegExp, Regimen["frequency"]][] = [
   [/\bOD\b|\bOM\b|\bON\b|\bq24h\b|once daily|\bdaily\b|\bnocte\b|\bmane\b/i, "once daily"],
 ];
 
+/**
+ * A label-legal frequency for any way a prescriber might have written one.
+ *
+ * Exported for Prescription Lens, which reads whatever was on the paper -
+ * "TDS", "1-1-1", "three times a day" - and has to land on a value the label
+ * step can actually offer, or the case becomes unwinnable. Same patterns the
+ * dosage parser uses, so the two cannot disagree.
+ */
+export function frequencyFromText(text: string): Regimen["frequency"] {
+  return parseFrequency(String(text ?? ""));
+}
+
+/** As above, for the timing half of the label. */
+export function timingFromText(text: string, frequency: Regimen["frequency"]): Regimen["timing"] {
+  return parseTiming(String(text ?? ""), frequency);
+}
+
 function parseFrequency(text: string): Regimen["frequency"] {
   let best: Regimen["frequency"] = "once daily";
   let bestAt = Number.POSITIVE_INFINITY;

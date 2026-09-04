@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useActiveCaseStore } from "@/lib/active-case-store";
 import { regimenForDrug } from "@/lib/game/dosing";
+import { useScannedCaseStore } from "@/lib/lens/scanned-case-store";
 
 export function useCaseLoader(mode: Mode, difficulty?: Difficulty | null) {
   const { profile } = useAuthStore();
@@ -19,6 +20,23 @@ export function useCaseLoader(mode: Mode, difficulty?: Difficulty | null) {
       return;
     }
     setLoading(true);
+
+    // A case scanned by Prescription Lens is claimed before anything is
+    // fetched, so it enters the game by the same door a seeded case does and
+    // every mode plays it without knowing the difference. Taken once: pressing
+    // Next case afterwards deals a normal generated case rather than replaying
+    // the photograph.
+    const scanned = useScannedCaseStore.getState().pending;
+    if (scanned && scanned.case.mode === mode) {
+      const claimed = useScannedCaseStore.getState().take();
+      if (claimed) {
+        setCaseData(claimed.case);
+        setActiveCase(claimed.case);
+        setLoading(false);
+        return;
+      }
+    }
+
     // OTC is not loaded here: it runs its own AI consultation off the
     // authored case bank in lib/game/otc-cases.ts.
     const c = await fetchTemplateCase(mode, difficulty, profile?.user_id, profile?.level)
