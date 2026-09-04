@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Users, ClipboardList, Activity, AlertTriangle, type LucideIcon } from "lucide-react";
+import { motion } from "framer-motion";
 import { useAuthStore } from "@/lib/auth-store";
+import { CountUp } from "@/components/CountUp";
 import {
   useAllMyStudents, useClassAssignments, useCohortScores, useMyClasses,
 } from "@/lib/educator/queries";
@@ -19,14 +21,24 @@ type StatProps = {
   sub?: string | null;
 };
 
-function Stat({ icon: Icon, label, value, sub }: StatProps) {
+function Stat({ icon: Icon, label, value, sub, index = 0 }: StatProps & { index?: number }) {
   return (
-    <div className="glass-card p-5">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.07, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={{ y: -4 }}
+      className="glass-card p-5"
+    >
       <Icon className="size-5 text-primary" />
-      <p className="mt-3 text-2xl font-black tabular-nums">{value}</p>
+      <p className="mt-3 text-2xl font-black tabular-nums">
+        {/* A count only where the figure is a number. "Top mode today" is a
+            mode name, and counting it up is not a thing that can happen. */}
+        {typeof value === "number" ? <CountUp value={value} /> : value}
+      </p>
       <p className="text-xs text-muted-foreground">{label}</p>
       {sub && <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>}
-    </div>
+    </motion.div>
   );
 }
 
@@ -88,12 +100,12 @@ function EducatorDashboard() {
       ) : (
         <>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat icon={Users} label="Students enrolled" value={studentIds.length} />
-            <Stat icon={Activity} label="Cases this week" value={thisWeek.length}
+            <Stat index={0} icon={Users} label="Students enrolled" value={studentIds.length} />
+            <Stat index={1} icon={Activity} label="Cases this week" value={thisWeek.length}
               sub={meanAccuracy !== null ? `${meanAccuracy}% mean accuracy` : "No activity yet"} />
-            <Stat icon={AlertTriangle} label="Inactive this week" value={quiet}
+            <Stat index={2} icon={AlertTriangle} label="Inactive this week" value={quiet}
               sub={quiet ? "Have not completed a case" : "Everyone has played"} />
-            <Stat icon={ClipboardList} label="Assignments past due" value={overdue} />
+            <Stat index={3} icon={ClipboardList} label="Assignments past due" value={overdue} />
           </div>
 
           <section className="mt-6 grid gap-4 lg:grid-cols-2">

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { WeeklyReportBanner } from "@/components/game/WeeklyReportBanner";
 import { RecommendedCases } from "@/components/game/RecommendedCases";
 import { AssignedWork } from "@/components/game/AssignedWork";
+import { CountUp } from "@/components/CountUp";
 import { useWeaknessMap, useWeeklyTotals } from "@/lib/game/useWeaknessMap";
 import { hasEnoughHistory } from "@/lib/game/weakness";
 import { motion } from "framer-motion";
@@ -307,10 +308,12 @@ function Dashboard() {
               <div className="mb-2 flex items-center justify-between gap-3">
                 <div>
                   <p className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">XP dose meter</p>
-                  <p className="mt-0.5 font-mono text-sm font-bold tabular-nums text-foreground">{currentXp} / {xpToNext} XP</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold tabular-nums text-foreground">
+                    <CountUp value={currentXp} /> / {xpToNext} XP
+                  </p>
                 </div>
                 <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary shadow-[0_10px_24px_-18px_oklch(0.74_0.14_180/0.9)]">
-                  {Math.round(xpPct)}%
+                  <CountUp value={Math.round(xpPct)} suffix="%" />
                 </span>
               </div>
               <div className="relative h-7 overflow-hidden rounded-lg border border-foreground/10 bg-slate-900/[0.04] dark:bg-black/25 shadow-inner">

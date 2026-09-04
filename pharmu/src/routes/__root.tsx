@@ -15,6 +15,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { TutorialBot } from "@/components/TutorialBot";
 import { useInitAuth } from "@/lib/use-init-auth";
 import { THEME_BOOT_SCRIPT, useThemeStore, useThemeSync } from "@/lib/theme-store";
+import { MotionConfig } from "framer-motion";
+import { PageTransition } from "@/components/PageTransition";
 
 function NotFoundComponent() {
   return (
@@ -137,12 +139,21 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthBootstrap />
-      <Outlet />
-      <TutorialBot />
-      {/* Toasts are drawn by sonner outside our stylesheet, so the theme has
-          to be handed to it explicitly or they stay dark on a light page. */}
-      <Toaster position="top-right" theme={theme} richColors />
+      {/* styles.css already flattens CSS animations for a visitor who has asked
+          for reduced motion, but framer-motion runs in JS and never saw that
+          rule - so every entry animation, hover lift and celebration played
+          regardless. This is the one switch that makes the JS half honour the
+          same preference. */}
+      <MotionConfig reducedMotion="user">
+        <AuthBootstrap />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
+        <TutorialBot />
+        {/* Toasts are drawn by sonner outside our stylesheet, so the theme has
+            to be handed to it explicitly or they stay dark on a light page. */}
+        <Toaster position="top-right" theme={theme} richColors />
+      </MotionConfig>
     </QueryClientProvider>
   );
 }

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
+import { CaseLoading } from "@/components/game/CaseLoading";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { OtcConsultation } from "@/components/game/OtcConsultation";
 import { BackButton } from "@/components/BackButton";
@@ -394,12 +395,7 @@ function CommunityRun({ activeMode, onBack }: { activeMode: "rx" | "otc"; onBack
     return (
       <>
         {difficultyModal}
-        <main className="grid min-h-[60vh] place-items-center">
-          <div className="text-center space-y-3">
-            <div className="text-4xl animate-pulse">Rx</div>
-            <p className="text-muted-foreground text-sm">Loading community case...</p>
-          </div>
-        </main>
+        <CaseLoading label="Writing the prescription" />
       </>
     );
   }

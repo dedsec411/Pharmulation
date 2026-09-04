@@ -17,6 +17,7 @@ import { cpdHoursFromCases, CPD_MILESTONES, generateCertificatePdf, nextCpdMiles
 import { PUBLIC_MODE_GROUPS, publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
+import { CountUp } from "@/components/CountUp";
 import { unwrapList } from "@/lib/supabase-query";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -206,26 +207,40 @@ function ProfilePage() {
         {tab === "overview" && (
           <>
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Each figure counts up rather than appearing, and the tiles
+                  arrive in sequence rather than all at once. These are the
+                  numbers the whole product is keeping for you, and they used
+                  to land as flatly as a table of query results. */}
               {[
-                { icon: Target, label: "Cases completed", value: profile.total_cases_completed },
-                { icon: Award, label: "Accuracy", value: `${Math.round(profile.accuracy_rate)}%` },
-                { icon: Clock, label: "Avg time / case", value: `${Math.round(profile.avg_time_per_case)}s` },
-                { icon: Flame, label: "Streak", value: `${profile.streak_days} days` },
+                { icon: Target, label: "Cases completed", value: profile.total_cases_completed, suffix: "" },
+                { icon: Award, label: "Accuracy", value: Math.round(profile.accuracy_rate), suffix: "%" },
+                { icon: Clock, label: "Avg time / case", value: Math.round(profile.avg_time_per_case), suffix: "s" },
+                { icon: Flame, label: "Streak", value: profile.streak_days, suffix: profile.streak_days === 1 ? " day" : " days" },
                 ...(examinerSessions.length
                   ? [{
                       icon: GraduationCap,
                       label: "Clinical Reasoning",
-                      value: `${Math.round(
+                      value: Math.round(
                         examinerSessions.reduce((sum, x) => sum + (x.cri ?? 0), 0) / examinerSessions.length,
-                      )}/100`,
+                      ),
+                      suffix: "/100",
                     }]
                   : []),
-              ].map((s) => (
-                <div key={s.label} className="glass-card p-5 text-center">
+              ].map((s, i) => (
+                <motion.div
+                  key={s.label}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.07, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  whileHover={{ y: -4 }}
+                  className="glass-card p-5 text-center"
+                >
                   <s.icon className="mx-auto h-5 w-5 text-primary mb-2" />
-                  <div className="text-xl font-bold">{s.value}</div>
+                  <div className="text-xl font-bold tabular-nums">
+                    <CountUp value={s.value} suffix={s.suffix} />
+                  </div>
                   <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
-                </div>
+                </motion.div>
               ))}
             </div>
 

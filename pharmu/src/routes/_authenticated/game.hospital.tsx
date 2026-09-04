@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
+import { CaseLoading } from "@/components/game/CaseLoading";
 import { CaseFileSlides } from "@/components/game/CaseFileSlides";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
@@ -435,5 +436,5 @@ function Row({ label, value }: { label: string; value: any }) {
   return <p className="mt-2 text-sm"><span className="text-xs uppercase tracking-wider text-indigo-700">{label}:</span> {String(value)}</p>;
 }
 function Loading() {
-  return <main className="grid min-h-[60vh] place-items-center text-muted-foreground">Loading case...</main>;
+  return <CaseLoading label="Building your case" />;
 }

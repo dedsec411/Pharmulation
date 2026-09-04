@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
+import { CaseLoading } from "@/components/game/CaseLoading";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 import { ModeTheme } from "@/components/game/ModeTheme";
@@ -221,7 +222,7 @@ function WarehouseGame() {
     return (
       <>
         {difficultyModal}
-        <main className="grid min-h-[60vh] place-items-center text-muted-foreground">Loading warehouse...</main>
+        <CaseLoading label="Booking in the delivery" />
       </>
     );
   }

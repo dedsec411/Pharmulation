@@ -9,6 +9,7 @@ import { tierFor } from "@/lib/levels";
 import { PUBLIC_MODE_GROUPS, type Mode } from "@/lib/game/shared";
 import { BackButton } from "@/components/BackButton";
 import { Navbar } from "@/components/Navbar";
+import { CountUp } from "@/components/CountUp";
 import { unwrapList } from "@/lib/supabase-query";
 
 export const Route = createFileRoute("/leaderboard")({
@@ -187,7 +188,9 @@ function LeaderboardPage() {
                   {cleanPlayerName(p.full_name)}
                 </div>
                 <div className="mt-1 truncate text-[11px] sm:text-xs text-muted-foreground">{tierFor(p.xp ?? 0).title}</div>
-                <div className="mt-1.5 text-base sm:text-lg font-black text-primary">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
+                <div className="mt-1.5 text-base sm:text-lg font-black tabular-nums text-primary">
+                  <CountUp value={Number(p.xp) || 0} /> {filter === "all" ? "XP" : "pts"}
+                </div>
                 <div className="mt-0.5 text-xs font-semibold text-muted-foreground">#{idx + 1}</div>
               </motion.div>
             );

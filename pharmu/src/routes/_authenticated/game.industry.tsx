@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
+import { CaseLoading } from "@/components/game/CaseLoading";
 import { BatchBooklet } from "@/components/game/BatchBooklet";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
@@ -679,7 +680,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
     return (
       <>
         {difficultyModal}
-        <main className="grid min-h-[60vh] place-items-center text-muted-foreground">Loading batch...</main>
+        <CaseLoading label="Preparing the batch record" />
       </>
     );
   }
