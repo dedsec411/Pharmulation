@@ -13,8 +13,8 @@ import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 export const Route = createFileRoute("/_authenticated/modes")({
   head: () => ({ meta: [{ title: "Training Modes - Pharmulation" }] }),
   component: Modes,
-  errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
-  notFoundComponent: () => <div className="p-8">Not found</div>,
+  errorComponent: ({ error }) => <div className="p-5 sm:p-8 text-destructive">{error.message}</div>,
+  notFoundComponent: () => <div className="p-5 sm:p-8">Not found</div>,
 });
 
 type ModeCard = {
@@ -56,7 +56,7 @@ function Modes() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-7xl px-6 py-10">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
         <div className="mb-6">
           <BackButton to="/dashboard" />
         </div>

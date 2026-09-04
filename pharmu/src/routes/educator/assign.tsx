@@ -146,7 +146,7 @@ function AssignPage() {
       </div>
 
       {live.length === 0 ? (
-        <div className="glass-card mt-6 p-10 text-center">
+        <div className="glass-card mt-6 p-6 sm:p-10 text-center">
           <ClipboardList className="mx-auto size-8 text-primary" />
           <p className="mt-3 font-bold">Create a class first</p>
           <p className="mt-1 text-sm text-muted-foreground">

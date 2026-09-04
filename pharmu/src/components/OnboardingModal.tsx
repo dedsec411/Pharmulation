@@ -73,7 +73,7 @@ export function OnboardingModal() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.98 }}
           transition={{ duration: 0.25 }}
-          className="glass-card w-full max-w-lg p-8 text-center"
+          className="glass-card w-full max-w-lg p-5 sm:p-8 text-center"
         >
           <div className="mx-auto mb-5 grid h-16 w-16 place-items-center overflow-hidden rounded-2xl bg-primary/15 text-primary">
             {steps[step].art ? (

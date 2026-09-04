@@ -113,7 +113,7 @@ function AnalyticsPage() {
       </div>
 
       {!map ? (
-        <div className="glass-card mt-6 p-10 text-center">
+        <div className="glass-card mt-6 p-6 sm:p-10 text-center">
           <BarChart3 className="mx-auto size-8 text-primary" />
           <p className="mt-3 font-bold">Nothing to analyse yet</p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">

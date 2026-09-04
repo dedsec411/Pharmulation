@@ -65,7 +65,7 @@ function SettingsPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-2xl px-6 py-8 space-y-6">
+      <main className="mx-auto max-w-2xl px-4 sm:px-6 py-8 space-y-6">
         <div><BackButton to="/profile" /></div>
         <h1 className="text-3xl font-bold">Settings</h1>
 

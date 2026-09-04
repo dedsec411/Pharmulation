@@ -41,8 +41,8 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-40 glass border-b border-border">
-      <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
-        <Link to="/dashboard" className="flex h-20 w-60 items-center overflow-visible rounded-2xl transition duration-300 hover:-translate-y-0.5 hover:drop-shadow-[0_16px_34px_oklch(0.74_0.14_180/0.28)]">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:h-24 sm:px-6">
+        <Link to="/dashboard" className="flex h-12 w-36 shrink-0 items-center overflow-visible rounded-2xl transition duration-300 hover:-translate-y-0.5 hover:drop-shadow-[0_16px_34px_oklch(0.74_0.14_180/0.28)] sm:h-20 sm:w-60">
           <LogoVideo className="aspect-video w-full" />
         </Link>
         <div className="hidden md:flex items-center gap-1 text-sm">
@@ -71,6 +71,28 @@ export function Navbar() {
           </button>
           {open && (
             <div className="absolute right-0 mt-2 w-48 glass-card p-1 text-sm z-50 shadow-[0_22px_55px_-30px_oklch(0.74_0.14_180/0.8)]">
+              {/* The bar's own links are hidden below md, so without these a
+                  phone could reach Modes, the Drug DB and the Leaderboard only
+                  by going via the dashboard cards. Hidden from md up, where
+                  the bar shows them itself and repeating them would be noise. */}
+              <div className="md:hidden">
+                {[
+                  { to: "/dashboard", label: "Dashboard" },
+                  { to: "/modes", label: "Modes" },
+                  { to: "/drugs", label: "Drug DB" },
+                  { to: "/leaderboard", label: "Leaderboard" },
+                ].map((l) => (
+                  <Link
+                    key={l.to}
+                    to={l.to}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg transition hover:bg-primary/10 hover:text-primary"
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+                <div className="my-1 h-px bg-border" />
+              </div>
               <Link to="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-[0_12px_28px_-22px_oklch(0.74_0.14_180/0.8)]">
                 <User className="h-4 w-4" /> Profile
               </Link>

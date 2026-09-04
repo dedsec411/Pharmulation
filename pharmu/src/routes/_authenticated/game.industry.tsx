@@ -21,8 +21,8 @@ import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 export const Route = createFileRoute("/_authenticated/game/industry")({
   head: () => ({ meta: [{ title: "Industry - Pharmulation" }] }),
   component: () => <ModeTheme mode="industry"><IndustryGame /></ModeTheme>,
-  errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
-  notFoundComponent: () => <div className="p-8">Not found</div>,
+  errorComponent: ({ error }) => <div className="p-5 sm:p-8 text-destructive">{error.message}</div>,
+  notFoundComponent: () => <div className="p-5 sm:p-8">Not found</div>,
 });
 
 
@@ -1320,7 +1320,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "release" && (
-          <section className="relative overflow-hidden rounded-3xl border border-amber-300/30 bg-slate-900/[0.07] dark:bg-black/55 p-8 text-center shadow-[0_24px_80px_-42px_rgba(245,158,11,0.9)] backdrop-blur">
+          <section className="relative overflow-hidden rounded-3xl border border-amber-300/30 bg-slate-900/[0.07] dark:bg-black/55 p-5 sm:p-8 text-center shadow-[0_24px_80px_-42px_rgba(245,158,11,0.9)] backdrop-blur">
             <div className="pointer-events-none absolute inset-0 opacity-30"
               style={{ backgroundImage: "linear-gradient(rgba(251,191,36,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(251,191,36,0.08) 1px, transparent 1px)", backgroundSize: "22px 22px" }} />
             <FlaskConical className="relative mx-auto size-12 text-amber-700 dark:text-amber-300" />

@@ -12,6 +12,35 @@
  * Deep navy/medical green base, teal accent, glassmorphism surfaces.
  */
 
+/*
+ * Display type scales with the screen.
+ *
+ * Every page heading in the app is a fixed `text-3xl`, every big score a fixed
+ * `text-5xl`. At 30px and 48px those are sized for a monitor, and on a 375px
+ * phone they wrapped, overflowed their cards, and made the whole product feel
+ * like a desktop page being viewed through a letterbox.
+ *
+ * Rather than adding an `sm:` variant to a few hundred class strings, the scale
+ * itself is fluid: each size interpolates from a phone-sized value at 375px up
+ * to exactly today's value at 640px. The maximum of every clamp is the current
+ * number, so nothing changes at tablet width or above - this only ever makes
+ * small screens smaller.
+ *
+ * Body sizes (xs to xl) are deliberately left alone. They are already 12-20px
+ * and shrinking them further would cost legibility for no layout gain.
+ *
+ * Line heights need no change: Tailwind already pairs these sizes with unitless
+ * ratios, so they follow the font size down on their own.
+ */
+@theme {
+  --text-2xl: clamp(1.25rem, 0.9rem + 1.51vw, 1.5rem);
+  --text-3xl: clamp(1.5rem, 0.97rem + 2.26vw, 1.875rem);
+  --text-4xl: clamp(1.6875rem, 0.89rem + 3.4vw, 2.25rem);
+  --text-5xl: clamp(2.0625rem, 0.74rem + 5.66vw, 3rem);
+  --text-6xl: clamp(2.375rem, 0.43rem + 8.3vw, 3.75rem);
+  --text-7xl: clamp(2.75rem, 0.27rem + 10.57vw, 4.5rem);
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

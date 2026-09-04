@@ -325,7 +325,7 @@ function ClassesPage() {
         {isLoading && <p className="text-sm text-muted-foreground">Loading your classes...</p>}
 
         {!isLoading && visible.length === 0 && (
-          <div className="glass-card p-10 text-center">
+          <div className="glass-card p-6 sm:p-10 text-center">
             <Users className="mx-auto size-8 text-primary" />
             <p className="mt-3 font-bold">No classes yet</p>
             <p className="mt-1 text-sm text-muted-foreground">

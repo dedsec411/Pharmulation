@@ -88,9 +88,14 @@ export default function Landing() {
                 : "-mt-2 -mb-8 sm:-mt-10 sm:-mb-28 md:-mb-36"
             }`}
           >
+            {/* Never wider than the viewport it sits in. At 116vw the capsule
+                was cut off at both edges with the wordmark unreadable in the
+                middle - and because the oversized mark still widened the layout
+                box, everything centred beneath it (headline, paragraph, button)
+                was pushed off to the right and clipped with it. */}
             <LogoVideo
               size="hero"
-              className="aspect-video w-[min(116vw,420px)] sm:w-[min(98vw,860px)]"
+              className="aspect-video w-[min(92vw,420px)] sm:w-[min(98vw,860px)]"
             />
           </h1>
           <div className="hero-copy-layer relative z-30 mx-auto max-w-3xl pt-2 sm:pt-0">
@@ -111,7 +116,7 @@ export default function Landing() {
       </section>
 
       {/* STATS */}
-      <section className="px-6 py-12">
+      <section className="px-4 py-10 sm:px-6 sm:py-12">
         <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((s, i) => (
             <motion.div
@@ -129,7 +134,7 @@ export default function Landing() {
       </section>
 
       {/* MODES */}
-      <section className="px-6 py-20">
+      <section className="px-4 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold">Four worlds. One pharmacist.</h2>
@@ -155,7 +160,7 @@ export default function Landing() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="px-6 py-20">
+      <section className="px-4 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-3xl md:text-4xl font-bold mb-12">Loved by pharmacists worldwide</h2>
           <div className="grid md:grid-cols-3 gap-5">
@@ -178,8 +183,8 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-3xl glass-card p-10 text-center">
+      <section className="px-4 py-12 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-3xl glass-card p-6 sm:p-10 text-center">
           <h2 className="text-3xl font-bold">Your first case is waiting.</h2>
           <p className="mt-3 text-muted-foreground">Free to start. No credit card. Earn CPD as you play.</p>
           <Link to="/login" className="mt-6 inline-block rounded-full bg-primary px-8 py-3.5 font-semibold text-primary-foreground hover:scale-[1.03] transition">

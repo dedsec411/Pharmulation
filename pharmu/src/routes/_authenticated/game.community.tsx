@@ -36,8 +36,8 @@ export const Route = createFileRoute("/_authenticated/game/community")({
       <CommunityGame />
     </ModeTheme>
   ),
-  errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
-  notFoundComponent: () => <div className="p-8">Not found</div>,
+  errorComponent: ({ error }) => <div className="p-5 sm:p-8 text-destructive">{error.message}</div>,
+  notFoundComponent: () => <div className="p-5 sm:p-8">Not found</div>,
 });
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -943,7 +943,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                     );
                   })}
                   {filtered.length === 0 && (
-                    <div className="col-span-full rounded-xl border border-dashed border-border/50 p-8 text-center text-sm text-muted-foreground">
+                    <div className="col-span-full rounded-xl border border-dashed border-border/50 p-5 sm:p-8 text-center text-sm text-muted-foreground">
                       No medicines found in this category.
                     </div>
                   )}

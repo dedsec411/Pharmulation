@@ -19,8 +19,8 @@ import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 export const Route = createFileRoute("/_authenticated/game/hospital")({
   head: () => ({ meta: [{ title: "Clinical - Pharmulation" }] }),
   component: () => <ModeTheme mode="hospital"><HospitalGame mode="hospital" /></ModeTheme>,
-  errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
-  notFoundComponent: () => <div className="p-8">Not found</div>,
+  errorComponent: ({ error }) => <div className="p-5 sm:p-8 text-destructive">{error.message}</div>,
+  notFoundComponent: () => <div className="p-5 sm:p-8">Not found</div>,
 });
 
 const ROUTES = ["oral", "IV", "IM", "SC"];

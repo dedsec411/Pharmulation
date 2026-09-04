@@ -165,7 +165,7 @@ function ProfilePage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
         
        <div className="mb-6"><BackButton to="/dashboard" /></div>
         {/* Header */}
@@ -351,9 +351,12 @@ function ProfilePage() {
           </div>
         )}
 
+        {/* overflow-x-auto, not overflow-hidden: five columns do not fit a
+            phone, and hidden clipped them off the side with no way to reach
+            them rather than letting the table scroll. */}
         {tab === "history" && (
-          <div className="mt-6 glass-card overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="mt-6 glass-card overflow-x-auto">
+            <table className="w-full min-w-[440px] text-sm">
               <thead className="text-xs uppercase text-muted-foreground border-b border-border">
                 <tr><th className="text-left p-3">Date</th><th className="text-left p-3">Mode</th><th className="text-right p-3">Score</th><th className="text-right p-3">Accuracy</th><th className="text-right p-3">Time</th></tr>
               </thead>
@@ -367,7 +370,7 @@ function ProfilePage() {
                     <td className="p-3 text-right">{s.time_taken}s</td>
                   </tr>
                 ))}
-                {scores.length === 0 && <tr><td colSpan={5} className="p-10 text-center text-muted-foreground">No cases played yet.</td></tr>}
+                {scores.length === 0 && <tr><td colSpan={5} className="p-6 sm:p-10 text-center text-muted-foreground">No cases played yet.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -376,7 +379,7 @@ function ProfilePage() {
         {tab === "certificates" && (
           <div className="mt-6 space-y-3">
             {certs.length === 0 && (
-              <div className="glass-card p-10 text-center text-muted-foreground">
+              <div className="glass-card p-6 sm:p-10 text-center text-muted-foreground">
                 <Trophy className="h-8 w-8 mx-auto mb-2 text-primary" />
                 Complete more cases to earn your first CPD certificate.
               </div>

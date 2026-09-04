@@ -21,8 +21,8 @@ import { useGameExit } from "@/lib/game/useGameExit";
 export const Route = createFileRoute("/_authenticated/game/warehousing")({
   head: () => ({ meta: [{ title: "Warehousing - Pharmulation" }] }),
   component: () => <ModeTheme mode="warehousing"><WarehouseGame /></ModeTheme>,
-  errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
-  notFoundComponent: () => <div className="p-8">Not found</div>,
+  errorComponent: ({ error }) => <div className="p-5 sm:p-8 text-destructive">{error.message}</div>,
+  notFoundComponent: () => <div className="p-5 sm:p-8">Not found</div>,
 });
 
 type Phase = "receiving" | "dispatch" | "expiry" | "audit" | "reconcile" | "done";

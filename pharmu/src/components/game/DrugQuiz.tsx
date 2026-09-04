@@ -73,7 +73,7 @@ export function DrugQuiz({ drugs, pool }: { drugs: StudyDrug[]; pool: StudyDrug[
 
   if (questions.length === 0) {
     return (
-      <div className="mt-6 glass-card p-10 text-center text-muted-foreground">
+      <div className="mt-6 glass-card p-6 sm:p-10 text-center text-muted-foreground">
         Not enough detail in this selection to build a quiz. Try the whole catalogue.
       </div>
     );
@@ -88,7 +88,7 @@ export function DrugQuiz({ drugs, pool }: { drugs: StudyDrug[]; pool: StudyDrug[
         animate={{ opacity: 1, y: 0 }}
         className="mx-auto mt-6 max-w-2xl space-y-4"
       >
-        <div className="glass-card p-8 text-center">
+        <div className="glass-card p-5 sm:p-8 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Quiz complete</p>
           <p className="mt-3 text-5xl font-black tabular-nums">{score}<span className="text-2xl text-muted-foreground">/{history.length}</span></p>
           <p className="mt-2 text-sm text-muted-foreground">

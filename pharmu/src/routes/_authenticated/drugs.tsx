@@ -125,7 +125,7 @@ function DrugsPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
         
         <div className="mb-6"><BackButton to="/dashboard" /></div>
         <div className="flex items-end justify-between flex-wrap gap-3">
@@ -250,7 +250,7 @@ function DrugsPage() {
         {tab === "study" && (
           <div className="mt-6">
             {studyDrugs.length === 0 ? (
-              <div className="glass-card p-10 text-center text-muted-foreground">
+              <div className="glass-card p-6 sm:p-10 text-center text-muted-foreground">
                 <BookOpen className="h-8 w-8 mx-auto mb-2 text-primary" />
                 Nothing to study in this selection. Pick another source above.
               </div>
@@ -350,12 +350,12 @@ function Flashcards({ drugs }: { drugs: Drug[] }) {
   const [i, setI] = useState(0);
   const [flipped, setFlipped] = useState(false);
   if (drugs.length === 0)
-    return <div className="mt-6 glass-card p-10 text-center text-muted-foreground">Add drugs to your study list to start flashcards.</div>;
+    return <div className="mt-6 glass-card p-6 sm:p-10 text-center text-muted-foreground">Add drugs to your study list to start flashcards.</div>;
   const d = drugs[i % drugs.length];
   return (
     <div className="mt-6 max-w-xl mx-auto">
       <div onClick={() => setFlipped((f) => !f)}
-        className="glass-card p-10 min-h-[260px] grid place-items-center text-center cursor-pointer hover:border-primary/40 transition">
+        className="glass-card p-6 sm:p-10 min-h-[260px] grid place-items-center text-center cursor-pointer hover:border-primary/40 transition">
         {!flipped ? (
           <div>
             <Sparkles className="mx-auto h-5 w-5 text-primary mb-2" />

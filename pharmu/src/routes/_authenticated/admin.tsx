@@ -134,7 +134,7 @@ function AdminPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
         <div className="mb-6"><BackButton to="/dashboard" /></div>
         <h1 className="text-3xl font-bold">Admin Panel</h1>
         <p className="text-muted-foreground text-sm">Manage users, cases and drugs.</p>

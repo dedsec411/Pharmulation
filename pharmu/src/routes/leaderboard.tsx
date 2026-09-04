@@ -109,7 +109,7 @@ function LeaderboardPage() {
   return (
     <>
     {profile && <Navbar />}
-    <main className="mx-auto max-w-5xl px-6 py-8">
+    <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <div className="mb-6"><BackButton to={profile ? "/dashboard" : "/"} label={profile ? "Dashboard" : "Home"} /></div>
       <div className="mt-3 flex items-end justify-between flex-wrap gap-3">
         <div>
@@ -197,7 +197,7 @@ function LeaderboardPage() {
 
       <div className="relative mt-5 overflow-hidden rounded-2xl border border-cyan-300/15 bg-white/70 dark:bg-slate-950/55">
         {players.length === 0 && (
-          <div className="p-10 text-center text-muted-foreground">No data for this filter yet. Be the first!</div>
+          <div className="p-6 sm:p-10 text-center text-muted-foreground">No data for this filter yet. Be the first!</div>
         )}
         <AnimatePresence initial={false}>
           {rest.map((p: any, i: number) => {

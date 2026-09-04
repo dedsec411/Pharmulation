@@ -87,7 +87,7 @@ function SignupPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card w-full max-w-md p-8"
+        className="glass-card w-full max-w-md p-5 sm:p-8"
       >
         <Link to="/" className="text-2xl font-extrabold text-gradient-teal">Pharmulation</Link>
         <h1 className="mt-6 text-2xl font-bold">Create your account</h1>

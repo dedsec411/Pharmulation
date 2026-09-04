@@ -20,8 +20,8 @@ import { MENTOR_IMAGE } from "@/lib/mentor";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard - Pharmulation" }] }),
   component: Dashboard,
-  errorComponent: ({ error }) => <div className="p-8 text-destructive">{error.message}</div>,
-  notFoundComponent: () => <div className="p-8">Not found</div>,
+  errorComponent: ({ error }) => <div className="p-5 sm:p-8 text-destructive">{error.message}</div>,
+  notFoundComponent: () => <div className="p-5 sm:p-8">Not found</div>,
 });
 
 const MODE_META: Record<string, { icon: any; label: string; tag: string; accent: string; ink: string; glow: string; tint: string; to: string; modes: readonly string[] }> = {
@@ -272,7 +272,7 @@ function Dashboard() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-7xl px-6 py-6 space-y-5">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5">
 
         {/* MENTOR TIP - top, first thing you see */}
         <MentorTipBanner tip={tip} />

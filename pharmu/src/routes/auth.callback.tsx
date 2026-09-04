@@ -62,7 +62,7 @@ function AuthCallbackPage() {
 
   return (
     <main className="grid min-h-screen place-items-center px-4">
-      <div className="glass-card w-full max-w-md p-8 text-center">
+      <div className="glass-card w-full max-w-md p-5 sm:p-8 text-center">
         {!error ? (
           <>
             <div className="mx-auto size-12 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
