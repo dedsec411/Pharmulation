@@ -139,7 +139,7 @@ function AdminPage() {
         <h1 className="text-3xl font-bold">Admin Panel</h1>
         <p className="text-muted-foreground text-sm">Manage users, cases and drugs.</p>
 
-        <div className="mt-6 flex gap-1 glass rounded-full p-1 text-sm w-fit">
+        <div className="mt-6 flex max-w-full gap-1 overflow-x-auto glass rounded-full p-1 text-sm w-fit">
           {(["overview", "users", "cases", "drugs"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-5 py-1.5 rounded-full capitalize transition ${

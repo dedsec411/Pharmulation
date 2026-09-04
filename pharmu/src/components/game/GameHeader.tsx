@@ -128,14 +128,14 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
         <div className="order-3 flex min-w-0 justify-center md:order-none">
           <div
-            className="relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-foreground/10 bg-slate-900/[0.04] dark:bg-black/30 px-3 py-2 shadow-inner backdrop-blur-xl md:min-w-[310px] md:max-w-none md:px-4"
+            className="relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-foreground/10 bg-slate-900/[0.04] dark:bg-black/30 px-3 py-1.5 shadow-inner backdrop-blur-xl sm:py-2 md:min-w-[310px] md:max-w-none md:px-4"
             style={{ boxShadow: `inset 0 0 26px oklch(0 0 0 / 0.35), 0 0 24px -14px ${state.glowColor}` }}
           >
             <div className="pointer-events-none absolute inset-0 opacity-35"
               style={{ backgroundImage: "linear-gradient(rgb(var(--hairline) / calc(0.045 * var(--hairline-boost, 1))) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--hairline) / calc(0.035 * var(--hairline-boost, 1))) 1px, transparent 1px)", backgroundSize: "14px 14px" }} />
             <div className="vital-monitor-scan pointer-events-none absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-foreground/12 to-transparent" />
             <div className="relative flex items-center justify-between gap-3 md:gap-4">
-              <div className="min-w-[64px] md:min-w-[82px]">
+              <div className="min-w-[64px] md:min-w-[82px] max-sm:flex max-sm:w-full max-sm:items-center max-sm:justify-between max-sm:gap-2">
                 <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground">
                   <Activity className="h-3.5 w-3.5" />
                 </div>
@@ -143,7 +143,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                   {formatTime(remaining)}
                 </div>
               </div>
-              <svg viewBox="0 0 150 44" className="h-9 flex-1 md:h-11" preserveAspectRatio="none">
+              <svg viewBox="0 0 150 44" className="hidden h-9 flex-1 sm:block md:h-11" preserveAspectRatio="none">
                 <polyline
                   points={desktopWave}
                   fill="none"

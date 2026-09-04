@@ -120,7 +120,7 @@ function LeaderboardPage() {
             <Trophy className="h-8 w-8 text-primary" /> Leaderboard
           </h1>
         </div>
-        <div className="flex gap-1 glass rounded-full p-1 text-sm">
+        <div className="flex max-w-full shrink-0 gap-1 overflow-x-auto glass rounded-full p-1 text-sm">
           {(["weekly", "alltime"] as const).map((s) => (
             <button key={s} onClick={() => setScope(s)}
               className={`px-4 py-1.5 rounded-full transition ${

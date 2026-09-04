@@ -320,6 +320,35 @@
   }
 }
 
+/*
+ * Drop the backdrop blur on touch devices.
+ *
+ * `glass` and `glass-card` are on nearly every surface in the product, and 73
+ * more elements carry a backdrop-blur class of their own. Each one makes the
+ * compositor sample and re-blur whatever is behind it, on every scrolled
+ * frame - which is the single biggest reason the app felt slow and laggy on a
+ * phone.
+ *
+ * Only the blur goes. The fills behind it are 74-95% opaque already, so the
+ * surfaces still read as solid panels; what is lost is the softening of what
+ * shows through, which is close to invisible at arm's length on a small
+ * screen and is not worth the frame budget.
+ *
+ * Same breakpoint the fixed background attachment above already uses, so
+ * "this device gets the cheaper treatment" is one rule, not two.
+ */
+@media (max-width: 768px), (pointer: coarse) {
+  .glass,
+  .glass-card,
+  [class*="backdrop-blur"] {
+    /* Unprefixed only. Writing the -webkit- form alongside it made the
+       minifier merge the pair and keep just the prefixed one, so the standard
+       property stayed at blur(20px) and none of this took effect. The build
+       adds the prefix itself. */
+    backdrop-filter: none !important;
+  }
+}
+
 @utility glass {
   background: var(--glass-fill);
   backdrop-filter: blur(16px);

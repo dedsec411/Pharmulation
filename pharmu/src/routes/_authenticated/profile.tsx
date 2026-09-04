@@ -194,7 +194,7 @@ function ProfilePage() {
         </motion.div>
 
         {/* Tabs */}
-        <div className="mt-6 flex gap-1 glass rounded-full p-1 text-sm w-fit mx-auto">
+        <div className="mt-6 flex max-w-full gap-1 overflow-x-auto glass rounded-full p-1 text-sm w-fit mx-auto">
           {(["overview", "badges", "history", "certificates"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-5 py-1.5 rounded-full capitalize transition ${

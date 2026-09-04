@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, Heart, BookOpen, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
@@ -107,6 +107,22 @@ function DrugsPage() {
     );
   });
 
+  /**
+   * How many cards are on screen.
+   *
+   * The catalogue is 881 medicines and every one of them was rendered at once:
+   * 8,280 DOM nodes, each a layout-animated motion component inside a
+   * backdrop-blurred glass card. A phone has to composite every one of those
+   * blurs on every scroll frame, which is what made this page crawl. A page at
+   * a time, with more on request.
+   */
+  const PAGE = 60;
+  const [shown, setShown] = useState(PAGE);
+  const visible = list.slice(0, shown);
+  // Any change to the filters starts the count again, so a narrowed search
+  // does not stay stuck on a page size meant for the whole catalogue.
+  useEffect(() => { setShown(PAGE); }, [q, category, drugClass]);
+
   // What the study tools draw from. Previously hardcoded to bookmarks, so all
   // three tabs sat empty until four drugs had been bookmarked - which read as
   // unimplemented rather than unstarted.
@@ -133,7 +149,7 @@ function DrugsPage() {
             <h1 className="text-3xl font-bold">Drug Database</h1>
             <p className="text-muted-foreground text-sm">{catalogDrugs.length} drugs indexed · {bookmarks.length} bookmarked</p>
           </div>
-          <div className="flex gap-1 glass rounded-full p-1 text-sm">
+          <div className="flex max-w-full shrink-0 gap-1 overflow-x-auto glass rounded-full p-1 text-sm">
             {(["all", "study", "flashcards", "quiz"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)}
                 className={`px-4 py-1.5 rounded-full transition capitalize ${
@@ -147,31 +163,39 @@ function DrugsPage() {
 
         {tab === "all" && (
           <>
+            {/* min-w-0 on each child: a grid item defaults to min-width:auto, which
+                  is its min-content width, and a select's min-content is its
+                  longest option. The drug classes include names like "SELECTIVE
+                  T-CELL COSTIMULATION MODULATOR", so the row measured 529px on a
+                  390px screen and forced the whole page wider with it. */}
             <div className="mt-6 grid md:grid-cols-[1fr_220px_220px] gap-3">
-              <div className="relative">
+              <div className="relative min-w-0">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input value={q} onChange={(e) => setQ(e.target.value)}
                   placeholder="Search by brand or generic name…"
                   className="w-full rounded-full glass pl-11 pr-4 py-3 outline-none focus:border-primary" />
               </div>
               <select value={category} onChange={(e) => setCategory(e.target.value)}
-                className="rounded-full glass px-4 py-3 text-sm outline-none">
+                className="min-w-0 rounded-full glass px-4 py-3 text-sm outline-none">
                 <option value="">All categories</option>
                 {categories.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
               <select value={drugClass} onChange={(e) => setDrugClass(e.target.value)}
-                className="rounded-full glass px-4 py-3 text-sm outline-none">
+                className="min-w-0 rounded-full glass px-4 py-3 text-sm outline-none">
                 <option value="">All classes</option>
                 {classes.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 
             <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {list.map((d) => {
+              {visible.map((d) => {
                 const bookmarked = bookmarks.includes(d.id);
                 return (
                   <motion.button
-                    layout key={d.id} onClick={() => setSelected(d)}
+                    // No `layout` prop: it makes framer-motion measure every
+                    // card's box on each render, and with hundreds on screen
+                    // that pass is felt on every keystroke in the search field.
+                    key={d.id} onClick={() => setSelected(d)}
                     whileHover={{ y: -2 }}
                     className="glass-card p-5 text-left hover:border-primary/40 transition relative">
                     {(
@@ -210,6 +234,18 @@ function DrugsPage() {
               })}
               {list.length === 0 && <div className="col-span-full text-center text-muted-foreground py-10">No drugs match your filters.</div>}
             </div>
+
+            {shown < list.length && (
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShown((n) => n + PAGE)}
+                  className="rounded-full border border-primary/40 bg-primary/10 px-6 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/20"
+                >
+                  Show more ({list.length - shown} left)
+                </button>
+              </div>
+            )}
           </>
         )}
 
