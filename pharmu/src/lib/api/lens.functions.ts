@@ -129,6 +129,10 @@ const FAILURE_MESSAGE: Record<string, { error: string; hint: string }> = {
   },
   "no-known-drugs": {
     error: "None of those medicines are in the training catalogue yet.",
+    // Replaced below by one naming the actual medicines. A person who can see
+    // "Airtal, Movax" knows immediately that the page was read correctly and
+    // the shelf is what is short - which is a different problem from a bad
+    // photograph, and they should not have to guess which one they hit.
     hint: "The simulator can only build a case around medicines it stocks on the dispensing shelf.",
   },
 };
@@ -158,10 +162,14 @@ export const readPrescriptionImage = createServerFn({ method: "POST" })
 
     // The catalogue is needed whichever way the read goes, and fetching it
     // while the model works saves a round trip from the slowest path.
-    const cataloguePromise = supabaseAdmin
-      .from("drugs")
-      .select("id, name, generic_name, category, drug_class, dosage")
-      .limit(2000);
+    const cataloguePromise = Promise.all([
+      supabaseAdmin.from("drugs")
+        .select("id, name, generic_name, category, drug_class, dosage").limit(2000),
+      // Brands are half of what makes a script resolvable: prescribers write
+      // "Risek", not "omeprazole". Fetched alongside rather than after, so the
+      // model call and both queries overlap.
+      supabaseAdmin.from("drug_brands").select("drug_id, brand").limit(5000),
+    ]);
 
     async function read(models: string[], hint?: string): Promise<LensExtraction | null> {
       try {
@@ -201,12 +209,25 @@ export const readPrescriptionImage = createServerFn({ method: "POST" })
         hint: "If this keeps happening, check the server has a working GEMINI_API_KEY." };
     }
 
-    const { data: drugRows, error: drugError } = await cataloguePromise;
-    if (drugError) {
-      console.error("[supabase] lens could not load the drug catalogue:", drugError);
+    const [drugResult, brandResult] = await cataloguePromise;
+    if (drugResult.error) {
+      console.error("[supabase] lens could not load the drug catalogue:", drugResult.error);
       return { ok: false, error: "Could not load the medicine catalogue. Please try again." };
     }
-    const catalogue = (drugRows ?? []) as CatalogueDrug[];
+    // Brands are an enhancement, not a requirement: if that query fails the
+    // catalogue still resolves everything written generically.
+    if (brandResult.error) {
+      console.error("[supabase] lens could not load brands:", brandResult.error);
+    }
+    const brandsByDrug = new Map<string, string[]>();
+    for (const row of (brandResult.data ?? []) as Array<{ drug_id: string; brand: string }>) {
+      if (!row?.drug_id || !row?.brand) continue;
+      const list = brandsByDrug.get(row.drug_id);
+      if (list) list.push(row.brand);
+      else brandsByDrug.set(row.drug_id, [row.brand]);
+    }
+    const catalogue = ((drugResult.data ?? []) as CatalogueDrug[])
+      .map((drug) => ({ ...drug, brands: brandsByDrug.get(drug.id) ?? [] }));
 
     let built = buildLensCase(extraction, catalogue);
 
@@ -226,7 +247,11 @@ export const readPrescriptionImage = createServerFn({ method: "POST" })
     if (!built.ok) {
       const message = FAILURE_MESSAGE[built.reason]
         ?? { error: built.detail, hint: "Try another photograph." };
-      return { ok: false, ...message };
+      // The catalogue failure is the one worth being specific about: the
+      // document was read, and naming what came off it separates "we could not
+      // read your photo" from "we do not stock these yet".
+      const hint = built.reason === "no-known-drugs" ? built.detail : message.hint;
+      return { ok: false, error: message.error, hint };
     }
 
     // The extraction - which held the real name - goes out of scope here. Only

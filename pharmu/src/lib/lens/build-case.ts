@@ -57,6 +57,14 @@ export type CatalogueDrug = {
   id: string;
   name: string;
   generic_name?: string | null;
+  /**
+   * Brand names this medicine is sold under.
+   *
+   * Not decoration. Prescribers write the brand - a script says "Tab. Risek
+   * 20mg", never "omeprazole" - so without these the resolver is reading a
+   * different language from the one the page is written in.
+   */
+  brands?: string[] | null;
   category?: string | null;
   drug_class?: string | null;
   dosage?: string | null;
@@ -139,14 +147,35 @@ function fictionalName(seed: string): string {
 /**
  * The catalogue entry a written drug name refers to, or null.
  *
- * Three passes, narrowing: the catalogue's own normalised key (which already
- * strips strengths and dose forms), then generic name, then a containment
- * check for the case where the page says "Amoxicillin trihydrate" and the
- * shelf says "Amoxicillin". Never a fuzzy score - a near-miss here dispenses
- * the wrong medicine, and no match at all is the safer failure.
+ * Four passes, narrowing: the catalogue's own normalised key (which already
+ * strips strengths and dose forms), then generic name, then brand, then a
+ * containment check for the case where the page says "Amoxicillin trihydrate"
+ * and the shelf says "Amoxicillin". Never a fuzzy score - a near-miss here
+ * dispenses the wrong medicine, and no match at all is the safer failure.
+ *
+ * The brand pass is exact only. Brands are short, invented and deliberately
+ * distinctive, so they collide in ways generic names do not, and one letter
+ * of slack between two of them is a different medicine.
  */
+/**
+ * The dose form a prescriber writes in front of the name.
+ *
+ * A script never says "Metronidazole". It says "Tab. Flagyl 400mg", and the
+ * catalogue's own key only strips the spelled-out forms, so the abbreviations
+ * survive and no comparison can ever match.
+ */
+const WRITTEN_FORM = /^(?:t|tab|tabs|tablet|cap|caps|capsule|syp|syr|syrup|susp|inj|injection|oint|ointment|cream|gel|drop|drops|sol)\b\.?\s*/i;
+
+/** What was written, reduced to the part that names a medicine. */
+function writtenKey(written: string): string {
+  let text = String(written ?? "").trim();
+  // Twice, because "T. Tab Flagyl" is not the strangest thing on a script.
+  for (let pass = 0; pass < 2; pass++) text = text.replace(WRITTEN_FORM, "").trim();
+  return normalizeDrugKey(text);
+}
+
 export function resolveDrug(written: string, catalogue: CatalogueDrug[]): CatalogueDrug | null {
-  const key = normalizeDrugKey(written);
+  const key = writtenKey(written);
   if (!key) return null;
 
   const exact = catalogue.find((d) => normalizeDrugKey(d.name) === key);
@@ -155,6 +184,10 @@ export function resolveDrug(written: string, catalogue: CatalogueDrug[]): Catalo
   const byGeneric = catalogue.find(
     (d) => d.generic_name && normalizeDrugKey(d.generic_name) === key);
   if (byGeneric) return byGeneric;
+
+  const byBrand = catalogue.find(
+    (d) => (d.brands ?? []).some((brand) => normalizeDrugKey(brand) === key));
+  if (byBrand) return byBrand;
 
   // Longest catalogue name contained in what was written, so "Amoxicillin
   // trihydrate" prefers "Amoxicillin" over a shorter incidental substring.
@@ -333,8 +366,9 @@ export function buildLensCase(
   }
 
   if (!resolved.length) {
+    const read = extraction.drugs.map((d) => d.name).join(", ");
     return { ok: false, reason: "no-known-drugs",
-      detail: `None of the medicines read (${extraction.drugs.map((d) => d.name).join(", ")}) are in the training catalogue.` };
+      detail: `Read from the page: ${read}. The document was legible - these are simply not on the dispensing shelf yet, so there is nothing to build a case around.` };
   }
 
   const patientName = fictionalName(seed);

@@ -11,6 +11,8 @@ const CATALOGUE: CatalogueDrug[] = [
   { id: "3", name: "Ibuprofen", generic_name: "Ibuprofen", category: "Analgesic", drug_class: "NSAID", dosage: "400mg PO TDS" },
   { id: "4", name: "Naproxen", generic_name: "Naproxen", category: "Analgesic", drug_class: "NSAID", dosage: "250mg PO BD" },
   { id: "5", name: "Ramipril", generic_name: "Ramipril", category: "Cardiovascular", drug_class: "ACE inhibitor", dosage: "5mg PO OD" },
+  { id: "6", name: "Metronidazole", generic_name: "Metronidazole", category: "Antibiotic", drug_class: "Nitroimidazole", dosage: "400mg PO TDS", brands: ["Flagyl", "Metrozine"] },
+  { id: "7", name: "Omeprazole", generic_name: "Omeprazole", category: "GI", drug_class: "PPI", dosage: "20mg PO OD", brands: ["Risek", "Losec"] },
 ];
 
 function extraction(over: Partial<LensExtraction> = {}): LensExtraction {
@@ -62,6 +64,32 @@ describe("resolveDrug", () => {
   it("returns null rather than guessing at an unknown medicine", () => {
     expect(resolveDrug("Zzyzxamab", CATALOGUE)).toBeNull();
     expect(resolveDrug("", CATALOGUE)).toBeNull();
+  });
+});
+
+describe("resolveDrug - brands", () => {
+  // The finding that mattered most: on real prescriptions the prescriber
+  // writes the brand. Nineteen names taken off five Pakistani scripts had
+  // zero matches as a generic. Without this pass the resolver is reading a
+  // different language from the one the page is written in.
+  it("resolves a brand to the medicine it is", () => {
+    expect(resolveDrug("Flagyl", CATALOGUE)?.name).toBe("Metronidazole");
+    expect(resolveDrug("Risek", CATALOGUE)?.name).toBe("Omeprazole");
+  });
+
+  it("resolves a brand carrying a strength, as it is written on a script", () => {
+    expect(resolveDrug("Tab Flagyl 400mg", CATALOGUE)?.name).toBe("Metronidazole");
+    expect(resolveReading(["Risek 20mg"], CATALOGUE)?.drug.name).toBe("Omeprazole");
+  });
+
+  // Brands are invented, short and deliberately distinctive, so they collide
+  // where generic names do not. One letter of slack is a different product.
+  it("does not accept a near-miss on a brand", () => {
+    expect(resolveDrug("Flagol", CATALOGUE)).toBeNull();
+  });
+
+  it("still prefers a generic name over any brand", () => {
+    expect(resolveDrug("Metronidazole", CATALOGUE)?.name).toBe("Metronidazole");
   });
 });
 
