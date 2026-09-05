@@ -432,6 +432,17 @@ function LensPreview({ summary }: { summary: LensSummary }) {
             Not stocked here, so left out of the case: {summary.dropped.join(", ")}
           </p>
         )}
+
+        {/* A messy script still makes a playable case, but the reading is the
+            one thing a person can check faster than we can. Say so plainly
+            rather than presenting a guess as a fact. */}
+        {summary.uncertain && (
+          <p className="mt-2 border-t border-border/30 pt-2 text-[11px] text-amber-600 dark:text-amber-300">
+            {summary.assumed.length > 0
+              ? `The handwriting was hard to read. Taken as: ${summary.assumed.join("; ")}. Check that before you play.`
+              : "The handwriting was hard to read - check the medicines above match the document."}
+          </p>
+        )}
       </div>
 
       {summary.decisionPoints.length > 0 && (

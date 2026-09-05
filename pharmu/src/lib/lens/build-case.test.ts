@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildLensCase, resolveDrug, MIN_CONFIDENCE, type CatalogueDrug, type LensExtraction } from "./build-case";
+import {
+  buildLensCase, resolveDrug, resolveReading, MIN_CONFIDENCE, UNCERTAIN_CONFIDENCE,
+  type CatalogueDrug, type LensExtraction,
+} from "./build-case";
 import { LABEL_FREQUENCIES, LABEL_TIMINGS, durationDays, ONGOING } from "@/lib/game/dosing";
 
 const CATALOGUE: CatalogueDrug[] = [
@@ -39,10 +42,79 @@ describe("resolveDrug", () => {
     expect(resolveDrug("Amoxicillin trihydrate", CATALOGUE)?.name).toBe("Amoxicillin");
   });
 
+  // Substring matching alone reads "Desloratadine" as "Loratadine" and hands
+  // over a different medicine. The catalogue name has to start a word.
+  it("does not read a longer medicine as the shorter one inside it", () => {
+    const shelf: CatalogueDrug[] = [{ id: "9", name: "Loratadine", category: "Antihistamine" }];
+    expect(resolveDrug("Desloratadine", shelf)).toBeNull();
+    expect(resolveDrug("Levocetirizine", [
+      { id: "8", name: "Cetirizine", category: "Antihistamine" },
+    ])).toBeNull();
+  });
+
+  it("still matches a catalogue name that starts a word in what was written", () => {
+    expect(resolveDrug("T. Aspirin 75mg", [
+      { id: "7", name: "Aspirin", category: "Analgesic" },
+    ])?.name).toBe("Aspirin");
+  });
+
   // A near-miss dispenses the wrong medicine. No match is the safer failure.
   it("returns null rather than guessing at an unknown medicine", () => {
     expect(resolveDrug("Zzyzxamab", CATALOGUE)).toBeNull();
     expect(resolveDrug("", CATALOGUE)).toBeNull();
+  });
+});
+
+describe("resolveReading - handwriting", () => {
+  // The whole point of the feature is documents that are hard to read, so a
+  // spelling that is one slip away from a real medicine has to land.
+  it("accepts a near-miss spelling of a stocked medicine", () => {
+    expect(resolveReading(["Amoxycillin"], CATALOGUE)?.drug.name).toBe("Amoxicillin");
+    expect(resolveReading(["Amoxycillin"], CATALOGUE)?.assumed).toBe(true);
+  });
+
+  it("falls through to a later candidate when the first reading is unknown", () => {
+    const hit = resolveReading(["Anoxydllin", "Amoxicillin"], CATALOGUE);
+    expect(hit?.drug.name).toBe("Amoxicillin");
+    // An outright match on a candidate is not an assumption.
+    expect(hit?.assumed).toBe(false);
+  });
+
+  it("prefers an exact match on any reading over a near-miss on the first", () => {
+    expect(resolveReading(["Ramiprill", "Naproxen"], CATALOGUE)?.assumed).toBe(false);
+  });
+
+  // The guard that keeps this feature safe: near is not the same as close
+  // enough, and two medicines equally near a scrawl is not a decision to make.
+  it("refuses a word that is near two different medicines", () => {
+    const ambiguous: CatalogueDrug[] = [
+      ...CATALOGUE,
+      { id: "6", name: "Ramipril", generic_name: "Ramipril", category: "Cardiovascular" },
+      { id: "7", name: "Ranipril", generic_name: "Ranipril", category: "Cardiovascular" },
+    ];
+    expect(resolveReading(["Ramiprol"], ambiguous)).toBeNull();
+  });
+
+  it("never crosses to a different medicine that merely looks similar", () => {
+    expect(resolveReading(["Naproxenib"], [
+      { id: "1", name: "Naproxen", category: "Analgesic" },
+      { id: "2", name: "Naratriptan", category: "Analgesic" },
+    ])?.drug.name).toBe("Naproxen");
+    // Different opening letters, so not a spelling of the same word.
+    expect(resolveReading(["Xaproxen"], CATALOGUE)).toBeNull();
+  });
+
+  // Scripts abbreviate. A truncation that can only be one medicine should
+  // land; a scrawl that matches nothing should not be guessed at.
+  it("resolves an abbreviated name, with or without a bare strength", () => {
+    expect(resolveReading(["Amox"], CATALOGUE)?.drug.name).toBe("Amoxicillin");
+    expect(resolveReading(["Amox 500"], CATALOGUE)?.drug.name).toBe("Amoxicillin");
+    expect(resolveReading(["Ramipril 5"], CATALOGUE)?.drug.name).toBe("Ramipril");
+  });
+
+  it("will not guess at a short scrawl that matches nothing", () => {
+    expect(resolveReading(["Rmpl"], CATALOGUE)).toBeNull();
+    expect(resolveReading([""], CATALOGUE)).toBeNull();
   });
 });
 
@@ -57,6 +129,45 @@ describe("buildLensCase", () => {
     const r = buildLensCase(extraction({ confidence: MIN_CONFIDENCE - 0.01 }), CATALOGUE);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("low-confidence");
+  });
+
+  // The bug this replaced: a real doctor's script reads back at ~0.45, and the
+  // old single bar at 0.55 threw away a case that was perfectly playable.
+  it("builds a case from a messy but legible read, and flags it", () => {
+    const r = buildLensCase(extraction({ confidence: UNCERTAIN_CONFIDENCE - 0.1 }), CATALOGUE);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.summary.uncertain).toBe(true);
+      expect(r.summary.resolved[0].matchedTo).toBe("Amoxicillin");
+    }
+  });
+
+  it("marks a case built on an assumed spelling as needing a check", () => {
+    const r = buildLensCase(
+      extraction({ drugs: [{ name: "Amoxycillin", dose: "500mg", frequency: "TDS" }] }),
+      CATALOGUE);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.summary.uncertain).toBe(true);
+      expect(r.summary.assumed[0]).toContain("Amoxicillin");
+    }
+  });
+
+  it("leaves a clean read unflagged", () => {
+    const r = buildLensCase(extraction(), CATALOGUE);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.summary.uncertain).toBe(false);
+      expect(r.summary.assumed).toEqual([]);
+    }
+  });
+
+  it("uses a candidate reading when the primary one is not stocked", () => {
+    const r = buildLensCase(extraction({
+      drugs: [{ name: "Augmentin", candidates: ["Amoxicillin"], dose: "625mg", frequency: "BD" }],
+    }), CATALOGUE);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.summary.resolved[0].matchedTo).toBe("Amoxicillin");
   });
 
   // The whole reason this file exists: a case naming a medicine that is not on

@@ -37,6 +37,12 @@ export type LensExtraction = {
   diagnosis?: string | null;
   drugs: Array<{
     name: string;
+    /**
+     * Other readings of the same scrawl, most likely first. Handwriting is
+     * ambiguous far more often than it is illegible, and a model forced to
+     * commit to one spelling throws away the reading that would have matched.
+     */
+    candidates?: string[] | null;
     dose?: string | null;
     route?: string | null;
     frequency?: string | null;
@@ -79,6 +85,10 @@ export type LensSummary = {
   dropped: string[];
   decisionPoints: string[];
   confidence: number;
+  /** The read was legible enough to build on, but worth checking first. */
+  uncertain: boolean;
+  /** Names matched by nearest-spelling rather than outright. */
+  assumed: string[];
 };
 
 /**
@@ -90,10 +100,21 @@ export type Json = string | number | boolean | null | Json[] | { [key: string]: 
 export type LensCase = { [key: string]: Json } & { id: string; mode: string };
 
 /**
- * Below this the reading is a guess, and a guess printed on something shaped
- * like a prescription teaches the wrong thing with complete confidence.
+ * Two thresholds, not one.
+ *
+ * There was a single bar at 0.55 and it was the wrong instrument. A model
+ * reading genuine doctor's handwriting reports low confidence *because the
+ * handwriting is bad* - which is exactly the case this feature exists for -
+ * so a legible-enough read of a real script was being thrown away with
+ * "too unclear to read reliably".
+ *
+ * The real test of whether a read is usable is not how neat the page was: it
+ * is whether the medicines on it resolved to something on the shelf. So the
+ * hard floor drops to genuinely-unreadable, and the old bar becomes a warning
+ * band - the case is built, and the preview says which readings to check.
  */
-export const MIN_CONFIDENCE = 0.55;
+export const MIN_CONFIDENCE = 0.35;
+export const UNCERTAIN_CONFIDENCE = 0.55;
 
 /**
  * Names used in place of whatever was on the document.
@@ -140,10 +161,92 @@ export function resolveDrug(written: string, catalogue: CatalogueDrug[]): Catalo
   const contained = catalogue
     .filter((d) => {
       const n = normalizeDrugKey(d.name);
-      return n.length > 4 && (key.includes(n) || n.includes(key));
+      if (n.length <= 4) return false;
+      // What was written is an abbreviation of the catalogue name: "Amox".
+      if (n.includes(key)) return true;
+      // The catalogue name appears inside what was written - but only count it
+      // where a word actually begins. Plain substring matching reads
+      // "Desloratadine" as "Loratadine" and hands over a different medicine;
+      // the boundary keeps "T. Aspirin 75mg" working while refusing that.
+      const at = key.indexOf(n);
+      return at >= 0 && (at === 0 || !/[a-z]/.test(key[at - 1]));
     })
     .sort((a, b) => normalizeDrugKey(b.name).length - normalizeDrugKey(a.name).length);
   return contained[0] ?? null;
+}
+
+/** Edit distance, bailing out as soon as it exceeds what we would accept. */
+function editDistance(a: string, b: string, ceiling: number): number {
+  if (Math.abs(a.length - b.length) > ceiling) return ceiling + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + cost);
+      if (row[j] < best) best = row[j];
+    }
+    if (best > ceiling) return ceiling + 1;
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/**
+ * Last resort: the nearest catalogue name, when it is near enough to be a
+ * spelling of the same word rather than a different medicine.
+ *
+ * Deliberately mean. A wrong match here dispenses the wrong drug, so it has
+ * to share the opening letters, stay within one or two characters, and be the
+ * only entry that close - "Ramipril" must never quietly become "Ranitidine",
+ * and an ambiguous near-miss is refused rather than guessed.
+ */
+function nearestDrug(key: string, catalogue: CatalogueDrug[]): CatalogueDrug | null {
+  if (key.length < 5) return null;
+  const ceiling = key.length >= 9 ? 2 : 1;
+  let best: CatalogueDrug | null = null;
+  let bestDistance = ceiling + 1;
+  let tied = false;
+
+  for (const drug of catalogue) {
+    const name = normalizeDrugKey(drug.name);
+    if (name.length < 5 || name.slice(0, 2) !== key.slice(0, 2)) continue;
+    const distance = editDistance(key, name, ceiling);
+    if (distance > ceiling) continue;
+    if (distance < bestDistance) { bestDistance = distance; best = drug; tied = false; }
+    else if (distance === bestDistance && drug.id !== best?.id) tied = true;
+  }
+  return tied ? null : best;
+}
+
+/**
+ * Every reading the model offered for one medicine, tried in order.
+ *
+ * The first spelling is the model's best guess, not necessarily the one on the
+ * shelf: "Amoxycillin" and "Augmentin 625" are both real ways of writing
+ * something the catalogue holds under another name.
+ */
+export function resolveReading(
+  readings: string[], catalogue: CatalogueDrug[],
+): { drug: CatalogueDrug; assumed: boolean } | null {
+  const given = readings.map((r) => String(r ?? "").trim()).filter(Boolean);
+  // Scripts are written "Amox 500", "Ramipril 5" - a bare number with no unit,
+  // which the catalogue's own key does not strip because it only removes
+  // numbers that carry one.
+  const bare = given
+    .map((r) => r.replace(/\d+(\.\d+)?\s*(mg|mcg|g|ml|iu|%)?/gi, " ").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const tried = [...new Set([...given, ...bare])];
+  for (const reading of tried) {
+    const exact = resolveDrug(reading, catalogue);
+    if (exact) return { drug: exact, assumed: false };
+  }
+  for (const reading of tried) {
+    const near = nearestDrug(normalizeDrugKey(reading), catalogue);
+    if (near) return { drug: near, assumed: true };
+  }
+  return null;
 }
 
 /** Distractors from the same category, so the choice is a real one. */
@@ -202,6 +305,8 @@ export function buildLensCase(
     return { ok: false, reason: "not-medical",
       detail: "That does not look like a prescription or clinical document." };
   }
+  // Only a genuinely unreadable page is refused here. A merely messy one goes
+  // on to resolution, which is the honest test of whether it can be played.
   if (!(extraction.confidence >= MIN_CONFIDENCE)) {
     return { ok: false, reason: "low-confidence",
       detail: "The text was too unclear to read reliably." };
@@ -214,12 +319,14 @@ export function buildLensCase(
   // Resolve first: what is left after this is what the case can be about.
   const resolved: Array<{ readAs: string; drug: CatalogueDrug; src: LensExtraction["drugs"][number] }> = [];
   const dropped: string[] = [];
+  const assumed: string[] = [];
   for (const item of extraction.drugs) {
-    const match = resolveDrug(item.name, catalogue);
+    const match = resolveReading([item.name, ...(item.candidates ?? [])], catalogue);
     // One entry per medicine: a page listing the same drug twice is a
     // repeat, not two things to dispense.
-    if (match && !resolved.some((r) => r.drug.id === match.id)) {
-      resolved.push({ readAs: item.name, drug: match, src: item });
+    if (match && !resolved.some((r) => r.drug.id === match.drug.id)) {
+      resolved.push({ readAs: item.name, drug: match.drug, src: item });
+      if (match.assumed) assumed.push(`${item.name} - ${match.drug.name}`);
     } else if (!match) {
       dropped.push(item.name);
     }
@@ -279,6 +386,8 @@ export function buildLensCase(
     dropped,
     decisionPoints,
     confidence: extraction.confidence,
+    uncertain: extraction.confidence < UNCERTAIN_CONFIDENCE || assumed.length > 0,
+    assumed,
   };
 
   if (mode === "hospital") {
