@@ -53,6 +53,30 @@ export function modelCandidates() {
   );
 }
 
+/**
+ * A different chain for reading images.
+ *
+ * The order above was measured on text latency for the chat and the examiner,
+ * where a lite model answers well and answers fast. Handwriting is not that
+ * job: on a doctor's script the lite models mis-read drug names and then
+ * honestly report low confidence, and Prescription Lens throws the whole read
+ * away. Reading accuracy is worth several seconds here - the Lens call already
+ * allows 45s and measures 3-8s - so vision leads with the full models and only
+ * falls back to lite if both are unavailable.
+ */
+export function visionModelCandidates(preferred?: string) {
+  return [
+    preferred,
+    process.env.GEMINI_VISION_MODEL,
+    "gemini-3.5-flash",
+    "gemini-3.6-flash",
+    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
+  ].filter((model, index, models): model is string =>
+    Boolean(model) && models.indexOf(model) === index
+  );
+}
+
 export function geminiKeyProblem(apiKey: string) {
   const trimmed = apiKey.trim();
   if (trimmed.length < 20 || trimmed.includes(" ")) {
@@ -84,6 +108,8 @@ export type GeminiCallOptions = {
    * going to succeed.
    */
   timeoutMs?: number;
+  /** Overrides the default chain. Vision callers pass their own order. */
+  models?: string[];
 };
 
 /** Per-model ceiling, so one unresponsive upstream cannot hold a request open. */
@@ -99,7 +125,7 @@ export async function callGemini(apiKey: string, options: GeminiCallOptions): Pr
 > {
   const failures: string[] = [];
 
-  for (const model of modelCandidates()) {
+  for (const model of options.models ?? modelCandidates()) {
     let response: Response;
     try {
       response = await fetch(

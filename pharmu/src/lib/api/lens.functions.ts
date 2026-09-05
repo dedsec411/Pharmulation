@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { callGemini, geminiKeyProblem } from "./gemini.server";
+import { callGemini, geminiKeyProblem, visionModelCandidates } from "./gemini.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
@@ -35,22 +35,37 @@ export type LensResult =
 function extractionPrompt(): string {
   return `You are reading a photograph of a medical document for a pharmacy training simulator. Report what is on the page. Do not design a teaching exercise, do not invent findings, and do not correct what you see - if the prescription is wrong, report it as written, because noticing that is the trainee's job.
 
+Assume this is handwritten by a clinician and is hard to read. That is normal and it is the job. Decode it the way a pharmacy dispenser does, not the way an OCR engine does:
+- Drug names are a closed set of real medicines. Prefer a real medicine whose shape fits the strokes over a literal letter-by-letter transcription. "Amoxycillin", "Amoxil" and a scrawled "Amox 500" are all the same medicine.
+- Use everything around the word. The strength, the dose form, the frequency and the stated condition all narrow what a name can be. A "500mg TDS x 7/7" for a chest infection is an antibiotic, not an antihistamine.
+- Expect prescribing shorthand and read it as written: OD, BD, TDS, QDS, nocte, mane, PRN, stat, po, SL, PR, 1-0-1, 1+1+1, x 7/7 (seven days), x 2/52 (two weeks), i/ii tabs, mitte 21.
+- A trailing flourish, a looped ending or a missing dot is handwriting, not a different drug.
+
+If after all that a word could be two different medicines, say so through candidates rather than picking one silently.
+
 First decide what you are looking at. If it is not a medical document - a receipt, a landscape, a screenshot of something else - say so and stop.
 
 Then read off:
 - documentType: what kind of document it is, in a few words ("handwritten prescription", "discharge summary", "medication label", "inpatient chart").
 - patient: name exactly as written, age as a number, sex, and any allergies stated. Use null for anything not on the page. Never guess an age.
 - diagnosis: the condition being treated, if stated or clearly implied by the medicines.
-- drugs: every medicine you can read. For each: name as written, dose, route, frequency as written (keep "TDS", "1-1-1", "bd" as they appear - do not translate them), duration, and any patient instruction.
+- drugs: every medicine you can make out. For each: name as your best reading, candidates (up to 3 other real medicine names the same handwriting could be, most likely first, empty if you are certain), dose, route, frequency as written (keep "TDS", "1-1-1", "bd" as they appear - do not translate them), duration, and any patient instruction.
 - decisionPoints: two to four things a pharmacist should check before dispensing THIS document - an interaction between two of these medicines, a dose that looks wrong for the age, an allergy conflict with what is prescribed, a missing duration. Each a single sentence naming the specific medicines involved. If the document is unremarkable, say what routine checks it still needs.
 - suggestedMode: "hospital" if it is an inpatient chart, discharge summary or anything with IV medicines and ward context; otherwise "rx".
-- confidence: 0 to 1, your honest reading confidence. Score low if the handwriting is ambiguous, the photo is blurred or cropped, or you are inferring drug names from partial words. A wrong drug name read confidently is the worst outcome here, so under-report rather than over-report.
+- confidence: 0 to 1 - how sure you are that you have identified the MEDICINES, not how neat the page is. Untidy handwriting you can still decode is a confident read: score it high. Score low only when you genuinely cannot tell which medicines are written, or the photo is too blurred or cropped to work from.
 
-Report only what is legible. An empty drugs array is a valid answer for a document you cannot read.
+Report only what you can make out. An empty drugs array is a valid answer for a document you truly cannot read.
 
 Respond with JSON only, matching exactly:
-{"isMedical":boolean,"documentType":string,"confidence":number,"patient":{"name":string|null,"age":number|null,"sex":string|null,"allergies":string[]},"diagnosis":string|null,"drugs":[{"name":string,"dose":string|null,"route":string|null,"frequency":string|null,"duration":string|null,"instruction":string|null}],"decisionPoints":string[],"suggestedMode":string}`;
+{"isMedical":boolean,"documentType":string,"confidence":number,"patient":{"name":string|null,"age":number|null,"sex":string|null,"allergies":string[]},"diagnosis":string|null,"drugs":[{"name":string,"candidates":string[],"dose":string|null,"route":string|null,"frequency":string|null,"duration":string|null,"instruction":string|null}],"decisionPoints":string[],"suggestedMode":string}`;
 }
+
+/**
+ * Nudge for the second pass, when the first read produced nothing playable.
+ * A different model gets a different look at the same strokes, and being told
+ * what failed stops it repeating the same abandonment.
+ */
+const SECOND_LOOK = "The first attempt could not identify the medicines on this document. Look again, harder. Work letter group by letter group, and lean on the strength, the dose form and the condition to decide which real medicine each word is. Offer candidates wherever a word is ambiguous. Only report an empty drugs list if the page is genuinely unreadable.";
 
 /** Defensive parse: the model returns JSON, but never trust the shape. */
 function parseExtraction(text: string): LensExtraction | null {
@@ -80,6 +95,9 @@ function parseExtraction(text: string): LensExtraction | null {
           const name = str(item.name);
           return name ? {
             name,
+            candidates: Array.isArray(item.candidates)
+              ? item.candidates.map(String).map((c) => c.trim()).filter(Boolean).slice(0, 3)
+              : [],
             dose: str(item.dose), route: str(item.route), frequency: str(item.frequency),
             duration: str(item.duration), instruction: str(item.instruction),
           } : null;
@@ -115,6 +133,9 @@ const FAILURE_MESSAGE: Record<string, { error: string; hint: string }> = {
   },
 };
 
+/** Failures a better read might fix. "not-medical" is not one of them. */
+const RETRY_WORTH_IT = new Set(["low-confidence", "no-drugs", "no-known-drugs"]);
+
 export const readPrescriptionImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(z.object({
@@ -135,53 +156,73 @@ export const readPrescriptionImage = createServerFn({ method: "POST" })
         hint: "Use a JPEG, PNG or WEBP photo." };
     }
 
-    let extraction: LensExtraction | null = null;
-    try {
-      const result = await callGemini(GEMINI_API_KEY, {
-        systemPrompt: extractionPrompt(),
-        contents: [{
-          role: "user",
-          parts: [
-            { inline_data: { mime_type: data.mimeType, data: data.imageBase64 } },
-            { text: "Read this document and report what is on it." },
-          ],
-        }],
-        // Reading is a transcription task, not a creative one: the same
-        // photograph should give the same drug names every time.
-        temperature: 0,
-        maxOutputTokens: 2000,
-        json: true,
-        // Vision takes materially longer than text, and the 20s default
-        // abandons requests that were going to land.
-        timeoutMs: 45_000,
-      });
-
-      if (!result.ok) {
-        return { ok: false, error: "Could not reach the document reader.", hint: result.error };
-      }
-      extraction = parseExtraction(result.text);
-    } catch (error) {
-      console.error("Lens read failed", error);
-      return { ok: false, error: "Could not read that image. Please try again." };
-    }
-
-    if (!extraction) {
-      return { ok: false, error: "The reader returned something unreadable.",
-        hint: "Try the photo again." };
-    }
-
-    // The catalogue the case has to be playable against. Service-role because
-    // this runs server-side; `drugs` is public-readable anyway.
-    const { data: drugRows, error: drugError } = await supabaseAdmin
+    // The catalogue is needed whichever way the read goes, and fetching it
+    // while the model works saves a round trip from the slowest path.
+    const cataloguePromise = supabaseAdmin
       .from("drugs")
       .select("id, name, generic_name, category, drug_class, dosage")
       .limit(2000);
+
+    async function read(models: string[], hint?: string): Promise<LensExtraction | null> {
+      try {
+        const result = await callGemini(GEMINI_API_KEY!, {
+          systemPrompt: extractionPrompt(),
+          contents: [{
+            role: "user",
+            parts: [
+              { inline_data: { mime_type: data.mimeType, data: data.imageBase64 } },
+              { text: hint ?? "Read this document and report what is on it." },
+            ],
+          }],
+          // Reading is a transcription task, not a creative one: the same
+          // photograph should give the same drug names every time.
+          temperature: 0,
+          maxOutputTokens: 2000,
+          json: true,
+          // Vision takes materially longer than text, and the 20s default
+          // abandons requests that were going to land.
+          timeoutMs: 45_000,
+          models,
+        });
+        if (!result.ok) {
+          console.error("Lens read failed", result.error);
+          return null;
+        }
+        return parseExtraction(result.text);
+      } catch (error) {
+        console.error("Lens read threw", error);
+        return null;
+      }
+    }
+
+    const extraction = await read(visionModelCandidates());
+    if (!extraction) {
+      return { ok: false, error: "Could not read that image. Please try again.",
+        hint: "If this keeps happening, check the server has a working GEMINI_API_KEY." };
+    }
+
+    const { data: drugRows, error: drugError } = await cataloguePromise;
     if (drugError) {
       console.error("[supabase] lens could not load the drug catalogue:", drugError);
       return { ok: false, error: "Could not load the medicine catalogue. Please try again." };
     }
+    const catalogue = (drugRows ?? []) as CatalogueDrug[];
 
-    const built = buildLensCase(extraction, (drugRows ?? []) as CatalogueDrug[]);
+    let built = buildLensCase(extraction, catalogue);
+
+    // A first pass that read nothing playable is not the end of it. Handwriting
+    // is exactly where one model gives up and another does not, so escalate to
+    // a second model once before telling someone their prescription is
+    // unreadable. Only for failures a better read could fix - a photograph of a
+    // sandwich is still not a prescription on the second attempt.
+    if (!built.ok && RETRY_WORTH_IT.has(built.reason)) {
+      const second = await read(visionModelCandidates("gemini-3.6-flash"), SECOND_LOOK);
+      if (second) {
+        const retry = buildLensCase(second, catalogue);
+        if (retry.ok) built = retry;
+      }
+    }
+
     if (!built.ok) {
       const message = FAILURE_MESSAGE[built.reason]
         ?? { error: built.detail, hint: "Try another photograph." };
