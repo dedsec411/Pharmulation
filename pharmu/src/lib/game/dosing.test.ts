@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   LABEL_FREQUENCIES, LABEL_TIMINGS, MAX_COURSE_DAYS, ONGOING,
   durationDays, formatDuration, normalizeDuration, regimenForDrug, regimenSig,
+  frequencyFromText, timingFromText,
 } from "./dosing";
 
 // The dosage strings exactly as they are stored in the drugs table.
@@ -133,5 +134,33 @@ describe("duration as a day count", () => {
       expect(days, `${stored} is off the slider`).toBeGreaterThanOrEqual(1);
       expect(days, `${stored} is off the slider`).toBeLessThanOrEqual(MAX_COURSE_DAYS);
     }
+  });
+});
+
+describe("dose-array notation", () => {
+  // "1-0-1" is morning and night. It used to fall through to the default and
+  // label a twice-daily medicine as once daily - marking a learner wrong for
+  // reading the script correctly.
+  it("counts the filled slots", () => {
+    expect(frequencyFromText("1-0-1")).toBe("twice daily");
+    expect(frequencyFromText("1-1-1")).toBe("three times daily");
+    expect(frequencyFromText("1+1+1+1")).toBe("four times daily");
+    expect(frequencyFromText("0-0-1")).toBe("once daily");
+    expect(frequencyFromText("Metformin 500 mg 1-0-1 x 1/12")).toBe("twice daily");
+  });
+
+  it("reads when a single slot is filled", () => {
+    expect(timingFromText("0-0-1", "once daily")).toBe("before sleep");
+    expect(timingFromText("1-0-0", "once daily")).toBe("morning");
+  });
+
+  // A strength range and a date both carry digits and separators.
+  it("does not mistake a strength or a duration for a regimen", () => {
+    expect(frequencyFromText("250-500mg TDS")).toBe("three times daily");
+    expect(frequencyFromText("Ramipril 5mg OD mane x 1/12")).toBe("once daily");
+  });
+
+  it("still reads p.c. as with food", () => {
+    expect(timingFromText("OD p.c.", "once daily")).toBe("with food");
   });
 });

@@ -150,7 +150,45 @@ export function timingFromText(text: string, frequency: Regimen["frequency"]): R
   return parseTiming(String(text ?? ""), frequency);
 }
 
+/**
+ * Dose-array notation: "1-0-1", "1+1+1", "0-0-1", "1-1-1-1".
+ *
+ * One slot per administration point through the day, which is how a great many
+ * prescribers write a regimen and the dominant convention on South Asian
+ * scripts. The count of non-zero slots is the frequency: "1-0-1" is morning and
+ * night, twice daily.
+ *
+ * Each slot is a single character, so a strength ("500-1000") cannot match, and
+ * the separator is - or + only, so a date or a duration ("1/12") cannot either.
+ */
+const DOSE_ARRAY = /(?:^|[\s(])([0-2]|1\/2)\s*[-+]\s*([0-2]|1\/2)\s*[-+]\s*([0-2]|1\/2)(?:\s*[-+]\s*([0-2]|1\/2))?(?=$|[\s),.;])/;
+
+function doseArraySlots(text: string): string[] | null {
+  const found = text.match(DOSE_ARRAY);
+  if (!found) return null;
+  const slots = found.slice(1).filter((slot): slot is string => slot !== undefined);
+  return slots.length >= 3 ? slots : null;
+}
+
+function frequencyFromDoseArray(text: string): Regimen["frequency"] | null {
+  const slots = doseArraySlots(text);
+  if (!slots) return null;
+  const taken = slots.filter((slot) => slot !== "0").length;
+  if (taken >= 4) return "four times daily";
+  if (taken === 3) return "three times daily";
+  if (taken === 2) return "twice daily";
+  if (taken === 1) return "once daily";
+  return null; // "0-0-0" says nothing at all
+}
+
 function parseFrequency(text: string): Regimen["frequency"] {
+  // More specific than any keyword, so it is asked first: a line reading
+  // "Metformin 500mg 1-0-1" has no BD or TDS in it to find, and without this
+  // it fell through to the "once daily" default - halving the dose on the
+  // label, and marking a learner wrong for getting it right.
+  const fromArray = frequencyFromDoseArray(text);
+  if (fromArray) return fromArray;
+
   let best: Regimen["frequency"] = "once daily";
   let bestAt = Number.POSITIVE_INFINITY;
   for (const [pattern, value] of FREQUENCY_PATTERNS) {
@@ -164,7 +202,14 @@ function parseFrequency(text: string): Regimen["frequency"] {
 }
 
 function parseTiming(text: string, frequency: Regimen["frequency"]): Regimen["timing"] {
-  if (/with (or after )?food|after food|with meals?|with breakfast/i.test(text)) return "with food";
+  if (/with (or after )?food|after food|with meals?|with breakfast|\bp\.?\s?c\.?(?![a-z])/i.test(text)) return "with food";
+  // A single filled slot says when, and it is the only thing on the line that
+  // does: "0-0-1" is the night dose, "1-0-0" the morning one.
+  const slots = doseArraySlots(text);
+  if (slots) {
+    const filled = slots.map((slot, index) => (slot === "0" ? -1 : index)).filter((i) => i >= 0);
+    if (filled.length === 1) return filled[0] === slots.length - 1 ? "before sleep" : "morning";
+  }
   if (/before breakfast|\bmane\b|\bOM\b|morning/i.test(text)) return "morning";
   if (/at night|bedtime|before sleep|\bnocte\b|\bON\b/i.test(text)) return "before sleep";
   if (frequency === "as needed") return "as needed";
