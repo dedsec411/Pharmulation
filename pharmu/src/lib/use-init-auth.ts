@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore, type Profile } from "./auth-store";
 import { touchDailyStreak } from "./supabase-rpc";
@@ -30,47 +31,70 @@ async function bumpStreak(profile: Profile) {
   return (data?.[0] as Profile | undefined) ?? profile;
 }
 
+/**
+ * Bring the client up to date with who is signed in. Once.
+ *
+ * This used to run the whole bootstrap twice on every single page load. Two
+ * paths did the same work: onAuthStateChange fires INITIAL_SESSION the moment
+ * you subscribe, and getSession() was called straight afterwards - so the
+ * profile was fetched twice and the streak RPC was sent twice, every time,
+ * before anything could render. TOKEN_REFRESHED then did it again on a timer,
+ * and SIGNED_IN fires on tab focus in some browsers, so a long session kept
+ * re-running it.
+ *
+ * Now both paths funnel into one adopt(), which no-ops when the session
+ * belongs to the person already loaded. Whichever arrives first does the work;
+ * the other returns immediately.
+ */
 export function useInitAuth() {
-  const { setSession, setProfile, setLoading } = useAuthStore();
+  // Selectors rather than destructuring the store: taking the whole store
+  // subscribes this to every change, so setting the profile re-rendered the
+  // component that had just set it.
+  const setSession = useAuthStore((s) => s.setSession);
+  const setProfile = useAuthStore((s) => s.setProfile);
+  const setLoading = useAuthStore((s) => s.setLoading);
 
   useEffect(() => {
     let mounted = true;
+    /** Who the loaded profile belongs to, so the same person is not re-fetched. */
+    let loadedFor: string | null = null;
 
-    // Listener first
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
+    async function adopt(session: Session | null) {
       if (!mounted) return;
       setSession(session);
-      if (session?.user) {
-        // Defer profile fetch to avoid deadlock
-        setTimeout(async () => {
-          const p = await loadProfile(session.user.id);
-          if (!mounted) return;
-          if (p) {
-            const bumped = await bumpStreak(p);
-            if (mounted) setProfile(bumped);
-          } else {
-            setProfile(null);
-          }
-        }, 0);
-      } else {
+
+      const userId = session?.user?.id ?? null;
+      if (!userId) {
+        loadedFor = null;
         setProfile(null);
+        return;
       }
-      if (event === "INITIAL_SESSION") setLoading(false);
+      // A refreshed token is the same person: nothing to re-read.
+      if (userId === loadedFor) return;
+      loadedFor = userId;
+
+      const profile = await loadProfile(userId);
+      if (!mounted) return;
+      if (!profile) {
+        setProfile(null);
+        return;
+      }
+      const bumped = await bumpStreak(profile);
+      if (mounted) setProfile(bumped);
+    }
+
+    // Deliberately not an async callback. supabase-js serialises these, and
+    // awaiting a supabase call inside one deadlocks the next auth request -
+    // which is what the old setTimeout(0) was working around.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      void adopt(session);
     });
 
-    // Then current session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-      setSession(session);
-      if (session?.user) {
-        const p = await loadProfile(session.user.id);
-        if (!mounted) return;
-        if (p) {
-          const bumped = await bumpStreak(p);
-          if (mounted) setProfile(bumped);
-        }
-      }
-      setLoading(false);
+    // getSession resolves whether or not INITIAL_SESSION arrives, so loading
+    // always ends. If the listener got there first, adopt() no-ops.
+    void supabase.auth.getSession().then(async ({ data }) => {
+      await adopt(data.session);
+      if (mounted) setLoading(false);
     });
 
     return () => {

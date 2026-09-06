@@ -18,11 +18,19 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 export const Route = createFileRoute("/educator")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/login" });
+    // Local session, not a network revalidation - see the note on the same
+    // guard in /_authenticated. This ran twice per navigation here: a round
+    // trip to the auth server, then a second one for the role.
+    const { data } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    if (!user) throw redirect({ to: "/login" });
 
-    const { data: profile } = await supabase
-      .from("profiles").select("role").eq("user_id", data.user.id).single();
+    // The profile is already loaded for this user in almost every case, and
+    // re-reading it before each faculty page was the second stall.
+    const cached = useAuthStore.getState().profile;
+    const profile = cached?.user_id === user.id
+      ? cached
+      : (await supabase.from("profiles").select("role").eq("user_id", user.id).single()).data;
 
     // `educator` is newer than the checked-in generated types, so the enum they
     // declare has no such member. Compared as a string until they regenerate.
@@ -33,7 +41,7 @@ export const Route = createFileRoute("/educator")({
     if (role !== "educator" && role !== "admin") {
       throw redirect({ to: "/dashboard" });
     }
-    return { user: data.user, role };
+    return { user, role };
   },
   component: EducatorShell,
 });

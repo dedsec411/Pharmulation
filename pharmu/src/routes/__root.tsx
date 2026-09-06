@@ -110,11 +110,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    // data-theme is stamped by the inline script below rather than rendered
-    // here: the server does not know which theme this visitor chose, and
-    // guessing means every light-theme user watches the app flash from black
-    // to white before React catches up.
-    <html lang="en" className="dark">
+    // The inline script below stamps the real data-theme before React runs,
+    // because the server cannot know which theme this visitor chose and
+    // guessing means a light-theme user watches the app flash black to white.
+    //
+    // That leaves the server HTML and the hydrating DOM disagreeing about this
+    // one attribute, which React reported on every single page load: "a tree
+    // hydrated but some attributes of the server rendered HTML didn't match".
+    // suppressHydrationWarning is the sanctioned answer for exactly this - an
+    // attribute deliberately set before hydration - and it applies only to
+    // this element, so a genuine mismatch anywhere else still surfaces.
+    //
+    // The default is rendered here as well so the markup is right for the
+    // common case, and still themed if the script is blocked.
+    <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <HeadContent />
