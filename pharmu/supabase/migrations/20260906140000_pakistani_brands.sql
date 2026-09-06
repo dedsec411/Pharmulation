@@ -85,6 +85,10 @@ FROM (VALUES
   ('Disprin', 'Aspirin', 'Reckitt Benckiser'),
   ('Loprin', 'Aspirin', 'Highnoon'),
   ('Tramal', 'Tramadol', 'Searle'),
+  -- Verified against the back-pain script it came off: Movax is tizanidine,
+  -- a centrally-acting muscle relaxant, which is what the Urdu note beside
+  -- it on that page asks for.
+  ('Movax', 'Tizanidine', 'Sami'),
   ('Celebrex', 'Celecoxib', 'Pfizer'),
   ('Risek', 'Omeprazole', 'Getz Pharma'),
   ('Losec', 'Omeprazole', 'AstraZeneca'),
