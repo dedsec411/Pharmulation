@@ -285,10 +285,10 @@ describe("stock kept in the wrong place", () => {
   });
 });
 
-describe("fines", () => {
+describe("fines and fees", () => {
   it("takes them out of the cash and names them in the ledger", () => {
     const out = closeWeek(week({
-      penalties: [{ amount: 30_000 * RUPEE, note: "Expired stock not separated" }],
+      charges: [{ kind: "penalty", amount: 30_000 * RUPEE, note: "Expired stock not separated" }],
     }));
     expect(out.kpis.closingCash).toBe(70_000 * RUPEE);
     const entry = out.ledger.find((e) => e.kind === "penalty");
@@ -301,8 +301,22 @@ describe("fines", () => {
   it("can finish a pharmacy that could not afford one", () => {
     const out = closeWeek(week({
       facility: { period: 1, cash: 10_000 * RUPEE, overdraft: 0, seed: "test" },
-      penalties: [{ amount: 75_000 * RUPEE, note: "Controlled medicines held without a permit" }],
+      charges: [{ kind: "penalty", amount: 75_000 * RUPEE, note: "Controlled medicines held without a permit" }],
     }));
     expect(out.insolvent).toBe(true);
+  });
+
+  // A licence fee and a fine both leave the account, but a learner reading the
+  // ledger should be able to tell which of the two it was.
+  it("keeps a licence fee apart from a fine", () => {
+    const out = closeWeek(week({
+      charges: [
+        { kind: "licence", amount: 15_000 * RUPEE, note: "Drug Sale Licence renewal" },
+        { kind: "penalty", amount: 10_000 * RUPEE, note: "No fridge temperature log" },
+      ],
+    }));
+    expect(out.kpis.closingCash).toBe(75_000 * RUPEE);
+    expect(out.ledger.find((e) => e.kind === "licence")?.amount).toBe(-15_000 * RUPEE);
+    expect(out.ledger.find((e) => e.kind === "penalty")?.amount).toBe(-10_000 * RUPEE);
   });
 });

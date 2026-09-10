@@ -250,3 +250,12 @@ export const LICENCE_FEE: Record<LicenceKind, Paisa> = {
 /** How long a renewal lasts, and how long a fresh permit takes to come through. */
 export const LICENCE_TERM_WEEKS = 52;
 export const NARCOTICS_LEAD_WEEKS = 3;
+
+/**
+ * How long a suspended pharmacy stays shut.
+ *
+ * Being closed down is temporary and recoverable - you shut, you put it right,
+ * you reopen. The weeks of no takings against unchanged rent are the
+ * punishment, and they are far heavier than any of the fines.
+ */
+export const SUSPENSION_WEEKS = 2;

@@ -341,8 +341,8 @@ export function periodKPIs(input: {
   openingCash: Paisa;
   purchases: Paisa;
   overheads: Paisa;
-  /** Fines. Money that leaves without buying anything. */
-  penalties?: Paisa;
+  /** Licence fees and fines: money that leaves without buying anything. */
+  charges?: Paisa;
 }): PeriodKPIs {
   const grossMargin = input.revenue - input.cogs;
   return {
@@ -354,6 +354,6 @@ export function periodKPIs(input: {
     serviceLevel: input.demanded > 0 ? (input.sold / input.demanded) * 100 : 100,
     wastagePercent: input.revenue > 0 ? (input.wastage / input.revenue) * 100 : 0,
     closingCash: input.openingCash + input.revenue - input.purchases - input.overheads
-      - (input.penalties ?? 0),
+      - (input.charges ?? 0),
   };
 }

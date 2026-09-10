@@ -64,9 +64,14 @@ CREATE INDEX IF NOT EXISTS wh_paperwork_facility_idx
 ALTER TABLE public.wh_facilities
   ADD COLUMN IF NOT EXISTS suspended_until_period int NOT NULL DEFAULT 0;
 
--- Fines belong in the weekly result, or the period report does not add up.
+-- Fines and licence fees belong in the weekly result, or the period report
+-- does not add up. Kept apart, because a learner reading a week where the cash
+-- fell should be able to tell a renewal they chose to pay from a fine they did
+-- not.
 ALTER TABLE public.wh_periods
   ADD COLUMN IF NOT EXISTS penalties_paisa bigint NOT NULL DEFAULT 0;
+ALTER TABLE public.wh_periods
+  ADD COLUMN IF NOT EXISTS fees_paisa bigint NOT NULL DEFAULT 0;
 
 -- ---------------------------------------------------------------------------
 -- 4. Isolation, on the same terms as the rest of the facility

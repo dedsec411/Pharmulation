@@ -72,8 +72,12 @@ export type WeekInput = {
   trading?: boolean;
   /** Where each medicine has to live, so stock kept wrongly can spoil. */
   requiredZone?: Readonly<Record<string, StorageZone>>;
-  /** Fines handed down this week, most often by an inspection. */
-  penalties?: ReadonlyArray<{ amount: Paisa; note: string }>;
+  /**
+   * Money leaving this week for something that is neither stock nor rent: a
+   * licence fee applied for, a fine handed down by an inspection. Each carries
+   * its own ledger kind so the learner is told which it was.
+   */
+  charges?: ReadonlyArray<{ kind: LedgerKind; amount: Paisa; note: string }>;
 };
 
 export type DrugOutcome = {
@@ -224,17 +228,17 @@ export function closeWeek(input: WeekInput): WeekResult {
   // ---- 6. The week's costs ------------------------------------------------
   if (overheads > 0) ledger.push({ kind: "overhead", amount: -overheads, note: "Rent, salaries, utilities" });
 
-  let penalties: Paisa = 0;
-  for (const fine of input.penalties ?? []) {
-    if (fine.amount <= 0) continue;
-    penalties += fine.amount;
-    ledger.push({ kind: "penalty", amount: -fine.amount, note: fine.note });
+  let charged: Paisa = 0;
+  for (const charge of input.charges ?? []) {
+    if (charge.amount <= 0) continue;
+    charged += charge.amount;
+    ledger.push({ kind: charge.kind, amount: -charge.amount, note: charge.note });
   }
 
   const kpis = periodKPIs({
     revenue, cogs, wastage: expired.wastage + spoiled.wastage,
     demanded: demandedTotal, sold: soldTotal,
-    openingCash: facility.cash, purchases, overheads, penalties,
+    openingCash: facility.cash, purchases, overheads, charges: charged,
   });
 
   return {
