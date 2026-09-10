@@ -3,13 +3,23 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   chooseCatalogue, openingStock, STARTING,
-  type CatalogueDrug, type CatalogueLine, type Difficulty,
+  type CatalogueDrug, type Difficulty,
 } from "@/lib/warehouse/bootstrap";
-import { closeWeek, type PendingOrder } from "@/lib/warehouse/week";
+import { closeWeek, type PendingOrder, type LedgerKind } from "@/lib/warehouse/week";
 import {
-  orderCost, RUPEE, type Paisa, type PricedDrug, type StockBatch, type DemandProfile,
-  type VolumeBreak,
+  orderCost, formatPKR,
+  type Paisa, type PricedDrug, type StockBatch, type DemandProfile,
+  type VolumeBreak, type StorageZone,
 } from "@/lib/warehouse/economics";
+import {
+  canTrade, licenceValid, find as findLicence, inspect,
+  LICENCE_FEE, LICENCE_TERM_WEEKS, NARCOTICS_LEAD_WEEKS, SUSPENSION_WEEKS,
+  type Licence, type ComplianceStock, type RegisterLine,
+} from "@/lib/warehouse/compliance";
+import {
+  rollEvents, recallHonoured, RECALL_IGNORED_FINE, EXCURSION_IGNORED_FINE,
+  type EventStock, type ShortageEvent,
+} from "@/lib/warehouse/events";
 
 /**
  * Running a facility.
@@ -124,7 +134,7 @@ export const createFacility = createServerFn({ method: "POST" })
       status: "active",
       issued_period: 1,
       expires_period: 1 + start.licenceWeeks,
-      fee_paisa: 15_000 * RUPEE,
+      fee_paisa: LICENCE_FEE.drug_sale,
     });
 
     return { ok: true as const, facilityId };
@@ -140,23 +150,43 @@ async function loadFacility(db: any, userId: string) {
   return facility.data as Row | null;
 }
 
+function toLicence(row: Row): Licence {
+  return {
+    kind: row.kind,
+    status: row.status,
+    expiresPeriod: Number(row.expires_period),
+  };
+}
+
+/** Whether the counter may open: licensed, and not shut by an inspector. */
+function isTrading(facility: Row, licences: readonly Licence[], period: number): boolean {
+  return canTrade(licences, period) && period > Number(facility.suspended_until_period ?? 0);
+}
+
 export const getFacilityState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const db = context.supabase as any;
     const facility = await loadFacility(db, context.userId);
     if (!facility) return { ok: false as const, error: "No pharmacy open." };
+    const period = Number(facility.current_period);
 
-    const [catalogue, stock, orders, periods, events, licences] = await Promise.all([
-      db.from("wh_catalogue").select("*, drugs(name, category)").eq("facility_id", facility.id),
-      db.from("wh_stock").select("*").eq("facility_id", facility.id).gt("qty", 0),
-      db.from("wh_orders").select("*, wh_order_lines(*)").eq("facility_id", facility.id)
-        .neq("status", "cancelled"),
-      db.from("wh_periods").select("*").eq("facility_id", facility.id)
-        .order("period_no", { ascending: false }).limit(12),
-      db.from("wh_events").select("*").eq("facility_id", facility.id).eq("resolved", false),
-      db.from("wh_licences").select("*").eq("facility_id", facility.id),
-    ]);
+    const [catalogue, stock, orders, periods, events, licences, register, paperwork] =
+      await Promise.all([
+        db.from("wh_catalogue").select("*, drugs(name, category)").eq("facility_id", facility.id),
+        db.from("wh_stock").select("*").eq("facility_id", facility.id).gt("qty", 0),
+        db.from("wh_orders").select("*, wh_order_lines(*)").eq("facility_id", facility.id)
+          .neq("status", "cancelled"),
+        db.from("wh_periods").select("*").eq("facility_id", facility.id)
+          .order("period_no", { ascending: false }).limit(12),
+        db.from("wh_events").select("*").eq("facility_id", facility.id).eq("resolved", false),
+        db.from("wh_licences").select("*").eq("facility_id", facility.id),
+        db.from("wh_cd_register").select("*, drugs(name)").eq("facility_id", facility.id),
+        db.from("wh_paperwork").select("kind").eq("facility_id", facility.id).eq("period_no", period),
+      ]);
+
+    const held = (licences.data ?? []).map(toLicence);
+    const kept = new Set((paperwork.data ?? []).map((r: Row) => r.kind as string));
 
     return {
       ok: true as const,
@@ -167,6 +197,120 @@ export const getFacilityState = createServerFn({ method: "GET" })
       periods: periods.data ?? [],
       events: events.data ?? [],
       licences: licences.data ?? [],
+      register: register.data ?? [],
+      // What this week's paperwork looks like, so the interface can show what
+      // is still outstanding rather than making the learner remember.
+      paperwork: {
+        temperatureLog: kept.has("temperature-log"),
+        cdRegister: kept.has("cd-register"),
+      },
+      trading: isTrading(facility, held, period),
+      suspendedUntilPeriod: Number(facility.suspended_until_period ?? 0),
+    };
+  });
+
+/* ------------------------------------------------------------------ *
+ * Licences
+ * ------------------------------------------------------------------ */
+
+/**
+ * Renew a licence, or apply for one you do not hold.
+ *
+ * The fee is paid the moment it is applied for rather than when it is granted,
+ * which is how licensing works everywhere and is the reason a learner has to
+ * keep cash back to stay legal. A narcotics permit is not granted over the
+ * counter: it is applied for, and it arrives weeks later.
+ */
+export const applyForLicence = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({ kind: z.enum(["drug_sale", "narcotics"]) }))
+  .handler(async ({ data, context }) => {
+    const db = context.supabase as any;
+    const facility = await loadFacility(db, context.userId);
+    if (!facility) return { ok: false as const, error: "No pharmacy open." };
+    const period = Number(facility.current_period);
+    const fee = LICENCE_FEE[data.kind];
+
+    if (Number(facility.cash_paisa) < fee) {
+      return {
+        ok: false as const,
+        error: `That application costs ${formatPKR(fee)}, and there is ${formatPKR(Number(facility.cash_paisa))} in the account.`,
+      };
+    }
+
+    const rows = await db.from("wh_licences")
+      .select("*").eq("facility_id", facility.id).eq("kind", data.kind).limit(1);
+    const held = (rows.data ?? [])[0] as Row | undefined;
+
+    if (held?.status === "pending") {
+      return {
+        ok: false as const,
+        error: `That application is already with the authority. It is expected in week ${held.issued_period}.`,
+      };
+    }
+
+    let issued = period;
+    let expires = period + LICENCE_TERM_WEEKS;
+    let status: Licence["status"] = "active";
+    let note: string;
+
+    if (held && held.status === "active") {
+      // Renewing early does not throw away the weeks already paid for.
+      expires = Math.max(Number(held.expires_period), period) + LICENCE_TERM_WEEKS;
+      note = data.kind === "drug_sale" ? "Drug Sale Licence renewal" : "Narcotics permit renewal";
+    } else if (data.kind === "narcotics") {
+      // A fresh narcotics permit is inspected before it is granted.
+      issued = period + NARCOTICS_LEAD_WEEKS;
+      expires = issued + LICENCE_TERM_WEEKS;
+      status = "pending";
+      note = "Narcotics permit application";
+    } else {
+      note = "Drug Sale Licence";
+    }
+
+    const payload = {
+      facility_id: facility.id,
+      kind: data.kind,
+      status,
+      issued_period: issued,
+      expires_period: expires,
+      fee_paisa: fee,
+    };
+    const written = held
+      ? await db.from("wh_licences").update(payload).eq("id", held.id)
+      : await db.from("wh_licences").insert(payload);
+    if (written.error) {
+      console.error("[warehouse] could not write licence:", written.error);
+      return { ok: false as const, error: "Could not lodge that application." };
+    }
+
+    await db.from("wh_facilities")
+      .update({ cash_paisa: Number(facility.cash_paisa) - fee, updated_at: new Date().toISOString() })
+      .eq("id", facility.id);
+    await db.from("wh_ledger").insert({
+      facility_id: facility.id,
+      period_no: period,
+      kind: "licence",
+      amount_paisa: -fee,
+      note,
+    });
+
+    // A licence back in force closes the notice that it had lapsed.
+    if (status === "active") {
+      await db.from("wh_events")
+        .update({ resolved: true, resolution: "renewed" })
+        .eq("facility_id", facility.id)
+        .eq("kind", "licence-expiry")
+        .eq("resolved", false);
+    }
+
+    return {
+      ok: true as const,
+      status,
+      grantedPeriod: issued,
+      expiresPeriod: expires,
+      fee,
+      pending: status === "pending",
     };
   });
 
@@ -187,17 +331,18 @@ export const placeOrder = createServerFn({ method: "POST" })
     const db = context.supabase as any;
     const facility = await loadFacility(db, context.userId);
     if (!facility) return { ok: false as const, error: "No pharmacy open." };
+    const period = Number(facility.current_period);
 
     const catalogue = await db.from("wh_catalogue").select("*").eq("facility_id", facility.id);
     const byDrug = new Map<string, Row>((catalogue.data ?? []).map((r: Row) => [r.drug_id, r]));
 
     const licences = await db.from("wh_licences")
-      .select("kind, status").eq("facility_id", facility.id);
-    const hasNarcotics = (licences.data ?? []).some(
-      (l: Row) => l.kind === "narcotics" && l.status === "active");
+      .select("kind, status, expires_period").eq("facility_id", facility.id);
+    const held = (licences.data ?? []).map(toLicence);
+    const hasNarcotics = licenceValid(findLicence(held, "narcotics"), period);
 
     let total: Paisa = 0;
-    let eta = facility.current_period;
+    let eta = period;
     const rows: Row[] = [];
 
     for (const line of data.lines) {
@@ -209,7 +354,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       if (entry.controlled && !hasNarcotics) {
         return {
           ok: false as const,
-          error: "You cannot order controlled medicines without a narcotics permit.",
+          error: "You cannot order controlled medicines without a valid narcotics permit.",
         };
       }
 
@@ -218,7 +363,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       };
       const cost = orderCost(priced, line.packs, SUPPLIER_BREAKS);
       total += cost;
-      eta = Math.max(eta, facility.current_period + Number(entry.lead_time_weeks));
+      eta = Math.max(eta, period + Number(entry.lead_time_weeks));
       rows.push({
         drug_id: line.drugId,
         packs: line.packs,
@@ -229,11 +374,11 @@ export const placeOrder = createServerFn({ method: "POST" })
     const order = await db.from("wh_orders").insert({
       facility_id: facility.id,
       supplier: data.supplier,
-      placed_period: facility.current_period,
+      placed_period: period,
       eta_period: eta,
       status: "placed",
       total_paisa: total,
-      payment_due_period: facility.current_period + PAYMENT_TERMS_WEEKS,
+      payment_due_period: period + PAYMENT_TERMS_WEEKS,
       paid: false,
     }).select("id").single();
     if (order.error) {
@@ -249,7 +394,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       orderId: order.data.id as string,
       total,
       etaPeriod: eta,
-      paymentDuePeriod: facility.current_period + PAYMENT_TERMS_WEEKS,
+      paymentDuePeriod: period + PAYMENT_TERMS_WEEKS,
     };
   });
 
@@ -257,13 +402,25 @@ export const placeOrder = createServerFn({ method: "POST" })
  * Putting stock away
  * ------------------------------------------------------------------ */
 
+/**
+ * Move stock into a storage zone.
+ *
+ * A move that puts a medicine somewhere it does not belong is warned about
+ * once and then allowed. Refusing outright would make goods-in a puzzle with a
+ * single correct answer and no consequence; allowing it silently would ruin a
+ * learner's week without telling them why. Warning and then letting them
+ * proceed is the only version where the mistake is genuinely theirs, and where
+ * a vaccine left out of the fridge is destroyed for a reason they were given.
+ */
 export const putAwayStock = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(z.object({
     moves: z.array(z.object({
       stockId: z.string().uuid(),
-      zone: z.enum(["ambient", "cold-chain", "cd-safe", "flammables"]),
+      zone: z.enum(["ambient", "cold-chain", "cd-safe", "flammables", "quarantine"]),
     })).min(1).max(200),
+    /** Set once the learner has seen the warning and meant it anyway. */
+    confirm: z.boolean().default(false),
   }))
   .handler(async ({ data, context }) => {
     const db = context.supabase as any;
@@ -279,33 +436,164 @@ export const putAwayStock = createServerFn({ method: "POST" })
       (catalogue.data ?? []).map((r: Row) => [r.drug_id, r]));
     const byId = new Map<string, Row>((batches.data ?? []).map((r: Row) => [r.id, r]));
 
-    const wrong: string[] = [];
-    const good: Array<{ id: string; zone: string }> = [];
+    const warnings: string[] = [];
+    const moves: Array<{ id: string; zone: string }> = [];
     for (const move of data.moves) {
       const batch = byId.get(move.stockId);
       if (!batch) continue;
       const rule = required.get(batch.drug_id);
-      const zone = rule?.storage ?? "ambient";
-      if (zone !== move.zone) {
-        const name = rule?.drugs?.name ?? "That medicine";
-        wrong.push(`${name} belongs in ${zone.replace("-", " ")}.`);
-      } else {
-        good.push({ id: move.stockId, zone: move.zone });
+      const zone = (rule?.storage ?? "ambient") as StorageZone;
+      const name = rule?.drugs?.name ?? "That medicine";
+      // Quarantine is always a legitimate place to put something: it is where
+      // stock is held, not a storage class you can get wrong.
+      if (move.zone !== "quarantine" && zone !== move.zone) {
+        warnings.push(zone === "cold-chain"
+          ? `${name} belongs in the fridge. Left out of it, this batch will be destroyed.`
+          : `${name} belongs in ${zone.replace("-", " ")}.`);
       }
+      moves.push({ id: move.stockId, zone: move.zone });
     }
 
-    // Refused rather than accepted and punished later. Mis-stored stock has
-    // real consequences - a vaccine left out is destroyed - and until the
-    // events pass models that properly, telling the learner now is the honest
-    // behaviour rather than silently ruining their week.
-    if (wrong.length) {
-      return { ok: false as const, error: "Some of that is in the wrong place.", detail: wrong };
+    if (warnings.length && !data.confirm) {
+      return { ok: false as const, error: "Some of that is going in the wrong place.", detail: warnings };
     }
 
-    for (const move of good) {
+    for (const move of moves) {
       await db.from("wh_stock").update({ location: move.zone }).eq("id", move.id);
     }
-    return { ok: true as const, moved: good.length };
+    return { ok: true as const, moved: moves.length, warnings };
+  });
+
+/* ------------------------------------------------------------------ *
+ * Paperwork
+ * ------------------------------------------------------------------ */
+
+/**
+ * Write up the controlled drugs register.
+ *
+ * The learner enters what they counted in the safe and that becomes the
+ * register's running balance. Deliberately not filled in automatically: a
+ * register that reconciles itself teaches nothing, because in a real pharmacy
+ * the shelf moves whether the book was written up or not, and the whole reason
+ * the register exists is the gap between the two.
+ */
+export const signCdRegister = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({
+    counts: z.array(z.object({
+      drugId: z.string().uuid(),
+      counted: z.number().int().min(0).max(100000),
+    })).max(60),
+  }))
+  .handler(async ({ data, context }) => {
+    const db = context.supabase as any;
+    const facility = await loadFacility(db, context.userId);
+    if (!facility) return { ok: false as const, error: "No pharmacy open." };
+    const period = Number(facility.current_period);
+
+    for (const entry of data.counts) {
+      await db.from("wh_cd_register").upsert({
+        facility_id: facility.id,
+        drug_id: entry.drugId,
+        balance: entry.counted,
+        posted_through_period: period,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "facility_id,drug_id" });
+    }
+
+    await db.from("wh_paperwork").upsert({
+      facility_id: facility.id,
+      period_no: period,
+      kind: "cd-register",
+    }, { onConflict: "facility_id,period_no,kind" });
+
+    return { ok: true as const, posted: data.counts.length, period };
+  });
+
+/** Record that the fridge temperature was read and logged this week. */
+export const logTemperature = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const db = context.supabase as any;
+    const facility = await loadFacility(db, context.userId);
+    if (!facility) return { ok: false as const, error: "No pharmacy open." };
+    const period = Number(facility.current_period);
+
+    await db.from("wh_paperwork").upsert({
+      facility_id: facility.id,
+      period_no: period,
+      kind: "temperature-log",
+    }, { onConflict: "facility_id,period_no,kind" });
+
+    return { ok: true as const, period };
+  });
+
+/* ------------------------------------------------------------------ *
+ * Acting on what the week threw at you
+ * ------------------------------------------------------------------ */
+
+/**
+ * Answer an open notice.
+ *
+ * The decision is recorded here; the stock it affects is dealt with at the
+ * close, so every write-off passes through the same arithmetic and lands in
+ * the same week's wastage. A learner who does nothing has still made a
+ * decision, and the close treats it as one.
+ */
+export const resolveEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(z.object({
+    eventId: z.string().uuid(),
+    action: z.enum(["quarantine", "use", "destroy", "acknowledge"]),
+  }))
+  .handler(async ({ data, context }) => {
+    const db = context.supabase as any;
+    const facility = await loadFacility(db, context.userId);
+    if (!facility) return { ok: false as const, error: "No pharmacy open." };
+
+    const found = await db.from("wh_events")
+      .select("*").eq("facility_id", facility.id).eq("id", data.eventId).maybeSingle();
+    const event = found.data as Row | null;
+    if (!event) return { ok: false as const, error: "That notice is not on file." };
+    if (event.resolved) return { ok: false as const, error: "That notice has already been dealt with." };
+
+    const payload = (event.payload ?? {}) as Row;
+
+    if (event.kind === "recall") {
+      if (data.action !== "quarantine") {
+        return {
+          ok: false as const,
+          error: "A recalled batch has to be pulled from sale. There is no other lawful answer.",
+        };
+      }
+      await db.from("wh_stock").update({ location: "quarantine" })
+        .eq("facility_id", facility.id).eq("batch_no", payload.batchNo);
+      await db.from("wh_events")
+        .update({ resolved: true, resolution: "quarantined" }).eq("id", event.id);
+      return { ok: true as const, resolution: "quarantined" };
+    }
+
+    if (event.kind === "excursion") {
+      if (data.action === "acknowledge") {
+        return { ok: false as const, error: "An excursion needs a decision: use it, hold it, or destroy it." };
+      }
+      // Whatever the learner decides, the medicine is in the condition it is
+      // in. Choosing to dispense stock the data sheet condemned does not make
+      // it safe; it only adds a fine to the loss.
+      if (data.action === "quarantine") {
+        for (const batchNo of (payload.affectedBatches ?? []) as string[]) {
+          await db.from("wh_stock").update({ location: "quarantine" })
+            .eq("facility_id", facility.id).eq("batch_no", batchNo);
+        }
+      }
+      await db.from("wh_events")
+        .update({ resolved: true, resolution: data.action }).eq("id", event.id);
+      return { ok: true as const, resolution: data.action };
+    }
+
+    await db.from("wh_events")
+      .update({ resolved: true, resolution: "acknowledged" }).eq("id", event.id);
+    return { ok: true as const, resolution: "acknowledged" };
   });
 
 /* ------------------------------------------------------------------ *
@@ -318,19 +606,31 @@ export const advanceWeek = createServerFn({ method: "POST" })
     const db = context.supabase as any;
     const facility = await loadFacility(db, context.userId);
     if (!facility) return { ok: false as const, error: "No pharmacy open." };
+    const period = Number(facility.current_period);
+    const difficulty = (facility.difficulty ?? "medium") as Difficulty;
 
-    const [catalogue, stock, orders] = await Promise.all([
-      db.from("wh_catalogue").select("*").eq("facility_id", facility.id),
-      db.from("wh_stock").select("*").eq("facility_id", facility.id).gt("qty", 0),
-      db.from("wh_orders").select("*, wh_order_lines(*)").eq("facility_id", facility.id)
-        .eq("status", "placed"),
-    ]);
+    const [catalogue, stock, orders, licenceRows, openEvents, registerRows, paperwork, lastPeriod] =
+      await Promise.all([
+        db.from("wh_catalogue").select("*, drugs(name)").eq("facility_id", facility.id),
+        db.from("wh_stock").select("*").eq("facility_id", facility.id).gt("qty", 0),
+        db.from("wh_orders").select("*, wh_order_lines(*)").eq("facility_id", facility.id)
+          .eq("status", "placed"),
+        db.from("wh_licences").select("*").eq("facility_id", facility.id),
+        db.from("wh_events").select("*").eq("facility_id", facility.id).eq("resolved", false),
+        db.from("wh_cd_register").select("*").eq("facility_id", facility.id),
+        db.from("wh_paperwork").select("kind").eq("facility_id", facility.id).eq("period_no", period),
+        db.from("wh_periods").select("closing_cash_paisa").eq("facility_id", facility.id)
+          .eq("period_no", period - 1).maybeSingle(),
+      ]);
 
     const lines = (catalogue.data ?? []) as Row[];
     const prices: Record<string, PricedDrug> = {};
     const demand: DemandProfile[] = [];
     const shelfLife = new Map<string, number>();
+    const requiredZone: Record<string, StorageZone> = {};
+    const catalogueByDrug = new Map<string, Row>();
     for (const line of lines) {
+      catalogueByDrug.set(line.drug_id, line);
       prices[line.drug_id] = {
         drugId: line.drug_id,
         mrp: Number(line.mrp_paisa),
@@ -343,9 +643,11 @@ export const advanceWeek = createServerFn({ method: "POST" })
         peakWeek: Number(line.peak_week),
       });
       shelfLife.set(line.drug_id, Number(line.shelf_life_weeks));
+      requiredZone[line.drug_id] = line.storage as StorageZone;
     }
 
-    const batches: StockBatch[] = (stock.data ?? []).map((r: Row) => ({
+    const stockRows = (stock.data ?? []) as Row[];
+    const batches: StockBatch[] = stockRows.map((r) => ({
       drugId: r.drug_id,
       batchNo: r.batch_no,
       qty: Number(r.qty),
@@ -354,26 +656,285 @@ export const advanceWeek = createServerFn({ method: "POST" })
       location: r.location,
     }));
 
-    const pending: PendingOrder[] = (orders.data ?? []).map((o: Row) => ({
+    const orderRows = (orders.data ?? []) as Row[];
+
+    /* ---- 1. Licences mature and lapse before anyone looks at the shelf ---- */
+    const licences: Licence[] = [];
+    const licenceEvents: Row[] = [];
+    for (const row of (licenceRows.data ?? []) as Row[]) {
+      let status = row.status as Licence["status"];
+      const expires = Number(row.expires_period);
+
+      // A permit applied for weeks ago comes through on its date.
+      if (status === "pending" && Number(row.issued_period) <= period) {
+        status = "active";
+        await db.from("wh_licences").update({ status }).eq("id", row.id);
+      }
+      if (status === "active" && expires < period) {
+        status = "expired";
+        await db.from("wh_licences").update({ status }).eq("id", row.id);
+        licenceEvents.push({
+          facility_id: facility.id,
+          period_no: period,
+          kind: "licence-expiry",
+          payload: { licence: row.kind, expiredPeriod: expires },
+          resolved: false,
+        });
+      }
+      licences.push({ kind: row.kind, status, expiresPeriod: expires });
+    }
+    if (licenceEvents.length) await db.from("wh_events").insert(licenceEvents);
+
+    const trading = isTrading(facility, licences, period);
+
+    /* ---- 2. What this week throws at them -------------------------------- */
+    const eventStock: EventStock[] = stockRows.map((r) => ({
+      drugId: r.drug_id,
+      name: catalogueByDrug.get(r.drug_id)?.drugs?.name ?? "Medicine",
+      batchNo: r.batch_no,
+      qty: Number(r.qty),
+      location: r.location,
+      requiredZone: (requiredZone[r.drug_id] ?? "ambient") as Exclude<StorageZone, "quarantine">,
+    }));
+
+    // One arrival per order, represented by its largest line, so a short
+    // delivery lands on something the learner can see is short.
+    const arrivingLine = new Map<string, Row>();
+    const arriving: Array<{ orderId: string; drugName: string; packs: number }> = [];
+    for (const order of orderRows) {
+      if (Number(order.eta_period) > period) continue;
+      const biggest = [...((order.wh_order_lines ?? []) as Row[])]
+        .sort((a, b) => Number(b.packs) - Number(a.packs))[0];
+      if (!biggest) continue;
+      arrivingLine.set(order.id, biggest);
+      arriving.push({
+        orderId: order.id,
+        drugName: catalogueByDrug.get(biggest.drug_id)?.drugs?.name ?? "Medicine",
+        packs: Number(biggest.packs),
+      });
+    }
+
+    const rolled = rollEvents({
+      period, seed: facility.seed, difficulty, stock: eventStock, arriving,
+    });
+
+    // A short delivery is applied to the order before the goods land, so what
+    // arrives is what the supplier actually sent.
+    for (const event of rolled) {
+      if (event.kind !== "shortage") continue;
+      const short = event as ShortageEvent;
+      const line = arrivingLine.get(short.orderId);
+      if (!line) continue;
+      line.received_packs = short.delivered;
+      await db.from("wh_order_lines")
+        .update({ received_packs: short.delivered }).eq("id", line.id);
+    }
+
+    /* ---- 3. Notices from earlier weeks, answered or ignored --------------- */
+    const condemned: string[] = [];
+    const charges: Array<{ kind: LedgerKind; amount: Paisa; note: string }> = [];
+
+    for (const row of (openEvents.data ?? []) as Row[]) {
+      if (Number(row.period_no) >= period) continue;
+      const payload = (row.payload ?? {}) as Row;
+
+      if (row.kind === "recall") {
+        const batchNo = payload.batchNo as string;
+        const stillHeld = batches.some((b) => b.batchNo === batchNo && b.qty > 0);
+        if (!stillHeld) {
+          // The batch is gone, which means it went over the counter after the
+          // notice. That is the worst outcome a recall has, not a pass - and
+          // an empty shelf must not be allowed to read as compliance.
+          charges.push({
+            kind: "penalty",
+            amount: RECALL_IGNORED_FINE,
+            note: `Recalled batch ${batchNo} was dispensed rather than withdrawn`,
+          });
+          await db.from("wh_events")
+            .update({ resolved: true, resolution: "dispensed before withdrawal" })
+            .eq("id", row.id);
+          continue;
+        }
+        if (recallHonoured(batches, batchNo)) {
+          await db.from("wh_events")
+            .update({ resolved: true, resolution: "destroyed" }).eq("id", row.id);
+          condemned.push(batchNo);
+        } else {
+          // Charged again every week it stays on the shelf: the harm is
+          // ongoing, and so is the choice to keep selling it.
+          charges.push({
+            kind: "penalty",
+            amount: RECALL_IGNORED_FINE,
+            note: `Recalled batch ${batchNo} still on sale`,
+          });
+        }
+        continue;
+      }
+
+      if (row.kind === "excursion") {
+        condemned.push(...((payload.affectedBatches ?? []) as string[]));
+        await db.from("wh_events")
+          .update({ resolved: true, resolution: "destroyed - not acted on" }).eq("id", row.id);
+        if (payload.requiredAction && payload.requiredAction !== "use") {
+          charges.push({
+            kind: "penalty",
+            amount: EXCURSION_IGNORED_FINE,
+            note: "Cold chain excursion left unanswered",
+          });
+        }
+        continue;
+      }
+
+      if (row.kind === "shortage") {
+        await db.from("wh_events")
+          .update({ resolved: true, resolution: "noted" }).eq("id", row.id);
+      }
+    }
+
+    // Decisions the learner did make, applied now so the write-off lands in
+    // this week's wastage rather than nowhere.
+    const answered = await db.from("wh_events")
+      .select("*").eq("facility_id", facility.id).eq("resolved", true)
+      .in("resolution", ["quarantined", "quarantine", "destroy", "use"]);
+    for (const row of (answered.data ?? []) as Row[]) {
+      const payload = (row.payload ?? {}) as Row;
+
+      if (row.kind === "recall") {
+        condemned.push(payload.batchNo as string);
+        await db.from("wh_events").update({ resolution: "destroyed" }).eq("id", row.id);
+        continue;
+      }
+
+      if (row.kind === "excursion") {
+        if (row.resolution === "use" && payload.requiredAction !== "use") {
+          charges.push({
+            kind: "penalty",
+            amount: EXCURSION_IGNORED_FINE,
+            note: "Stock dispensed against the manufacturer's stability limits",
+          });
+        }
+        // The condition of the medicine does not depend on the decision - but
+        // a learner who chose to destroy stock the data sheet had cleared has
+        // still destroyed it, and should see the loss they chose.
+        if (payload.requiredAction !== "use" || row.resolution === "destroy") {
+          condemned.push(...((payload.affectedBatches ?? []) as string[]));
+        }
+        await db.from("wh_events").update({ resolution: "settled" }).eq("id", row.id);
+      }
+    }
+
+    /* ---- 4. The inspector, if this is the week ---------------------------- */
+    const inspection = rolled.find((e) => e.kind === "inspection");
+    let suspendedUntil = Number(facility.suspended_until_period ?? 0);
+    let inspectionResult: ReturnType<typeof inspect> | null = null;
+
+    if (inspection) {
+      const physical = new Map<string, number>();
+      for (const row of stockRows) {
+        physical.set(row.drug_id, (physical.get(row.drug_id) ?? 0) + Number(row.qty));
+      }
+      const registerByDrug = new Map<string, Row>(
+        ((registerRows.data ?? []) as Row[]).map((r) => [r.drug_id, r]));
+
+      const register: RegisterLine[] = [];
+      for (const line of lines) {
+        if (!line.controlled) continue;
+        const book = registerByDrug.get(line.drug_id);
+        const counted = physical.get(line.drug_id) ?? 0;
+        if (!book && counted === 0) continue;
+        register.push({
+          drugId: line.drug_id,
+          name: line.drugs?.name ?? "Controlled medicine",
+          expected: Number(book?.balance ?? 0),
+          counted,
+        });
+      }
+
+      const complianceStock: ComplianceStock[] = stockRows.map((r) => ({
+        drugId: r.drug_id,
+        batchNo: r.batch_no,
+        qty: Number(r.qty),
+        expiresPeriod: Number(r.expires_period),
+        location: r.location,
+        requiredZone: (requiredZone[r.drug_id] ?? "ambient") as Exclude<StorageZone, "quarantine">,
+        controlled: Boolean(catalogueByDrug.get(r.drug_id)?.controlled),
+      }));
+
+      // An inspector only asks for a fridge log where there is a fridge in use.
+      const kept = new Set(((paperwork.data ?? []) as Row[]).map((r) => r.kind as string));
+      const usesFridge = complianceStock.some((s) => s.requiredZone === "cold-chain" && s.qty > 0);
+
+      inspectionResult = inspect({
+        period,
+        licences,
+        stock: complianceStock,
+        register,
+        temperatureLogKept: !usesFridge || kept.has("temperature-log"),
+      });
+
+      if (inspectionResult.totalFine > 0) {
+        charges.push({
+          kind: "penalty",
+          amount: inspectionResult.totalFine,
+          note: `Inspection, week ${period}: ${inspectionResult.findings.length} finding(s)`,
+        });
+      }
+      if (inspectionResult.suspended) suspendedUntil = period + SUSPENSION_WEEKS;
+
+      await db.from("wh_events").insert({
+        facility_id: facility.id,
+        period_no: period,
+        kind: "inspection",
+        payload: {
+          notice: 0,
+          findings: inspectionResult.findings,
+          totalFine: inspectionResult.totalFine,
+          suspended: inspectionResult.suspended,
+          passed: inspectionResult.passed,
+          suspendedUntilPeriod: inspectionResult.suspended ? suspendedUntil : null,
+        },
+        // An inspection is a report, not a task. There is nothing to answer.
+        resolved: true,
+        resolution: inspectionResult.passed ? "passed" : "findings recorded",
+      });
+    }
+
+    /* ---- 5. Recalls, excursions and short deliveries raised this week ----- */
+    const raised = rolled.filter((e) => e.kind !== "inspection");
+    if (raised.length) {
+      await db.from("wh_events").insert(raised.map((event) => ({
+        facility_id: facility.id,
+        period_no: period,
+        kind: event.kind,
+        payload: event as unknown as Row,
+        // A short delivery is information. A recall or an excursion is a
+        // decision, and it stays open until the learner makes it.
+        resolved: event.kind === "shortage",
+        resolution: event.kind === "shortage" ? "noted" : null,
+      })));
+    }
+
+    /* ---- 6. The week itself ----------------------------------------------- */
+    const pending: PendingOrder[] = orderRows.map((o) => ({
       id: o.id,
       etaPeriod: Number(o.eta_period),
       paymentDuePeriod: Number(o.payment_due_period),
       total: Number(o.total_paisa),
       paid: Boolean(o.paid),
       delivered: o.status === "delivered",
-      lines: (o.wh_order_lines ?? []).map((l: Row) => ({
+      lines: ((o.wh_order_lines ?? []) as Row[]).map((l) => ({
         drugId: l.drug_id,
         packs: Number(l.packs),
         unitPrice: Number(l.unit_price_paisa),
         shelfLifeWeeks: shelfLife.get(l.drug_id) ?? 52,
-        receivedPacks: l.received_packs === null ? undefined : Number(l.received_packs),
+        receivedPacks: l.received_packs === null || l.received_packs === undefined
+          ? undefined : Number(l.received_packs),
       })),
     }));
 
-    const difficulty = (facility.difficulty ?? "medium") as Difficulty;
     const result = closeWeek({
       facility: {
-        period: Number(facility.current_period),
+        period,
         cash: Number(facility.cash_paisa),
         overdraft: Number(facility.overdraft_paisa),
         seed: facility.seed,
@@ -383,10 +944,13 @@ export const advanceWeek = createServerFn({ method: "POST" })
       prices,
       demand,
       overheads: STARTING[difficulty].weeklyOverheads,
+      trading,
+      requiredZone,
+      condemned,
+      charges,
     });
 
-    const period = Number(facility.current_period);
-
+    /* ---- 7. Write it all back --------------------------------------------- */
     // Stock is replaced wholesale rather than diffed. At forty lines this is a
     // handful of rows, and a replace cannot leave a batch behind the way a
     // partial update can.
@@ -411,6 +975,13 @@ export const advanceWeek = createServerFn({ method: "POST" })
       await db.from("wh_orders").update({ paid: true }).eq("id", payment.orderId);
     }
 
+    const penalties = charges.reduce(
+      (sum, c) => sum + (c.kind === "penalty" ? c.amount : 0), 0);
+    const fees = await db.from("wh_ledger").select("amount_paisa")
+      .eq("facility_id", facility.id).eq("period_no", period).eq("kind", "licence");
+    const feesPaid = ((fees.data ?? []) as Row[])
+      .reduce((sum, r) => sum + Math.abs(Number(r.amount_paisa)), 0);
+
     await db.from("wh_periods").insert({
       facility_id: facility.id,
       period_no: period,
@@ -419,7 +990,13 @@ export const advanceWeek = createServerFn({ method: "POST" })
       wastage_paisa: result.kpis.wastage,
       purchases_paisa: result.paid.reduce((sum, p) => sum + p.amount, 0),
       overheads_paisa: STARTING[difficulty].weeklyOverheads,
-      opening_cash_paisa: Number(facility.cash_paisa),
+      penalties_paisa: penalties,
+      fees_paisa: feesPaid,
+      // The week opened where the last one closed. Fees paid during the week
+      // are in the ledger, so opening plus the ledger still lands on closing.
+      opening_cash_paisa: lastPeriod.data
+        ? Number(lastPeriod.data.closing_cash_paisa)
+        : STARTING[difficulty].cash,
       closing_cash_paisa: result.kpis.closingCash,
       demanded: result.perDrug.reduce((n, d) => n + d.demanded, 0),
       sold: result.perDrug.reduce((n, d) => n + d.sold, 0),
@@ -439,6 +1016,7 @@ export const advanceWeek = createServerFn({ method: "POST" })
       current_period: period + 1,
       cash_paisa: result.kpis.closingCash,
       status: result.insolvent ? "insolvent" : "running",
+      suspended_until_period: suspendedUntil,
       updated_at: new Date().toISOString(),
     }).eq("id", facility.id);
 
@@ -448,8 +1026,15 @@ export const advanceWeek = createServerFn({ method: "POST" })
       kpis: result.kpis,
       perDrug: result.perDrug,
       writeOffs: result.writeOffs,
+      spoiled: result.spoiled,
+      condemned: result.condemned,
       delivered: result.delivered,
       paid: result.paid,
       insolvent: result.insolvent,
+      traded: trading,
+      suspendedUntilPeriod: suspendedUntil,
+      events: rolled,
+      inspection: inspectionResult,
+      charges,
     };
   });

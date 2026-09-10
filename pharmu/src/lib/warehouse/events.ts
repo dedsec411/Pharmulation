@@ -15,7 +15,7 @@
  * pharmacist actually does: read the data sheet, not recall a threshold.
  */
 
-import type { StorageZone } from "./economics";
+import { RUPEE, type Paisa, type StorageZone } from "./economics";
 
 export type EventKind = "recall" | "excursion" | "inspection" | "shortage";
 
@@ -101,6 +101,18 @@ export const ODDS: Record<"easy" | "medium" | "hard", EventOdds> = {
   medium: { recall: 0.10, excursion: 0.09, inspectionEvery: 10 },
   hard:   { recall: 0.16, excursion: 0.14, inspectionEvery: 6 },
 };
+
+/**
+ * What ignoring a notice costs, charged every week it is still ignored.
+ *
+ * A recall is not advice. Leaving a withdrawn batch on the shelf is charged
+ * again each week rather than once, because the harm is ongoing - and so is
+ * the choice to keep selling it.
+ */
+export const RECALL_IGNORED_FINE: Paisa = 25_000 * RUPEE;
+
+/** What dispensing stock the data sheet condemned costs. */
+export const EXCURSION_IGNORED_FINE: Paisa = 40_000 * RUPEE;
 
 const RECALL_REASONS = [
   "Out-of-specification assay result reported by the manufacturer.",
