@@ -320,3 +320,36 @@ describe("fines and fees", () => {
     expect(out.ledger.find((e) => e.kind === "penalty")?.amount).toBe(-10_000 * RUPEE);
   });
 });
+
+describe("stock condemned outside the week", () => {
+  const condemn = (over = {}) => closeWeek(week({
+    stock: [stock({ batchNo: "PULLED" }), stock({ batchNo: "FINE" })],
+    demand: [flatDemand(20)],
+    condemned: ["PULLED"],
+    ...over,
+  }));
+
+  it("writes it off and charges the value as wastage", () => {
+    const out = condemn();
+    expect(out.condemned[0].batchNo).toBe("PULLED");
+    expect(out.kpis.wastage).toBe(100 * 96 * RUPEE);
+    expect(out.stock.some((b) => b.batchNo === "PULLED")).toBe(false);
+  });
+
+  // A recalled batch is off sale from the moment the notice is honoured.
+  it("cannot be dispensed in the week it was withdrawn", () => {
+    const out = condemn();
+    expect(out.perDrug[0].revenue).toBe(out.perDrug[0].sold * 120 * RUPEE);
+    expect(out.stock.find((b) => b.batchNo === "FINE")!.qty).toBeLessThan(100);
+  });
+
+  it("leaves every other batch alone", () => {
+    expect(condemn().stock.some((b) => b.batchNo === "FINE")).toBe(true);
+  });
+
+  it("ignores a batch number the pharmacy no longer holds", () => {
+    const out = closeWeek(week({ stock: [stock()], condemned: ["GONE"] }));
+    expect(out.condemned).toHaveLength(0);
+    expect(out.stock).toHaveLength(1);
+  });
+});

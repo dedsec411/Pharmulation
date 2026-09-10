@@ -73,6 +73,13 @@ export type WeekInput = {
   /** Where each medicine has to live, so stock kept wrongly can spoil. */
   requiredZone?: Readonly<Record<string, StorageZone>>;
   /**
+   * Batch numbers condemned by something decided outside this week: a recall
+   * the learner honoured, or a cold-chain excursion they acted on - or did
+   * not. Written off before the counter opens, because none of it is fit to
+   * dispense.
+   */
+  condemned?: readonly string[];
+  /**
    * Money leaving this week for something that is neither stock nor rent: a
    * licence fee applied for, a fine handed down by an inspection. Each carries
    * its own ledger kind so the learner is told which it was.
@@ -97,6 +104,8 @@ export type WeekResult = {
   writeOffs: ExpiredWriteOff[];
   /** Batches destroyed by being kept somewhere they should not have been. */
   spoiled: ExpiredWriteOff[];
+  /** Batches written off because a recall or an excursion took them. */
+  condemned: ExpiredWriteOff[];
   /** Order ids that arrived this week. */
   delivered: string[];
   /** Order ids paid this week, and what they cost. */
@@ -158,7 +167,33 @@ export function closeWeek(input: WeekInput): WeekResult {
     ledger.push({ kind: "purchase", amount: -order.total, note: `Invoice ${order.id.slice(0, 6)}` });
   }
 
-  // ---- 3. Stock ruined by being kept in the wrong place -------------------
+  // ---- 3. Stock condemned by a recall or an excursion --------------------
+  // Recalled stock is written off rather than credited by the manufacturer.
+  // A credit note would be the more realistic paperwork, but it would also
+  // make honouring a recall cost nothing, and the whole weight of the decision
+  // is that doing the right thing here is expensive.
+  const condemnedSet = new Set(input.condemned ?? []);
+  const condemned: ExpiredWriteOff[] = [];
+  if (condemnedSet.size) {
+    const survivors: StockBatch[] = [];
+    for (const batch of stock) {
+      if (condemnedSet.has(batch.batchNo) && batch.qty > 0) {
+        condemned.push({ batchNo: batch.batchNo, qty: batch.qty, value: batch.qty * batch.unitCost });
+      } else {
+        survivors.push(batch);
+      }
+    }
+    stock = survivors;
+  }
+  const condemnedValue = condemned.reduce((sum, w) => sum + w.value, 0);
+  if (condemned.length) {
+    ledger.push({
+      kind: "write-off", amount: 0,
+      note: `${condemned.length} batch(es) withdrawn and destroyed`,
+    });
+  }
+
+  // ---- 4. Stock ruined by being kept in the wrong place -------------------
   // Before the counter opens, because a vaccine that spent the week out of the
   // fridge was never fit to dispense at any point during it.
   const spoiled = spoilMisstored(stock, input.requiredZone ?? {});
@@ -170,7 +205,7 @@ export function closeWeek(input: WeekInput): WeekResult {
     });
   }
 
-  // ---- 4. The counter sells what it can ----------------------------------
+  // ---- 5. The counter sells what it can ----------------------------------
   const trading = input.trading !== false;
   const perDrug: DrugOutcome[] = [];
   let revenue: Paisa = 0;
@@ -215,7 +250,7 @@ export function closeWeek(input: WeekInput): WeekResult {
     });
   }
 
-  // ---- 5. Stock that ran out of life -------------------------------------
+  // ---- 6. Stock that ran out of life -------------------------------------
   const expired = expireStock(stock, period);
   stock = expired.kept;
   if (expired.wastage > 0) {
@@ -225,7 +260,7 @@ export function closeWeek(input: WeekInput): WeekResult {
     });
   }
 
-  // ---- 6. The week's costs ------------------------------------------------
+  // ---- 7. The week's costs ------------------------------------------------
   if (overheads > 0) ledger.push({ kind: "overhead", amount: -overheads, note: "Rent, salaries, utilities" });
 
   let charged: Paisa = 0;
@@ -236,7 +271,7 @@ export function closeWeek(input: WeekInput): WeekResult {
   }
 
   const kpis = periodKPIs({
-    revenue, cogs, wastage: expired.wastage + spoiled.wastage,
+    revenue, cogs, wastage: expired.wastage + spoiled.wastage + condemnedValue,
     demanded: demandedTotal, sold: soldTotal,
     openingCash: facility.cash, purchases, overheads, charges: charged,
   });
@@ -249,6 +284,7 @@ export function closeWeek(input: WeekInput): WeekResult {
     perDrug,
     writeOffs: expired.writeOffs,
     spoiled: spoiled.writeOffs,
+    condemned,
     delivered,
     paid,
     // Wastage is a loss of value, not of cash - the cash left when the stock
