@@ -287,7 +287,13 @@ export type OpeningBatch = {
 export function openingStock(
   lines: readonly CatalogueLine[], seed: string, coverWeeks: number,
 ): OpeningBatch[] {
-  return lines.map((line, index) => {
+  // Nothing controlled on the opening shelf. The facility opens with a Drug
+  // Sale Licence and no narcotics permit, and a pharmacy without the permit
+  // would not be holding the stock - starting it with morphine it is not
+  // licensed for would fail the first inspection for a decision the learner
+  // never made. Controlled lines stay in the catalogue, because obtaining the
+  // permit and then ordering them is the goal.
+  return lines.filter((line) => !line.controlled).map((line, index) => {
     const r = unit(`${seed}:open:${line.drugId}`);
     const qty = Math.max(1, Math.round(line.baseWeekly * coverWeeks * (0.7 + r * 0.6)));
     // Every fifth line, and never a controlled one, arrives near the end of

@@ -176,6 +176,16 @@ describe("opening a facility", () => {
     expect(stock.some((b) => b.expiresPeriod <= 8)).toBe(true);
   });
 
+  // The facility opens with a sale licence and no narcotics permit. Handing it
+  // stock it is not licensed to hold would fail the first inspection for a
+  // decision the learner never made.
+  it("opens with nothing controlled on the shelf", () => {
+    const stock = openingStock(lines, "s", 2);
+    const controlled = lines.filter((l) => l.controlled).map((l) => l.drugId);
+    expect(controlled.length).toBeGreaterThan(0);
+    expect(stock.some((b) => controlled.includes(b.drugId))).toBe(false);
+  });
+
   it("never opens with a dead or empty batch", () => {
     const stock = openingStock(lines, "s", 2);
     expect(stock.every((b) => b.qty >= 1 && b.expiresPeriod >= 3)).toBe(true);
