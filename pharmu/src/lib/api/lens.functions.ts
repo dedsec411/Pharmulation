@@ -140,6 +140,19 @@ const FAILURE_MESSAGE: Record<string, { error: string; hint: string }> = {
 /** Failures a better read might fix. "not-medical" is not one of them. */
 const RETRY_WORTH_IT = new Set(["low-confidence", "no-drugs", "no-known-drugs"]);
 
+/**
+ * How long the whole scan may take, and how long any one model may hold it.
+ *
+ * This runs as a serverless function with a hard ceiling on its duration, so
+ * the budget has to be ours rather than the platform's: a model that hangs
+ * must lose its turn while there is still time for the next one, instead of
+ * every model timing out in sequence and the request dying with nothing to
+ * show. 18s per model against images that now arrive around a quarter of a
+ * megabyte, where the slowest measured read was 6.5s.
+ */
+const LENS_BUDGET_MS = 45_000;
+const PER_MODEL_TIMEOUT_MS = 18_000;
+
 export const readPrescriptionImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(z.object({
@@ -147,6 +160,8 @@ export const readPrescriptionImage = createServerFn({ method: "POST" })
     mimeType: z.string().max(60),
   }))
   .handler(async ({ data }): Promise<LensResult> => {
+    const startedAt = Date.now();
+    const remainingMs = () => LENS_BUDGET_MS - (Date.now() - startedAt);
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
       return { ok: false, error: "Prescription Lens is not configured on this server.",
@@ -187,9 +202,9 @@ export const readPrescriptionImage = createServerFn({ method: "POST" })
           temperature: 0,
           maxOutputTokens: 2000,
           json: true,
-          // Vision takes materially longer than text, and the 20s default
-          // abandons requests that were going to land.
-          timeoutMs: 45_000,
+          // Bounded by whatever is left of the whole scan's budget, so a slow
+          // model cannot spend the time the next one needs.
+          timeoutMs: Math.max(6_000, Math.min(PER_MODEL_TIMEOUT_MS, remainingMs())),
           models,
         });
         if (!result.ok) {
@@ -236,8 +251,10 @@ export const readPrescriptionImage = createServerFn({ method: "POST" })
     // a second model once before telling someone their prescription is
     // unreadable. Only for failures a better read could fix - a photograph of a
     // sandwich is still not a prescription on the second attempt.
-    if (!built.ok && RETRY_WORTH_IT.has(built.reason)) {
-      const second = await read(visionModelCandidates("gemini-3.6-flash"), SECOND_LOOK);
+    // Only when there is genuinely time for another read. Starting one with
+    // four seconds left just guarantees a timeout on top of a failure.
+    if (!built.ok && RETRY_WORTH_IT.has(built.reason) && remainingMs() > 12_000) {
+      const second = await read(visionModelCandidates("gemini-3.5-flash"), SECOND_LOOK);
       if (second) {
         const retry = buildLensCase(second, catalogue);
         if (retry.ok) built = retry;
