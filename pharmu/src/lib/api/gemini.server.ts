@@ -56,22 +56,38 @@ export function modelCandidates() {
 /**
  * A different chain for reading images.
  *
- * The order above was measured on text latency for the chat and the examiner,
- * where a lite model answers well and answers fast. Handwriting is not that
- * job: on a doctor's script the lite models mis-read drug names and then
- * honestly report low confidence, and Prescription Lens throws the whole read
- * away. Reading accuracy is worth several seconds here - the Lens call already
- * allows 45s and measures 3-8s - so vision leads with the full models and only
- * falls back to lite if both are unavailable.
+ * The order above was measured on text latency for the chat and the examiner.
+ * Vision is a different job and was measured separately, against the same
+ * prescription and the real Lens prompt:
+ *
+ *                            232KB    119KB    2.0MB photo
+ *   gemini-flash-lite-latest    2.7s     4.6s    25.5s      always 200
+ *   gemini-3.6-flash            6.5s    10.1s      503       one failure
+ *   gemini-3.5-flash           19.0s    13.4s    19.9s      always 200
+ *   gemini-3.5-flash-lite      38.1s        -        -       slowest by far
+ *
+ * All of them read the page correctly - four drugs, confidence 0.98 or better,
+ * every time they answered. What separates them is time, and time was what
+ * actually broke: leading with gemini-3.5-flash spent nineteen seconds to be
+ * no more right than one that took three, and on a full-size photo the whole
+ * chain overran the serverless function's budget, so every model timed out and
+ * the scan reported it could not read the image at all.
+ *
+ * So the fastest consistently-correct model leads. gemini-3.6-flash sits
+ * behind it as a full-model fallback - it is capable but returned a 503 under
+ * load, which is exactly why a chain exists. gemini-3.5-flash is last and is
+ * also what a low-confidence read escalates to: it is the slowest of the three
+ * and the only one that has come back at confidence 1.00.
+ * gemini-3.5-flash-lite is dropped outright: slowest of the four, no more
+ * accurate.
  */
 export function visionModelCandidates(preferred?: string) {
   return [
     preferred,
     process.env.GEMINI_VISION_MODEL,
-    "gemini-3.5-flash",
-    "gemini-3.6-flash",
     "gemini-flash-lite-latest",
-    "gemini-3.5-flash-lite",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
   ].filter((model, index, models): model is string =>
     Boolean(model) && models.indexOf(model) === index
   );
