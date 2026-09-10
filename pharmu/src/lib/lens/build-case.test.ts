@@ -101,15 +101,39 @@ describe("resolveReading - handwriting", () => {
     expect(resolveReading(["Amoxycillin"], CATALOGUE)?.assumed).toBe(true);
   });
 
-  it("falls through to a later candidate when the first reading is unknown", () => {
+  // A candidate is the model declining to commit. It is often right, but a
+  // real script produced "Ramacorin" with Ramipril behind it and the preview
+  // showed Ramipril as plain fact - so a candidate now travels as an
+  // assumption and says so.
+  it("falls through to a later candidate, and marks it as an assumption", () => {
     const hit = resolveReading(["Anoxydllin", "Amoxicillin"], CATALOGUE);
     expect(hit?.drug.name).toBe("Amoxicillin");
-    // An outright match on a candidate is not an assumption.
+    expect(hit?.assumed).toBe(true);
+  });
+
+  it("takes the model's own first reading at face value", () => {
+    const hit = resolveReading(["Amoxicillin 500mg", "Ampicillin"], CATALOGUE);
+    expect(hit?.drug.name).toBe("Amoxicillin");
     expect(hit?.assumed).toBe(false);
   });
 
-  it("prefers an exact match on any reading over a near-miss on the first", () => {
-    expect(resolveReading(["Ramiprill", "Naproxen"], CATALOGUE)?.assumed).toBe(false);
+  // Stripping "500mg" off what was read is not a guess about identity.
+  it("does not call a stripped strength an assumption", () => {
+    expect(resolveReading(["Ramipril 5"], CATALOGUE)?.assumed).toBe(false);
+  });
+
+  // "Ramiprill" carries "Ramipril" whole, at the start of the word, so the
+  // model's own reading resolves and the candidate is never reached.
+  it("keeps the first reading when a stray letter still contains the drug", () => {
+    const hit = resolveReading(["Ramiprill", "Naproxen"], CATALOGUE);
+    expect(hit?.drug.name).toBe("Ramipril");
+    expect(hit?.assumed).toBe(false);
+  });
+
+  it("reaches the candidate only when the first reading resolves to nothing", () => {
+    const hit = resolveReading(["Qzzptn", "Naproxen"], CATALOGUE);
+    expect(hit?.drug.name).toBe("Naproxen");
+    expect(hit?.assumed).toBe(true);
   });
 
   // The guard that keeps this feature safe: near is not the same as close
@@ -143,6 +167,41 @@ describe("resolveReading - handwriting", () => {
   it("will not guess at a short scrawl that matches nothing", () => {
     expect(resolveReading(["Rmpl"], CATALOGUE)).toBeNull();
     expect(resolveReading([""], CATALOGUE)).toBeNull();
+  });
+});
+
+describe("the patient's age", () => {
+  // A real script wrote 15:00 beside the name and the read came back with the
+  // patient aged 1 - on a prescription whose diagnosis was breast cancer.
+  it("refuses an age a prescription could not plausibly carry", () => {
+    for (const age of [0, 1, 106, 1500, -4]) {
+      const r = buildLensCase(extraction({
+        patient: { name: "X", age, sex: null, allergies: [] },
+      }), CATALOGUE);
+      expect(r.ok).toBe(true);
+      if (r.ok) expect(r.summary.patientAge).toBeNull();
+    }
+  });
+
+  it("keeps an age that makes sense", () => {
+    const r = buildLensCase(extraction({
+      patient: { name: "X", age: 68, sex: null, allergies: [] },
+    }), CATALOGUE);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.summary.patientAge).toBe(68);
+  });
+
+  // The case still has to reason about a patient even when the page gave no
+  // usable age - it just must not print one it invented.
+  it("still builds a playable case when the age is unusable", () => {
+    const r = buildLensCase(extraction({
+      patient: { name: "X", age: 1, sex: null, allergies: [] },
+    }), CATALOGUE);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.summary.patientAge).toBeNull();
+      expect((r.case.patient_info_json as { age: number }).age).toBeGreaterThan(1);
+    }
   });
 });
 

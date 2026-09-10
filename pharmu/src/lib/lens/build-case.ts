@@ -83,12 +83,17 @@ export type LensFailure =
 export type LensSummary = {
   documentType: string;
   patientName: string;
-  patientAge: number;
+  /** Null when the document carried no age we could believe. */
+  patientAge: number | null;
   diagnosis: string;
   mode: "rx" | "hospital";
   difficulty: "easy" | "medium" | "hard";
   /** Drugs that were matched to the catalogue and are in the case. */
-  resolved: Array<{ readAs: string; matchedTo: string; category: string }>;
+  resolved: Array<{
+    readAs: string; matchedTo: string; category: string;
+    /** True when this identity is the model's alternative or a nearest match. */
+    assumed: boolean;
+  }>;
   /** Read off the page but not stocked, so deliberately left out. */
   dropped: string[];
   decisionPoints: string[];
@@ -263,21 +268,40 @@ function nearestDrug(key: string, catalogue: CatalogueDrug[]): CatalogueDrug | n
 export function resolveReading(
   readings: string[], catalogue: CatalogueDrug[],
 ): { drug: CatalogueDrug; assumed: boolean } | null {
-  const given = readings.map((r) => String(r ?? "").trim()).filter(Boolean);
+  const clean = (value: string) => String(value ?? "").trim();
   // Scripts are written "Amox 500", "Ramipril 5" - a bare number with no unit,
   // which the catalogue's own key does not strip because it only removes
-  // numbers that carry one.
-  const bare = given
-    .map((r) => r.replace(/\d+(\.\d+)?\s*(mg|mcg|g|ml|iu|%)?/gi, " ").replace(/\s+/g, " ").trim())
-    .filter(Boolean);
-  const tried = [...new Set([...given, ...bare])];
-  for (const reading of tried) {
-    const exact = resolveDrug(reading, catalogue);
-    if (exact) return { drug: exact, assumed: false };
+  // numbers that carry one. Stripping it is not a guess about identity, so a
+  // bare variant inherits the confidence of the reading it came from.
+  const bare = (value: string) =>
+    value.replace(/\d+(\.\d+)?\s*(mg|mcg|g|ml|iu|%)?/gi, " ").replace(/\s+/g, " ").trim();
+
+  const primary = clean(readings[0] ?? "");
+  const alternates = readings.slice(1).map(clean).filter(Boolean);
+
+  // What the model actually read comes first and is taken at face value.
+  for (const attempt of [...new Set([primary, bare(primary)])].filter(Boolean)) {
+    const hit = resolveDrug(attempt, catalogue);
+    if (hit) return { drug: hit, assumed: false };
   }
-  for (const reading of tried) {
-    const near = nearestDrug(normalizeDrugKey(reading), catalogue);
+
+  // Anything after that is the model offering an alternative because it was
+  // not sure. It may well be right - "Augmentin" for a scrawled co-amoxiclav
+  // usually is - but it is a reading the model itself declined to commit to,
+  // so it travels as an assumption and the preview says so.
+  for (const alternate of alternates) {
+    for (const attempt of [...new Set([alternate, bare(alternate)])].filter(Boolean)) {
+      const hit = resolveDrug(attempt, catalogue);
+      if (hit) return { drug: hit, assumed: true };
+    }
+  }
+
+  // Last resort: nearest catalogue spelling. Always an assumption.
+  for (const attempt of [primary, ...alternates]) {
+    const near = nearestDrug(normalizeDrugKey(attempt), catalogue);
     if (near) return { drug: near, assumed: true };
+    const stripped = nearestDrug(normalizeDrugKey(bare(attempt)), catalogue);
+    if (stripped) return { drug: stripped, assumed: true };
   }
   return null;
 }
@@ -350,7 +374,10 @@ export function buildLensCase(
   }
 
   // Resolve first: what is left after this is what the case can be about.
-  const resolved: Array<{ readAs: string; drug: CatalogueDrug; src: LensExtraction["drugs"][number] }> = [];
+  const resolved: Array<{
+    readAs: string; drug: CatalogueDrug; assumed: boolean;
+    src: LensExtraction["drugs"][number];
+  }> = [];
   const dropped: string[] = [];
   const assumed: string[] = [];
   for (const item of extraction.drugs) {
@@ -358,7 +385,7 @@ export function buildLensCase(
     // One entry per medicine: a page listing the same drug twice is a
     // repeat, not two things to dispense.
     if (match && !resolved.some((r) => r.drug.id === match.drug.id)) {
-      resolved.push({ readAs: item.name, drug: match.drug, src: item });
+      resolved.push({ readAs: item.name, drug: match.drug, assumed: match.assumed, src: item });
       if (match.assumed) assumed.push(`${item.name} - ${match.drug.name}`);
     } else if (!match) {
       dropped.push(item.name);
@@ -372,9 +399,20 @@ export function buildLensCase(
   }
 
   const patientName = fictionalName(seed);
-  const age = Number.isFinite(Number(extraction.patient?.age))
-    ? Math.min(105, Math.max(1, Number(extraction.patient.age)))
-    : 45;
+  // A prescription carries times, dates, quantities and strengths, and a
+  // model asked for an age will sometimes hand one of those back instead. A
+  // real script for "Breast Ca / HTN" came back with the patient aged 1,
+  // read off the 15:00 written beside the name - which is both obviously
+  // wrong and the kind of wrong that undermines everything beside it.
+  //
+  // Anything outside a plausible adult-or-child range is treated as no age at
+  // all: the case still needs a number to reason about, but the preview says
+  // nothing rather than something false.
+  const readAge = Number(extraction.patient?.age);
+  const believableAge = Number.isFinite(readAge) && readAge >= 2 && readAge <= 105
+    ? Math.round(readAge)
+    : null;
+  const age = believableAge ?? 45;
   const allergies = (extraction.patient?.allergies ?? []).filter(Boolean);
   const diagnosis = String(extraction.diagnosis ?? "").trim() || "Clinical review";
   const decisionPoints = (extraction.decisionPoints ?? []).filter(Boolean).slice(0, 4);
@@ -413,9 +451,10 @@ export function buildLensCase(
 
   const summary: LensSummary = {
     documentType: extraction.documentType || "clinical document",
-    patientName, patientAge: age, diagnosis, mode, difficulty,
+    patientName, patientAge: believableAge, diagnosis, mode, difficulty,
     resolved: resolved.map((r) => ({
       readAs: r.readAs, matchedTo: r.drug.name, category: r.drug.category ?? "Uncategorised",
+      assumed: r.assumed,
     })),
     dropped,
     decisionPoints,

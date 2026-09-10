@@ -398,7 +398,9 @@ function LensPreview({ summary }: { summary: LensSummary }) {
       <div className="rounded-xl border border-border/40 bg-background/40 p-3">
         <p className="flex items-center gap-2 text-sm font-bold">
           <Stethoscope className="size-4 text-primary" />
-          {summary.patientName}, {summary.patientAge}
+          {/* No age at all rather than one we do not believe: a script that
+              said 15:00 beside the name once came back as a 1-year-old. */}
+          {summary.patientName}{summary.patientAge === null ? "" : `, ${summary.patientAge}`}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">{summary.diagnosis}</p>
         <p className="mt-2 text-[11px] text-muted-foreground">
@@ -415,6 +417,16 @@ function LensPreview({ summary }: { summary: LensSummary }) {
             <li key={r.matchedTo} className="flex items-center gap-2 text-sm">
               <Pill className="size-3.5 shrink-0 text-primary" />
               <span className="font-semibold">{r.matchedTo}</span>
+              {/* An identity the model offered as an alternative, or one we
+                  reached by nearest spelling, is a reading nobody committed
+                  to. It is marked on the medicine itself rather than only in
+                  a note underneath, because this is the line a person checks
+                  against the paper in their hand. */}
+              {r.assumed && (
+                <span className="shrink-0 rounded-sm bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  Assumed
+                </span>
+              )}
               {/* Shown when the shelf name differs from what was written, so
                   it is clear what was matched to what. */}
               {r.readAs.toLowerCase() !== r.matchedTo.toLowerCase() && (
