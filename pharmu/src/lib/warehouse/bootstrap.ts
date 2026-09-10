@@ -228,3 +228,83 @@ export function chooseCatalogue(
 
   return picked.map((drug) => commercialsFor(drug, seed));
 }
+
+/* ------------------------------------------------------------------ *
+ * Opening a facility
+ * ------------------------------------------------------------------ */
+
+export type Difficulty = "easy" | "medium" | "hard";
+
+export type StartingConditions = {
+  /** Cash in hand on day one. */
+  cash: Paisa;
+  /** How far the account may go under before the facility is finished. */
+  overdraft: Paisa;
+  /** Rent, salaries and utilities, every week, before a single sale. */
+  weeklyOverheads: Paisa;
+  /** Weeks of cover the opening shelf is stocked to. */
+  openingCoverWeeks: number;
+  /** Weeks until the Drug Sale Licence needs renewing. */
+  licenceWeeks: number;
+};
+
+/**
+ * Where a learner starts.
+ *
+ * Hard has no overdraft at all, which means a single over-ordered week can
+ * finish the run - the point being that working capital is the constraint a
+ * small pharmacy actually lives under, not an abstraction.
+ *
+ * None of these start comfortable. A facility that opens with enough cash to
+ * ignore the budget teaches nothing about the budget.
+ */
+export const STARTING: Record<Difficulty, StartingConditions> = {
+  easy:   { cash: 400_000 * RUPEE, overdraft: 100_000 * RUPEE, weeklyOverheads: 18_000 * RUPEE, openingCoverWeeks: 3, licenceWeeks: 40 },
+  medium: { cash: 250_000 * RUPEE, overdraft:  50_000 * RUPEE, weeklyOverheads: 25_000 * RUPEE, openingCoverWeeks: 2, licenceWeeks: 24 },
+  hard:   { cash: 150_000 * RUPEE, overdraft:       0,         weeklyOverheads: 32_000 * RUPEE, openingCoverWeeks: 1, licenceWeeks: 12 },
+};
+
+export type OpeningBatch = {
+  drugId: string;
+  batchNo: string;
+  qty: number;
+  expiresPeriod: number;
+  unitCost: Paisa;
+  location: Exclude<StorageZone, "quarantine">;
+};
+
+/**
+ * The shelf as the learner inherits it.
+ *
+ * Stocked to a couple of weeks of cover rather than full, so there is
+ * something to sell on day one and something to order by the end of it.
+ *
+ * A few lines are deliberately short-dated. A facility that opens clean
+ * teaches nothing about expiry until week thirty; opening with stock that
+ * dies in a fortnight puts FEFO and write-offs in front of the learner while
+ * they still have the cash to react to it.
+ */
+export function openingStock(
+  lines: readonly CatalogueLine[], seed: string, coverWeeks: number,
+): OpeningBatch[] {
+  return lines.map((line, index) => {
+    const r = unit(`${seed}:open:${line.drugId}`);
+    const qty = Math.max(1, Math.round(line.baseWeekly * coverWeeks * (0.7 + r * 0.6)));
+    // Every fifth line, and never a controlled one, arrives near the end of
+    // its life. Enough to bite, not enough to be unfair.
+    const shortDated = index % 5 === 2 && !line.controlled;
+    const life = shortDated
+      ? 2 + Math.round(r * 3)
+      : Math.round(line.shelfLifeWeeks * (0.4 + r * 0.4));
+    return {
+      drugId: line.drugId,
+      batchNo: `OPEN-${line.drugId.slice(0, 6)}`.toUpperCase(),
+      qty,
+      expiresPeriod: 1 + Math.max(2, life),
+      // Opening stock is already put away: the learner inherits a working
+      // pharmacy, not a loading bay.
+      unitCost: line.tradePrice,
+      location: line.storage,
+    };
+  });
+}

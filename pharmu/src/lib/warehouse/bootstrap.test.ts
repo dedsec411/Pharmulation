@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   chooseCatalogue, commercialsFor, storageFor, isControlled, needsColdChain,
-  type CatalogueDrug,
+  STARTING, openingStock, type CatalogueDrug,
 } from "./bootstrap";
 import { unitMargin, marginPercent, abcClassify } from "./economics";
 
@@ -136,5 +136,59 @@ describe("choosing what the pharmacy carries", () => {
     })));
     const distinct = new Set(Object.values(classes));
     expect(distinct.size).toBeGreaterThan(1);
+  });
+});
+
+describe("opening a facility", () => {
+  const lines = chooseCatalogue(CATALOGUE, "s", 10);
+
+  // Working capital is the constraint a small pharmacy actually lives under.
+  // On hard there is no overdraft at all, so one over-ordered week can end it.
+  it("gets tighter as difficulty rises", () => {
+    expect(STARTING.easy.cash).toBeGreaterThan(STARTING.medium.cash);
+    expect(STARTING.medium.cash).toBeGreaterThan(STARTING.hard.cash);
+    expect(STARTING.hard.overdraft).toBe(0);
+    expect(STARTING.hard.weeklyOverheads).toBeGreaterThan(STARTING.easy.weeklyOverheads);
+  });
+
+  // The learner inherits a working pharmacy, not a loading bay. The type
+  // already forbids quarantine here, so this checks the runtime value lands in
+  // a real zone rather than restating what the compiler guarantees.
+  it("opens the shelf already put away", () => {
+    const zones = ["ambient", "cold-chain", "cd-safe", "flammables"];
+    const stock = openingStock(lines, "s", 2);
+    expect(stock.length).toBeGreaterThan(0);
+    expect(stock.every((b) => zones.includes(b.location))).toBe(true);
+  });
+
+  it("puts every medicine where it belongs", () => {
+    const stock = openingStock(lines, "s", 2);
+    for (const batch of stock) {
+      const line = lines.find((l) => l.drugId === batch.drugId)!;
+      expect(batch.location).toBe(line.storage);
+    }
+  });
+
+  // A facility that opens clean teaches nothing about expiry until week
+  // thirty. Some stock has to be dying while there is still cash to react.
+  it("opens with some stock already near the end of its life", () => {
+    const stock = openingStock(lines, "s", 2);
+    expect(stock.some((b) => b.expiresPeriod <= 8)).toBe(true);
+  });
+
+  it("never opens with a dead or empty batch", () => {
+    const stock = openingStock(lines, "s", 2);
+    expect(stock.every((b) => b.qty >= 1 && b.expiresPeriod >= 3)).toBe(true);
+  });
+
+  it("stocks more when the cover is deeper", () => {
+    const thin = openingStock(lines, "s", 1);
+    const deep = openingStock(lines, "s", 4);
+    const total = (b: { qty: number }[]) => b.reduce((n, x) => n + x.qty, 0);
+    expect(total(deep)).toBeGreaterThan(total(thin));
+  });
+
+  it("rebuilds identically from the same seed", () => {
+    expect(openingStock(lines, "s", 2)).toEqual(openingStock(lines, "s", 2));
   });
 });
