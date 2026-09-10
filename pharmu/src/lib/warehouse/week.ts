@@ -3,9 +3,10 @@
  *
  * One function decides everything that happens between the learner finishing
  * their decisions and seeing the result, in the order a real week happens it:
- * deliveries land, suppliers get paid, the counter sells what it can, stock
- * that ran out of life is written off, the rent goes out, and what is left is
- * next week's cash.
+ * deliveries land, suppliers get paid, anything kept in the wrong place is
+ * written off, the counter sells what it can, stock that ran out of life is
+ * written off too, the rent and any fines go out, and what is left is next
+ * week's cash.
  *
  * Pure and total: same inputs, same week, every time. Nothing here reads a
  * clock, a database or an unseeded random number, so a result can be replayed
@@ -20,9 +21,9 @@
  */
 
 import {
-  fulfilFEFO, expireStock, periodKPIs, weeklyDemand,
+  fulfilFEFO, expireStock, spoilMisstored, periodKPIs, weeklyDemand,
   type Paisa, type PricedDrug, type StockBatch, type DemandProfile, type PeriodKPIs,
-  type ExpiredWriteOff,
+  type ExpiredWriteOff, type StorageZone,
 } from "./economics";
 
 export type FacilityState = {
@@ -60,6 +61,19 @@ export type WeekInput = {
   demand: readonly DemandProfile[];
   /** Rent, salaries, utilities - what the week costs before a single sale. */
   overheads: Paisa;
+  /**
+   * Whether the pharmacy may lawfully sell this week.
+   *
+   * False when the licence has lapsed or an inspection suspended it. The
+   * counter is shut and nothing is dispensed - but the rent still goes out,
+   * the invoices still fall due and the stock still ages, which is precisely
+   * why letting a licence lapse is expensive rather than merely embarrassing.
+   */
+  trading?: boolean;
+  /** Where each medicine has to live, so stock kept wrongly can spoil. */
+  requiredZone?: Readonly<Record<string, StorageZone>>;
+  /** Fines handed down this week, most often by an inspection. */
+  penalties?: ReadonlyArray<{ amount: Paisa; note: string }>;
 };
 
 export type DrugOutcome = {
@@ -77,6 +91,8 @@ export type WeekResult = {
   kpis: PeriodKPIs;
   perDrug: DrugOutcome[];
   writeOffs: ExpiredWriteOff[];
+  /** Batches destroyed by being kept somewhere they should not have been. */
+  spoiled: ExpiredWriteOff[];
   /** Order ids that arrived this week. */
   delivered: string[];
   /** Order ids paid this week, and what they cost. */
@@ -138,7 +154,20 @@ export function closeWeek(input: WeekInput): WeekResult {
     ledger.push({ kind: "purchase", amount: -order.total, note: `Invoice ${order.id.slice(0, 6)}` });
   }
 
-  // ---- 3. The counter sells what it can ----------------------------------
+  // ---- 3. Stock ruined by being kept in the wrong place -------------------
+  // Before the counter opens, because a vaccine that spent the week out of the
+  // fridge was never fit to dispense at any point during it.
+  const spoiled = spoilMisstored(stock, input.requiredZone ?? {});
+  stock = spoiled.kept;
+  if (spoiled.writeOffs.length) {
+    ledger.push({
+      kind: "write-off", amount: 0,
+      note: `${spoiled.writeOffs.length} batch(es) destroyed - stored outside the cold chain`,
+    });
+  }
+
+  // ---- 4. The counter sells what it can ----------------------------------
+  const trading = input.trading !== false;
   const perDrug: DrugOutcome[] = [];
   let revenue: Paisa = 0;
   let cogs: Paisa = 0;
@@ -149,9 +178,10 @@ export function closeWeek(input: WeekInput): WeekResult {
     const priced = prices[profile.drugId];
     const wanted = weeklyDemand(profile, period, facility.seed);
     demandedTotal += wanted;
-    if (!priced) {
-      // Nothing to sell it at, so nothing is sold. Recorded rather than
-      // silently dropped, or the service level would flatter the learner.
+    if (!priced || !trading) {
+      // Either there is no lawful price to sell at, or the pharmacy is shut.
+      // Recorded as unserved demand rather than silently dropped, or the
+      // service level would flatter a learner whose patients went elsewhere.
       perDrug.push({ drugId: profile.drugId, demanded: wanted, sold: 0, short: wanted, revenue: 0 });
       continue;
     }
@@ -174,7 +204,14 @@ export function closeWeek(input: WeekInput): WeekResult {
   }
   if (revenue > 0) ledger.push({ kind: "sale", amount: revenue, note: `Week ${period} takings` });
 
-  // ---- 4. Stock that ran out of life -------------------------------------
+  if (!trading) {
+    ledger.push({
+      kind: "penalty", amount: 0,
+      note: "Closed to the public: the pharmacy is not licensed to sell this week",
+    });
+  }
+
+  // ---- 5. Stock that ran out of life -------------------------------------
   const expired = expireStock(stock, period);
   stock = expired.kept;
   if (expired.wastage > 0) {
@@ -184,13 +221,20 @@ export function closeWeek(input: WeekInput): WeekResult {
     });
   }
 
-  // ---- 5. The week's costs ------------------------------------------------
+  // ---- 6. The week's costs ------------------------------------------------
   if (overheads > 0) ledger.push({ kind: "overhead", amount: -overheads, note: "Rent, salaries, utilities" });
 
+  let penalties: Paisa = 0;
+  for (const fine of input.penalties ?? []) {
+    if (fine.amount <= 0) continue;
+    penalties += fine.amount;
+    ledger.push({ kind: "penalty", amount: -fine.amount, note: fine.note });
+  }
+
   const kpis = periodKPIs({
-    revenue, cogs, wastage: expired.wastage,
+    revenue, cogs, wastage: expired.wastage + spoiled.wastage,
     demanded: demandedTotal, sold: soldTotal,
-    openingCash: facility.cash, purchases, overheads,
+    openingCash: facility.cash, purchases, overheads, penalties,
   });
 
   return {
@@ -200,6 +244,7 @@ export function closeWeek(input: WeekInput): WeekResult {
     kpis,
     perDrug,
     writeOffs: expired.writeOffs,
+    spoiled: spoiled.writeOffs,
     delivered,
     paid,
     // Wastage is a loss of value, not of cash - the cash left when the stock

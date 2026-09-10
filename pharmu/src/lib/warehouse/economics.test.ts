@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   RUPEE, formatPKR, unitMargin, marginPercent, lawfulSalePrice,
   reorderPoint, pricePerPack, orderCost, abcClassify,
-  weeklyDemand, fulfilFEFO, expireStock, periodKPIs,
+  weeklyDemand, fulfilFEFO, expireStock, spoilMisstored, periodKPIs,
   type StockBatch, type PricedDrug,
 } from "./economics";
 
@@ -180,5 +180,46 @@ describe("period close", () => {
     });
     expect(kpis.serviceLevel).toBe(100);
     expect(kpis.grossMarginPercent).toBe(0);
+  });
+});
+
+describe("stock kept in the wrong place", () => {
+  const COLD = { insulin: "cold-chain" } as const;
+  const insulin = (over: Partial<StockBatch> = {}) =>
+    batch({ drugId: "insulin", batchNo: "COLD1", ...over });
+
+  // A vaccine that spent the week on an ambient shelf is gone. Saying
+  // otherwise would teach a learner that the fridge is a filing preference.
+  it("destroys cold chain left out of the fridge", () => {
+    const out = spoilMisstored([insulin({ location: "ambient" })], COLD);
+    expect(out.kept).toHaveLength(0);
+    expect(out.writeOffs[0].batchNo).toBe("COLD1");
+    expect(out.wastage).toBe(10 * 96 * RUPEE);
+  });
+
+  it("leaves cold chain that is in the fridge alone", () => {
+    const out = spoilMisstored([insulin({ location: "cold-chain" })], COLD);
+    expect(out.kept).toHaveLength(1);
+    expect(out.wastage).toBe(0);
+  });
+
+  // Goods-in and recalled stock both sit in quarantine. Charging for that
+  // would punish the learner for the one thing quarantine exists to do.
+  it("does not touch cold chain sitting in quarantine", () => {
+    const out = spoilMisstored([insulin({ location: "quarantine" })], COLD);
+    expect(out.kept).toHaveLength(1);
+    expect(out.wastage).toBe(0);
+  });
+
+  // A tablet on the wrong shelf is an untidy warehouse, not destroyed stock.
+  it("does not destroy an ambient medicine put somewhere odd", () => {
+    const out = spoilMisstored([batch({ location: "flammables" })], { panadol: "ambient" });
+    expect(out.kept).toHaveLength(1);
+    expect(out.wastage).toBe(0);
+  });
+
+  it("ignores a medicine with no storage rule recorded", () => {
+    const out = spoilMisstored([insulin({ location: "ambient" })], {});
+    expect(out.kept).toHaveLength(1);
   });
 });

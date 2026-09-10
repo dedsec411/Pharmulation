@@ -282,6 +282,43 @@ export function expireStock(
   return { kept, writeOffs, wastage };
 }
 
+/**
+ * Stock destroyed by being kept in the wrong place.
+ *
+ * Only the cold chain is destroyed. A tablet that spent a week on the wrong
+ * shelf is a compliance finding and an untidy warehouse; a vaccine that spent
+ * a week out of the fridge is gone, and pretending otherwise would teach a
+ * learner that the fridge is a filing preference.
+ *
+ * Quarantine is exempt on purpose. It is where stock that has just arrived
+ * sits before anyone touches it, and where recalled stock is held - neither is
+ * a storage failure, and charging for it would punish the learner for the one
+ * thing goods-in is supposed to do.
+ */
+export function spoilMisstored(
+  batches: readonly StockBatch[],
+  requiredZone: Readonly<Record<string, StorageZone>>,
+): { kept: StockBatch[]; writeOffs: ExpiredWriteOff[]; wastage: Paisa } {
+  const kept: StockBatch[] = [];
+  const writeOffs: ExpiredWriteOff[] = [];
+  let wastage = 0;
+  for (const batch of batches) {
+    const needs = requiredZone[batch.drugId];
+    const ruined = needs === "cold-chain"
+      && batch.qty > 0
+      && batch.location !== "cold-chain"
+      && batch.location !== "quarantine";
+    if (ruined) {
+      const value = batch.qty * batch.unitCost;
+      writeOffs.push({ batchNo: batch.batchNo, qty: batch.qty, value });
+      wastage += value;
+    } else {
+      kept.push(batch);
+    }
+  }
+  return { kept, writeOffs, wastage };
+}
+
 export type PeriodKPIs = {
   revenue: Paisa;
   cogs: Paisa;
@@ -304,6 +341,8 @@ export function periodKPIs(input: {
   openingCash: Paisa;
   purchases: Paisa;
   overheads: Paisa;
+  /** Fines. Money that leaves without buying anything. */
+  penalties?: Paisa;
 }): PeriodKPIs {
   const grossMargin = input.revenue - input.cogs;
   return {
@@ -314,6 +353,7 @@ export function periodKPIs(input: {
     wastage: input.wastage,
     serviceLevel: input.demanded > 0 ? (input.sold / input.demanded) * 100 : 100,
     wastagePercent: input.revenue > 0 ? (input.wastage / input.revenue) * 100 : 0,
-    closingCash: input.openingCash + input.revenue - input.purchases - input.overheads,
+    closingCash: input.openingCash + input.revenue - input.purchases - input.overheads
+      - (input.penalties ?? 0),
   };
 }

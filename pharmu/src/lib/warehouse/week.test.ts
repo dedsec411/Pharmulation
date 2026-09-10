@@ -215,3 +215,94 @@ describe("the briefing a week opens with", () => {
     expect(brief.paymentsDue).toBe(5_000 * RUPEE);
   });
 });
+
+describe("a week the pharmacy is not allowed to trade", () => {
+  const shut = () => closeWeek(week({
+    facility: { period: 1, cash: 100_000 * RUPEE, overdraft: 0, seed: "test" },
+    stock: [stock()],
+    demand: [flatDemand(30)],
+    overheads: 5_000 * RUPEE,
+    trading: false,
+  }));
+
+  // The counter is shut. The rent is not.
+  it("sells nothing and still pays the overheads", () => {
+    const out = shut();
+    expect(out.kpis.revenue).toBe(0);
+    expect(out.kpis.closingCash).toBe(95_000 * RUPEE);
+  });
+
+  it("counts the demand it turned away rather than pretending it never came", () => {
+    const out = shut();
+    // Demand carries a seeded weekly wobble, so what matters is that every
+    // pack of it went unserved rather than the exact number.
+    expect(out.perDrug[0].demanded).toBeGreaterThan(0);
+    expect(out.perDrug[0].short).toBe(out.perDrug[0].demanded);
+    expect(out.kpis.serviceLevel).toBe(0);
+  });
+
+  it("leaves the stock on the shelf", () => {
+    expect(shut().stock[0].qty).toBe(100);
+  });
+
+  it("says why in the ledger", () => {
+    expect(shut().ledger.some((e) => e.note.includes("not licensed"))).toBe(true);
+  });
+});
+
+describe("stock kept in the wrong place", () => {
+  const cold = stock({ drugId: "insulin", batchNo: "COLD1", location: "ambient" });
+
+  it("is written off, and charged as wastage", () => {
+    const out = closeWeek(week({
+      stock: [cold],
+      requiredZone: { insulin: "cold-chain" },
+    }));
+    expect(out.spoiled[0].batchNo).toBe("COLD1");
+    expect(out.stock).toHaveLength(0);
+    expect(out.kpis.wastage).toBe(100 * 96 * RUPEE);
+  });
+
+  // Ruined before the counter opens: it was never fit to dispense.
+  it("cannot be sold in the week it was ruined", () => {
+    const out = closeWeek(week({
+      stock: [cold],
+      prices: { insulin: { drugId: "insulin", mrp: 120 * RUPEE, tradePrice: 96 * RUPEE } },
+      demand: [{ drugId: "insulin", baseWeekly: 20, seasonality: 0, peakWeek: 1 }],
+      requiredZone: { insulin: "cold-chain" },
+    }));
+    expect(out.kpis.revenue).toBe(0);
+    expect(out.perDrug[0].short).toBe(out.perDrug[0].demanded);
+  });
+
+  it("survives a delivery that has not been put away yet", () => {
+    const out = closeWeek(week({
+      orders: [order({ lines: [{ drugId: "insulin", packs: 40, unitPrice: 96 * RUPEE, shelfLifeWeeks: 30 }] })],
+      requiredZone: { insulin: "cold-chain" },
+    }));
+    expect(out.spoiled).toHaveLength(0);
+    expect(out.stock[0].location).toBe(ARRIVES_IN);
+  });
+});
+
+describe("fines", () => {
+  it("takes them out of the cash and names them in the ledger", () => {
+    const out = closeWeek(week({
+      penalties: [{ amount: 30_000 * RUPEE, note: "Expired stock not separated" }],
+    }));
+    expect(out.kpis.closingCash).toBe(70_000 * RUPEE);
+    const entry = out.ledger.find((e) => e.kind === "penalty");
+    expect(entry?.amount).toBe(-30_000 * RUPEE);
+    expect(entry?.note).toBe("Expired stock not separated");
+  });
+
+  // A fine large enough to clear the account ends the run, like any other
+  // cash that leaves and does not come back.
+  it("can finish a pharmacy that could not afford one", () => {
+    const out = closeWeek(week({
+      facility: { period: 1, cash: 10_000 * RUPEE, overdraft: 0, seed: "test" },
+      penalties: [{ amount: 75_000 * RUPEE, note: "Controlled medicines held without a permit" }],
+    }));
+    expect(out.insolvent).toBe(true);
+  });
+});
