@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { readPrescriptionImage } from "@/lib/api/lens.functions";
 import { useScannedCaseStore } from "@/lib/lens/scanned-case-store";
+import { prepareImage } from "@/lib/lens/prepare-image";
 import type { LensCase, LensSummary } from "@/lib/lens/build-case";
 import { PUBLIC_MODE_GROUPS } from "@/lib/game/shared";
 
@@ -26,26 +27,17 @@ import { PUBLIC_MODE_GROUPS } from "@/lib/game/shared";
 
 type Stage = "pick" | "reading" | "preview" | "error";
 
-const MAX_BYTES = 6 * 1024 * 1024;
+/**
+ * The largest ORIGINAL a phone is allowed to hand over. The photo is shrunk in
+ * the browser before it is sent, so this only has to be generous enough for a
+ * high-resolution camera - it is not the size that goes over the wire.
+ */
+const MAX_BYTES = 25 * 1024 * 1024;
 
 /** The game route a mode is played at. */
 function routeForMode(mode: string): string {
   const group = PUBLIC_MODE_GROUPS.find((g) => (g.modes as readonly string[]).includes(mode));
   return group ? `/game/${group.key}` : "/dashboard";
-}
-
-/** Strip the `data:image/jpeg;base64,` prefix the API does not want. */
-function toBase64(file: File): Promise<{ base64: string; mimeType: string }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Could not read that file."));
-    reader.onload = () => {
-      const raw = String(reader.result ?? "");
-      const comma = raw.indexOf(",");
-      resolve({ base64: comma >= 0 ? raw.slice(comma + 1) : raw, mimeType: file.type });
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 export function PrescriptionLens({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -99,8 +91,8 @@ export function PrescriptionLens({ open, onClose }: { open: boolean; onClose: ()
     }
     if (file.size > MAX_BYTES) {
       setError({
-        message: "That photo is too large to send.",
-        hint: "Most phone cameras are fine. If this came from a scanner, try a smaller export.",
+        message: "That image is too large to open.",
+        hint: "Any phone photo is fine. A very large scanner export may need saving smaller first.",
       });
       setStage("error");
       return;
@@ -113,7 +105,14 @@ export function PrescriptionLens({ open, onClose }: { open: boolean; onClose: ()
     setError(null);
 
     try {
-      const { base64, mimeType } = await toBase64(file);
+      // Shrunk here rather than sent whole: a 12-megapixel photo does not
+      // finish being read inside the server's time budget, and its base64 is
+      // larger than the platform will accept as a request body.
+      const { base64, mimeType, bytes, resized } = await prepareImage(file);
+      if (import.meta.env.DEV) {
+        console.info(`[lens] sending ${(bytes / 1024).toFixed(0)} KB` +
+          `${resized ? ` (from ${(file.size / 1024).toFixed(0)} KB)` : " unresized"}`);
+      }
       const result = await readPrescriptionImage({ data: { imageBase64: base64, mimeType } });
       if (!result.ok) {
         setError({ message: result.error, hint: result.hint });
