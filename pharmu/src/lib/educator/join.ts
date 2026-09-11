@@ -112,10 +112,27 @@ export function useMyEnrollments(userId?: string) {
         .select("class_id, classes(id, name, archived)")
         .eq("student_id", userId!);
       if (error) throw error;
+
+      /**
+       * An enrolment row is the proof of membership. The class it points at is
+       * only where the name comes from.
+       *
+       * This used to return the embedded class and drop any row whose embed
+       * was empty, which meant a student who could read their own enrolment
+       * but not the class behind it was reported as being in no class at all -
+       * and because the assignment and assessment queries key off the ids this
+       * returns, they silently stopped running too. A permissions problem on
+       * one table turned into "your lecturer has set you nothing".
+       *
+       * Keying off the enrolment instead means the worst case is a class whose
+       * name is not known yet, which still shows the work set for it.
+       */
       return (data ?? [])
-        .map((row: any) => row.classes)
-        .filter((c: any) => c && !c.archived)
-        .map((c: any) => ({ id: String(c.id), name: String(c.name) }));
+        .filter((row: any) => row?.class_id && !row.classes?.archived)
+        .map((row: any) => ({
+          id: String(row.class_id),
+          name: row.classes?.name ? String(row.classes.name) : "Your class",
+        }));
     },
   });
 }
