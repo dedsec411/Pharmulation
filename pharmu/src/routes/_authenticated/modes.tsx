@@ -8,7 +8,7 @@ import { LensEntry } from "@/components/lens/LensEntry";
 import { useAuthStore } from "@/lib/auth-store";
 import { useThemeStore } from "@/lib/theme-store";
 import { supabase } from "@/integrations/supabase/client";
-import { MODE_TIMERS } from "@/lib/game/shared";
+import { MODE_TIMERS, isTimedMode } from "@/lib/game/shared";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 
 export const Route = createFileRoute("/_authenticated/modes")({
@@ -38,7 +38,7 @@ const MODES: ModeCard[] = [
 },
   { slug: "hospital", to: "/game/hospital", label: "Clinical", desc: "Build medication orders, check interactions.", icon: Hospital, emoji: "🏥", tag: "Medium", accent: "#6366F1", ink: "#4038B8", tint: "from-[#6366F1]/25 to-[#A78BFA]/10" },
   { slug: "industry", to: "/game/industry", label: "Industry", desc: "Run a tablet batch from formula to release.", icon: Factory, emoji: "🏭", tag: "Medium", accent: "#F59E0B", ink: "#9A5B06", tint: "from-[#F59E0B]/25 to-[#FBBF24]/10" },
-  { slug: "warehousing", to: "/game/warehousing", label: "Warehousing", desc: "Receive stock, FEFO, cold chain & reconciliation.", icon: Package, emoji: "📦", tag: "Medium", accent: "#0EA5E9", ink: "#0A6C99", tint: "from-[#0EA5E9]/25 to-[#38BDF8]/10" },
+  { slug: "warehousing", to: "/game/warehousing", label: "Warehousing", desc: "Run a pharmacy week by week: licences, buying, storage, cash.", icon: Package, emoji: "📦", tag: "Ongoing", accent: "#0EA5E9", ink: "#0A6C99", tint: "from-[#0EA5E9]/25 to-[#38BDF8]/10" },
 ];
 
 function Modes() {
@@ -89,7 +89,9 @@ function Modes() {
                 <h3 className="relative mt-4 text-lg font-bold" style={{ color: theme === "light" ? m.ink : m.accent }}>{m.label}</h3>
                 <p className="relative mt-1 text-sm text-muted-foreground">{m.desc}</p>
                 <div className="relative mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1"><Clock className="size-3" /> {MODE_TIMERS[m.slug as keyof typeof MODE_TIMERS]}s</span>
+                  {isTimedMode(m.slug)
+                    ? <span className="inline-flex items-center gap-1"><Clock className="size-3" /> {MODE_TIMERS[m.slug]}s</span>
+                    : <span className="inline-flex items-center gap-1"><Clock className="size-3" /> no time limit</span>}
                   {locked && <span className="inline-flex items-center gap-1 text-amber-500"><Lock className="size-3" /> {count}/10</span>}
                 </div>
               </div>

@@ -54,15 +54,28 @@ export const DIFFICULTY_RULES: Record<Difficulty, {
   },
 };
 
+/**
+ * Modes played against a clock.
+ *
+ * Warehousing is not one of them. It is a facility that advances only when the
+ * learner closes a week, so there is no case to race and no limit to scale -
+ * and the type says so, rather than leaving a number in the table that every
+ * screen would go on displaying.
+ */
+export type TimedMode = Exclude<Mode, "warehousing">;
+
+export function isTimedMode(mode: string): mode is TimedMode {
+  return mode !== "warehousing" && mode in MODE_TIMERS;
+}
+
 /** Baseline seconds per case, at medium difficulty. */
-export const MODE_TIMERS: Record<Mode, number> = {
+export const MODE_TIMERS: Record<TimedMode, number> = {
   rx: 180,
   // OTC is a typed consultation with an AI patient, not a few clicks, so it
   // needs materially more time than the click-driven modes.
   otc: 360,
   hospital: 240,
   industry: 360,
-  warehousing: 300,
 };
 
 /**
@@ -76,7 +89,7 @@ export const DIFFICULTY_TIME_SCALE: Record<Difficulty, number> = {
 };
 
 /** Seconds allowed for a case, scaled by difficulty. */
-export function modeTimeLimit(mode: Mode, difficulty?: Difficulty | string | null) {
+export function modeTimeLimit(mode: TimedMode, difficulty?: Difficulty | string | null) {
   const key = (difficulty === "easy" || difficulty === "hard" || difficulty === "medium")
     ? difficulty
     : "medium";

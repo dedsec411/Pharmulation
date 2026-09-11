@@ -8,7 +8,7 @@ import { CaseFileSlides } from "@/components/game/CaseFileSlides";
 import { useCaseLoader } from "@/components/game/useCaseLoader";
 import { ModeTheme } from "@/components/game/ModeTheme";
 import { useTimer } from "@/lib/game/useTimer";
-import { computeScore, submitScore, modeTimeLimit, toastScore, SCORE_WEIGHTS, type Mode } from "@/lib/game/shared";
+import { computeScore, submitScore, modeTimeLimit, toastScore, SCORE_WEIGHTS, type TimedMode } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, ClipboardList, Database, HeartPulse, Plus, Terminal, Trash2 } from "lucide-react";
@@ -145,7 +145,7 @@ function buildClinicalChart(caseData: any, patient: any) {
   return { currentMeds: generatedMeds, labs, physicianOrder };
 }
 
-export function HospitalGame({ mode }: { mode: Mode }) {
+export function HospitalGame({ mode }: { mode: TimedMode }) {
   const onExit = useGameExit("/modes");
   const { difficulty, difficultyModal } = useDifficultyChoice(mode);
   const LIMIT = modeTimeLimit(mode, difficulty);

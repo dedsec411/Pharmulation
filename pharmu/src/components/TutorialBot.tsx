@@ -110,9 +110,10 @@ const GUIDES: Record<string, TutorialGuide> = {
     role: "Warehouse pharmacist",
     icon: Package,
     steps: [
-      { title: "Inspect stock", body: "Check deliveries, expiry dates, batch details, and storage requirements before accepting or placing items." },
-      { title: "Use FEFO", body: "First expired, first out keeps stock safe and reduces waste." },
-      { title: "Cold chain matters", body: "Temperature-sensitive products need correct storage. Quarantine stock when conditions are unsafe." },
+      { title: "You run the shop", body: "This one has no timer. You own a licensed pharmacy and the week only moves when you close it, so take as long as you like over each decision." },
+      { title: "Put stock away", body: "Everything a supplier sends lands in goods-in and cannot be dispensed until you place it. A delivery left there sells nothing." },
+      { title: "Buy under a fixed price", body: "DRAP fixes the retail price and prints it on the pack, so the only margin you get is the one you buy. Watch cover, the reorder point and the volume breaks." },
+      { title: "Keep the paperwork", body: "Licences expire, the fridge log is the only evidence the cold chain held, and the controlled drugs register has to reconcile exactly. An inspector arrives without notice." },
     ],
   },
   generic: {
