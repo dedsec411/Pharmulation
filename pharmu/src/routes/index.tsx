@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Pill, Hospital,
-  TrendingUp, Database, Trophy, GraduationCap, Star,
+  TrendingUp, Database, Trophy, GraduationCap,
   Boxes,
   Factory,
 } from "lucide-react";
@@ -51,17 +51,47 @@ const modes = [
   },
 ];
 
+/**
+ * Every figure here is countable in the database, on purpose.
+ *
+ * This block previously claimed seventy thousand pharmacists trained and a
+ * hundred CPD credit hours. Neither was true, and the first question a judge
+ * or a pharmacist asks about a number like that is where it came from. What
+ * the product genuinely has is more persuasive anyway: nine hundred medicines
+ * and thirteen hundred Pakistani brand names is a real catalogue, and nobody
+ * else demonstrating here will have one.
+ */
 const stats = [
-  { icon: GraduationCap, value: "70,000+", label: "Pharmacists Trained" },
-  { icon: Database, value: "500+", label: "Drug Database" },
-  { icon: Trophy, value: "4", label: "Training Modes" },
-  { icon: TrendingUp, value: "100", label: "CPD Credit Hours" },
+  { icon: Database, value: "896", label: "Medicines in the catalogue" },
+  { icon: Pill, value: "1,286", label: "Pakistani brand names" },
+  { icon: Trophy, value: "4", label: "Training modes" },
+  { icon: GraduationCap, value: "65", label: "Written case files" },
 ];
 
-const testimonials = [
-  { name: "Dr. Layla H.", role: "PharmD, Cairo", quote: "Pharmulation is the closest thing to real pharmacy I've found online. The clinical cases are brilliant." },
-  { name: "Omar K.", role: "Pharmacy student, Year 4", quote: "I went from terrified of prescriptions to confident in 3 weeks. The mentor tips are gold." },
-  { name: "Sara M.", role: "Clinical pharmacist", quote: "Finally a CE platform that doesn't put me to sleep. The streaks keep me coming back daily." },
+/**
+ * What makes it different, rather than invented praise.
+ *
+ * This section used to carry three testimonials from people who do not exist,
+ * under a heading saying the product was loved worldwide. A fabricated
+ * endorsement is the weakest thing on a page: it adds nothing to a reader who
+ * discounts it and costs everything with a reader who checks.
+ */
+const differences = [
+  {
+    icon: Pill,
+    title: "It knows what prescribers here actually write",
+    body: "A script in Karachi says Risek, not omeprazole. The catalogue carries 1,286 Pakistani brand names alongside the generics, so the medicine you are handed is the one you would really be handed.",
+  },
+  {
+    icon: Database,
+    title: "Photograph a real prescription and play it",
+    body: "The Prescription Lens reads a handwritten script and builds a case from it in seconds. The photograph is never stored anywhere, and the patient's real name is discarded before you ever see the case.",
+  },
+  {
+    icon: TrendingUp,
+    title: "It tells you what you are bad at, not just your average",
+    body: "Every error is filed by drug class and by skill. After a dozen cases it can say your problem is renal dosing in antibiotics - which is a thing you can go and fix.",
+  },
 ];
 
 const faqs = [
@@ -136,7 +166,7 @@ export default function Landing() {
               Train Like a Real Pharmacist. <span className="text-primary">Anywhere.</span> Anytime.
             </p>
             <p className="relative z-10 mx-auto mt-3 max-w-[21rem] text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:max-w-2xl sm:text-base">
-              Four immersive training modes. 500+ drug entries. Real prescriptions, real patients, real consequences - without the risk.
+              Four training modes. 896 medicines. Real prescriptions, real decisions, real consequences - without the risk.
             </p>
             <div className="relative z-10 mt-7 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:flex-wrap">
               <Link to="/login" className="w-44 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03] sm:w-auto sm:px-8 sm:py-3.5 sm:text-base">
@@ -194,20 +224,20 @@ export default function Landing() {
       {/* TESTIMONIALS */}
       <section className="px-4 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-center text-3xl md:text-4xl font-bold mb-12">Loved by pharmacists worldwide</h2>
-          <div className="grid md:grid-cols-3 gap-5">
-            {testimonials.map((t) => (
-              <div key={t.name} className="glass-card p-6">
-                <div className="flex gap-1 mb-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                  ))}
+          <h2 className="mb-3 text-center text-3xl font-bold md:text-4xl">
+            Built for the pharmacy you will actually work in
+          </h2>
+          <p className="mx-auto mb-12 max-w-2xl text-center text-muted-foreground">
+            Three things a generic quiz app does not do.
+          </p>
+          <div className="grid gap-5 md:grid-cols-3">
+            {differences.map((d) => (
+              <div key={d.title} className="glass-card p-6">
+                <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                  <d.icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <p className="text-sm text-foreground/90 italic">"{t.quote}"</p>
-                <div className="mt-4 text-sm">
-                  <div className="font-semibold">{t.name}</div>
-                  <div className="text-muted-foreground text-xs">{t.role}</div>
-                </div>
+                <h3 className="text-base font-semibold leading-snug">{d.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{d.body}</p>
               </div>
             ))}
           </div>
@@ -234,7 +264,7 @@ export default function Landing() {
       <section className="px-4 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-3xl glass-card p-6 sm:p-10 text-center">
           <h2 className="text-3xl font-bold">Your first case is waiting.</h2>
-          <p className="mt-3 text-muted-foreground">Free to start. No credit card. Earn CPD as you play.</p>
+          <p className="mt-3 text-muted-foreground">Free to start. No card. Your training time is tracked as you go.</p>
           <Link to="/login" className="mt-6 inline-block rounded-full bg-primary px-8 py-3.5 font-semibold text-primary-foreground hover:scale-[1.03] transition">
             Create my account
           </Link>
