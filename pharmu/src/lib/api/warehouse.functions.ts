@@ -37,6 +37,17 @@ import { SUPPLIER_BREAKS, PAYMENT_TERMS_WEEKS, SUPPLIER_NAME } from "@/lib/wareh
 
 const CATALOGUE_SIZE = 40;
 
+/**
+ * When a week's buying counts as having gone wrong.
+ *
+ * Both of these are already priced into the week's result - unserved demand
+ * earns nothing and dead stock costs what it cost - so these thresholds exist
+ * only to name the fault, which is what lets the weakness map tell a learner
+ * that their problem is buying rather than bad luck.
+ */
+const STOCKOUT_SERVICE_LEVEL = 90;
+const OVER_ORDERED_WASTAGE_PERCENT = 5;
+
 type Row = Record<string, any>;
 
 /* ------------------------------------------------------------------ *
@@ -912,6 +923,23 @@ export const advanceWeek = createServerFn({ method: "POST" })
         location: b.location,
         received_period: period,
       })));
+    }
+
+    // Buying faults are read off the result rather than reported by anyone.
+    // Turning demand away and letting stock die are the two ways the ordering
+    // decision goes wrong, and a learner should be told which one they did.
+    if (result.kpis.serviceLevel < STOCKOUT_SERVICE_LEVEL && trading) {
+      const short = result.perDrug.reduce((n, d) => n + d.short, 0);
+      faults.push({
+        code: "stock-out",
+        detail: `${short} pack(s) of demand went unserved - ${result.kpis.serviceLevel.toFixed(0)}% service level.`,
+      });
+    }
+    if (result.kpis.wastagePercent > OVER_ORDERED_WASTAGE_PERCENT) {
+      faults.push({
+        code: "over-ordered",
+        detail: `${result.kpis.wastagePercent.toFixed(1)}% of the week's takings written off as dead stock.`,
+      });
     }
 
     // Stock destroyed by bad storage is a fault too, and one nobody reported.

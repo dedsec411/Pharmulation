@@ -5,6 +5,9 @@ import {
   BAND_LABEL, MIN_ATTEMPTS, SKILLS, bandFor,
   type Band, type Cell, type WeaknessMap,
 } from "@/lib/game/weakness";
+import {
+  OPERATION_SKILLS, MIN_WEEKS, type OperationsMap,
+} from "@/lib/game/operations";
 
 /**
  * The weakness heatmap.
@@ -50,7 +53,59 @@ function CellBox({ cell, onPick }: { cell: Cell; onPick: (c: Cell) => void }) {
   );
 }
 
-export function WeaknessHeatmap({ map }: { map: WeaknessMap }) {
+/**
+ * Running a pharmacy, measured on its own track.
+ *
+ * Deliberately not columns on the grid above. A lapsed licence is not about
+ * antibiotics, so there is no drug class to put it under, and adding four
+ * mostly-empty columns to every clinical row would make the grid harder to
+ * read in exchange for a cell that could never be filled.
+ */
+function OperationsStrip({ operations }: { operations: OperationsMap }) {
+  if (operations.weeks === 0) return null;
+  return (
+    <div className="mt-6 border-t border-border/40 pt-4">
+      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        Running a pharmacy
+      </p>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        {operations.weeks} closed {operations.weeks === 1 ? "week" : "weeks"} of Warehousing.
+        Each figure is the share of weeks that went by without a fault of that kind.
+      </p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {OPERATION_SKILLS.map((spec) => {
+          const cell = operations.cells.find((c) => c.skill === spec.key);
+          const accuracy = cell?.accuracy ?? null;
+          const band: Band | null = accuracy === null ? null : bandFor(accuracy);
+          return (
+            <div key={spec.key} className="rounded-xl border border-border/40 bg-background/40 p-3">
+              <div className="text-xs font-semibold">{spec.label}</div>
+              {accuracy === null ? (
+                <div className="mt-1 text-[11px] text-muted-foreground">
+                  Needs {MIN_WEEKS} closed weeks before this can be scored.
+                </div>
+              ) : (
+                <>
+                  <div className="mt-1 text-lg font-bold tabular-nums">
+                    {Math.round(accuracy * 100)}%
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {band ? BAND_LABEL[band] : ""}
+                    {cell && cell.faults > 0
+                      ? ` - ${cell.faults} ${cell.faults === 1 ? "finding" : "findings"}`
+                      : " - nothing recorded"}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function WeaknessHeatmap({ map, operations }: { map: WeaknessMap; operations?: OperationsMap }) {
   const [picked, setPicked] = useState<Cell | null>(null);
 
   const rows = useMemo(() => map.classes.map((drugClass) => ({
@@ -151,9 +206,11 @@ export function WeaknessHeatmap({ map }: { map: WeaknessMap }) {
         <p className="mt-3 text-[11px] text-muted-foreground">
           {map.unmappedErrors} further {map.unmappedErrors === 1 ? "error" : "errors"} came from
           Industry and Warehousing, which test process control rather than any of these seven
-          clinical skills, and are not counted here.
+          clinical skills, and are not counted above.
         </p>
       )}
+
+      {operations && <OperationsStrip operations={operations} />}
     </div>
   );
 }

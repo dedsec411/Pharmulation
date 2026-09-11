@@ -373,7 +373,7 @@ function Dashboard() {
 
         <WeeklyReportBanner
           userId={userId}
-          map={weaknessMap ?? null}
+          map={weaknessMap?.clinical ?? null}
           level={profile?.level ?? 1}
           xp={profile?.xp ?? 0}
           xpToNextLevel={Math.max(0, ((profile?.level ?? 1) + 1) * 500 - (profile?.xp ?? 0))}
@@ -386,8 +386,8 @@ function Dashboard() {
         {/* Renders nothing unless a lecturer has set this student work. */}
         <AssignedWork userId={userId} />
 
-        {weaknessMap && hasEnoughHistory(weaknessMap) && (
-          <RecommendedCases map={weaknessMap} />
+        {weaknessMap && hasEnoughHistory(weaknessMap.clinical) && (
+          <RecommendedCases map={weaknessMap.clinical} />
         )}
 
         {/* Scanning a document is a thing you do, not a mode you enter, so it

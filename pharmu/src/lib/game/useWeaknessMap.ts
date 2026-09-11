@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWeaknessMap, type DrugIndex, type WeaknessMap } from "./weakness";
+import { buildOperationsMap, type OperationsMap } from "./operations";
 
 /**
  * The learner's weakness map, computed once and shared.
@@ -39,10 +40,23 @@ export function useDrugIndex() {
   });
 }
 
+/**
+ * Both halves of a learner's record, from one pass over their history.
+ *
+ * Clinical skill is a drug class against a clinical skill. Running a pharmacy
+ * is neither of those - a lapsed licence is not about antibiotics - so the
+ * operational side is measured on its own track and returned alongside rather
+ * than forced into the same grid.
+ */
+export type LearnerMaps = {
+  clinical: WeaknessMap;
+  operations: OperationsMap;
+};
+
 export function useWeaknessMap(userId?: string) {
   const { data: drugIndex = {} } = useDrugIndex();
 
-  return useQuery<WeaknessMap | null>({
+  return useQuery<LearnerMaps | null>({
     queryKey: ["weakness-map", userId],
     enabled: !!userId && Object.keys(drugIndex).length > 0,
     staleTime: 5 * 60 * 1000,
@@ -53,7 +67,11 @@ export function useWeaknessMap(userId?: string) {
         .order("completed_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      return buildWeaknessMap(data ?? [], drugIndex);
+      const rows = data ?? [];
+      return {
+        clinical: buildWeaknessMap(rows, drugIndex),
+        operations: buildOperationsMap(rows),
+      };
     },
   });
 }

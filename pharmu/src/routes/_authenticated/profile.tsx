@@ -282,9 +282,9 @@ function ProfilePage() {
               </div>
             )}
 
-            {weaknessMap && hasEnoughHistory(weaknessMap) && (
+            {weaknessMap && hasEnoughHistory(weaknessMap.clinical) && (
               <div className="mt-6">
-                <WeaknessHeatmap map={weaknessMap} />
+                <WeaknessHeatmap map={weaknessMap.clinical} operations={weaknessMap.operations} />
               </div>
             )}
 
