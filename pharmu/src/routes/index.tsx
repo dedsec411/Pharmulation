@@ -10,6 +10,9 @@ import { PillBackground } from "@/components/PillBackground";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogoVideo } from "@/components/LogoVideo";
 import { useThemeStore } from "@/lib/theme-store";
+import {
+  Accordion, AccordionItem, AccordionTrigger, AccordionContent,
+} from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -57,6 +60,33 @@ const testimonials = [
   { name: "Dr. Layla H.", role: "PharmD, Cairo", quote: "Pharmulation is the closest thing to real pharmacy I've found online. The clinical cases are brilliant." },
   { name: "Omar K.", role: "Pharmacy student, Year 4", quote: "I went from terrified of prescriptions to confident in 3 weeks. The mentor tips are gold." },
   { name: "Sara M.", role: "Clinical pharmacist", quote: "Finally a CE platform that doesn't put me to sleep. The streaks keep me coming back daily." },
+];
+
+const faqs = [
+  {
+    q: "What is Pharmulation?",
+    a: "A pharmacy simulator you play in a browser. You are handed a prescription, a patient or a delivery and you have to work it: pick the right medicine, get the dose and the label right, spot what is wrong before it reaches the patient. Nothing you do here can hurt anyone, which is the whole point of practising it here first.",
+  },
+  {
+    q: "Who is it for?",
+    a: "Pharmacy students, technicians and practising pharmacists. Educators can create a class, hand out a join code, set assessments and see where a cohort is actually going wrong rather than where they assume it is.",
+  },
+  {
+    q: "How does the scoring work?",
+    a: "Every case scores what a pharmacist is judged on: choosing the right medicine, the dose, the label, and the checks you made before dispensing. Getting it wrong costs more than getting it slowly, and a hint costs a little. Each error is filed by type, which is what builds your weakness map - so after a dozen cases the app can tell you that your problem is renal dosing rather than just that your average is 71%.",
+  },
+  {
+    q: "Do I earn CPD hours?",
+    a: "Pharmulation records the time you spend training and will produce a certificate summarising it. That is a record of practice, not accreditation - whether your regulator counts self-directed learning of this kind is for you to check against their own rules.",
+  },
+  {
+    q: "Can it really read a handwritten prescription?",
+    a: "Yes. Photograph one and the Prescription Lens reads it and builds a playable case from it. The photograph is never stored anywhere, and a real patient name is discarded before you ever see the case - it comes back with an invented one.",
+  },
+  {
+    q: "What does it cost?",
+    a: "Nothing. It is free to use and there is no card to enter.",
+  },
 ];
 
 export default function Landing() {
@@ -182,6 +212,22 @@ export default function Landing() {
         </div>
       </section>
 
+      <section id="faq" className="px-4 py-12 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-8 text-center text-3xl font-bold md:text-4xl">Questions</h2>
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((item) => (
+              <AccordionItem key={item.q} value={item.q}>
+                <AccordionTrigger className="text-left text-base">{item.q}</AccordionTrigger>
+                <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="px-4 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-3xl glass-card p-6 sm:p-10 text-center">
@@ -199,8 +245,9 @@ export default function Landing() {
           <div className="flex gap-6">
             <Link to="/login" className="hover:text-primary">Sign in</Link>
             <Link to="/leaderboard" className="hover:text-primary">Leaderboard</Link>
-            <a href="#" className="hover:text-primary">Privacy</a>
-            <a href="#" className="hover:text-primary">Contact</a>
+            <Link to="/privacy" className="hover:text-primary">Privacy</Link>
+            <Link to="/terms" className="hover:text-primary">Terms</Link>
+            <a href="mailto:wasiqahmed411@gmail.com" className="hover:text-primary">Contact</a>
           </div>
           <div>© {new Date().getFullYear()} Pharmulation</div>
         </div>
