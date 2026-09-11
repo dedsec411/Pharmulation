@@ -18,7 +18,14 @@ export type LicenceKind = "drug_sale" | "narcotics";
 
 export type Licence = {
   kind: LicenceKind;
+  /**
+   * What the paperwork says. Useful for telling a learner where an
+   * application stands, but never the thing that decides whether they may
+   * trade - see licenceValid.
+   */
   status: "active" | "expired" | "pending" | "refused";
+  /** The week it takes effect. A permit applied for is dated, not immediate. */
+  issuedPeriod: number;
   expiresPeriod: number;
 };
 
@@ -49,13 +56,25 @@ export type Finding = {
  * ------------------------------------------------------------------ */
 
 /**
- * A licence is valid up to and including the week it expires.
+ * Whether a licence covers this week.
  *
- * Trading a week past it is not a paperwork slip - it is trading unlicensed,
- * and it is the one finding that stops the pharmacy rather than fining it.
+ * Decided by its dates rather than by its status, because the two can disagree
+ * and the dates are the truth. A permit applied for in week one and granted in
+ * week four is in force the moment week four arrives - not whenever something
+ * gets round to rewriting the row - and a learner told "expected in week four"
+ * who finds it still pending in week four has been lied to by a field that
+ * happened not to have been updated yet.
+ *
+ * A refusal is the one status that overrides the dates, because there is
+ * nothing to take effect.
+ *
+ * Valid up to and including the week it expires. Trading a week past it is not
+ * a paperwork slip - it is trading unlicensed, and it is the one finding that
+ * stops a pharmacy rather than fining it.
  */
 export function licenceValid(licence: Licence | undefined, period: number): boolean {
-  return Boolean(licence && licence.status === "active" && licence.expiresPeriod >= period);
+  if (!licence || licence.status === "refused") return false;
+  return licence.issuedPeriod <= period && licence.expiresPeriod >= period;
 }
 
 export function find(licences: readonly Licence[], kind: LicenceKind): Licence | undefined {

@@ -7,10 +7,10 @@ import {
 import { RUPEE } from "./economics";
 
 const sale = (over: Partial<Licence> = {}): Licence => ({
-  kind: "drug_sale", status: "active", expiresPeriod: 50, ...over,
+  kind: "drug_sale", status: "active", issuedPeriod: 1, expiresPeriod: 50, ...over,
 });
 const narcotics = (over: Partial<Licence> = {}): Licence => ({
-  kind: "narcotics", status: "active", expiresPeriod: 50, ...over,
+  kind: "narcotics", status: "active", issuedPeriod: 1, expiresPeriod: 50, ...over,
 });
 
 const item = (over: Partial<ComplianceStock> = {}): ComplianceStock => ({
@@ -36,10 +36,18 @@ describe("licences", () => {
     expect(licenceValid(sale({ expiresPeriod: 10 }), 11)).toBe(false);
   });
 
-  it("is worthless when it was never granted", () => {
+  it("is worthless before the week it takes effect, and after a refusal", () => {
     expect(licenceValid(undefined, 1)).toBe(false);
-    expect(licenceValid(sale({ status: "pending" }), 1)).toBe(false);
+    expect(licenceValid(sale({ status: "pending", issuedPeriod: 5 }), 1)).toBe(false);
     expect(licenceValid(sale({ status: "refused" }), 1)).toBe(false);
+  });
+
+  // A learner told the permit arrives in week four, who reaches week four and
+  // finds it still pending, has been lied to by a field nobody got round to
+  // rewriting. The dates decide, not the label.
+  it("counts from the week it was granted, whatever the paperwork still says", () => {
+    expect(licenceValid(narcotics({ status: "pending", issuedPeriod: 4 }), 4)).toBe(true);
+    expect(licenceValid(narcotics({ status: "pending", issuedPeriod: 4 }), 3)).toBe(false);
   });
 
   // Controlled medicines need the permit on top of the sale licence, not

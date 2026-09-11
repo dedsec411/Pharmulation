@@ -414,8 +414,10 @@ describe("licences", () => {
     await run.applyForLicence(db, USER, { kind: "narcotics" });
     for (let i = 0; i < NARCOTICS_LEAD_WEEKS; i++) await close(db);
 
+    // In force the moment its week arrives, not whenever something gets round
+    // to rewriting the status column.
     const s = await state(db);
-    expect(s.licences.find((l: any) => l.kind === "narcotics").status).toBe("active");
+    expect(s.licences.find((l: any) => l.kind === "narcotics").in_force).toBe(true);
 
     const controlled = s.catalogue.find((c: any) => c.controlled);
     const order: any = await run.placeOrder(db, USER, {

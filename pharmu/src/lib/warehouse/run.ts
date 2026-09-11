@@ -50,6 +50,7 @@ function toLicence(row: Row): Licence {
   return {
     kind: row.kind,
     status: row.status,
+    issuedPeriod: Number(row.issued_period ?? 1),
     expiresPeriod: Number(row.expires_period),
   };
 }
@@ -189,6 +190,16 @@ export async function getFacilityState(db: Db, userId: string) {
   const held = (licences.data ?? []).map(toLicence);
   const kept = new Set((paperwork.data ?? []).map((r: Row) => r.kind as string));
 
+  // Whether each licence covers this week, worked out from its dates rather
+  // than read off the status column. The column is only rewritten when a week
+  // closes, so a permit granted for the very week the learner is standing in
+  // would still read "pending" - which is exactly when they need to know it is
+  // in force.
+  const licenceRows = ((licences.data ?? []) as Row[]).map((row) => ({
+    ...row,
+    in_force: licenceValid(toLicence(row), period),
+  }));
+
   return {
     ok: true as const,
     facility,
@@ -199,7 +210,7 @@ export async function getFacilityState(db: Db, userId: string) {
     events: events.data ?? [],
     inspections: inspections.data ?? [],
     ledger: ledger.data ?? [],
-    licences: licences.data ?? [],
+    licences: licenceRows,
     register: register.data ?? [],
     // What this week's paperwork looks like, so the interface can show what
     // is still outstanding rather than making the learner remember.
@@ -577,7 +588,12 @@ export async function advanceWeek(db: Db, userId: string) {
         resolved: false,
       });
     }
-    licences.push({ kind: row.kind, status, expiresPeriod: expires });
+    licences.push({
+      kind: row.kind,
+      status,
+      issuedPeriod: Number(row.issued_period ?? 1),
+      expiresPeriod: expires,
+    });
   }
   if (licenceEvents.length) await db.from("wh_events").insert(licenceEvents);
 

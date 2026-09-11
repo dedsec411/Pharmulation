@@ -61,8 +61,12 @@ export function ComplianceDesk({
           const held = facility.licences.find((l) => l.kind === spec.kind);
           const expires = held ? Number(held.expires_period) : null;
           const left = expires === null ? null : expires - facility.period;
-          const active = held?.status === "active" && (left ?? -1) >= 0;
-          const pending = held?.status === "pending";
+          // Whether it covers this week is worked out from its dates by the
+          // server. The status column is only rewritten when a week closes, so
+          // reading it here would show a permit as pending on the very week it
+          // came into force.
+          const active = Boolean(held?.in_force);
+          const pending = Boolean(held) && !active && held?.status === "pending";
 
           return (
             <article key={spec.kind} className="rounded-lg border bg-card/60 p-4">
