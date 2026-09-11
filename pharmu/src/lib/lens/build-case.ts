@@ -26,7 +26,14 @@ import { normalizeDrugKey } from "@/lib/drug-catalog";
 export type LensExtraction = {
   isMedical: boolean;
   documentType: string;
-  /** The model's own 0-1 confidence in the reading. */
+  /**
+   * 0-1 in how far the document was read at all.
+   *
+   * Not a self-assessment any more: the reader behind this returns no
+   * confidence score, so the value says whether a document came back rather
+   * than how sure anything is about it. Whether a reading is usable is settled
+   * below, by whether the medicines resolve against the catalogue.
+   */
   confidence: number;
   patient: {
     name?: string | null;
@@ -38,9 +45,14 @@ export type LensExtraction = {
   drugs: Array<{
     name: string;
     /**
-     * Other readings of the same scrawl, most likely first. Handwriting is
-     * ambiguous far more often than it is illegible, and a model forced to
-     * commit to one spelling throws away the reading that would have matched.
+     * Other ways in to the same medicine, most likely first.
+     *
+     * Originally other readings of an ambiguous scrawl. The dedicated reader
+     * commits to one name instead, so what arrives here now is usually its
+     * generic for the thing it read - a second string to try against the
+     * catalogue when the written one carries a brand or a strength. Either way
+     * a match found through this list is a match on something other than what
+     * the page says, which is why resolution marks it as assumed.
      */
     candidates?: string[] | null;
     dose?: string | null;
