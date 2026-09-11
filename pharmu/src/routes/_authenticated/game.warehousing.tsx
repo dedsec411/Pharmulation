@@ -10,6 +10,7 @@ import { StockRoom } from "@/components/warehouse/StockRoom";
 import { OrderDesk } from "@/components/warehouse/OrderDesk";
 import { NoticeBoard } from "@/components/warehouse/NoticeBoard";
 import { ComplianceDesk } from "@/components/warehouse/ComplianceDesk";
+import { ReportsDesk } from "@/components/warehouse/ReportsDesk";
 import {
   useAdvanceWeek, useFacility, useOpenPharmacy, usePutAway, usePlaceOrder,
   useResolveEvent, useApplyForLicence, useSignRegister, useLogTemperature,
@@ -128,6 +129,7 @@ function Warehousing() {
             )}
           </TabsTrigger>
           <TabsTrigger value="compliance">Compliance</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="week">
@@ -177,6 +179,10 @@ function Warehousing() {
             onSignRegister={(counts) => register.mutate({ counts })}
             onLogTemperature={() => fridgeLog.mutate(undefined as never)}
           />
+        </TabsContent>
+
+        <TabsContent value="reports">
+          <ReportsDesk facility={facility} />
         </TabsContent>
       </Tabs>
     </div>

@@ -161,7 +161,8 @@ export const getFacilityState = createServerFn({ method: "GET" })
     if (!facility) return { ok: false as const, error: "No pharmacy open." };
     const period = Number(facility.current_period);
 
-    const [catalogue, stock, orders, periods, events, licences, register, paperwork, inspections] =
+    const [catalogue, stock, orders, periods, events, licences, register, paperwork,
+           inspections, ledger] =
       await Promise.all([
         db.from("wh_catalogue").select("*, drugs(name, category)").eq("facility_id", facility.id),
         db.from("wh_stock").select("*").eq("facility_id", facility.id).gt("qty", 0),
@@ -178,6 +179,10 @@ export const getFacilityState = createServerFn({ method: "GET" })
         // back and read what the inspector actually found.
         db.from("wh_events").select("*").eq("facility_id", facility.id).eq("kind", "inspection")
           .order("period_no", { ascending: false }).limit(5),
+        // The period table says what happened. The ledger says why, which is
+        // the only way a learner whose cash fell can find out what took it.
+        db.from("wh_ledger").select("*").eq("facility_id", facility.id)
+          .order("period_no", { ascending: false }).limit(60),
       ]);
 
     const held = (licences.data ?? []).map(toLicence);
@@ -192,6 +197,7 @@ export const getFacilityState = createServerFn({ method: "GET" })
       periods: periods.data ?? [],
       events: events.data ?? [],
       inspections: inspections.data ?? [],
+      ledger: ledger.data ?? [],
       licences: licences.data ?? [],
       register: register.data ?? [],
       // What this week's paperwork looks like, so the interface can show what

@@ -127,6 +127,7 @@ export function useFacility() {
         month: monthToDate(periods),
         events: (state.events ?? []) as Row[],
         inspections: (state.inspections ?? []) as Row[],
+        ledger: (state.ledger ?? []) as Row[],
         licences: (state.licences ?? []) as Row[],
         register: (state.register ?? []) as Row[],
         paperwork: state.paperwork,
