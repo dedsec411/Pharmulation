@@ -194,15 +194,20 @@ export async function getFacilityState(db: Db, userId: string) {
   if (!facility) return { ok: false as const, error: "No pharmacy open." };
   const period = Number(facility.current_period);
 
-  const [catalogue, stock, orders, periods, events, licences, register, paperwork,
+  const [catalogue, stock, arriving, owing, periods, events, licences, register, paperwork,
          inspections, ledger] =
     await Promise.all([
       db.from("wh_catalogue").select("*, drugs(name, category)").eq("facility_id", facility.id),
       db.from("wh_stock").select("*").eq("facility_id", facility.id).gt("qty", 0),
+      // Only the orders that still matter: on their way, or not yet paid for.
+      // A shop a year old has placed a thousand, and the screen needs none of
+      // the settled ones.
       db.from("wh_orders").select("*, wh_order_lines(*)").eq("facility_id", facility.id)
-        .neq("status", "cancelled"),
+        .eq("status", "placed"),
+      db.from("wh_orders").select("*, wh_order_lines(*)").eq("facility_id", facility.id)
+        .eq("paid", false).neq("status", "cancelled"),
       db.from("wh_periods").select("*").eq("facility_id", facility.id)
-        .order("period_no", { ascending: false }).limit(12),
+        .order("period_no", { ascending: false }).limit(26),
       db.from("wh_events").select("*").eq("facility_id", facility.id).eq("resolved", false),
       db.from("wh_licences").select("*").eq("facility_id", facility.id),
       db.from("wh_cd_register").select("*, drugs(name)").eq("facility_id", facility.id),
@@ -218,6 +223,11 @@ export async function getFacilityState(db: Db, userId: string) {
         .order("period_no", { ascending: false }).limit(60),
     ]);
 
+  const orders = [...new Map(
+    [...((arriving.data ?? []) as Row[]), ...((owing.data ?? []) as Row[])]
+      .map((row) => [row.id as string, row]),
+  ).values()];
+
   const held = (licences.data ?? []).map(toLicence);
   const kept = new Set((paperwork.data ?? []).map((r: Row) => r.kind as string));
 
@@ -231,12 +241,18 @@ export async function getFacilityState(db: Db, userId: string) {
     in_force: licenceValid(toLicence(row), period),
   }));
 
+  // The seed decides every recall, fridge failure and inspection the facility
+  // will ever meet. Handing it to the browser would let a determined learner
+  // work out next week's weather, which is not the preparation the mode is
+  // trying to teach.
+  const { seed: _seed, ...visible } = facility;
+
   return {
     ok: true as const,
-    facility,
+    facility: visible,
     catalogue: catalogue.data ?? [],
     stock: stock.data ?? [],
-    orders: orders.data ?? [],
+    orders,
     periods: periods.data ?? [],
     events: events.data ?? [],
     inspections: inspections.data ?? [],
@@ -260,10 +276,14 @@ export async function applyForLicence(db: Db, userId: string, data: { kind: Lice
   const period = Number(facility.current_period);
   const fee = LICENCE_FEE[data.kind];
 
-  if (Number(facility.cash_paisa) < fee) {
+  // Payable on the overdraft, like anything else. Refusing a renewal a
+  // learner could borrow for would leave a shut pharmacy with no way to
+  // reopen, draining overheads until it died of a rule rather than a decision.
+  const afterFee = Number(facility.cash_paisa) - fee;
+  if (afterFee < -Number(facility.overdraft_paisa ?? 0)) {
     return {
       ok: false as const,
-      error: `That application costs ${formatPKR(fee)}, and there is ${formatPKR(Number(facility.cash_paisa))} in the account.`,
+      error: `That application costs ${formatPKR(fee)}, and the account will not carry it.`,
     };
   }
 
@@ -314,7 +334,7 @@ export async function applyForLicence(db: Db, userId: string, data: { kind: Lice
   }
 
   await db.from("wh_facilities")
-    .update({ cash_paisa: Number(facility.cash_paisa) - fee, updated_at: new Date().toISOString() })
+    .update({ cash_paisa: afterFee, updated_at: new Date().toISOString() })
     .eq("id", facility.id);
   await db.from("wh_ledger").insert({
     facility_id: facility.id,
@@ -469,7 +489,19 @@ export async function signCdRegister(db: Db, userId: string, data: { counts: Arr
   if (!facility) return { ok: false as const, error: "No pharmacy open." };
   const period = Number(facility.current_period);
 
-  for (const entry of data.counts) {
+  // Only the controlled lines this pharmacy actually carries. A register entry
+  // for anything else is not a register entry.
+  const catalogue = await db.from("wh_catalogue")
+    .select("drug_id, controlled").eq("facility_id", facility.id);
+  const controlled = new Set(
+    ((catalogue.data ?? []) as Row[]).filter((r) => r.controlled).map((r) => r.drug_id as string));
+
+  const accepted = data.counts.filter((entry) => controlled.has(entry.drugId));
+  if (data.counts.length && !accepted.length) {
+    return { ok: false as const, error: "None of those are controlled medicines you carry." };
+  }
+
+  for (const entry of accepted) {
     await db.from("wh_cd_register").upsert({
       facility_id: facility.id,
       drug_id: entry.drugId,
@@ -485,7 +517,7 @@ export async function signCdRegister(db: Db, userId: string, data: { counts: Arr
     kind: "cd-register",
   }, { onConflict: "facility_id,period_no,kind" });
 
-  return { ok: true as const, posted: data.counts.length, period };
+  return { ok: true as const, posted: accepted.length, period };
 }
 
 export async function logTemperature(db: Db, userId: string) {

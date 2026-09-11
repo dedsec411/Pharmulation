@@ -529,9 +529,25 @@ describe("licences", () => {
     expect(order.ok).toBe(true);
   });
 
-  it("refuses an application the pharmacy cannot pay for", async () => {
+  // Payable on the overdraft like anything else. A shut pharmacy refused the
+  // renewal it could have borrowed for would drain its overheads until it died
+  // of a rule rather than a decision.
+  it("lets a renewal be paid for on the overdraft", async () => {
     const { db } = await openShop();
-    await db.from("wh_facilities").update({ cash_paisa: 100 }).eq("user_id", USER);
+    await db.from("wh_facilities").update({
+      cash_paisa: 100, overdraft_paisa: 100_000 * RUPEE,
+    }).eq("user_id", USER);
+
+    const applied: any = await run.applyForLicence(db, USER, { kind: "narcotics" });
+    expect(applied.ok).toBe(true);
+    expect(Number(facilityRow(db).cash_paisa)).toBeLessThan(0);
+  });
+
+  it("refuses an application the account will not carry", async () => {
+    const { db } = await openShop();
+    await db.from("wh_facilities").update({
+      cash_paisa: 100, overdraft_paisa: 0,
+    }).eq("user_id", USER);
     const refused: any = await run.applyForLicence(db, USER, { kind: "narcotics" });
     expect(refused.ok).toBe(false);
     expect(db.rows("wh_licences").some((l) => l.kind === "narcotics")).toBe(false);
@@ -624,6 +640,26 @@ describe("paperwork", () => {
     expect(Number(book.balance)).toBe(17);
     expect(Number(book.posted_through_period)).toBe(1);
     expect((await state(db)).paperwork.cdRegister).toBe(true);
+  });
+
+  it("refuses a register entry for something the pharmacy does not carry", async () => {
+    const { db } = await openShop();
+    const refused: any = await run.signCdRegister(db, USER, {
+      counts: [{ drugId: "drug-does-not-exist", counted: 5 }],
+    });
+    expect(refused.ok).toBe(false);
+    expect(db.rows("wh_cd_register")).toHaveLength(0);
+  });
+
+  it("refuses a register entry for a medicine that is not controlled", async () => {
+    const { db } = await openShop();
+    const s = await state(db);
+    const ordinary = s.catalogue.find((c: any) => !c.controlled);
+    const refused: any = await run.signCdRegister(db, USER, {
+      counts: [{ drugId: ordinary.drug_id, counted: 5 }],
+    });
+    expect(refused.ok).toBe(false);
+    expect(db.rows("wh_cd_register")).toHaveLength(0);
   });
 
   it("updates the same register line rather than adding another", async () => {
