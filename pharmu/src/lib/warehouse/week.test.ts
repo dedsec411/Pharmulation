@@ -69,6 +69,29 @@ describe("deliveries", () => {
   });
 });
 
+describe("batch numbers", () => {
+  // Everything downstream keys on them: a recall names one, a condemned list
+  // is a list of them, and the learner reads them off a shelf.
+  it("are unique across the lines of one delivery", () => {
+    const out = closeWeek(week({
+      orders: [order({
+        lines: [
+          { drugId: "panadol", packs: 10, unitPrice: 96 * RUPEE, shelfLifeWeeks: 52 },
+          { drugId: "panadeine", packs: 10, unitPrice: 96 * RUPEE, shelfLifeWeeks: 52 },
+        ],
+      })],
+    }));
+    expect(new Set(out.stock.map((b) => b.batchNo)).size).toBe(2);
+  });
+
+  it("are unique across deliveries of the same medicine", () => {
+    const out = closeWeek(week({
+      orders: [order({ id: "order-a" }), order({ id: "order-b" })],
+    }));
+    expect(new Set(out.stock.map((b) => b.batchNo)).size).toBe(2);
+  });
+});
+
 describe("selling", () => {
   it("sells at the printed MRP and charges what the batch cost", () => {
     const out = closeWeek(week({

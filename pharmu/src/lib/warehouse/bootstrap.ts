@@ -304,7 +304,10 @@ export function openingStock(
       : Math.round(line.shelfLifeWeeks * (0.4 + r * 0.4));
     return {
       drugId: line.drugId,
-      batchNo: `OPEN-${line.drugId.slice(0, 6)}`.toUpperCase(),
+      // Numbered by position rather than by a slice of the drug id. Two ids
+      // can easily share their first six characters, and a recall names a
+      // batch number - so a collision would withdraw somebody else's stock.
+      batchNo: `OPEN-${index + 1}`,
       qty,
       expiresPeriod: 1 + Math.max(2, life),
       // Opening stock is already put away: the learner inherits a working

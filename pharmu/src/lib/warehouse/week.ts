@@ -142,12 +142,16 @@ export function closeWeek(input: WeekInput): WeekResult {
     if (order.delivered || order.etaPeriod > period) continue;
     order.delivered = true;
     delivered.push(order.id);
-    for (const line of order.lines) {
+    for (const [index, line] of order.lines.entries()) {
       const packs = line.receivedPacks ?? line.packs;
       if (packs <= 0) continue;
       stock.push({
         drugId: line.drugId,
-        batchNo: `${order.id.slice(0, 6)}-${line.drugId.slice(0, 4)}`.toUpperCase(),
+        // Week, delivery, line. Not a slice of any id: ids truncate into each
+        // other, and a recall names a batch number and nothing else, so two
+        // batches sharing one would withdraw stock that was never recalled.
+        // This also reads the way a real batch reference does.
+        batchNo: `W${period}-${delivered.length}-${index + 1}`,
         qty: packs,
         expiresPeriod: period + Math.max(1, line.shelfLifeWeeks),
         unitCost: line.unitPrice,

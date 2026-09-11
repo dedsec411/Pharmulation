@@ -198,6 +198,13 @@ describe("opening a facility", () => {
     expect(total(deep)).toBeGreaterThan(total(thin));
   });
 
+  // A recall names a batch number and nothing else, so two batches sharing one
+  // would withdraw stock that was never recalled.
+  it("gives every batch a number of its own", () => {
+    const stock = openingStock(lines, "s", 2);
+    expect(new Set(stock.map((b) => b.batchNo)).size).toBe(stock.length);
+  });
+
   it("rebuilds identically from the same seed", () => {
     expect(openingStock(lines, "s", 2)).toEqual(openingStock(lines, "s", 2));
   });
