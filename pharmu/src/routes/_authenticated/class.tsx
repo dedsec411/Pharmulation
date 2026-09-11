@@ -118,8 +118,8 @@ function ClassPage() {
           >
             <h2 className="text-lg font-bold">Not in a class yet</h2>
             <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-              If your university uses Pharmulation, your lecturer will have given you an
-              eight-character join code. Enter it below and any work they set will appear
+              If your university uses Pharmulation, your lecturer will have given you a
+              six-character join code. Enter it below and any work they set will appear
               here and on your dashboard. You can keep training without one - nothing on
               the rest of the app needs a class.
             </p>
