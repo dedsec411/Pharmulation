@@ -4,8 +4,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * transition-all rather than transition-colors, and a pressed state.
+ *
+ * There was no press feedback at all. On a desktop the hover state covers for
+ * it, but a touch screen has no hover - so the only confirmation that a tap
+ * registered was whatever happened next, and on a slow connection that is
+ * nothing for a second or more. A button that does not acknowledge a tap gets
+ * tapped again.
+ *
+ * It is deliberately slight. motion-reduce turns it off for anybody who has
+ * asked the operating system for less movement.
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all active:scale-[0.97] motion-reduce:active:scale-100 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {

@@ -169,7 +169,7 @@ export default function Landing() {
               Four training modes. 896 medicines. Real prescriptions, real decisions, real consequences - without the risk.
             </p>
             <div className="relative z-10 mt-7 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:flex-wrap">
-              <Link to="/login" className="w-44 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03] sm:w-auto sm:px-8 sm:py-3.5 sm:text-base">
+              <Link to="/login" className="w-44 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03] active:scale-[0.98] sm:w-auto sm:px-8 sm:py-3.5 sm:text-base">
                 Start Training
               </Link>
             </div>
@@ -265,7 +265,7 @@ export default function Landing() {
         <div className="mx-auto max-w-3xl glass-card p-6 sm:p-10 text-center">
           <h2 className="text-3xl font-bold">Your first case is waiting.</h2>
           <p className="mt-3 text-muted-foreground">Free to start. No card. Your training time is tracked as you go.</p>
-          <Link to="/login" className="mt-6 inline-block rounded-full bg-primary px-8 py-3.5 font-semibold text-primary-foreground hover:scale-[1.03] transition">
+          <Link to="/login" className="mt-6 inline-block rounded-full bg-primary px-8 py-3.5 font-semibold text-primary-foreground transition hover:scale-[1.03] active:scale-[0.98]">
             Create my account
           </Link>
         </div>
