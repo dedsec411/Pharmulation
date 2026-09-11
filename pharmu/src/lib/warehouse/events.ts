@@ -253,3 +253,134 @@ export function recallHonoured(
   const held = stock.filter((s) => s.batchNo === batchNo && s.qty > 0);
   return held.every((s) => s.location === "quarantine");
 }
+
+/* ------------------------------------------------------------------ *
+ * Settling last week's notices
+ * ------------------------------------------------------------------ */
+
+/**
+ * A notice as it stands when the week closes: what it was about, and what the
+ * learner did with it, if anything.
+ */
+export type OpenNotice = {
+  id: string;
+  kind: string;
+  /** The week it was raised. Only notices older than the closing week settle. */
+  period: number;
+  resolved: boolean;
+  resolution: string | null;
+  batchNo?: string;
+  affectedBatches?: string[];
+  requiredAction?: ExcursionEvent["requiredAction"];
+};
+
+export type Settlement = {
+  /** Batch numbers to write off at this close. */
+  condemned: string[];
+  charges: Array<{ kind: "penalty"; amount: Paisa; note: string }>;
+  /** How each notice should be marked once the close has dealt with it. */
+  updates: Array<{ id: string; resolution: string }>;
+};
+
+/**
+ * What last week's notices cost this week.
+ *
+ * Pure, because this is where the judgements live and every one of them is
+ * arguable: whether a batch was withdrawn in time, whether ignoring a recall
+ * should be charged again, whether stock survives a decision that went against
+ * the data sheet. A learner disputing any of it should be able to be shown the
+ * rule rather than told the database said so.
+ *
+ * Two rules run through all of it. A recalled batch that is simply gone is the
+ * worst outcome, not a pass - it went over the counter after the notice - so
+ * an empty shelf can never read as compliance. And the condition of medicine
+ * does not depend on what anyone decided about it: stock the manufacturer's
+ * limits condemned is destroyed whether the learner agreed or not.
+ */
+export function settleNotices(
+  notices: readonly OpenNotice[],
+  stock: ReadonlyArray<{ batchNo: string; location: StorageZone; qty: number }>,
+  period: number,
+): Settlement {
+  const condemned: string[] = [];
+  const charges: Settlement["charges"] = [];
+  const updates: Settlement["updates"] = [];
+
+  for (const notice of notices) {
+    if (!notice.resolved) {
+      // Only notices raised in an earlier week settle. One raised at this
+      // close has not been seen yet, let alone ignored.
+      if (notice.period >= period) continue;
+
+      if (notice.kind === "recall" && notice.batchNo) {
+        const batchNo = notice.batchNo;
+        const held = stock.filter((s) => s.batchNo === batchNo && s.qty > 0);
+        if (!held.length) {
+          charges.push({
+            kind: "penalty",
+            amount: RECALL_IGNORED_FINE,
+            note: `Recalled batch ${batchNo} was dispensed rather than withdrawn`,
+          });
+          updates.push({ id: notice.id, resolution: "dispensed before withdrawal" });
+        } else if (held.every((s) => s.location === "quarantine")) {
+          condemned.push(batchNo);
+          updates.push({ id: notice.id, resolution: "destroyed" });
+        } else {
+          // Charged again every week it stays on sale. The notice stays open,
+          // because the batch is still there and so is the decision.
+          charges.push({
+            kind: "penalty",
+            amount: RECALL_IGNORED_FINE,
+            note: `Recalled batch ${batchNo} still on sale`,
+          });
+        }
+        continue;
+      }
+
+      if (notice.kind === "excursion") {
+        condemned.push(...(notice.affectedBatches ?? []));
+        updates.push({ id: notice.id, resolution: "destroyed - not acted on" });
+        if (notice.requiredAction && notice.requiredAction !== "use") {
+          charges.push({
+            kind: "penalty",
+            amount: EXCURSION_IGNORED_FINE,
+            note: "Cold chain excursion left unanswered",
+          });
+        }
+        continue;
+      }
+
+      if (notice.kind === "shortage") {
+        updates.push({ id: notice.id, resolution: "noted" });
+      }
+      continue;
+    }
+
+    // Answered notices, whose stock is dealt with at the next close so that
+    // every write-off passes through the same week's arithmetic.
+    if (notice.kind === "recall" && notice.resolution === "quarantined" && notice.batchNo) {
+      condemned.push(notice.batchNo);
+      updates.push({ id: notice.id, resolution: "destroyed" });
+      continue;
+    }
+
+    if (notice.kind === "excursion"
+        && ["use", "quarantine", "destroy"].includes(notice.resolution ?? "")) {
+      if (notice.resolution === "use" && notice.requiredAction !== "use") {
+        charges.push({
+          kind: "penalty",
+          amount: EXCURSION_IGNORED_FINE,
+          note: "Stock dispensed against the manufacturer's stability limits",
+        });
+      }
+      // Condemned if the limits condemned it, or if the learner chose to
+      // destroy stock the limits had cleared - their call, their loss.
+      if (notice.requiredAction !== "use" || notice.resolution === "destroy") {
+        condemned.push(...(notice.affectedBatches ?? []));
+      }
+      updates.push({ id: notice.id, resolution: "settled" });
+    }
+  }
+
+  return { condemned, charges, updates };
+}

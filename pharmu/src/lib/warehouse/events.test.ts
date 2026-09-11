@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  rollEvents, requiredExcursionAction, applyRecall, recallHonoured, ODDS,
+  rollEvents, requiredExcursionAction, applyRecall, recallHonoured, settleNotices,
+  ODDS, RECALL_IGNORED_FINE, EXCURSION_IGNORED_FINE,
   type EventStock, type RollInput, type RecallEvent, type ExcursionEvent, type ShortageEvent,
+  type OpenNotice,
 } from "./events";
 
 const item = (over: Partial<EventStock> = {}): EventStock => ({
@@ -151,5 +153,136 @@ describe("inspections", () => {
 
   it("does not inspect a pharmacy on its opening week", () => {
     expect(roll({ period: 1 }).some((e) => e.kind === "inspection")).toBe(false);
+  });
+});
+
+describe("settling last week's notices", () => {
+  const onShelf = (batchNo: string, location: "ambient" | "quarantine" = "ambient") =>
+    ({ batchNo, location, qty: 10 } as const);
+
+  const recall = (over: Partial<OpenNotice> = {}): OpenNotice => ({
+    id: "n1", kind: "recall", period: 4, resolved: false, resolution: null,
+    batchNo: "BAD", ...over,
+  });
+  const excursion = (over: Partial<OpenNotice> = {}): OpenNotice => ({
+    id: "n2", kind: "excursion", period: 4, resolved: false, resolution: null,
+    affectedBatches: ["COLD1"], requiredAction: "destroy", ...over,
+  });
+
+  it("leaves a notice raised this week alone", () => {
+    const out = settleNotices([recall({ period: 5 })], [onShelf("BAD")], 5);
+    expect(out).toEqual({ condemned: [], charges: [], updates: [] });
+  });
+
+  describe("a recall", () => {
+    it("writes off a batch that was pulled from sale", () => {
+      const out = settleNotices([recall()], [onShelf("BAD", "quarantine")], 5);
+      expect(out.condemned).toEqual(["BAD"]);
+      expect(out.charges).toEqual([]);
+      expect(out.updates[0]).toEqual({ id: "n1", resolution: "destroyed" });
+    });
+
+    // Charged again each week, because the harm is ongoing and so is the
+    // choice to keep selling it. The notice stays open.
+    it("fines a batch still on the shelf, and keeps the notice open", () => {
+      const out = settleNotices([recall()], [onShelf("BAD")], 5);
+      expect(out.condemned).toEqual([]);
+      expect(out.charges[0].amount).toBe(RECALL_IGNORED_FINE);
+      expect(out.charges[0].note).toContain("still on sale");
+      expect(out.updates).toEqual([]);
+    });
+
+    it("charges again the following week if it is still there", () => {
+      const twice = [5, 6].map((p) => settleNotices([recall()], [onShelf("BAD")], p));
+      expect(twice.every((s) => s.charges.length === 1)).toBe(true);
+    });
+
+    // An empty shelf must never read as compliance: the batch went over the
+    // counter after the notice, which is the worst outcome a recall has.
+    it("treats a batch that has gone as dispensed, not as withdrawn", () => {
+      const out = settleNotices([recall()], [onShelf("SOMETHING-ELSE")], 5);
+      expect(out.condemned).toEqual([]);
+      expect(out.charges[0].note).toContain("dispensed rather than withdrawn");
+      expect(out.updates[0].resolution).toBe("dispensed before withdrawal");
+    });
+
+    it("writes off a batch the learner answered for", () => {
+      const out = settleNotices(
+        [recall({ resolved: true, resolution: "quarantined" })], [onShelf("BAD", "quarantine")], 5);
+      expect(out.condemned).toEqual(["BAD"]);
+      expect(out.updates[0].resolution).toBe("destroyed");
+    });
+
+    it("does not write the same batch off twice", () => {
+      const first = settleNotices(
+        [recall({ resolved: true, resolution: "quarantined" })], [onShelf("BAD", "quarantine")], 5);
+      const after = settleNotices(
+        [recall({ resolved: true, resolution: first.updates[0].resolution })], [], 6);
+      expect(after.condemned).toEqual([]);
+    });
+  });
+
+  describe("a cold chain excursion", () => {
+    it("destroys the stock when nobody answered, and fines the silence", () => {
+      const out = settleNotices([excursion()], [onShelf("COLD1")], 5);
+      expect(out.condemned).toEqual(["COLD1"]);
+      expect(out.charges[0].amount).toBe(EXCURSION_IGNORED_FINE);
+      expect(out.updates[0].resolution).toBe("destroyed - not acted on");
+    });
+
+    // Nothing was required, so ignoring it costs nothing but the stock.
+    it("does not fine silence on an excursion the data sheet cleared", () => {
+      const out = settleNotices([excursion({ requiredAction: "use" })], [onShelf("COLD1")], 5);
+      expect(out.charges).toEqual([]);
+    });
+
+    // The condition of the medicine does not depend on the decision.
+    it("destroys condemned stock even when the learner chose to use it", () => {
+      const out = settleNotices(
+        [excursion({ resolved: true, resolution: "use" })], [onShelf("COLD1")], 5);
+      expect(out.condemned).toEqual(["COLD1"]);
+      expect(out.charges[0].note).toContain("stability limits");
+    });
+
+    it("charges nothing for using stock the data sheet cleared", () => {
+      const out = settleNotices(
+        [excursion({ resolved: true, resolution: "use", requiredAction: "use" })],
+        [onShelf("COLD1")], 5);
+      expect(out.charges).toEqual([]);
+      expect(out.condemned).toEqual([]);
+    });
+
+    // Over-cautious is allowed to be expensive, but it is not an offence.
+    it("lets a learner destroy stock that was fine, at their own cost", () => {
+      const out = settleNotices(
+        [excursion({ resolved: true, resolution: "destroy", requiredAction: "use" })],
+        [onShelf("COLD1")], 5);
+      expect(out.condemned).toEqual(["COLD1"]);
+      expect(out.charges).toEqual([]);
+    });
+
+    it("settles a notice once and not again", () => {
+      const out = settleNotices(
+        [excursion({ resolved: true, resolution: "quarantine" })], [onShelf("COLD1")], 5);
+      expect(out.updates[0].resolution).toBe("settled");
+      const again = settleNotices(
+        [excursion({ resolved: true, resolution: "settled" })], [onShelf("COLD1")], 6);
+      expect(again.condemned).toEqual([]);
+      expect(again.updates).toEqual([]);
+    });
+  });
+
+  it("closes a short delivery without charging for it", () => {
+    const out = settleNotices(
+      [{ id: "n3", kind: "shortage", period: 4, resolved: false, resolution: null }], [], 5);
+    expect(out.charges).toEqual([]);
+    expect(out.updates[0].resolution).toBe("noted");
+  });
+
+  // An expired licence is not settled by the close: it is settled by renewing.
+  it("leaves a licence expiry open", () => {
+    const out = settleNotices(
+      [{ id: "n4", kind: "licence-expiry", period: 4, resolved: false, resolution: null }], [], 5);
+    expect(out).toEqual({ condemned: [], charges: [], updates: [] });
   });
 });

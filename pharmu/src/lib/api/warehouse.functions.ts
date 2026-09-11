@@ -17,8 +17,8 @@ import {
   type Licence, type ComplianceStock, type RegisterLine,
 } from "@/lib/warehouse/compliance";
 import {
-  rollEvents, recallHonoured, RECALL_IGNORED_FINE, EXCURSION_IGNORED_FINE,
-  type EventStock, type ShortageEvent,
+  rollEvents, settleNotices,
+  type EventStock, type ShortageEvent, type OpenNotice,
 } from "@/lib/warehouse/events";
 
 /**
@@ -731,96 +731,35 @@ export const advanceWeek = createServerFn({ method: "POST" })
     }
 
     /* ---- 3. Notices from earlier weeks, answered or ignored --------------- */
-    const condemned: string[] = [];
-    const charges: Array<{ kind: LedgerKind; amount: Paisa; note: string }> = [];
-
-    for (const row of (openEvents.data ?? []) as Row[]) {
-      if (Number(row.period_no) >= period) continue;
-      const payload = (row.payload ?? {}) as Row;
-
-      if (row.kind === "recall") {
-        const batchNo = payload.batchNo as string;
-        const stillHeld = batches.some((b) => b.batchNo === batchNo && b.qty > 0);
-        if (!stillHeld) {
-          // The batch is gone, which means it went over the counter after the
-          // notice. That is the worst outcome a recall has, not a pass - and
-          // an empty shelf must not be allowed to read as compliance.
-          charges.push({
-            kind: "penalty",
-            amount: RECALL_IGNORED_FINE,
-            note: `Recalled batch ${batchNo} was dispensed rather than withdrawn`,
-          });
-          await db.from("wh_events")
-            .update({ resolved: true, resolution: "dispensed before withdrawal" })
-            .eq("id", row.id);
-          continue;
-        }
-        if (recallHonoured(batches, batchNo)) {
-          await db.from("wh_events")
-            .update({ resolved: true, resolution: "destroyed" }).eq("id", row.id);
-          condemned.push(batchNo);
-        } else {
-          // Charged again every week it stays on the shelf: the harm is
-          // ongoing, and so is the choice to keep selling it.
-          charges.push({
-            kind: "penalty",
-            amount: RECALL_IGNORED_FINE,
-            note: `Recalled batch ${batchNo} still on sale`,
-          });
-        }
-        continue;
-      }
-
-      if (row.kind === "excursion") {
-        condemned.push(...((payload.affectedBatches ?? []) as string[]));
-        await db.from("wh_events")
-          .update({ resolved: true, resolution: "destroyed - not acted on" }).eq("id", row.id);
-        if (payload.requiredAction && payload.requiredAction !== "use") {
-          charges.push({
-            kind: "penalty",
-            amount: EXCURSION_IGNORED_FINE,
-            note: "Cold chain excursion left unanswered",
-          });
-        }
-        continue;
-      }
-
-      if (row.kind === "shortage") {
-        await db.from("wh_events")
-          .update({ resolved: true, resolution: "noted" }).eq("id", row.id);
-      }
-    }
-
-    // Decisions the learner did make, applied now so the write-off lands in
-    // this week's wastage rather than nowhere.
+    // Which notice costs what is decided by settleNotices, not here, so the
+    // judgements can be tested and shown to a learner who disputes one.
     const answered = await db.from("wh_events")
       .select("*").eq("facility_id", facility.id).eq("resolved", true)
       .in("resolution", ["quarantined", "quarantine", "destroy", "use"]);
-    for (const row of (answered.data ?? []) as Row[]) {
+
+    const notices: OpenNotice[] = [
+      ...((openEvents.data ?? []) as Row[]),
+      ...((answered.data ?? []) as Row[]),
+    ].map((row) => {
       const payload = (row.payload ?? {}) as Row;
+      return {
+        id: row.id as string,
+        kind: row.kind as string,
+        period: Number(row.period_no),
+        resolved: Boolean(row.resolved),
+        resolution: (row.resolution ?? null) as string | null,
+        batchNo: payload.batchNo as string | undefined,
+        affectedBatches: (payload.affectedBatches ?? []) as string[],
+        requiredAction: payload.requiredAction,
+      };
+    });
 
-      if (row.kind === "recall") {
-        condemned.push(payload.batchNo as string);
-        await db.from("wh_events").update({ resolution: "destroyed" }).eq("id", row.id);
-        continue;
-      }
-
-      if (row.kind === "excursion") {
-        if (row.resolution === "use" && payload.requiredAction !== "use") {
-          charges.push({
-            kind: "penalty",
-            amount: EXCURSION_IGNORED_FINE,
-            note: "Stock dispensed against the manufacturer's stability limits",
-          });
-        }
-        // The condition of the medicine does not depend on the decision - but
-        // a learner who chose to destroy stock the data sheet had cleared has
-        // still destroyed it, and should see the loss they chose.
-        if (payload.requiredAction !== "use" || row.resolution === "destroy") {
-          condemned.push(...((payload.affectedBatches ?? []) as string[]));
-        }
-        await db.from("wh_events").update({ resolution: "settled" }).eq("id", row.id);
-      }
+    const settled = settleNotices(notices, batches, period);
+    const condemned = settled.condemned;
+    const charges: Array<{ kind: LedgerKind; amount: Paisa; note: string }> = [...settled.charges];
+    for (const update of settled.updates) {
+      await db.from("wh_events")
+        .update({ resolved: true, resolution: update.resolution }).eq("id", update.id);
     }
 
     /* ---- 4. The inspector, if this is the week ---------------------------- */
