@@ -9,9 +9,10 @@ import { WeekBoard } from "@/components/warehouse/WeekBoard";
 import { StockRoom } from "@/components/warehouse/StockRoom";
 import { OrderDesk } from "@/components/warehouse/OrderDesk";
 import { NoticeBoard } from "@/components/warehouse/NoticeBoard";
+import { ComplianceDesk } from "@/components/warehouse/ComplianceDesk";
 import {
   useAdvanceWeek, useFacility, useOpenPharmacy, usePutAway, usePlaceOrder,
-  useResolveEvent,
+  useResolveEvent, useApplyForLicence, useSignRegister, useLogTemperature,
 } from "@/components/warehouse/useFacility";
 import { SUPPLIER_NAME } from "@/lib/warehouse/supplier";
 import { money } from "@/lib/warehouse/view";
@@ -40,6 +41,9 @@ function Warehousing() {
   const putAway = usePutAway();
   const order = usePlaceOrder();
   const resolve = useResolveEvent();
+  const licence = useApplyForLicence();
+  const register = useSignRegister();
+  const fridgeLog = useLogTemperature();
   const [tab, setTab] = useState("week");
 
   if (isLoading) {
@@ -123,6 +127,7 @@ function Warehousing() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="compliance">Compliance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="week">
@@ -160,6 +165,17 @@ function Warehousing() {
             busy={resolve.isPending}
             onGoTo={setTab}
             onResolve={(eventId, action) => resolve.mutate({ eventId, action })}
+          />
+        </TabsContent>
+
+        <TabsContent value="compliance">
+          <ComplianceDesk
+            facility={facility}
+            busy={licence.isPending || register.isPending || fridgeLog.isPending}
+            onGoTo={setTab}
+            onApply={(kind) => licence.mutate({ kind })}
+            onSignRegister={(counts) => register.mutate({ counts })}
+            onLogTemperature={() => fridgeLog.mutate(undefined as never)}
           />
         </TabsContent>
       </Tabs>
