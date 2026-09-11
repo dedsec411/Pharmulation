@@ -7,9 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OpenPharmacy } from "@/components/warehouse/OpenPharmacy";
 import { WeekBoard } from "@/components/warehouse/WeekBoard";
 import { StockRoom } from "@/components/warehouse/StockRoom";
+import { OrderDesk } from "@/components/warehouse/OrderDesk";
 import {
-  useAdvanceWeek, useFacility, useOpenPharmacy, usePutAway,
+  useAdvanceWeek, useFacility, useOpenPharmacy, usePutAway, usePlaceOrder,
 } from "@/components/warehouse/useFacility";
+import { SUPPLIER_NAME } from "@/lib/warehouse/supplier";
 import { money } from "@/lib/warehouse/view";
 import { toast } from "sonner";
 
@@ -34,6 +36,7 @@ function Warehousing() {
   const open = useOpenPharmacy();
   const advance = useAdvanceWeek();
   const putAway = usePutAway();
+  const order = usePlaceOrder();
   const [tab, setTab] = useState("week");
 
   if (isLoading) {
@@ -108,6 +111,7 @@ function Warehousing() {
         <TabsList className="mb-4">
           <TabsTrigger value="week">Week</TabsTrigger>
           <TabsTrigger value="stock">Stock</TabsTrigger>
+          <TabsTrigger value="ordering">Ordering</TabsTrigger>
         </TabsList>
 
         <TabsContent value="week">
@@ -128,6 +132,14 @@ function Warehousing() {
               if (result.ok) toast.success(`${result.moved} batch(es) put away.`);
               return result.ok;
             }}
+          />
+        </TabsContent>
+
+        <TabsContent value="ordering">
+          <OrderDesk
+            facility={facility}
+            placing={order.isPending}
+            onOrder={(lines) => order.mutate({ supplier: SUPPLIER_NAME, lines })}
           />
         </TabsContent>
       </Tabs>
