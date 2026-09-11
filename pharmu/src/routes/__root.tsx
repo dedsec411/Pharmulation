@@ -17,6 +17,9 @@ import { useInitAuth } from "@/lib/use-init-auth";
 import { THEME_BOOT_SCRIPT, useThemeStore, useThemeSync } from "@/lib/theme-store";
 import { MotionConfig } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
+import {
+  SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, OG_IMAGE, canonical,
+} from "@/lib/site";
 
 function NotFoundComponent() {
   return (
@@ -80,20 +83,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Pharmulation - Train Like a Real Pharmacist" },
-      { name: "description", content: "Browser-based pharmacy training simulator. Real prescriptions, OTC, clinical, industry, and warehousing cases." },
-      { property: "og:title", content: "Pharmulation - Train Like a Real Pharmacist" },
-      { property: "og:description", content: "Browser-based pharmacy training simulator. Real prescriptions, OTC, clinical, industry, and warehousing cases." },
+      { title: `${SITE_NAME} - ${SITE_TAGLINE}` },
+      { name: "description", content: SITE_DESCRIPTION },
+      { name: "theme-color", content: "#00BFA5" },
+
+      // The share card. This previously pointed at a preview image on the
+      // scaffolding tool's bucket - a URL nobody here controls, showing
+      // nothing about this product - so a link pasted into WhatsApp or a group
+      // chat previewed as somebody else's screenshot, or as nothing at all.
+      { property: "og:site_name", content: SITE_NAME },
+      { property: "og:title", content: `${SITE_NAME} - ${SITE_TAGLINE}` },
+      { property: "og:description", content: SITE_DESCRIPTION },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/") },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "The Pharmulation wordmark above the line: train like a real pharmacist." },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Pharmulation - Train Like a Real Pharmacist" },
-      { name: "twitter:description", content: "Browser-based pharmacy training simulator. Real prescriptions, OTC, clinical, industry, and warehousing cases." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ad21e273-1c51-419d-9dc8-989c38b350ef/id-preview-308e8334--a89de76e-398b-4993-be82-7ff82fc0f1af.lovable.app-1781339392769.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ad21e273-1c51-419d-9dc8-989c38b350ef/id-preview-308e8334--a89de76e-398b-4993-be82-7ff82fc0f1af.lovable.app-1781339392769.png" },
+      { name: "twitter:title", content: `${SITE_NAME} - ${SITE_TAGLINE}` },
+      { name: "twitter:description", content: SITE_DESCRIPTION },
+      { name: "twitter:image", content: OG_IMAGE },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
+      // There was no favicon at all. The manifest asked for one and got a 404,
+      // so every browser tab showed the blank default page icon.
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

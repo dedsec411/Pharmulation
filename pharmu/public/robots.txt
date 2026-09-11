@@ -1,0 +1,24 @@
+# Pharmulation
+
+User-agent: *
+Allow: /$
+Allow: /login
+Allow: /signup
+Allow: /leaderboard
+Allow: /privacy
+Allow: /terms
+
+# Everything behind a sign-in. A crawler only ever gets the login redirect
+# from these, so asking for them wastes its budget and ours.
+Disallow: /dashboard
+Disallow: /modes
+Disallow: /game/
+Disallow: /profile
+Disallow: /settings
+Disallow: /drugs
+Disallow: /admin
+Disallow: /educator/
+Disallow: /assessment/
+Disallow: /auth/
+
+Sitemap: https://pharmulation.vercel.app/sitemap.xml
