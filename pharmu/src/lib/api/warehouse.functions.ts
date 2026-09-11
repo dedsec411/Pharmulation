@@ -759,6 +759,10 @@ export const advanceWeek = createServerFn({ method: "POST" })
     const settled = settleNotices(notices, batches, period);
     const condemned = settled.condemned;
     const charges: Array<{ kind: LedgerKind; amount: Paisa; note: string }> = [...settled.charges];
+    // What went wrong this week, coded rather than matched on prose, so the
+    // week can be scored and the learner told what cost them.
+    const faults: Array<{ code: string; detail: string }> =
+      settled.charges.map((c) => ({ code: c.code, detail: c.note }));
     for (const update of settled.updates) {
       await db.from("wh_events")
         .update({ resolved: true, resolution: update.resolution }).eq("id", update.id);
@@ -820,6 +824,7 @@ export const advanceWeek = createServerFn({ method: "POST" })
           note: `Inspection, week ${period}: ${inspectionResult.findings.length} finding(s)`,
         });
       }
+      faults.push(...inspectionResult.findings.map((f) => ({ code: f.code, detail: f.detail })));
       if (inspectionResult.suspended) suspendedUntil = period + SUSPENSION_WEEKS;
 
       await db.from("wh_events").insert({
@@ -909,6 +914,14 @@ export const advanceWeek = createServerFn({ method: "POST" })
       })));
     }
 
+    // Stock destroyed by bad storage is a fault too, and one nobody reported.
+    if (result.spoiled.length) {
+      faults.push({
+        code: "cold-chain-broken",
+        detail: `${result.spoiled.length} batch(es) destroyed - stored outside the cold chain`,
+      });
+    }
+
     for (const orderId of result.delivered) {
       await db.from("wh_orders").update({ status: "delivered" }).eq("id", orderId);
     }
@@ -977,5 +990,6 @@ export const advanceWeek = createServerFn({ method: "POST" })
       events: rolled,
       inspection: inspectionResult,
       charges,
+      faults,
     };
   });

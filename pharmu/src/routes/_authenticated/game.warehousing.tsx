@@ -11,12 +11,16 @@ import { OrderDesk } from "@/components/warehouse/OrderDesk";
 import { NoticeBoard } from "@/components/warehouse/NoticeBoard";
 import { ComplianceDesk } from "@/components/warehouse/ComplianceDesk";
 import { ReportsDesk } from "@/components/warehouse/ReportsDesk";
+import { WeekResult, type ClosedWeek } from "@/components/warehouse/WeekResult";
 import {
   useAdvanceWeek, useFacility, useOpenPharmacy, usePutAway, usePlaceOrder,
   useResolveEvent, useApplyForLicence, useSignRegister, useLogTemperature,
 } from "@/components/warehouse/useFacility";
 import { SUPPLIER_NAME } from "@/lib/warehouse/supplier";
 import { money } from "@/lib/warehouse/view";
+import { weekScore, type WeekScore } from "@/lib/warehouse/score";
+import { submitScore } from "@/lib/game/shared";
+import { useAuthStore } from "@/lib/auth-store";
 import { toast } from "sonner";
 
 /**
@@ -46,6 +50,8 @@ function Warehousing() {
   const register = useSignRegister();
   const fridgeLog = useLogTemperature();
   const [tab, setTab] = useState("week");
+  const [closed, setClosed] = useState<{ week: ClosedWeek; scored: WeekScore; xp: number } | null>(null);
+  const userId = useAuthStore((s) => s.profile?.user_id);
 
   if (isLoading) {
     return (
@@ -61,22 +67,48 @@ function Warehousing() {
 
   const closeWeek = () => {
     advance.mutate(undefined as never, {
-      onSuccess: (result: any) => {
+      onSuccess: async (result: any) => {
         if (!result?.ok) return;
-        if (result.insolvent) {
-          toast.error("The account is past its limit. The pharmacy is finished.", {
-            description: "Your closed weeks stay on file - the post-mortem is the lesson.",
-          });
-          return;
-        }
-        const traded = result.traded
-          ? `Week ${result.period}: ${money(result.kpis.revenue)} taken.`
-          : `Week ${result.period} closed with the counter shut.`;
-        toast.success(traded, {
-          description: result.inspection
-            ? `An inspector called. ${result.inspection.findings.length} finding(s).`
-            : undefined,
+
+        const fines = (result.charges ?? [])
+          .filter((c: any) => c.kind === "penalty")
+          .reduce((sum: number, c: any) => sum + c.amount, 0);
+
+        const scored = weekScore({
+          serviceLevel: result.kpis.serviceLevel,
+          grossMarginPercent: result.kpis.grossMarginPercent,
+          revenue: result.kpis.revenue,
+          wastage: result.kpis.wastage,
+          fines,
+          traded: result.traded,
         });
+
+        // A week is the unit of work here the way a case is elsewhere, so it
+        // earns XP the same way. Demand served stands in for accuracy: it is
+        // the closest thing a pharmacy has to getting the answer right.
+        const demanded = result.perDrug.reduce((n: number, d: any) => n + d.demanded, 0);
+        const sold = result.perDrug.reduce((n: number, d: any) => n + d.sold, 0);
+        let xp = 0;
+        if (userId) {
+          const submitted = await submitScore({
+            userId,
+            caseId: `generated:warehouse-week-${result.period}`,
+            mode: "warehousing",
+            score: scored.score,
+            // A week is not raced. There is no clock to report.
+            timeTaken: 0,
+            errors: result.faults.length,
+            correctDrugs: sold,
+            totalDrugs: demanded,
+            difficulty: facility.difficulty,
+            errorsDetail: result.faults.map((f: any) => ({
+              errorType: f.code, whyWrong: f.detail,
+            })),
+          });
+          xp = submitted.xpGain;
+        }
+
+        setClosed({ week: result as ClosedWeek, scored, xp });
       },
     });
   };
@@ -185,6 +217,13 @@ function Warehousing() {
           <ReportsDesk facility={facility} />
         </TabsContent>
       </Tabs>
+
+      <WeekResult
+        week={closed?.week ?? null}
+        scored={closed?.scored ?? null}
+        xp={closed?.xp ?? 0}
+        onClose={() => setClosed(null)}
+      />
     </div>
   );
 }

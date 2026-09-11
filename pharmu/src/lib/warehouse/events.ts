@@ -277,7 +277,9 @@ export type OpenNotice = {
 export type Settlement = {
   /** Batch numbers to write off at this close. */
   condemned: string[];
-  charges: Array<{ kind: "penalty"; amount: Paisa; note: string }>;
+  /** Each carries a code as well as wording, so the week's faults can be
+   *  counted and reported without matching on prose. */
+  charges: Array<{ kind: "penalty"; code: string; amount: Paisa; note: string }>;
   /** How each notice should be marked once the close has dealt with it. */
   updates: Array<{ id: string; resolution: string }>;
 };
@@ -318,6 +320,7 @@ export function settleNotices(
         if (!held.length) {
           charges.push({
             kind: "penalty",
+            code: "recall-dispensed",
             amount: RECALL_IGNORED_FINE,
             note: `Recalled batch ${batchNo} was dispensed rather than withdrawn`,
           });
@@ -330,6 +333,7 @@ export function settleNotices(
           // because the batch is still there and so is the decision.
           charges.push({
             kind: "penalty",
+            code: "recall-ignored",
             amount: RECALL_IGNORED_FINE,
             note: `Recalled batch ${batchNo} still on sale`,
           });
@@ -343,6 +347,7 @@ export function settleNotices(
         if (notice.requiredAction && notice.requiredAction !== "use") {
           charges.push({
             kind: "penalty",
+            code: "excursion-ignored",
             amount: EXCURSION_IGNORED_FINE,
             note: "Cold chain excursion left unanswered",
           });
@@ -369,6 +374,7 @@ export function settleNotices(
       if (notice.resolution === "use" && notice.requiredAction !== "use") {
         charges.push({
           kind: "penalty",
+          code: "excursion-dispensed",
           amount: EXCURSION_IGNORED_FINE,
           note: "Stock dispensed against the manufacturer's stability limits",
         });
