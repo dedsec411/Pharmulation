@@ -204,7 +204,7 @@ function AdminPage() {
                     <td className="p-3 text-muted-foreground">{u.email}</td>
                     <td className="p-3 capitalize">{u.role}</td>
                     <td className="p-3 text-right">{u.level}</td>
-                    <td className="p-3 text-right">{u.total_cases_completed}</td>
+                    <td className="p-3 text-right">{Number(u.total_cases_completed ?? 0).toLocaleString()}</td>
                     <td className="p-3 text-right whitespace-nowrap">
                       {u.role !== "educator" && u.role !== "admin" && (
                         <button

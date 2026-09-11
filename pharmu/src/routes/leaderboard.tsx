@@ -221,7 +221,7 @@ function LeaderboardPage() {
                   <div className="truncate text-base sm:text-lg font-bold tracking-wide">{cleanPlayerName(p.full_name)} {isMe && <span className="text-xs text-primary">(you)</span>}</div>
                   <div className="truncate text-xs text-muted-foreground capitalize">{tierFor(p.xp ?? 0).title} · {p.total_cases_completed ?? 0} cases · {p.accuracy_rate ?? 0}% acc</div>
                 </div>
-                <div className="shrink-0 rounded-md bg-primary/10 px-3 py-1 text-right font-bold tabular-nums text-primary">{p.xp} {filter === "all" ? "XP" : "pts"}</div>
+                <div className="shrink-0 rounded-md bg-primary/10 px-3 py-1 text-right font-bold tabular-nums text-primary">{Number(p.xp ?? 0).toLocaleString()} {filter === "all" ? "XP" : "pts"}</div>
               </motion.div>
             );
           })}
@@ -233,7 +233,7 @@ function LeaderboardPage() {
         <div className="mt-4 rounded-2xl border border-primary/40 bg-primary/10 p-4 flex items-center gap-4 shadow-[0_0_35px_-22px_oklch(0.74_0.14_180)]">
           <div className="w-8 text-center font-bold text-primary">{myRank}</div>
           <div className="min-w-0 flex-1 truncate text-base sm:text-lg font-bold">Your rank - {cleanPlayerName(me?.full_name)}</div>
-          <div className="shrink-0 font-bold tabular-nums text-primary">{me?.xp} {filter === "all" ? "XP" : "pts"}</div>
+          <div className="shrink-0 font-bold tabular-nums text-primary">{Number(me?.xp ?? 0).toLocaleString()} {filter === "all" ? "XP" : "pts"}</div>
         </div>
       )}
     </main>

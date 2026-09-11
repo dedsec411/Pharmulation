@@ -481,7 +481,7 @@ function Dashboard() {
                           {formatActivityDate(s.completed_at)}
                         </p>
                       </div>
-                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{s.score} pts</span>
+                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{Number(s.score ?? 0).toLocaleString()} pts</span>
                     </li>
                   );
                 })}
@@ -555,7 +555,7 @@ function Dashboard() {
                       <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">pharmacist rank</p>
                     </div>
                     <span className="rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 font-mono text-xs font-black tabular-nums text-primary shadow-inner">
-                      {p.xp} XP
+                      {Number(p.xp ?? 0).toLocaleString()} XP
                     </span>
                   </motion.li>
                 );

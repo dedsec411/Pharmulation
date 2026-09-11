@@ -101,11 +101,11 @@ function Roster({ classId }: { classId: string }) {
           {students.map((s) => (
             <tr key={s.student_id} className="border-b border-border/20 last:border-0">
               <td className="px-4 py-2.5 font-semibold">{s.full_name ?? "Unnamed student"}</td>
-              <td className="px-4 py-2.5 text-right tabular-nums">{s.total_cases_completed}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums">{Number(s.total_cases_completed ?? 0).toLocaleString()}</td>
               <td className="px-4 py-2.5 text-right tabular-nums">
                 {s.total_cases_completed ? `${Math.round(Number(s.accuracy_rate))}%` : "-"}
               </td>
-              <td className="px-4 py-2.5 text-right tabular-nums">{s.xp}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums">{Number(s.xp ?? 0).toLocaleString()}</td>
               <td className="px-4 py-2.5 text-right text-xs text-muted-foreground">
                 {new Date(s.enrolled_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
               </td>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useDeferredValue } from "react";
 import { Search, Heart, BookOpen, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
@@ -98,14 +98,30 @@ function DrugsPage() {
     [catalogDrugs],
   );
 
-  const list = catalogDrugs.filter((d) => {
-    const term = q.toLowerCase();
-    return (
+  /**
+   * The filtered catalogue.
+   *
+   * Two things were wrong with doing this inline. It ran on every render, so
+   * opening a drug, switching tabs or bookmarking one re-scanned all 896
+   * medicines for no reason. And it ran on every keystroke, so a fast typist
+   * filtered the whole catalogue six or seven times before finishing a word.
+   *
+   * useDeferredValue rather than a timed debounce: the input itself stays
+   * instant because React keeps the typed value, and only the expensive list
+   * lags behind by a frame or two. A setTimeout would have made the text
+   * cursor itself feel sticky, which is the thing a debounce is supposed to
+   * prevent.
+   */
+  const deferredQ = useDeferredValue(q);
+  const list = useMemo(() => {
+    const term = deferredQ.trim().toLowerCase();
+    if (!term && !category && !drugClass) return catalogDrugs;
+    return catalogDrugs.filter((d) => (
       (!term || d.name.toLowerCase().includes(term) || d.generic_name?.toLowerCase().includes(term)) &&
       (!category || d.category === category) &&
       (!drugClass || d.drug_class === drugClass)
-    );
-  });
+    ));
+  }, [catalogDrugs, deferredQ, category, drugClass]);
 
   /**
    * How many cards are on screen.
@@ -121,7 +137,7 @@ function DrugsPage() {
   const visible = list.slice(0, shown);
   // Any change to the filters starts the count again, so a narrowed search
   // does not stay stuck on a page size meant for the whole catalogue.
-  useEffect(() => { setShown(PAGE); }, [q, category, drugClass]);
+  useEffect(() => { setShown(PAGE); }, [deferredQ, category, drugClass]);
 
   // What the study tools draw from. Previously hardcoded to bookmarks, so all
   // three tabs sat empty until four drugs had been bookmarked - which read as
