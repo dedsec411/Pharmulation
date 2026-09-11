@@ -114,8 +114,17 @@ function Toggle({ label, desc, checked, onChange }: { label: string; desc: strin
         <div className="font-semibold text-sm">{label}</div>
         <div className="text-xs text-muted-foreground">{desc}</div>
       </div>
-      <button onClick={() => onChange(!checked)}
-        className={`relative w-11 h-6 rounded-full transition ${checked ? "bg-primary" : "bg-foreground/15"}`}>
+      {/* A bare button with an empty label is announced as "button" and
+          nothing else, so a screen reader user has no idea which setting they
+          are on or whether it is currently on. role=switch plus aria-checked
+          is what a toggle is supposed to be. */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${checked ? "bg-primary" : "bg-foreground/15"}`}>
         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${checked ? "left-5" : "left-0.5"}`} />
       </button>
     </div>
