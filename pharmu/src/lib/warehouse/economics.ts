@@ -164,11 +164,16 @@ export function abcClassify(
     for (const line of sorted) out[line.drugId] = "C";
     return out;
   }
+  // Judged on the value that came BEFORE each line, so the line that carries
+  // the catalogue past 80% is still in class A. Measuring after it instead
+  // would let a pharmacy whose single biggest earner is 90% of the business
+  // come back with no class A line at all, which is the opposite of what the
+  // analysis is for.
   let running = 0;
   for (const line of sorted) {
+    const before = running / total;
+    out[line.drugId] = before < 0.8 ? "A" : before < 0.95 ? "B" : "C";
     running += Math.max(0, line.annualValue);
-    const share = running / total;
-    out[line.drugId] = share <= 0.8 ? "A" : share <= 0.95 ? "B" : "C";
   }
   return out;
 }
