@@ -17,7 +17,7 @@
  */
 
 import {
-  chooseCatalogue, openingStock, STARTING,
+  chooseCatalogue, openingStock, startingPosition,
   type CatalogueDrug, type Difficulty,
 } from "./bootstrap";
 import { closeWeek, type PendingOrder, type LedgerKind } from "./week";
@@ -62,6 +62,9 @@ function isTrading(facility: Row, licences: readonly Licence[], period: number):
 
 const CATALOGUE_SIZE = 40;
 
+/** How long the previous owner's account has left to run when you take over. */
+const OPENING_ACCOUNT_WEEKS = PAYMENT_TERMS_WEEKS * 2;
+
 /**
  * When a week's buying counts as having gone wrong.
  *
@@ -96,10 +99,14 @@ export async function createFacility(db: Db, userId: string, data: { name: strin
   }
 
   const difficulty = data.difficulty as Difficulty;
-  const start = STARTING[difficulty];
   const seed = crypto.randomUUID();
   const lines = chooseCatalogue(drugs.data as CatalogueDrug[], seed, CATALOGUE_SIZE);
   if (!lines.length) return { ok: false as const, error: "The catalogue is empty." };
+
+  // Rent and working capital follow from what this particular shop sells.
+  // Fixed figures cannot work: every facility gets a different catalogue, and
+  // a rent that squeezed one would be pocket change to the next.
+  const start = startingPosition(lines, difficulty);
 
   const facility = await db.from("wh_facilities").insert({
     user_id: userId,
@@ -108,7 +115,9 @@ export async function createFacility(db: Db, userId: string, data: { name: strin
     difficulty,
     current_period: 1,
     cash_paisa: start.cash,
+    opening_cash_paisa: start.cash,
     overdraft_paisa: start.overdraft,
+    weekly_overheads_paisa: start.weeklyOverheads,
     seed,
     status: "running",
   }).select("id").single();
@@ -132,8 +141,9 @@ export async function createFacility(db: Db, userId: string, data: { name: strin
     controlled: l.controlled,
   })));
 
+  const opening = openingStock(lines, seed, start.openingCoverWeeks);
   await db.from("wh_stock").insert(
-    openingStock(lines, seed, start.openingCoverWeeks).map((b) => ({
+    opening.map((b) => ({
       facility_id: facilityId,
       drug_id: b.drugId,
       batch_no: b.batchNo,
@@ -143,6 +153,27 @@ export async function createFacility(db: Db, userId: string, data: { name: strin
       location: b.location,
       received_period: 1,
     })));
+
+  // The shelf comes with the business, and so does the bill for it. Handing a
+  // learner five weeks of free stock would let them bank the proceeds and coast
+  // for a year on money they never earned - and taking over a going concern
+  // means taking over its creditors. It falls due far enough out to be
+  // survivable and close enough to have to be planned for, and it is the first
+  // real thing the budget has to be managed around.
+  const shelfCost = opening.reduce((sum, b) => sum + b.qty * b.unitCost, 0);
+  if (shelfCost > 0) {
+    await db.from("wh_orders").insert({
+      facility_id: facilityId,
+      supplier: "Previous owner's account",
+      placed_period: 1,
+      eta_period: 1,
+      // Already on the shelf, so nothing is delivered again - only paid for.
+      status: "delivered",
+      total_paisa: shelfCost,
+      payment_due_period: 1 + OPENING_ACCOUNT_WEEKS,
+      paid: false,
+    });
+  }
 
   // A Drug Sale Licence to trade at all. No narcotics permit: obtaining one
   // is a goal, and until it exists the controlled lines cannot be ordered.
@@ -515,13 +546,22 @@ export async function advanceWeek(db: Db, userId: string) {
   if (!facility) return { ok: false as const, error: "No pharmacy open." };
   const period = Number(facility.current_period);
   const difficulty = (facility.difficulty ?? "medium") as Difficulty;
+  const weeklyOverheads = Number(facility.weekly_overheads_paisa ?? 0);
 
-  const [catalogue, stock, orders, licenceRows, openEvents, registerRows, paperwork, lastPeriod] =
+  const [catalogue, stock, orders, unpaid, licenceRows, openEvents, registerRows,
+         paperwork, lastPeriod] =
     await Promise.all([
       db.from("wh_catalogue").select("*, drugs(name)").eq("facility_id", facility.id),
       db.from("wh_stock").select("*").eq("facility_id", facility.id).gt("qty", 0),
+      // Two queries, because an order matters to the close for two separate
+      // reasons and they do not expire together. One is still on its way; the
+      // other landed weeks ago and has not been paid for. Asking only for
+      // orders still in transit means a delivered invoice is never presented
+      // and the pharmacy gets its stock for nothing.
       db.from("wh_orders").select("*, wh_order_lines(*)").eq("facility_id", facility.id)
         .eq("status", "placed"),
+      db.from("wh_orders").select("*, wh_order_lines(*)").eq("facility_id", facility.id)
+        .eq("paid", false).neq("status", "cancelled"),
       db.from("wh_licences").select("*").eq("facility_id", facility.id),
       db.from("wh_events").select("*").eq("facility_id", facility.id).eq("resolved", false),
       db.from("wh_cd_register").select("*").eq("facility_id", facility.id),
@@ -563,7 +603,12 @@ export async function advanceWeek(db: Db, userId: string) {
     location: r.location,
   }));
 
-  const orderRows = (orders.data ?? []) as Row[];
+  // Merged and de-duplicated: an order that is both in transit and unpaid
+  // comes back from both queries.
+  const orderRows = [...new Map(
+    [...((orders.data ?? []) as Row[]), ...((unpaid.data ?? []) as Row[])]
+      .map((row) => [row.id as string, row]),
+  ).values()];
 
   /* ---- 1. Licences mature and lapse before anyone looks at the shelf ---- */
   const licences: Licence[] = [];
@@ -725,6 +770,7 @@ export async function advanceWeek(db: Db, userId: string) {
       stock: complianceStock,
       register,
       temperatureLogKept: !usesFridge || kept.has("temperature-log"),
+      cdRegisterKept: kept.has("cd-register"),
     });
 
     if (inspectionResult.totalFine > 0) {
@@ -799,7 +845,7 @@ export async function advanceWeek(db: Db, userId: string) {
     orders: pending,
     prices,
     demand,
-    overheads: STARTING[difficulty].weeklyOverheads,
+    overheads: weeklyOverheads,
     trading,
     requiredZone,
     condemned,
@@ -870,14 +916,14 @@ export async function advanceWeek(db: Db, userId: string) {
     cogs_paisa: result.kpis.cogs,
     wastage_paisa: result.kpis.wastage,
     purchases_paisa: result.paid.reduce((sum, p) => sum + p.amount, 0),
-    overheads_paisa: STARTING[difficulty].weeklyOverheads,
+    overheads_paisa: weeklyOverheads,
     penalties_paisa: penalties,
     fees_paisa: feesPaid,
     // The week opened where the last one closed. Fees paid during the week
     // are in the ledger, so opening plus the ledger still lands on closing.
     opening_cash_paisa: lastPeriod.data
       ? Number(lastPeriod.data.closing_cash_paisa)
-      : STARTING[difficulty].cash,
+      : Number(facility.opening_cash_paisa ?? facility.cash_paisa),
     closing_cash_paisa: result.kpis.closingCash,
     demanded: result.perDrug.reduce((n, d) => n + d.demanded, 0),
     sold: result.perDrug.reduce((n, d) => n + d.sold, 0),

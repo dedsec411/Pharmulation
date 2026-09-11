@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { STARTING, type Difficulty } from "@/lib/warehouse/bootstrap";
-import { money } from "@/lib/warehouse/view";
 
 /**
  * Opening a pharmacy.
@@ -32,6 +31,9 @@ export function OpenPharmacy({
   const [city, setCity] = useState("Karachi");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const start = STARTING[difficulty];
+  // Rent and capital are worked out from the catalogue the shop turns out to
+  // get, so there is no rupee figure to quote yet - only how tight it will be.
+  const squeeze = Math.round(start.overheadShare * 100);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-5 sm:p-8">
@@ -83,26 +85,35 @@ export function OpenPharmacy({
           <Wallet className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Working capital</div>
-            <div className="text-sm font-semibold tabular-nums">{money(start.cash)}</div>
+            <div className="text-sm font-semibold">
+              {start.capitalWeeks < 1 ? "under a week" : start.capitalWeeks > 1.2 ? "a comfortable week" : "about a week"} of buying
+            </div>
           </div>
         </div>
         <div className="flex items-start gap-2">
           <Landmark className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Overdraft</div>
-            <div className="text-sm font-semibold tabular-nums">
-              {start.overdraft > 0 ? money(start.overdraft) : "none"}
+            <div className="text-sm font-semibold">
+              {start.overdraftWeeks > 0 ? "a few days of cover" : "none at all"}
             </div>
           </div>
         </div>
         <div className="flex items-start gap-2">
           <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Weekly overheads</div>
-            <div className="text-sm font-semibold tabular-nums">{money(start.weeklyOverheads)}</div>
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Rent and wages</div>
+            <div className="text-sm font-semibold">{squeeze}% of a perfect week</div>
           </div>
         </div>
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        The figures are set against what this pharmacy turns out to sell, so the
+        pressure is the same whatever ends up on the shelves. At {squeeze}% a flawless
+        week clears what is left - and a stock-out, a batch written off or a fine
+        takes it straight back.
+      </p>
 
       <Button
         className="w-full"

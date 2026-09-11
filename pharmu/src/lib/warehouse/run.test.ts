@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createFakeDb, type FakeDb } from "./fake-db";
 import * as run from "./run";
-import { STARTING } from "./bootstrap";
 import { LICENCE_FEE, NARCOTICS_LEAD_WEEKS, SUSPENSION_WEEKS } from "./compliance";
 import { ODDS } from "./events";
 import { RUPEE } from "./economics";
@@ -57,23 +56,37 @@ async function openShop(
   over: { difficulty?: "easy" | "medium" | "hard"; seed?: string } = {},
 ): Promise<{ db: FakeDb; facilityId: string }> {
   const db = createFakeDb({ drugs: drugTable() });
-  const created: any = await run.createFacility(db, USER, {
-    name: "Test Pharmacy", city: "Karachi", difficulty: over.difficulty ?? "medium",
-  });
-  expect(created.ok).toBe(true);
+
+  // A seeded shop gets deterministic ids too. The facility's own seed decides
+  // the catalogue and the opening shelf as well as the weather, so leaving it
+  // to a real uuid would make two "identical" runs differ in what they sell.
+  const realUuid = crypto.randomUUID;
   if (over.seed) {
-    await db.from("wh_facilities").update({ seed: over.seed }).eq("id", created.facilityId);
+    let n = 0;
+    (crypto as any).randomUUID = () => `${over.seed}-${String(++n).padStart(4, "0")}`;
   }
-  return { db, facilityId: created.facilityId };
+  try {
+    const created: any = await run.createFacility(db, USER, {
+      name: "Test Pharmacy", city: "Karachi", difficulty: over.difficulty ?? "medium",
+    });
+    expect(created.ok).toBe(true);
+    return { db, facilityId: created.facilityId };
+  } finally {
+    (crypto as any).randomUUID = realUuid;
+  }
 }
 
 const facilityRow = (db: FakeDb) => db.rows("wh_facilities")[0];
+/** Orders the learner placed, ignoring the account inherited with the shop. */
+const placedOrders = (db: FakeDb) =>
+  db.rows("wh_orders").filter((o) => o.supplier !== "Previous owner's account");
 const state = (db: FakeDb) => run.getFacilityState(db, USER) as Promise<any>;
 const close = (db: FakeDb) => run.advanceWeek(db, USER) as Promise<any>;
 
 /** Put everything sitting in goods-in where it belongs. */
 async function putEverythingAway(db: FakeDb) {
   const s: any = await state(db);
+  if (!s.ok) return { ok: false as const, moved: 0 };
   const storage = new Map<string, string>(
     s.catalogue.map((c: any) => [c.drug_id, c.storage]));
   const waiting = s.stock.filter((b: any) => b.location === "quarantine");
@@ -97,7 +110,11 @@ describe("opening a pharmacy", () => {
 
     expect(s.ok).toBe(true);
     expect(s.facility.current_period).toBe(1);
-    expect(s.facility.cash_paisa).toBe(STARTING.medium.cash);
+    // Cash is worked out from the catalogue this shop happened to get, so
+    // what matters is that it is roughly a week of buying rather than a
+    // particular number.
+    expect(Number(s.facility.cash_paisa)).toBeGreaterThan(0);
+    expect(Number(s.facility.weekly_overheads_paisa)).toBeGreaterThan(0);
     expect(s.catalogue.length).toBeGreaterThan(10);
     expect(s.stock.length).toBeGreaterThan(0);
     expect(s.licences.map((l: any) => l.kind)).toEqual(["drug_sale"]);
@@ -212,6 +229,49 @@ describe("closing a week", () => {
     expect(seen.size).toBeGreaterThan(5);
   });
 
+  // The close used to ask only for orders still in transit. Delivery marks an
+  // order delivered, and the invoice falls due weeks after that - so every
+  // invoice was presented on a week the order was no longer in the query, and
+  // the pharmacy got its stock for nothing.
+  it("pays for stock that was delivered weeks ago", async () => {
+    const { db } = await openShop({ seed: "invoices" });
+    const s = await state(db);
+    const line = s.catalogue.find((c: any) => !c.controlled);
+    const order: any = await run.placeOrder(db, USER, {
+      supplier: "Central Distributors",
+      lines: [{ drugId: line.drug_id, packs: 40 }],
+    });
+
+    let paid = false;
+    for (let week = 0; week < order.paymentDuePeriod + 2 && !paid; week++) {
+      const result = await close(db);
+      paid = result.paid.some((p: any) => p.orderId === order.orderId);
+    }
+
+    expect(paid).toBe(true);
+    expect(db.rows("wh_orders").find((o) => o.id === order.orderId)!.paid).toBe(true);
+  });
+
+  it("leaves no invoice unpaid once its week has passed", async () => {
+    const { db } = await openShop({ seed: "invoices" });
+    const s = await state(db);
+    for (const line of s.catalogue.slice(0, 5)) {
+      await run.placeOrder(db, USER, {
+        supplier: "Central Distributors",
+        lines: [{ drugId: line.drug_id, packs: 20 }],
+      });
+    }
+    for (let week = 0; week < 10; week++) {
+      await close(db);
+      await putEverythingAway(db);
+    }
+
+    const period = Number(facilityRow(db).current_period);
+    const overdue = db.rows("wh_orders").filter(
+      (o) => !o.paid && Number(o.payment_due_period) < period && o.status !== "cancelled");
+    expect(overdue).toEqual([]);
+  });
+
   it("never leaves a batch with a negative or fractional quantity", async () => {
     const { db } = await openShop();
     for (let i = 0; i < 8; i++) {
@@ -273,7 +333,7 @@ describe("ordering", () => {
     });
     expect(refused.ok).toBe(false);
     expect(refused.error).toContain("narcotics permit");
-    expect(db.rows("wh_orders")).toHaveLength(0);
+    expect(placedOrders(db)).toHaveLength(0);
   });
 
   it("refuses a medicine the pharmacy does not carry", async () => {
@@ -283,7 +343,7 @@ describe("ordering", () => {
       lines: [{ drugId: "drug-does-not-exist", packs: 10 }],
     });
     expect(refused.ok).toBe(false);
-    expect(db.rows("wh_orders")).toHaveLength(0);
+    expect(placedOrders(db)).toHaveLength(0);
   });
 
   // Goods-in is the whole point of quarantine: what arrives cannot be sold
@@ -464,7 +524,8 @@ describe("licences", () => {
     const shut = await close(db);
 
     expect(shut.traded).toBe(false);
-    expect(Number(facilityRow(db).cash_paisa)).toBe(cash - STARTING.medium.weeklyOverheads);
+    expect(Number(facilityRow(db).cash_paisa))
+      .toBe(cash - Number(facilityRow(db).weekly_overheads_paisa));
   });
 
   it("raises the expiry notice once, not once a week", async () => {
@@ -544,10 +605,12 @@ describe("notices", () => {
   /** Run weeks until the named kind of notice appears, or give up. */
   async function weeksUntilNotice(db: FakeDb, kind: string, limit = 40) {
     for (let i = 0; i < limit; i++) {
-      await close(db);
+      const result: any = await close(db);
+      if (!result.ok) return null;
       await putEverythingAway(db);
       const open = db.rows("wh_events").find((e) => e.kind === kind && !e.resolved);
       if (open) return open;
+      if (result.insolvent) return null;
     }
     return null;
   }
@@ -751,5 +814,166 @@ describe("running out of money", () => {
     await close(db);
     await db.from("wh_facilities").update({ status: "insolvent" }).eq("user_id", USER);
     expect(db.rows("wh_periods")).toHaveLength(1);
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * The edges
+ * ------------------------------------------------------------------ */
+
+describe("stock running out of life", () => {
+  it("writes an expired batch off and takes it off the shelf", async () => {
+    const { db } = await openShop();
+    const doomed = db.rows("wh_stock")[0];
+    await db.from("wh_stock").update({ expires_period: 1 }).eq("id", doomed.id);
+
+    const result = await close(db);
+    expect(result.writeOffs.map((w: any) => w.batchNo)).toContain(doomed.batch_no);
+    expect(result.kpis.wastage).toBeGreaterThan(0);
+    expect(db.rows("wh_stock").some((b) => b.batch_no === doomed.batch_no)).toBe(false);
+  });
+
+  // Goods-in is where a delivery sits before anyone touches it. Charging for
+  // that would punish the learner for the one thing quarantine exists to do.
+  it("does not destroy a cold chain delivery still sitting in goods-in", async () => {
+    const { db } = await openShop();
+    const s = await state(db);
+    const cold = s.catalogue.find((c: any) => c.storage === "cold-chain");
+    if (!cold) return;
+
+    await run.placeOrder(db, USER, {
+      supplier: "Central Distributors",
+      lines: [{ drugId: cold.drug_id, packs: 20 }],
+    });
+    for (let i = 0; i < 4; i++) {
+      const landed = await close(db);
+      if (landed.delivered.length) break;
+    }
+
+    const waiting = db.rows("wh_stock").filter(
+      (b) => b.drug_id === cold.drug_id && b.location === "quarantine");
+    expect(waiting.length).toBeGreaterThan(0);
+
+    const after = await close(db);
+    expect(after.spoiled).toHaveLength(0);
+    expect(db.rows("wh_stock").some(
+      (b) => b.drug_id === cold.drug_id && b.location === "quarantine")).toBe(true);
+  });
+});
+
+describe("the register against the shelf", () => {
+  it("reads unwritten controlled stock as unrecorded at the inspection", async () => {
+    const { db } = await openShop({ seed: "register-seed" });
+    await run.applyForLicence(db, USER, { kind: "narcotics" });
+    for (let i = 0; i < NARCOTICS_LEAD_WEEKS; i++) await close(db);
+
+    const s = await state(db);
+    const controlled = s.catalogue.find((c: any) => c.controlled);
+    await run.placeOrder(db, USER, {
+      supplier: "Central Distributors",
+      lines: [{ drugId: controlled.drug_id, packs: 20 }],
+    });
+
+    // Keep the safe stocked and never write the book up.
+    let report: any = null;
+    for (let week = 0; week < ODDS.medium.inspectionEvery + 4; week++) {
+      await run.placeOrder(db, USER, {
+        supplier: "Central Distributors",
+        lines: [{ drugId: controlled.drug_id, packs: 40 }],
+      });
+      const result = await close(db);
+      await putEverythingAway(db);
+      if (result.inspection) { report = result.inspection; break; }
+    }
+    expect(report).toBeTruthy();
+    expect(db.rows("wh_stock").some((b) => b.drug_id === controlled.drug_id)).toBe(true);
+
+    expect(report.findings.some((f: any) => f.code.startsWith("cd-")
+      || f.code === "no-cd-register")).toBe(true);
+  });
+
+  it("reconciles when the learner counted correctly", async () => {
+    const { db } = await openShop({ seed: "register-seed" });
+    await run.applyForLicence(db, USER, { kind: "narcotics" });
+    for (let i = 0; i < NARCOTICS_LEAD_WEEKS; i++) await close(db);
+
+    const s = await state(db);
+    const controlled = s.catalogue.find((c: any) => c.controlled);
+    await run.placeOrder(db, USER, {
+      supplier: "Central Distributors",
+      lines: [{ drugId: controlled.drug_id, packs: 20 }],
+    });
+
+    let report: any = null;
+    for (let week = 0; week < ODDS.medium.inspectionEvery + 4; week++) {
+      await run.placeOrder(db, USER, {
+        supplier: "Central Distributors",
+        lines: [{ drugId: controlled.drug_id, packs: 40 }],
+      });
+      const result = await close(db);
+      await putEverythingAway(db);
+      // Count the safe and write down what is there, every week.
+      const held = db.rows("wh_stock")
+        .filter((b) => b.drug_id === controlled.drug_id)
+        .reduce((n, b) => n + Number(b.qty), 0);
+      await run.signCdRegister(db, USER, {
+        counts: [{ drugId: controlled.drug_id, counted: held }],
+      });
+      if (result.inspection) { report = result.inspection; break; }
+    }
+    expect(report).toBeTruthy();
+    expect(report.findings.some((f: any) => f.code.startsWith("cd-")
+      || f.code === "no-cd-register")).toBe(false);
+  });
+});
+
+describe("borrowed money", () => {
+  it("keeps trading while the account is inside the overdraft", async () => {
+    const { db } = await openShop({ difficulty: "medium" });
+    // Deep into the red but nowhere near the limit, and shut so no takings
+    // can accidentally lift it back out.
+    await db.from("wh_facilities").update({
+      cash_paisa: -1_000_000 * RUPEE,
+      overdraft_paisa: 9_000_000 * RUPEE,
+    }).eq("user_id", USER);
+    await db.from("wh_licences").update({ expires_period: 0 }).eq("kind", "drug_sale");
+
+    const result = await close(db);
+    expect(result.kpis.closingCash).toBeLessThan(0);
+    expect(result.insolvent).toBe(false);
+    expect(facilityRow(db).status).toBe("running");
+  });
+
+  it("lets a learner start again after going under", async () => {
+    const { db } = await openShop({ difficulty: "hard" });
+    await db.from("wh_facilities").update({ status: "insolvent" }).eq("user_id", USER);
+
+    const again: any = await run.createFacility(db, USER, {
+      name: "Second Attempt", city: "Lahore", difficulty: "medium",
+    });
+    expect(again.ok).toBe(true);
+    expect(db.rows("wh_facilities")).toHaveLength(2);
+    expect((await state(db)).facility.name).toBe("Second Attempt");
+  });
+});
+
+describe("the same week, twice", () => {
+  // A learner disputing a result has to be able to be shown the same week.
+  it("replays identically from the same seed", async () => {
+    const play = async () => {
+      const { db } = await openShop({ seed: "replay" });
+      const weeks = [];
+      for (let i = 0; i < 6; i++) {
+        const result = await close(db);
+        weeks.push({
+          revenue: result.kpis.revenue,
+          wastage: result.kpis.wastage,
+          served: Math.round(result.kpis.serviceLevel),
+          events: result.events.map((e: any) => e.kind).sort(),
+        });
+      }
+      return weeks;
+    };
+    expect(await play()).toEqual(await play());
   });
 });

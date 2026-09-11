@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   RUPEE, formatPKR, unitMargin, marginPercent, lawfulSalePrice,
   reorderPoint, pricePerPack, orderCost, abcClassify,
-  weeklyDemand, fulfilFEFO, expireStock, spoilMisstored, periodKPIs,
+  weeklyDemand, expectedDemand, forecastWeekly,
+  fulfilFEFO, expireStock, spoilMisstored, periodKPIs,
   type StockBatch, type PricedDrug,
 } from "./economics";
 
@@ -49,6 +50,16 @@ describe("ordering", () => {
   it("covers the lead time plus a safety buffer", () => {
     expect(reorderPoint(40, 2, 1)).toBe(120);
     expect(reorderPoint(0, 2, 1)).toBe(0);
+  });
+
+  // A NaN reorder point compares false against everything, so the line would
+  // silently never be worth ordering and the shelf would empty with the screen
+  // insisting nothing was wrong.
+  it("never returns a figure that is not a number", () => {
+    expect(reorderPoint(Number.NaN, 2, 1)).toBe(0);
+    expect(reorderPoint(40, Number.NaN, 1)).toBe(40);
+    expect(reorderPoint(40, 2, Number.NaN)).toBe(80);
+    expect(reorderPoint(-5, 2, 1)).toBe(0);
   });
 
   it("takes the best volume break the order qualifies for", () => {
@@ -221,5 +232,36 @@ describe("stock kept in the wrong place", () => {
   it("ignores a medicine with no storage rule recorded", () => {
     const out = spoilMisstored([insulin({ location: "ambient" })], {});
     expect(out.kept).toHaveLength(1);
+  });
+});
+
+describe("what a buyer can forecast", () => {
+  const winter = { drugId: "amox", baseWeekly: 40, seasonality: 0.5, peakWeek: 4 };
+
+  // The forecast is the curve without the noise. Planning against a flat
+  // average empties the shelf every year at the exact moment it should not.
+  it("follows the season and leaves the weekly wobble out", () => {
+    expect(expectedDemand(winter, 4)).toBeCloseTo(60, 5);
+    expect(expectedDemand(winter, 30)).toBeCloseTo(20, 5);
+    expect(expectedDemand(winter, 4)).toBe(expectedDemand(winter, 4));
+  });
+
+  it("averages across the weeks an order has to cover", () => {
+    const across = forecastWeekly(winter, 4, 4);
+    expect(across).toBeLessThan(expectedDemand(winter, 4));
+    expect(across).toBeGreaterThan(expectedDemand(winter, 30));
+  });
+
+  it("is the centre the actual week wobbles around", () => {
+    const samples = Array.from({ length: 40 }, (_, i) => weeklyDemand(winter, 4, `s${i}`));
+    const mean = samples.reduce((n, v) => n + v, 0) / samples.length;
+    expect(mean).toBeGreaterThan(expectedDemand(winter, 4) * 0.9);
+    expect(mean).toBeLessThan(expectedDemand(winter, 4) * 1.1);
+  });
+
+  it("treats a profile with nothing in it as no demand", () => {
+    const empty = { drugId: "x", baseWeekly: Number.NaN, seasonality: Number.NaN, peakWeek: Number.NaN };
+    expect(expectedDemand(empty, 5)).toBe(0);
+    expect(forecastWeekly(empty, 5, 3)).toBe(0);
   });
 });

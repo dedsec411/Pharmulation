@@ -31,6 +31,8 @@ function toCatalogue(rows: Row[]): ViewCatalogueLine[] {
     mrp: Number(r.mrp_paisa),
     tradePrice: Number(r.trade_price_paisa),
     baseWeekly: Number(r.base_weekly),
+    seasonality: Number(r.seasonality),
+    peakWeek: Number(r.peak_week),
     leadTimeWeeks: Number(r.lead_time_weeks),
     storage: r.storage,
     controlled: Boolean(r.controlled),
@@ -101,7 +103,7 @@ export function useFacility() {
       const cash = Number(state.facility.cash_paisa);
 
       const names = new Map(catalogue.map((l) => [l.drugId, l.name]));
-      const positions = stockPositions(catalogue, stock, orders);
+      const positions = stockPositions(catalogue, stock, orders, period);
       const expiring = expiringSoon(stock, names, period);
 
       return {

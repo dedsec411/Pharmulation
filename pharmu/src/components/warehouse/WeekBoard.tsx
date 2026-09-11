@@ -153,6 +153,15 @@ export function WeekBoard({ facility, onGoTo, onClose, closing }: Props) {
         </motion.div>
       )}
 
+      {brief.netPosition < 0 && (
+        <p className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-xs text-muted-foreground">
+          You are holding {money(brief.owed)} of your suppliers' money against{" "}
+          {money(facility.cash)} in the bank. Thirty-day terms make a pharmacy look
+          better off than it is, and the gap only shows up on the week the invoices
+          land together.
+        </p>
+      )}
+
       {outstanding.length > 0 && (
         <div className="rounded-lg border bg-card/60 p-4">
           <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
@@ -186,7 +195,7 @@ export function WeekBoard({ facility, onGoTo, onClose, closing }: Props) {
       <section>
         <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
           <CalendarClock className="h-4 w-4 text-muted-foreground" />
-          This week commits you to
+          Where the money stands
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <StatTile
@@ -196,15 +205,16 @@ export function WeekBoard({ facility, onGoTo, onClose, closing }: Props) {
             tone={cashTone}
           />
           <StatTile
-            label="Invoices due"
-            value={money(brief.paymentsDue)}
-            hint={brief.paymentsDue > 0 ? `leaves ${money(brief.cashAfterCommitments)}` : "nothing due"}
-            tone={brief.cashAfterCommitments < 0 ? "bad" : "plain"}
+            label="Owed to suppliers"
+            value={money(brief.owed)}
+            hint={brief.paymentsDue > 0 ? `${money(brief.paymentsDue)} due this week` : "nothing due this week"}
+            tone={brief.owed > facility.cash ? "bad" : "plain"}
           />
           <StatTile
-            label="Arriving"
-            value={`${brief.arriving.length} order(s)`}
-            hint={brief.arriving.length ? "lands when you close" : "nothing in transit"}
+            label="Cash less debts"
+            value={money(brief.netPosition)}
+            hint="what the shop is actually worth"
+            tone={brief.netPosition < 0 ? "bad" : "good"}
           />
           <StatTile label="Stock value" value={money(brief.stockValue)} hint={`${facility.positions.length} lines`} />
           <StatTile

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   chooseCatalogue, commercialsFor, storageFor, isControlled, needsColdChain,
-  STARTING, openingStock, type CatalogueDrug,
+  STARTING, startingPosition, openingStock, type CatalogueDrug,
 } from "./bootstrap";
-import { unitMargin, marginPercent, abcClassify } from "./economics";
+import { unitMargin, marginPercent, abcClassify, RUPEE } from "./economics";
 
 const drug = (over: Partial<CatalogueDrug> & { id: string }): CatalogueDrug => ({
   name: over.id, category: "Other", ...over,
@@ -145,10 +145,56 @@ describe("opening a facility", () => {
   // Working capital is the constraint a small pharmacy actually lives under.
   // On hard there is no overdraft at all, so one over-ordered week can end it.
   it("gets tighter as difficulty rises", () => {
-    expect(STARTING.easy.cash).toBeGreaterThan(STARTING.medium.cash);
-    expect(STARTING.medium.cash).toBeGreaterThan(STARTING.hard.cash);
-    expect(STARTING.hard.overdraft).toBe(0);
-    expect(STARTING.hard.weeklyOverheads).toBeGreaterThan(STARTING.easy.weeklyOverheads);
+    const easy = startingPosition(lines, "easy");
+    const medium = startingPosition(lines, "medium");
+    const hard = startingPosition(lines, "hard");
+
+    expect(easy.cash).toBeGreaterThan(medium.cash);
+    expect(medium.cash).toBeGreaterThan(hard.cash);
+    expect(hard.overdraft).toBe(0);
+    expect(hard.weeklyOverheads).toBeGreaterThan(easy.weeklyOverheads);
+  });
+
+  // The single number that decides whether the mode has any tension in it. A
+  // pharmacy whose rent is a rounding error on its margin can never go under,
+  // and a budget that cannot bite teaches nothing about budgets.
+  it("sets the rent against what the shop actually earns", () => {
+    const position = startingPosition(lines, "medium");
+    const grossMargin = position.weeklyRevenue - position.weeklyCost;
+
+    expect(position.weeklyOverheads).toBeGreaterThan(grossMargin * 0.7);
+    expect(position.weeklyOverheads).toBeLessThan(grossMargin);
+  });
+
+  // A pharmacy that cannot afford to restock what it sold in a week is not a
+  // going concern, and one holding four weeks of buying in cash has no
+  // decisions left to make.
+  it("holds about a week of buying in the bank", () => {
+    const position = startingPosition(lines, "medium");
+    expect(position.cash).toBeGreaterThan(position.weeklyCost * 0.8);
+    expect(position.cash).toBeLessThan(position.weeklyCost * 1.5);
+  });
+
+  // A rent of Rs 43,217.61 tells a learner the number came out of a
+  // spreadsheet rather than off a lease.
+  it("quotes whole rupees", () => {
+    for (const level of ["easy", "medium", "hard"] as const) {
+      const position = startingPosition(lines, level);
+      expect(position.cash % RUPEE).toBe(0);
+      expect(position.weeklyOverheads % RUPEE).toBe(0);
+      expect(position.overdraft % RUPEE).toBe(0);
+    }
+  });
+
+  // A ten-line pharmacy and a forty-line one have to be under the same
+  // pressure, or difficulty would just mean "how big a catalogue you got".
+  it("keeps the pressure the same however much the shop sells", () => {
+    const small = startingPosition(chooseCatalogue(CATALOGUE, "s", 4), "medium");
+    const large = startingPosition(lines, "medium");
+    const squeeze = (p: typeof small) => p.weeklyOverheads / (p.weeklyRevenue - p.weeklyCost);
+
+    expect(squeeze(small)).toBeCloseTo(squeeze(large), 1);
+    expect(large.weeklyOverheads).toBeGreaterThan(small.weeklyOverheads);
   });
 
   // The learner inherits a working pharmacy, not a loading bay. The type

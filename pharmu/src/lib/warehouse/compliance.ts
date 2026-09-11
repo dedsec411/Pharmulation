@@ -159,6 +159,8 @@ export type InspectionInput = {
   register: readonly RegisterLine[];
   /** Whether the fridge temperature log was kept this period. */
   temperatureLogKept: boolean;
+  /** Whether the controlled drugs register was written up this period. */
+  cdRegisterKept: boolean;
 };
 
 export type InspectionResult = {
@@ -198,6 +200,18 @@ export function inspect(input: InspectionInput): InspectionResult {
       severity: "critical",
       detail: `${controlled.length} controlled line(s) held without a narcotics permit.`,
       fine: 75_000 * RUPEE,
+    });
+  }
+  // A register that was never kept cannot be reconciled, and an empty book
+  // against an empty safe is not a pass - it is a pharmacy that has been
+  // handling controlled medicines with no record of any of it. Checked
+  // separately from the balances for exactly that reason.
+  if (controlled.length && !input.cdRegisterKept) {
+    findings.push({
+      code: "no-cd-register",
+      severity: "critical",
+      detail: "Controlled medicines held with no register written up for this period.",
+      fine: 40_000 * RUPEE,
     });
   }
   const looseCD = controlled.filter((s) => s.location !== "cd-safe");

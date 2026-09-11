@@ -121,8 +121,17 @@ export function lawfulSalePrice(drug: PricedDrug, asked: Paisa): Paisa {
 export function reorderPoint(
   weeklyDemand: number, leadTimeWeeks: number, safetyWeeks: number,
 ): number {
-  const cover = Math.max(0, leadTimeWeeks) + Math.max(0, safetyWeeks);
-  return Math.ceil(Math.max(0, weeklyDemand) * cover);
+  // Guarded against a figure that is not a number at all. A NaN reorder point
+  // compares false against everything, so a line would silently never be worth
+  // ordering and the shelf would empty with the screen saying nothing was
+  // wrong - which is a far worse failure than a wrong number.
+  const cover = safe(leadTimeWeeks) + safe(safetyWeeks);
+  return Math.ceil(safe(weeklyDemand) * cover);
+}
+
+/** A non-negative, finite number. Anything else is nothing. */
+function safe(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
 
 /**
@@ -200,10 +209,38 @@ function seededUnit(seed: string): number {
  * quantity all year will feel both ends of that.
  */
 export function weeklyDemand(profile: DemandProfile, week: number, seed = ""): number {
-  const phase = ((week - profile.peakWeek) / 52) * Math.PI * 2;
-  const seasonal = 1 + profile.seasonality * Math.cos(phase);
   const wobble = 0.85 + seededUnit(`${seed}:${profile.drugId}:${week}`) * 0.3;
-  return Math.max(0, Math.round(profile.baseWeekly * seasonal * wobble));
+  return Math.max(0, Math.round(expectedDemand(profile, week) * wobble));
+}
+
+/**
+ * What a buyer could reasonably forecast: the seasonal curve without the noise.
+ *
+ * The difference matters. Planning against the flat base figure means ordering
+ * for an average week in the middle of a winter antibiotic peak, and the shelf
+ * empties every year at exactly the moment it should not. Planning against the
+ * curve is what a pharmacist actually does; the weekly wobble on top is what
+ * safety stock is for, and no amount of forecasting will catch it.
+ */
+export function expectedDemand(profile: DemandProfile, week: number): number {
+  const phase = ((week - safe(profile.peakWeek)) / 52) * Math.PI * 2;
+  return safe(profile.baseWeekly * (1 + safe(profile.seasonality) * Math.cos(phase)));
+}
+
+/**
+ * Average weekly demand over a stretch of weeks, for planning a reorder.
+ *
+ * A reorder point covers the weeks until stock arrives, and if those weeks
+ * straddle the start of a season the average across them is the honest figure
+ * rather than today's.
+ */
+export function forecastWeekly(
+  profile: DemandProfile, fromWeek: number, weeks: number,
+): number {
+  const span = Math.max(1, Math.round(weeks));
+  let total = 0;
+  for (let i = 0; i < span; i++) total += expectedDemand(profile, fromWeek + i);
+  return total / span;
 }
 
 /* ------------------------------------------------------------------ *

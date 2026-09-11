@@ -25,6 +25,7 @@ function inspection(over: Partial<Parameters<typeof inspect>[0]> = {}) {
     stock: [],
     register: [],
     temperatureLogKept: true,
+    cdRegisterKept: true,
     ...over,
   });
 }
@@ -163,6 +164,24 @@ describe("the inspection", () => {
       stock: [item({ expiresPeriod: 9, location: "quarantine" })],
     });
     expect(result.findings.some((f) => f.code === "expired-on-shelf")).toBe(false);
+  });
+
+  // An empty book against an empty safe is not a pass. It is a pharmacy that
+  // has been handling controlled medicines with no record of any of it.
+  it("writes up controlled stock held with no register at all", () => {
+    const result = inspection({
+      licences: [sale(), narcotics()],
+      stock: [item({ controlled: true, requiredZone: "cd-safe", location: "cd-safe" })],
+      cdRegisterKept: false,
+    });
+    const finding = result.findings.find((f) => f.code === "no-cd-register");
+    expect(finding?.severity).toBe("critical");
+  });
+
+  it("asks for no register from a pharmacy holding nothing controlled", () => {
+    const result = inspection({ cdRegisterKept: false });
+    expect(result.findings.some((f) => f.code === "no-cd-register")).toBe(false);
+    expect(result.passed).toBe(true);
   });
 
   it("notes a missing temperature log without closing anyone down", () => {

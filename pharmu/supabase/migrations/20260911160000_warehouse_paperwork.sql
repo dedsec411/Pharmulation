@@ -64,6 +64,24 @@ CREATE INDEX IF NOT EXISTS wh_paperwork_facility_idx
 ALTER TABLE public.wh_facilities
   ADD COLUMN IF NOT EXISTS suspended_until_period int NOT NULL DEFAULT 0;
 
+-- ---------------------------------------------------------------------------
+-- What this particular shop costs to run
+--
+-- Rent and working capital are worked out from the catalogue the facility
+-- actually got, because every facility gets a different one: a rent that
+-- squeezed a forty-line pharmacy would be pocket change to one selling twice
+-- as much, and a budget that cannot bite teaches nothing about budgets. So the
+-- figure is stored per facility rather than read from a table of constants.
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE public.wh_facilities
+  ADD COLUMN IF NOT EXISTS weekly_overheads_paisa bigint NOT NULL DEFAULT 0;
+
+-- What the facility opened with, so week one's report has an opening balance
+-- that is not simply whatever the cash happened to be when it was written.
+ALTER TABLE public.wh_facilities
+  ADD COLUMN IF NOT EXISTS opening_cash_paisa bigint NOT NULL DEFAULT 0;
+
 -- Fines and licence fees belong in the weekly result, or the period report
 -- does not add up. Kept apart, because a learner reading a week where the cash
 -- fell should be able to tell a renewal they chose to pay from a fine they did

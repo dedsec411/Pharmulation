@@ -12,7 +12,7 @@
  */
 
 import {
-  abcClassify, reorderPoint, formatPKR,
+  abcClassify, reorderPoint, forecastWeekly, formatPKR,
   type Paisa, type StorageZone,
 } from "./economics";
 
@@ -23,6 +23,8 @@ export type ViewCatalogueLine = {
   mrp: Paisa;
   tradePrice: Paisa;
   baseWeekly: number;
+  seasonality: number;
+  peakWeek: number;
   leadTimeWeeks: number;
   storage: StorageZone;
   controlled: boolean;
@@ -86,13 +88,29 @@ export function onHandByDrug(stock: readonly ViewBatch[]): Map<string, OnHand> {
  */
 const SAFETY_WEEKS = 1;
 
+/**
+ * The week a delivery spends in goods-in before it can be dispensed.
+ *
+ * A supplier quoting two weeks means the boxes arrive in two weeks. They land
+ * in quarantine, and the earliest they can be sold is the week after that. A
+ * reorder point built on the quoted lead time is therefore a week short every
+ * time, which is exactly how a shelf ends up empty while an order sits
+ * unopened in the back - so the figure shown to the learner is the time to the
+ * shelf, not the time to the door.
+ */
+const GOODS_IN_WEEKS = 1;
+
 export type LinePosition = {
   line: ViewCatalogueLine;
   onHand: OnHand;
   /** Packs already ordered and not yet delivered. */
   onOrder: number;
-  /** Weeks the sellable stock lasts at the usual rate. */
+  /** What the coming weeks are forecast to ask for, season included. */
+  forecastWeekly: number;
+  /** Weeks the sellable stock lasts against that forecast. */
   weeksOfCover: number;
+  /** Ordering to dispensing: the supplier's lead time plus a week in goods-in. */
+  weeksToShelf: number;
   reorderAt: number;
   /** True when stock plus what is coming will not cover the lead time. */
   needsOrdering: boolean;
@@ -114,6 +132,7 @@ export function stockPositions(
   catalogue: readonly ViewCatalogueLine[],
   stock: readonly ViewBatch[],
   orders: readonly ViewOrder[],
+  period = 1,
 ): LinePosition[] {
   const held = onHandByDrug(stock);
 
@@ -133,12 +152,22 @@ export function stockPositions(
   return catalogue.map((line) => {
     const onHand = held.get(line.drugId) ?? { packs: 0, sellable: 0, quarantined: 0, value: 0 };
     const coming = onOrder.get(line.drugId) ?? 0;
-    const reorderAt = reorderPoint(line.baseWeekly, line.leadTimeWeeks, SAFETY_WEEKS);
+    const weeksToShelf = line.leadTimeWeeks + GOODS_IN_WEEKS;
+    // Planned against the season rather than a flat average. Ordering for an
+    // average week in the middle of a winter antibiotic peak empties the shelf
+    // every year at exactly the moment it should not.
+    const forecast = forecastWeekly(
+      { drugId: line.drugId, baseWeekly: line.baseWeekly, seasonality: line.seasonality, peakWeek: line.peakWeek },
+      period, weeksToShelf + SAFETY_WEEKS,
+    );
+    const reorderAt = reorderPoint(forecast, weeksToShelf, SAFETY_WEEKS);
     return {
       line,
       onHand,
       onOrder: coming,
-      weeksOfCover: line.baseWeekly > 0 ? onHand.sellable / line.baseWeekly : Infinity,
+      forecastWeekly: forecast,
+      weeksOfCover: forecast > 0 ? onHand.sellable / forecast : Infinity,
+      weeksToShelf,
       reorderAt,
       needsOrdering: onHand.sellable + coming <= reorderAt,
       abc: classes[line.drugId] ?? "C",
@@ -190,6 +219,17 @@ export function expiringSoon(
 export type Briefing = {
   arriving: ViewOrder[];
   paymentsDue: Paisa;
+  /**
+   * Everything owed to suppliers, due this week or not.
+   *
+   * The figure that stops a learner mistaking thirty-day terms for profit. A
+   * pharmacy buying steadily always holds a month of somebody else's money,
+   * and a cash balance that ignores it climbs week after week while the
+   * business goes nowhere.
+   */
+  owed: Paisa;
+  /** Cash less everything owed. What the shop is actually worth. */
+  netPosition: Paisa;
   /** Cash after this week's invoices, before anything is sold. */
   cashAfterCommitments: Paisa;
   stockValue: Paisa;
@@ -205,13 +245,17 @@ export function briefing(
   orders: readonly ViewOrder[],
   expiring: readonly ExpiringBatch[],
 ): Briefing {
-  const paymentsDue = orders
-    .filter((o) => !o.paid && o.paymentDuePeriod <= period && o.status !== "cancelled")
+  const unpaid = orders.filter((o) => !o.paid && o.status !== "cancelled");
+  const paymentsDue = unpaid
+    .filter((o) => o.paymentDuePeriod <= period)
     .reduce((sum, o) => sum + o.total, 0);
+  const owed = unpaid.reduce((sum, o) => sum + o.total, 0);
 
   return {
     arriving: orders.filter((o) => o.status === "placed" && o.etaPeriod <= period),
     paymentsDue,
+    owed,
+    netPosition: cash - owed,
     cashAfterCommitments: cash - paymentsDue,
     stockValue: positions.reduce((sum, p) => sum + p.onHand.value, 0),
     linesBelowReorder: positions.filter((p) => p.needsOrdering).length,

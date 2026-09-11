@@ -47,6 +47,9 @@ export function OrderDesk({ facility, onOrder, placing }: Props) {
   })), [lines, facility.catalogue]);
 
   const cashAfter = facility.briefing.cashAfterCommitments - analysis.total;
+  // What the pharmacy will owe once this order is on the book. The figure that
+  // stops four weeks of terms reading as four weeks of profit.
+  const owedAfter = facility.briefing.owed + analysis.total;
   const rows = useMemo(() => {
     const sorted = [...facility.positions].sort((a, b) => a.weeksOfCover - b.weeksOfCover);
     return onlyShort ? sorted.filter((p) => p.needsOrdering) : sorted;
@@ -74,8 +77,10 @@ export function OrderDesk({ facility, onOrder, placing }: Props) {
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               {SUPPLIER_BREAKS.map((b) => `${b.discountPercent}% over ${b.minPacks} packs`).join(" - ")}.
-              Invoiced on {PAYMENT_TERMS_WEEKS * 7}-day terms, so the stock arrives
-              well before the money leaves.
+              Invoiced on {PAYMENT_TERMS_WEEKS * 7}-day terms, so the stock arrives well
+              before the money leaves - which is why the cash always looks healthier
+              than the business is. Lead times below are to the shelf, counting the
+              week a delivery spends in goods-in before it can be dispensed.
             </p>
           </div>
           <div className="flex items-end gap-2">
@@ -148,7 +153,7 @@ export function OrderDesk({ facility, onOrder, placing }: Props) {
                         {pos.line.controlled && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
                       </span>
                       <span className="text-[11px] text-muted-foreground">
-                        {pos.line.category} - {pos.line.leadTimeWeeks}w lead
+                        {pos.line.category} - {pos.weeksToShelf}w to the shelf
                       </span>
                     </td>
                     <td className="py-1.5 text-right tabular-nums">{money(pos.line.mrp)}</td>
@@ -211,11 +216,13 @@ export function OrderDesk({ facility, onOrder, placing }: Props) {
             </div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Cash after</div>
-            <div className={`text-lg font-semibold tabular-nums ${cashAfter < 0 ? "text-red-500" : ""}`}>
-              {money(cashAfter)}
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Owed after this</div>
+            <div className={`text-lg font-semibold tabular-nums ${owedAfter > facility.cash ? "text-red-500" : ""}`}>
+              {money(owedAfter)}
             </div>
-            <div className="text-xs text-muted-foreground">after invoices already due</div>
+            <div className="text-xs text-muted-foreground">
+              against {money(facility.cash)} in the bank
+            </div>
           </div>
         </div>
 

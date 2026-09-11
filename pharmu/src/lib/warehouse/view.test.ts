@@ -9,6 +9,7 @@ import { RUPEE } from "./economics";
 const line = (over: Partial<ViewCatalogueLine> = {}): ViewCatalogueLine => ({
   drugId: "panadol", name: "Panadol", category: "Analgesic",
   mrp: 120 * RUPEE, tradePrice: 96 * RUPEE, baseWeekly: 20,
+  seasonality: 0, peakWeek: 1,
   leadTimeWeeks: 2, storage: "ambient", controlled: false, ...over,
 });
 
@@ -79,6 +80,15 @@ describe("the position of a line", () => {
     expect(pos.onOrder).toBe(0);
   });
 
+  // A supplier quoting two weeks means the boxes arrive in two weeks. They
+  // land in quarantine, and the earliest they can be dispensed is the week
+  // after. A reorder point built on the quoted figure is short every time.
+  it("counts the week a delivery spends in goods-in", () => {
+    const [pos] = stockPositions([line({ baseWeekly: 10, leadTimeWeeks: 2 })], [], []);
+    expect(pos.weeksToShelf).toBe(3);
+    expect(pos.reorderAt).toBe(40);
+  });
+
   it("classifies the lines worth managing closely", () => {
     const positions = stockPositions([
       line({ drugId: "big", baseWeekly: 500 }),
@@ -122,6 +132,25 @@ describe("stock near the end of its life", () => {
 });
 
 describe("the week's briefing", () => {
+  // Thirty-day terms mean a pharmacy buying steadily always holds a month of
+  // somebody else's money. A cash figure that ignores it climbs every week
+  // while the business goes nowhere.
+  it("counts everything owed, not only what is due", () => {
+    const out = briefing(5, 100_000 * RUPEE, [], [
+      order({ id: "due", paymentDuePeriod: 5 }),
+      order({ id: "later", paymentDuePeriod: 9 }),
+    ], []);
+    expect(out.paymentsDue).toBe(10_000 * RUPEE);
+    expect(out.owed).toBe(20_000 * RUPEE);
+    expect(out.netPosition).toBe(80_000 * RUPEE);
+  });
+
+  it("does not count an invoice that has been paid", () => {
+    const out = briefing(5, 100_000 * RUPEE, [], [order({ paid: true })], []);
+    expect(out.owed).toBe(0);
+    expect(out.netPosition).toBe(100_000 * RUPEE);
+  });
+
   it("shows what the invoices leave behind", () => {
     const out = briefing(5, 100_000 * RUPEE, [], [order({ paymentDuePeriod: 5 })], []);
     expect(out.paymentsDue).toBe(10_000 * RUPEE);

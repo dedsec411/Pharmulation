@@ -236,12 +236,19 @@ export function chooseCatalogue(
 export type Difficulty = "easy" | "medium" | "hard";
 
 export type StartingConditions = {
-  /** Cash in hand on day one. */
-  cash: Paisa;
-  /** How far the account may go under before the facility is finished. */
-  overdraft: Paisa;
-  /** Rent, salaries and utilities, every week, before a single sale. */
-  weeklyOverheads: Paisa;
+  /**
+   * Overheads as a share of what the shop earns in a perfect week.
+   *
+   * The single number that decides whether the mode has any tension in it. At
+   * 0.85 a flawless week clears fifteen percent of its gross margin and any
+   * dip - a stock-out, a batch written off, a fine - puts the week into a
+   * loss. That is the position a small pharmacy actually trades from.
+   */
+  overheadShare: number;
+  /** Opening cash, in weeks of what the shop spends on stock. */
+  capitalWeeks: number;
+  /** How far under it may go, in the same units. */
+  overdraftWeeks: number;
   /** Weeks of cover the opening shelf is stocked to. */
   openingCoverWeeks: number;
   /** Weeks until the Drug Sale Licence needs renewing. */
@@ -249,20 +256,66 @@ export type StartingConditions = {
 };
 
 /**
- * Where a learner starts.
+ * Where a learner starts, as ratios rather than amounts.
+ *
+ * Fixed rupee figures cannot work here. Every facility gets a different
+ * catalogue, so one pharmacy's perfect week might take four times another's -
+ * and a rent that was punishing for one would be pocket change to the other.
+ * Ratios hold the pressure steady whatever the shop happens to sell.
  *
  * Hard has no overdraft at all, which means a single over-ordered week can
- * finish the run - the point being that working capital is the constraint a
- * small pharmacy actually lives under, not an abstraction.
- *
- * None of these start comfortable. A facility that opens with enough cash to
- * ignore the budget teaches nothing about the budget.
+ * finish the run. Working capital is the constraint a small pharmacy actually
+ * lives under, not an abstraction.
  */
 export const STARTING: Record<Difficulty, StartingConditions> = {
-  easy:   { cash: 400_000 * RUPEE, overdraft: 100_000 * RUPEE, weeklyOverheads: 18_000 * RUPEE, openingCoverWeeks: 3, licenceWeeks: 40 },
-  medium: { cash: 250_000 * RUPEE, overdraft:  50_000 * RUPEE, weeklyOverheads: 25_000 * RUPEE, openingCoverWeeks: 2, licenceWeeks: 24 },
-  hard:   { cash: 150_000 * RUPEE, overdraft:       0,         weeklyOverheads: 32_000 * RUPEE, openingCoverWeeks: 1, licenceWeeks: 12 },
+  easy:   { overheadShare: 0.65, capitalWeeks: 1.4, overdraftWeeks: 0.6, openingCoverWeeks: 6, licenceWeeks: 40 },
+  medium: { overheadShare: 0.82, capitalWeeks: 1.0, overdraftWeeks: 0.3, openingCoverWeeks: 5, licenceWeeks: 24 },
+  hard:   { overheadShare: 0.93, capitalWeeks: 0.7, overdraftWeeks: 0,   openingCoverWeeks: 4, licenceWeeks: 12 },
 };
+
+export type OpeningPosition = {
+  cash: Paisa;
+  overdraft: Paisa;
+  weeklyOverheads: Paisa;
+  /** What a perfect week takes, for the learner's own reference. */
+  weeklyRevenue: Paisa;
+  /** What that week's stock costs to replace. */
+  weeklyCost: Paisa;
+  openingCoverWeeks: number;
+  licenceWeeks: number;
+};
+
+/**
+ * The money the facility opens with, worked out from what it actually sells.
+ *
+ * Rent is set against the gross margin of a perfect week, and cash against the
+ * cost of restocking one. Both follow from the catalogue rather than being
+ * declared, which is the only way a forty-line pharmacy and a ten-line one can
+ * both be under the same pressure.
+ *
+ * Everything is rounded to whole rupees. A rent of Rs 43,217.61 tells a learner
+ * the number came out of a spreadsheet rather than off a lease.
+ */
+export function startingPosition(
+  lines: readonly CatalogueLine[], difficulty: Difficulty,
+): OpeningPosition {
+  const rules = STARTING[difficulty];
+  const weeklyRevenue = lines.reduce((sum, l) => sum + l.mrp * l.baseWeekly, 0);
+  const weeklyCost = lines.reduce((sum, l) => sum + l.tradePrice * l.baseWeekly, 0);
+  const grossMargin = Math.max(0, weeklyRevenue - weeklyCost);
+
+  const toRupees = (value: number) => Math.round(value / RUPEE) * RUPEE;
+
+  return {
+    cash: toRupees(weeklyCost * rules.capitalWeeks),
+    overdraft: toRupees(weeklyCost * rules.overdraftWeeks),
+    weeklyOverheads: toRupees(grossMargin * rules.overheadShare),
+    weeklyRevenue,
+    weeklyCost,
+    openingCoverWeeks: rules.openingCoverWeeks,
+    licenceWeeks: rules.licenceWeeks,
+  };
+}
 
 export type OpeningBatch = {
   drugId: string;
@@ -276,8 +329,10 @@ export type OpeningBatch = {
 /**
  * The shelf as the learner inherits it.
  *
- * Stocked to a couple of weeks of cover rather than full, so there is
- * something to sell on day one and something to order by the end of it.
+ * Stocked to rather more than the longest time-to-shelf, because a learner
+ * whose inherited shelf runs dry before their very first order can reach it
+ * spends week three watching a number fall for reasons that were settled
+ * before they arrived. The shelf has to outlast the first restock.
  *
  * A few lines are deliberately short-dated. A facility that opens clean
  * teaches nothing about expiry until week thirty; opening with stock that
