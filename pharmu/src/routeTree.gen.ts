@@ -29,6 +29,7 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedModesRouteImport } from './routes/_authenticated/modes'
 import { Route as AuthenticatedDrugsRouteImport } from './routes/_authenticated/drugs'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedClassRouteImport } from './routes/_authenticated/class'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedGameWarehousingRouteImport } from './routes/_authenticated/game.warehousing'
 import { Route as AuthenticatedGameIndustryRouteImport } from './routes/_authenticated/game.industry'
@@ -135,6 +136,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedClassRoute = AuthenticatedClassRouteImport.update({
+  id: '/class',
+  path: '/class',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/class': typeof AuthenticatedClassRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/drugs': typeof AuthenticatedDrugsRoute
   '/modes': typeof AuthenticatedModesRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/class': typeof AuthenticatedClassRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/drugs': typeof AuthenticatedDrugsRoute
   '/modes': typeof AuthenticatedModesRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/class': typeof AuthenticatedClassRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/drugs': typeof AuthenticatedDrugsRoute
   '/_authenticated/modes': typeof AuthenticatedModesRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/admin'
+    | '/class'
     | '/dashboard'
     | '/drugs'
     | '/modes'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/admin'
+    | '/class'
     | '/dashboard'
     | '/drugs'
     | '/modes'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/_authenticated/admin'
+    | '/_authenticated/class'
     | '/_authenticated/dashboard'
     | '/_authenticated/drugs'
     | '/_authenticated/modes'
@@ -491,6 +503,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/class': {
+      id: '/_authenticated/class'
+      path: '/class'
+      fullPath: '/class'
+      preLoaderRoute: typeof AuthenticatedClassRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -538,6 +557,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedClassRoute: typeof AuthenticatedClassRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDrugsRoute: typeof AuthenticatedDrugsRoute
   AuthenticatedModesRoute: typeof AuthenticatedModesRoute
@@ -552,6 +572,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedClassRoute: AuthenticatedClassRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDrugsRoute: AuthenticatedDrugsRoute,
   AuthenticatedModesRoute: AuthenticatedModesRoute,

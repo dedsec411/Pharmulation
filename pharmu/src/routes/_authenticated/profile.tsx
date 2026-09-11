@@ -10,7 +10,7 @@ import { tierFor, xpProgress } from "@/lib/levels";
 import { bandFor, examinerByKey } from "@/lib/game/examiner";
 import { WeaknessHeatmap } from "@/components/game/WeaknessHeatmap";
 import { PeerBenchmark } from "@/components/game/PeerBenchmark";
-import { ClassMembership } from "@/components/game/ClassMembership";
+import { ClassSignpost } from "@/components/game/ClassSignpost";
 import { useWeaknessMap } from "@/lib/game/useWeaknessMap";
 import { hasEnoughHistory } from "@/lib/game/weakness";
 import { cpdHoursFromCases, CPD_MILESTONES, generateCertificatePdf, nextCpdMilestone } from "@/lib/cpd";
@@ -292,8 +292,12 @@ function ProfilePage() {
               <PeerBenchmark userId={userId} />
             </div>
 
+            {/* The join box used to sit here, below the badges, which is not
+                where anybody looks when a lecturer has just read a code out.
+                It has its own page in the navigation now; this is a signpost
+                to it rather than a second copy of the same form. */}
             <div className="mt-6">
-              <ClassMembership userId={userId} />
+              <ClassSignpost userId={userId} />
             </div>
 
             <div className="mt-6 glass-card p-6">

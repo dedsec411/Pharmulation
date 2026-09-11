@@ -76,7 +76,12 @@ export function ClassMembership({ userId }: { userId?: string }) {
 
       <form onSubmit={onSubmit} className="mt-4 flex flex-wrap items-start gap-2">
         <div className="min-w-[180px] flex-1">
+          {/* A placeholder is not a label: it disappears the moment somebody
+              types, and a screen reader announces the field as nothing. */}
+          <label htmlFor="class-join-code" className="sr-only">Class join code</label>
           <input
+            id="class-join-code"
+            name="joinCode"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="Join code"
@@ -84,11 +89,17 @@ export function ClassMembership({ userId }: { userId?: string }) {
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}
+            aria-invalid={Boolean(problem)}
+            aria-describedby={problem ? "class-join-code-problem" : undefined}
             className={`w-full rounded-xl border bg-background/60 px-4 py-2.5 font-mono text-sm tracking-[0.25em] outline-none ${
               problem ? "border-rose-400/60" : "border-border/50 focus:border-primary"
             }`}
           />
-          {problem && <p className="mt-1.5 px-1 text-xs text-rose-400">{problem}</p>}
+          {problem && (
+            <p id="class-join-code-problem" role="alert" className="mt-1.5 px-1 text-xs text-rose-400">
+              {problem}
+            </p>
+          )}
         </div>
         <button
           type="submit"

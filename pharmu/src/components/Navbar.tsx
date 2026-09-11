@@ -39,6 +39,28 @@ export function Navbar() {
   // second account.
   const isFaculty = role === "educator" || isAdmin;
 
+  /**
+   * What goes in the bar, by who is looking at it.
+   *
+   * A student gets Class - joining one and the work set for it used to be
+   * buried at the bottom of the profile page, which is not somewhere anybody
+   * looks when a lecturer has just read a code out. Faculty get Faculty, which
+   * was previously only reachable from inside the account dropdown.
+   *
+   * They are deliberately exclusive. A lecturer does not enrol in their own
+   * class, and showing them a student page with nothing in it would be a dead
+   * end rather than a feature.
+   */
+  const links = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/modes", label: "Modes" },
+    ...(isFaculty
+      ? [{ to: "/educator/dashboard", label: "Faculty" }]
+      : [{ to: "/class", label: "Class" }]),
+    { to: "/drugs", label: "Drug DB" },
+    { to: "/leaderboard", label: "Leaderboard" },
+  ] as const;
+
   return (
     <nav className="sticky top-0 z-40 glass border-b border-border">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:h-24 sm:px-6">
@@ -46,13 +68,7 @@ export function Navbar() {
           <LogoVideo className="aspect-video w-full" />
         </Link>
         <div className="hidden md:flex items-center gap-1 text-sm">
-          {[
-            { to: "/dashboard", label: "Dashboard" },
-            { to: "/modes", label: "Modes" },
-            { to: "/drugs", label: "Drug DB" },
-            { to: "/leaderboard", label: "Leaderboard" },
-            { to: "/profile", label: "Profile" },
-          ].map((l) => (
+          {[...links, { to: "/profile", label: "Profile" } as const].map((l) => (
             <Link key={l.to} to={l.to}
               className="rounded-full border border-transparent px-4 py-2 text-muted-foreground transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/10 hover:text-foreground hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]"
               activeProps={{ className: "rounded-full border border-primary/35 bg-primary/10 px-4 py-2 text-primary shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]" }}>
@@ -76,12 +92,10 @@ export function Navbar() {
                   by going via the dashboard cards. Hidden from md up, where
                   the bar shows them itself and repeating them would be noise. */}
               <div className="md:hidden">
-                {[
-                  { to: "/dashboard", label: "Dashboard" },
-                  { to: "/modes", label: "Modes" },
-                  { to: "/drugs", label: "Drug DB" },
-                  { to: "/leaderboard", label: "Leaderboard" },
-                ].map((l) => (
+                {/* The dropdown already carries its own Faculty entry below,
+                    styled apart from the rest, so it is dropped from the shared
+                    list here rather than appearing twice. */}
+                {links.filter((l) => l.to !== "/educator/dashboard").map((l) => (
                   <Link
                     key={l.to}
                     to={l.to}
