@@ -226,7 +226,8 @@ function Dashboard() {
   const tip =
   MENTOR_TIPS[Math.floor(Math.random() * MENTOR_TIPS.length)];
 
-  const { data: scores = [] } = useQuery({
+  const { data: scores = [], isPending: scoresPending, isError: scoresFailed,
+          refetch: refetchScores } = useQuery({
     queryKey: ["recent-scores", userId],
     queryFn: async () => {
       if (!userId) return [];
@@ -255,7 +256,7 @@ function Dashboard() {
     enabled: !!userId,
   });
 
-  const { data: topPlayers = [] } = useQuery({
+  const { data: topPlayers = [], isPending: boardPending } = useQuery({
     queryKey: ["mini-lb"],
     queryFn: async () => unwrapList(
       await supabase.rpc("get_public_profiles", { limit_count: 5 }),
@@ -459,7 +460,34 @@ function Dashboard() {
             className="glass-card p-6 lg:col-span-2 transition duration-300 hover:border-primary/40"
           >
             <h3 className="font-bold mb-3">Recent activity</h3>
-            {scores.length === 0 ? (
+            {/* An empty list and a list that has not arrived yet look identical
+                when the query defaults to []. A learner with a hundred cases
+                behind them was being told they had none, for as long as the
+                round trip took. */}
+            {scoresPending ? (
+              <ul className="space-y-2" aria-hidden="true">
+                {[0, 1, 2, 3].map((i) => (
+                  <li key={i} className="flex items-center gap-3 rounded-xl border border-border/35 px-3 py-2.5">
+                    <span className="size-8 shrink-0 animate-pulse rounded-lg bg-foreground/10" />
+                    <span className="h-3 flex-1 animate-pulse rounded bg-foreground/10" style={{ maxWidth: `${70 - i * 8}%` }} />
+                    <span className="h-5 w-14 shrink-0 animate-pulse rounded-full bg-foreground/10" />
+                  </li>
+                ))}
+              </ul>
+            ) : scoresFailed ? (
+              // A failed load is not an empty history either. The global handler
+              // has already said something went wrong; this says what to do.
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+                <p className="text-muted-foreground">Your recent activity could not be loaded.</p>
+                <button
+                  type="button"
+                  onClick={() => refetchScores()}
+                  className="mt-2 rounded-full border border-border px-3 py-1.5 text-xs font-semibold transition hover:border-primary/50 hover:text-primary"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : scores.length === 0 ? (
               <p className="text-sm text-muted-foreground">No cases yet. Pick a mode above to start training.</p>
             ) : (
               <ul className="space-y-2">
@@ -525,7 +553,14 @@ function Dashboard() {
             </div>
 
             <ol className="relative space-y-2.5 text-sm">
-              {topPlayers.length === 0 && (
+              {boardPending && [0, 1, 2].map((i) => (
+                <li key={`s${i}`} aria-hidden="true" className="flex items-center gap-3 rounded-xl px-2 py-1.5">
+                  <span className="size-6 shrink-0 animate-pulse rounded-full bg-foreground/10" />
+                  <span className="h-3 flex-1 animate-pulse rounded bg-foreground/10" />
+                  <span className="h-3 w-12 shrink-0 animate-pulse rounded bg-foreground/10" />
+                </li>
+              ))}
+              {!boardPending && topPlayers.length === 0 && (
                 <li className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center text-xs text-muted-foreground">
                   Be the first on the board.
                 </li>
