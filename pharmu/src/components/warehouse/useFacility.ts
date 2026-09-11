@@ -149,16 +149,20 @@ export function useFacility() {
 function useFacilityAction<TArgs, TResult extends { ok: boolean; error?: string }>(
   run: (args: TArgs) => Promise<TResult>,
   onDone?: (result: TResult) => void,
+  /** For actions whose refusal the screen answers better than a toast can. */
+  quiet = false,
 ) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: run,
     onSuccess: async (result) => {
       if (!result.ok) {
-        const detail = (result as any).detail as string[] | undefined;
-        toast.error(result.error ?? "That did not work.", {
-          description: detail?.join(" "),
-        });
+        if (!quiet) {
+          const detail = (result as any).detail as string[] | undefined;
+          toast.error(result.error ?? "That did not work.", {
+            description: detail?.join(" "),
+          });
+        }
         return;
       }
       await queryClient.invalidateQueries({ queryKey: FACILITY_KEY });
@@ -187,10 +191,19 @@ export function usePlaceOrder() {
   );
 }
 
+/**
+ * Put stock away.
+ *
+ * Quiet on refusal: a move into the wrong place comes back with the reasons,
+ * and the screen puts them in front of the learner as a decision to confirm
+ * rather than flashing a toast that disappears before they have read it.
+ */
 export function usePutAway() {
   return useFacilityAction(
     (data: { moves: Array<{ stockId: string; zone: string }>; confirm?: boolean }) =>
       putAwayStock({ data: { ...data, confirm: data.confirm ?? false } as any }),
+    undefined,
+    true,
   );
 }
 

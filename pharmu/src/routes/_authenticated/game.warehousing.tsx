@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OpenPharmacy } from "@/components/warehouse/OpenPharmacy";
 import { WeekBoard } from "@/components/warehouse/WeekBoard";
-import { useAdvanceWeek, useFacility, useOpenPharmacy } from "@/components/warehouse/useFacility";
+import { StockRoom } from "@/components/warehouse/StockRoom";
+import {
+  useAdvanceWeek, useFacility, useOpenPharmacy, usePutAway,
+} from "@/components/warehouse/useFacility";
 import { money } from "@/lib/warehouse/view";
 import { toast } from "sonner";
 
@@ -30,6 +33,7 @@ function Warehousing() {
   const { data: facility, isLoading } = useFacility();
   const open = useOpenPharmacy();
   const advance = useAdvanceWeek();
+  const putAway = usePutAway();
   const [tab, setTab] = useState("week");
 
   if (isLoading) {
@@ -103,6 +107,7 @@ function Warehousing() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="week">Week</TabsTrigger>
+          <TabsTrigger value="stock">Stock</TabsTrigger>
         </TabsList>
 
         <TabsContent value="week">
@@ -111,6 +116,18 @@ function Warehousing() {
             onGoTo={setTab}
             onClose={closeWeek}
             closing={advance.isPending}
+          />
+        </TabsContent>
+
+        <TabsContent value="stock">
+          <StockRoom
+            facility={facility}
+            busy={putAway.isPending}
+            onPutAway={async (moves, confirm) => {
+              const result = await putAway.mutateAsync({ moves, confirm });
+              if (result.ok) toast.success(`${result.moved} batch(es) put away.`);
+              return result.ok;
+            }}
           />
         </TabsContent>
       </Tabs>
