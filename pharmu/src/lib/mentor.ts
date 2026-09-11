@@ -137,18 +137,56 @@ export const MENTOR_TIPS: string[] = [
 ];
 
 /**
- * The tip for a given day.
+ * The tip the server renders, before the browser has taken over.
  *
- * Deliberately not Math.random(). Picking at random in a render body meant the
- * tip changed every time anything on the dashboard re-rendered - a query
- * settling, a hover, a counter finishing its animation - so it moved while
- * somebody was reading it. It also meant the server rendered one tip and the
- * browser hydrated with another, which is a mismatch React has to repair.
- *
- * Derived from the UTC date so the server and the client always agree, and so
- * there is something new tomorrow.
+ * Deliberately derived from the date rather than picked at random. A random
+ * choice here would mean the server rendered one tip and the browser hydrated
+ * with a different one, which is a mismatch React has to repair on every load.
+ * This is the opening frame; nextTip below is what the reader actually ends up
+ * looking at.
  */
 export function tipOfTheDay(now: Date = new Date()): string {
-  const day = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86_400_000);
-  return MENTOR_TIPS[((day % MENTOR_TIPS.length) + MENTOR_TIPS.length) % MENTOR_TIPS.length];
+  return MENTOR_TIPS[dayIndex(now)];
+}
+
+function dayIndex(now: Date): number {
+  const day = Math.floor(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86_400_000);
+  return ((day % MENTOR_TIPS.length) + MENTOR_TIPS.length) % MENTOR_TIPS.length;
+}
+
+/** Where the rotation keeps its place between visits. */
+const TIP_INDEX_KEY = "pharmulation.mentorTipIndex";
+
+/**
+ * The next tip along, one step further every time the dashboard opens.
+ *
+ * A daily tip was too still - it is the same sentence for everybody until
+ * midnight, and refreshing the page does nothing, which reads as broken rather
+ * than as deliberate. Random would move, but it repeats: with fifty-six tips
+ * you would see the same one twice in a row often enough to notice.
+ *
+ * So it steps through the list instead. Every visit is a different tip, all
+ * fifty-six come round before any repeats, and where you are up to survives a
+ * refresh. The starting point is seeded from the date so two people opening
+ * the app for the first time on different days do not both begin at the top.
+ *
+ * Call this after mount, never during a render: it both reads and writes, and
+ * a render has to be able to run twice without changing anything.
+ */
+export function nextTip(now: Date = new Date()): string {
+  let index = dayIndex(now);
+  try {
+    const stored = window.localStorage.getItem(TIP_INDEX_KEY);
+    if (stored !== null) {
+      const parsed = Number.parseInt(stored, 10);
+      if (Number.isFinite(parsed)) index = parsed;
+    }
+    const advanced = (index + 1) % MENTOR_TIPS.length;
+    window.localStorage.setItem(TIP_INDEX_KEY, String(advanced));
+    return MENTOR_TIPS[advanced];
+  } catch {
+    // Private browsing, or storage turned off. Still show something sensible.
+    return MENTOR_TIPS[index];
+  }
 }

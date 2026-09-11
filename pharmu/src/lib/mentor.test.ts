@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { MENTOR_TIPS, tipOfTheDay } from "./mentor";
+import { afterEach, describe, expect, it } from "vitest";
+import { MENTOR_TIPS, tipOfTheDay, nextTip } from "./mentor";
 
 describe("the tips themselves", () => {
   it("has enough that a daily user is not seeing repeats within a month", () => {
@@ -71,5 +71,79 @@ describe("the tip of the day", () => {
     for (const iso of ["1970-01-01T00:00:00Z", "2026-09-11T00:00:00Z", "2099-12-31T00:00:00Z"]) {
       expect(MENTOR_TIPS).toContain(on(iso));
     }
+  });
+});
+
+describe("stepping to the next tip", () => {
+  /** The tests run in node, so localStorage has to be stood up by hand. */
+  function withStorage(initial: Record<string, string> = {}) {
+    const store = new Map(Object.entries(initial));
+    (globalThis as any).window = {
+      localStorage: {
+        getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+        setItem: (k: string, v: string) => { store.set(k, v); },
+      },
+    };
+    return store;
+  }
+  afterEach(() => { delete (globalThis as any).window; });
+
+  const day = new Date("2026-09-14T12:00:00Z");
+
+  // The complaint that prompted this: one tip for everybody, all day, and a
+  // refresh did nothing.
+  it("gives a different tip on every visit", () => {
+    withStorage();
+    const seen = [nextTip(day), nextTip(day), nextTip(day), nextTip(day)];
+    expect(new Set(seen).size).toBe(4);
+  });
+
+  it("picks up where it left off rather than starting again", () => {
+    const store = withStorage();
+    nextTip(day);
+    const afterFirst = store.get("pharmulation.mentorTipIndex");
+    nextTip(day);
+    expect(store.get("pharmulation.mentorTipIndex")).not.toBe(afterFirst);
+  });
+
+  // Random would repeat often enough to notice with only fifty-six tips.
+  it("works through all of them before showing one twice", () => {
+    withStorage();
+    const seen = new Set<string>();
+    for (let i = 0; i < MENTOR_TIPS.length; i++) seen.add(nextTip(day));
+    expect(seen.size).toBe(MENTOR_TIPS.length);
+  });
+
+  it("comes back round to the start instead of running off the end", () => {
+    withStorage({ "pharmulation.mentorTipIndex": String(MENTOR_TIPS.length - 1) });
+    expect(nextTip(day)).toBe(MENTOR_TIPS[0]);
+  });
+
+  it("starts somewhere different depending on the day", () => {
+    withStorage();
+    const monday = nextTip(new Date("2026-09-14T12:00:00Z"));
+    withStorage();
+    const tuesday = nextTip(new Date("2026-09-15T12:00:00Z"));
+    expect(monday).not.toBe(tuesday);
+  });
+
+  it("recovers from junk left in storage", () => {
+    withStorage({ "pharmulation.mentorTipIndex": "not a number" });
+    expect(MENTOR_TIPS).toContain(nextTip(day));
+  });
+
+  // Private browsing, or storage switched off entirely.
+  it("still shows a tip when storage throws", () => {
+    (globalThis as any).window = {
+      localStorage: {
+        getItem: () => { throw new Error("denied"); },
+        setItem: () => { throw new Error("denied"); },
+      },
+    };
+    expect(MENTOR_TIPS).toContain(nextTip(day));
+  });
+
+  it("still shows a tip when there is no window at all", () => {
+    expect(MENTOR_TIPS).toContain(nextTip(day));
   });
 });

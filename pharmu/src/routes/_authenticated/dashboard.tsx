@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { unwrapList } from "@/lib/supabase-query";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
-import { MENTOR_IMAGE, tipOfTheDay } from "@/lib/mentor";
+import { MENTOR_IMAGE, tipOfTheDay, nextTip } from "@/lib/mentor";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard - Pharmulation" }] }),
@@ -201,8 +201,18 @@ function Dashboard() {
   const userId = profile?.user_id;
   const { data: weaknessMap } = useWeaknessMap(userId);
   const { data: weekly } = useWeeklyTotals(userId);
-  // Stable for the day rather than re-rolled on every render. See tipOfTheDay.
-  const tip = tipOfTheDay();
+  /**
+   * A different tip every time the dashboard opens.
+   *
+   * The first value is the date-derived one so the server and the browser
+   * render the same thing and hydration has nothing to repair. The moment the
+   * component is mounted it steps to the next tip in the list - which is why
+   * this is an effect rather than something computed while rendering: nextTip
+   * writes down where it got to, and a render must be able to run twice
+   * without changing anything.
+   */
+  const [tip, setTip] = useState(tipOfTheDay);
+  useEffect(() => { setTip(nextTip()); }, []);
 
   const { data: scores = [], isPending: scoresPending, isError: scoresFailed,
           refetch: refetchScores } = useQuery({
