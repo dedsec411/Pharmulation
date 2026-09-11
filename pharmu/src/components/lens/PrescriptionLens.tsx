@@ -417,11 +417,13 @@ function LensPreview({ summary }: { summary: LensSummary }) {
             <li key={r.matchedTo} className="flex items-center gap-2 text-sm">
               <Pill className="size-3.5 shrink-0 text-primary" />
               <span className="font-semibold">{r.matchedTo}</span>
-              {/* An identity the model offered as an alternative, or one we
-                  reached by nearest spelling, is a reading nobody committed
-                  to. It is marked on the medicine itself rather than only in
-                  a note underneath, because this is the line a person checks
-                  against the paper in their hand. */}
+              {/* A medicine reached by anything other than the name as it was
+                  written - the reader's own generic for it, or nearest
+                  spelling - is a match on a different string than the page
+                  carries. It is marked on the medicine itself rather than only
+                  in a note underneath, because this is the line a person checks
+                  against the paper in their hand. Over-marking is the safe
+                  direction here; under-marking is how a wrong drug goes out. */}
               {r.assumed && (
                 <span className="shrink-0 rounded-sm bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                   Assumed

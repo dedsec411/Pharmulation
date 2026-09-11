@@ -22,6 +22,9 @@ Tracks the findings from the full-codebase audit. Items get checked off as they'
 
 ## Next up — correctness / security
 
+- [ ] **Set `PRESCRIPTOAI_API_KEY` in the Vercel project** before the showcase. Prescription Lens now reads through PrescriptoAI instead of Gemini, and without that variable the scanner reports itself unconfigured. `GEMINI_API_KEY` is still needed for the chat, the viva examiner and the weekly report.
+- [ ] Rotate the PrescriptoAI key once the showcase is over. It was pasted into a chat transcript to get it installed.
+
 - [x] **Migration drift — root cause fixed and live database audited clean.** `supabase/config.toml` pointed at `ogxbvpnpqbwjmdyhrabr` while the app runs against `hpzjxzmqgrcpbizxucbp`, so `supabase db push` silently targeted the wrong database and migrations here never reached production. Two were caught missing after the fact:
   - `20260827120000` (role self-escalation trigger) — applied late; the hole was live until then.
   - `20260615153330` (badge/leaderboard lockdown) — **never ran**; any authenticated user could self-award badges and write arbitrary leaderboard scores, and `award_badge_if_earned` did not exist, so no badge had ever been awarded.
