@@ -9,7 +9,7 @@ import { closeWeek, type PendingOrder, type LedgerKind } from "@/lib/warehouse/w
 import {
   orderCost, formatPKR,
   type Paisa, type PricedDrug, type StockBatch, type DemandProfile,
-  type VolumeBreak, type StorageZone,
+  type StorageZone,
 } from "@/lib/warehouse/economics";
 import {
   canTrade, licenceValid, find as findLicence, inspect,
@@ -20,6 +20,7 @@ import {
   rollEvents, settleNotices,
   type EventStock, type ShortageEvent, type OpenNotice,
 } from "@/lib/warehouse/events";
+import { SUPPLIER_BREAKS, PAYMENT_TERMS_WEEKS, SUPPLIER_NAME } from "@/lib/warehouse/supplier";
 
 /**
  * Running a facility.
@@ -33,17 +34,6 @@ import {
  * only load state, hand it over, and write back what came out, which is what
  * makes the arithmetic testable without a database.
  */
-
-/** Distributors here discount on volume. Ordering big is cheaper per pack and
- *  ties up the cash that buys next week - which is the whole tension. */
-const SUPPLIER_BREAKS: readonly VolumeBreak[] = [
-  { minPacks: 50, discountPercent: 3 },
-  { minPacks: 150, discountPercent: 6 },
-  { minPacks: 400, discountPercent: 10 },
-];
-
-/** Suppliers sell on 30-day terms, which is four of our weeks. */
-const PAYMENT_TERMS_WEEKS = 4;
 
 const CATALOGUE_SIZE = 40;
 
@@ -321,7 +311,7 @@ export const applyForLicence = createServerFn({ method: "POST" })
 export const placeOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(z.object({
-    supplier: z.string().min(1).max(60).default("Central Distributors"),
+    supplier: z.string().min(1).max(60).default(SUPPLIER_NAME),
     lines: z.array(z.object({
       drugId: z.string().uuid(),
       packs: z.number().int().min(1).max(5000),
