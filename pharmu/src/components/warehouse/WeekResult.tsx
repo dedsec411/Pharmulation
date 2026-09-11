@@ -45,8 +45,6 @@ type Props = {
 const NEW_NOTICE_LABEL: Record<string, string> = {
   recall: "A batch has been recalled",
   excursion: "The fridge failed",
-  shortage: "A delivery came up short",
-  inspection: "An inspector called",
 };
 
 export function WeekResult({ week, scored, xp, onClose }: Props) {
@@ -56,6 +54,10 @@ export function WeekResult({ week, scored, xp, onClose }: Props) {
     .filter((c) => c.kind === "penalty")
     .reduce((sum, c) => sum + c.amount, 0);
   const lost = [...week.writeOffs, ...week.spoiled, ...week.condemned];
+  // An inspection already appears as findings and a fine. Listing it again as
+  // something waiting would be telling the learner to act on a past event.
+  const decisions = week.events.filter((e) => e.kind === "recall" || e.kind === "excursion");
+  const shortages = week.events.filter((e) => e.kind === "shortage");
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -156,16 +158,29 @@ export function WeekResult({ week, scored, xp, onClose }: Props) {
           </section>
         )}
 
-        {week.events.length > 0 && (
+        {decisions.length > 0 && (
           <section>
-            <h4 className="mb-1.5 text-sm font-semibold">Waiting for you next week</h4>
+            <h4 className="mb-1.5 text-sm font-semibold">Needs a decision from you</h4>
             <div className="flex flex-wrap gap-1.5">
-              {week.events.map((event, i) => (
+              {decisions.map((event, i) => (
                 <Badge key={`${event.kind}-${i}`} variant="outline" className="text-[10px]">
                   {NEW_NOTICE_LABEL[event.kind] ?? event.kind}
                 </Badge>
               ))}
             </div>
+          </section>
+        )}
+
+        {shortages.length > 0 && (
+          <section>
+            <h4 className="mb-1.5 text-sm font-semibold">Short deliveries</h4>
+            <ul className="space-y-1">
+              {shortages.map((event, i) => (
+                <li key={`short-${i}`} className="text-xs text-muted-foreground">
+                  {event.drugName}: {event.delivered} packs against {event.ordered} ordered.
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 
