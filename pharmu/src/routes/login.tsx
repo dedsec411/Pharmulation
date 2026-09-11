@@ -76,9 +76,17 @@ function LoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-3">
-          <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+          {/* The placeholder was doing the job of a label, which it cannot do:
+              it disappears the moment somebody types, and a screen reader
+              announces the field as nothing at all. The visible design is
+              unchanged - the label is there for the people who need it. */}
+          <label htmlFor="login-email" className="sr-only">Email address</label>
+          <input required type="email" id="login-email" name="email" autoComplete="email"
+            value={email} onChange={(e) => setEmail(e.target.value)}
             placeholder="Email" className="w-full rounded-xl glass px-4 py-3 outline-none focus:border-primary" />
-          <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+          <label htmlFor="login-password" className="sr-only">Password</label>
+          <input required type="password" id="login-password" name="password" autoComplete="current-password"
+            value={password} onChange={(e) => setPassword(e.target.value)}
             placeholder="Password" className="w-full rounded-xl glass px-4 py-3 outline-none focus:border-primary" />
           <button disabled={loading} className="w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:scale-[1.02] transition disabled:opacity-60">
             {loading ? "Signing in..." : "Sign in"}

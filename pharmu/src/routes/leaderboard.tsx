@@ -126,7 +126,7 @@ function LeaderboardPage() {
         <div className="flex max-w-full shrink-0 gap-1 overflow-x-auto glass rounded-full p-1 text-sm">
           {(["weekly", "alltime"] as const).map((s) => (
             <button key={s} onClick={() => setScope(s)}
-              className={`px-4 py-1.5 rounded-full transition ${
+              className={`inline-flex min-h-9 items-center rounded-full px-4 py-1.5 transition ${
                 scope === s ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground"
               }`}>
               {s === "weekly" ? "Weekly" : "All-time"}
@@ -138,7 +138,7 @@ function LeaderboardPage() {
       <div className="mt-5 flex gap-2 flex-wrap rounded-2xl border border-cyan-300/10 bg-slate-900/[0.035] dark:bg-black/20 p-2 shadow-inner">
         {FILTERS.map((item) => (
           <button key={item.key} onClick={() => setFilter(item.key)}
-            className={`text-xs rounded-full px-3 py-1.5 transition ${
+            className={`inline-flex min-h-9 items-center rounded-full px-3 py-1.5 text-xs transition ${
               filter === item.key ? "bg-primary/20 text-primary border border-primary/40 shadow-[0_0_18px_-8px_oklch(0.74_0.14_180)]" : "bg-foreground/[0.04] text-muted-foreground hover:bg-foreground/[0.08]"
             }`}>
             {item.label}

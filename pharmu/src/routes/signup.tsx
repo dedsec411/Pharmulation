@@ -109,31 +109,50 @@ function SignupPage() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-3">
+          {/* Placeholders were doing the job of labels, which they cannot do:
+              they vanish the moment somebody types, and a screen reader
+              announces the field as nothing at all. The visible design is
+              unchanged - these are for the people who need them. */}
+          <label htmlFor="signup-name" className="sr-only">Full name</label>
           <input
             required
+            id="signup-name"
+            name="name"
+            autoComplete="name"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Full name"
             className="w-full rounded-xl px-4 py-3 outline-none focus:border-primary glass"
           />
+          <label htmlFor="signup-email" className="sr-only">Email address</label>
           <input
             required
             type="email"
+            id="signup-email"
+            name="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             className="w-full rounded-xl px-4 py-3 outline-none focus:border-primary glass"
           />
+          <label htmlFor="signup-password" className="sr-only">Password, at least 6 characters</label>
           <input
             required
             type="password"
+            id="signup-password"
+            name="password"
+            autoComplete="new-password"
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (min 6 chars)"
             className="w-full rounded-xl px-4 py-3 outline-none focus:border-primary glass"
           />
+          <label htmlFor="signup-role" className="sr-only">What you are signing up as</label>
           <select
+            id="signup-role"
+            name="role"
             value={role}
             onChange={(e) => setRole(e.target.value as typeof role)}
             className="w-full rounded-xl px-4 py-3 outline-none focus:border-primary glass"
@@ -148,7 +167,10 @@ function SignupPage() {
             </p>
           ) : (
             <div>
+              <label htmlFor="signup-join" className="sr-only">Class join code, optional</label>
               <input
+                id="signup-join"
+                name="joinCode"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 placeholder="Class join code (optional)"
