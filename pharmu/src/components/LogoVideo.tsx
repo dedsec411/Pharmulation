@@ -36,7 +36,7 @@ export function LogoVideo({ className = "", size = "nav" }: LogoVideoProps) {
         loop={isLooping}
         muted
         playsInline
-        poster="/logo-poster.png"
+        poster="/logo-poster.webp"
         preload="auto"
         onEnded={() => setIsLooping(true)}
         className="h-full w-full object-contain"

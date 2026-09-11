@@ -8,7 +8,15 @@
  */
 
 /** Mentor avatar, served from `public/`. */
-export const MENTOR_IMAGE = "/dr-hakim-clean.png";
+/**
+ * 42 KB rather than 1.3 MB.
+ *
+ * The original was 1516x1967 and shipped in full on every page that shows the
+ * mentor. It is never drawn larger than eighty pixels tall, so more than
+ * ninety-five percent of that download was thrown away by the browser before
+ * anything appeared.
+ */
+export const MENTOR_IMAGE = "/dr-hakim.webp";
 
 /** Display name, for headings and chat labels. */
 export const MENTOR_NAME = "Dr. Hakim";
