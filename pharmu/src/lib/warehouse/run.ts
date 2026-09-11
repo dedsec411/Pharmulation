@@ -22,7 +22,7 @@ import {
 } from "./bootstrap";
 import { closeWeek, type PendingOrder, type LedgerKind } from "./week";
 import {
-  orderCost, formatPKR,
+  pricePerPack, formatPKR,
   type Paisa, type PricedDrug, type StockBatch, type DemandProfile,
   type StorageZone,
 } from "./economics";
@@ -35,7 +35,7 @@ import {
   rollEvents, settleNotices,
   type EventStock, type ShortageEvent, type OpenNotice,
 } from "./events";
-import { SUPPLIER_BREAKS, PAYMENT_TERMS_WEEKS } from "./supplier";
+import { orderAnalysis, SUPPLIER_BREAKS, PAYMENT_TERMS_WEEKS } from "./supplier";
 
 /** Whatever speaks PostgREST: the real client, or a fake one in a test. */
 export type Db = any;
@@ -356,9 +356,8 @@ export async function placeOrder(db: Db, userId: string, data: { supplier: strin
   const held = (licences.data ?? []).map(toLicence);
   const hasNarcotics = licenceValid(findLicence(held, "narcotics"), period);
 
-  let total: Paisa = 0;
   let eta = period;
-  const rows: Row[] = [];
+  const wanted: Array<{ entry: Row; priced: PricedDrug; packs: number }> = [];
 
   for (const line of data.lines) {
     const entry = byDrug.get(line.drugId);
@@ -373,18 +372,29 @@ export async function placeOrder(db: Db, userId: string, data: { supplier: strin
       };
     }
 
-    const priced: PricedDrug = {
-      drugId: entry.drug_id, mrp: Number(entry.mrp_paisa), tradePrice: Number(entry.trade_price_paisa),
-    };
-    const cost = orderCost(priced, line.packs, SUPPLIER_BREAKS);
-    total += cost;
     eta = Math.max(eta, period + Number(entry.lead_time_weeks));
-    rows.push({
-      drug_id: line.drugId,
+    wanted.push({
+      entry,
+      priced: {
+        drugId: entry.drug_id,
+        mrp: Number(entry.mrp_paisa),
+        tradePrice: Number(entry.trade_price_paisa),
+      },
       packs: line.packs,
-      unit_price_paisa: Math.round(cost / line.packs),
     });
   }
+
+  // Priced through the same function the ordering screen quoted from, on the
+  // whole order's pack count. Charging line by line against a quote that
+  // showed the order's discount would invoice the learner for more than they
+  // were told, which is the one thing an ordering screen must never do.
+  const quote = orderAnalysis(wanted.map((w) => ({ drug: w.priced, packs: w.packs })));
+  const total: Paisa = quote.total;
+  const rows: Row[] = wanted.map((w) => ({
+    drug_id: w.priced.drugId,
+    packs: w.packs,
+    unit_price_paisa: pricePerPack(w.priced, quote.packs, SUPPLIER_BREAKS),
+  }));
 
   const order = await db.from("wh_orders").insert({
     facility_id: facility.id,

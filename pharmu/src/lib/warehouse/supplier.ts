@@ -12,7 +12,7 @@
  * need, because it is cheaper and you do not pay yet.
  */
 
-import { orderCost, pricePerPack, type Paisa, type PricedDrug, type VolumeBreak } from "./economics";
+import { pricePerPack, type Paisa, type PricedDrug, type VolumeBreak } from "./economics";
 
 export const SUPPLIER_NAME = "Central Distributors";
 
@@ -53,6 +53,9 @@ export type OrderAnalysis = {
  * Discounts are earned on the whole order's pack count rather than per line,
  * because that is how a wholesaler invoices: the learner who consolidates four
  * small orders into one gets the break, and finding that out is the point.
+ *
+ * The same function has to price the invoice on the server, or the figure on
+ * the screen and the figure in the accounts are two different promises.
  */
 export function orderAnalysis(
   lines: readonly OrderLine[],
@@ -61,7 +64,12 @@ export function orderAnalysis(
   const packs = lines.reduce((n, l) => n + Math.max(0, l.packs), 0);
   const priced = lines.filter((l) => l.packs > 0);
 
-  const total = priced.reduce((sum, l) => sum + orderCost(l.drug, l.packs, breaks), 0);
+  // Every line is priced at the rate the whole order earned, not at the rate
+  // its own quantity would have earned alone. Pricing line by line while
+  // showing the order's discount is how a quote and an invoice end up
+  // disagreeing, and the learner is the one who finds out.
+  const total = priced.reduce(
+    (sum, l) => sum + pricePerPack(l.drug, packs, breaks) * l.packs, 0);
   const atListPrice = priced.reduce((sum, l) => sum + l.drug.tradePrice * l.packs, 0);
 
   const earned = [...breaks]

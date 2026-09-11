@@ -3,6 +3,7 @@ import { createFakeDb, type FakeDb } from "./fake-db";
 import * as run from "./run";
 import { LICENCE_FEE, NARCOTICS_LEAD_WEEKS, SUSPENSION_WEEKS } from "./compliance";
 import { ODDS } from "./events";
+import { orderAnalysis } from "./supplier";
 import { RUPEE } from "./economics";
 
 /**
@@ -322,6 +323,47 @@ describe("ordering", () => {
     expect(order.etaPeriod).toBeGreaterThan(1);
     expect(order.paymentDuePeriod).toBeGreaterThan(order.etaPeriod - 1);
     expect(db.rows("wh_order_lines")).toHaveLength(1);
+  });
+
+  // The screen quotes the whole order's volume break. An invoice priced line by
+  // line would charge more than the learner was told, which is the one thing an
+  // ordering screen must never do.
+  it("charges exactly what the ordering screen quoted", async () => {
+    const { db } = await openShop({ seed: "quote" });
+    const s = await state(db);
+    const picked = s.catalogue.filter((c: any) => !c.controlled).slice(0, 6);
+    const lines = picked.map((c: any) => ({ drugId: c.drug_id, packs: 30 }));
+
+    const quoted = orderAnalysis(picked.map((c: any) => ({
+      drug: {
+        drugId: c.drug_id, mrp: Number(c.mrp_paisa), tradePrice: Number(c.trade_price_paisa),
+      },
+      packs: 30,
+    })));
+    expect(quoted.discountPercent).toBeGreaterThan(0);
+
+    const order: any = await run.placeOrder(db, USER, {
+      supplier: "Central Distributors", lines,
+    });
+    expect(order.ok).toBe(true);
+    expect(order.total).toBe(quoted.total);
+    expect(Number(db.rows("wh_orders").find((o) => o.id === order.orderId)!.total_paisa))
+      .toBe(quoted.total);
+  });
+
+  it("bills what the order lines add up to", async () => {
+    const { db } = await openShop({ seed: "quote" });
+    const s = await state(db);
+    const picked = s.catalogue.filter((c: any) => !c.controlled).slice(0, 4);
+    const order: any = await run.placeOrder(db, USER, {
+      supplier: "Central Distributors",
+      lines: picked.map((c: any) => ({ drugId: c.drug_id, packs: 40 })),
+    });
+
+    const lineTotal = db.rows("wh_order_lines")
+      .filter((l) => l.order_id === order.orderId)
+      .reduce((sum, l) => sum + Number(l.unit_price_paisa) * Number(l.packs), 0);
+    expect(lineTotal).toBe(order.total);
   });
 
   it("refuses a controlled medicine without the permit", async () => {

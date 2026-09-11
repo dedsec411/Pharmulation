@@ -45,6 +45,25 @@ describe("costing an order", () => {
   it("takes the best break, not the first", () => {
     expect(orderAnalysis([{ drug: panadol, packs: 500 }]).discountPercent).toBe(10);
   });
+
+  // Pricing line by line while showing the order's discount is how a quote and
+  // an invoice end up disagreeing.
+  it("charges every line at the rate the whole order earned", () => {
+    const out = orderAnalysis([
+      { drug: panadol, packs: 30 },
+      { drug: amox, packs: 25 },
+    ]);
+    expect(out.discountPercent).toBe(3);
+    expect(out.total).toBe(97 * RUPEE * 30 + 194 * RUPEE * 25);
+    expect(out.saved).toBe(3 * RUPEE * 30 + 6 * RUPEE * 25);
+  });
+
+  it("quotes a total the discount it reports can explain", () => {
+    for (const packs of [10, 49, 50, 149, 150, 399, 400, 900]) {
+      const out = orderAnalysis([{ drug: panadol, packs }]);
+      expect(out.total).toBe(Math.round(100 * RUPEE * (1 - out.discountPercent / 100)) * packs);
+    }
+  });
 });
 
 describe("the next break", () => {
