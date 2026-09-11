@@ -193,6 +193,25 @@ describe("closing a week", () => {
     }
   });
 
+  // A fee is paid the moment it is applied for, mid-week, while the period
+  // report is written at the close. Getting the opening balance from the
+  // facility's cash rather than the last week's closing would hide the fee.
+  it("reconciles a week a licence fee was paid in", async () => {
+    const { db } = await openShop();
+    await close(db);
+    await run.applyForLicence(db, USER, { kind: "narcotics" });
+    const result = await close(db);
+
+    const period = db.rows("wh_periods").find((p) => p.period_no === result.period)!;
+    const entries = db.rows("wh_ledger").filter((l) => l.period_no === result.period);
+    const movement = entries.reduce((sum, l) => sum + Number(l.amount_paisa), 0);
+
+    expect(entries.some((l) => l.kind === "licence")).toBe(true);
+    expect(Number(period.fees_paisa)).toBe(LICENCE_FEE.narcotics);
+    expect(Number(period.opening_cash_paisa) + movement)
+      .toBe(Number(period.closing_cash_paisa));
+  });
+
   it("carries cash from one week's close to the next week's open", async () => {
     const { db } = await openShop();
     for (let i = 0; i < 4; i++) await close(db);

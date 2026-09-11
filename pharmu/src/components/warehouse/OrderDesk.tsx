@@ -60,7 +60,9 @@ export function OrderDesk({ facility, onOrder, placing }: Props) {
     const next: Record<string, number> = { ...packs };
     for (const pos of facility.positions) {
       if (!pos.needsOrdering || pos.line.controlled) continue;
-      const want = Math.ceil(pos.line.baseWeekly * targetCover);
+      // Against the forecast, so the target means the same thing as the cover
+      // and the reorder point beside it.
+      const want = Math.ceil(pos.forecastWeekly * targetCover);
       const short = want - pos.onHand.sellable - pos.onOrder;
       if (short > 0) next[pos.line.drugId] = short;
     }
@@ -132,7 +134,7 @@ export function OrderDesk({ facility, onOrder, placing }: Props) {
                 <th className="pb-2 text-right font-medium">MRP</th>
                 <th className="pb-2 text-right font-medium">Trade</th>
                 <th className="pb-2 text-right font-medium">Margin</th>
-                <th className="pb-2 text-right font-medium">Weekly</th>
+                <th className="pb-2 text-right font-medium">Forecast</th>
                 <th className="pb-2 text-right font-medium">Cover</th>
                 <th className="pb-2 text-right font-medium">Reorder at</th>
                 <th className="pb-2 text-right font-medium">On order</th>
@@ -161,7 +163,9 @@ export function OrderDesk({ facility, onOrder, placing }: Props) {
                     <td className={`py-1.5 text-right tabular-nums ${margin < 12 ? "text-amber-600 dark:text-amber-400" : ""}`}>
                       {margin.toFixed(0)}%
                     </td>
-                    <td className="py-1.5 text-right tabular-nums text-muted-foreground">{pos.line.baseWeekly}</td>
+                    <td className="py-1.5 text-right tabular-nums text-muted-foreground">
+                      {Math.round(pos.forecastWeekly)}
+                    </td>
                     <td className={`py-1.5 text-right tabular-nums ${pos.needsOrdering ? "text-amber-600 dark:text-amber-400" : ""}`}>
                       {coverLabel(pos.weeksOfCover)}
                     </td>
