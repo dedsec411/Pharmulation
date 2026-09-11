@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { unwrapList } from "@/lib/supabase-query";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
-import { MENTOR_IMAGE } from "@/lib/mentor";
+import { MENTOR_IMAGE, tipOfTheDay } from "@/lib/mentor";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard - Pharmulation" }] }),
@@ -73,28 +73,6 @@ const MODE_META: Record<string, { icon: any; label: string; tag: string; accent:
   },
 };
 
-const MENTOR_TIPS = [
-  "Always verify the patient's allergy status before dispensing antibiotics.",
-  "Methotrexate is weekly, never daily. Read prescriptions out loud to catch errors.",
-  "When in doubt, call the prescriber. Clarification prevents harm.",
-  "Counsel one medicine at a time. Patients remember only a few key points.",
-  "Cold chain breaks happen in seconds. Check the temperature log every time.",
-  "FEFO isn't optional. First expired, first out - every single time.",
-  "Look for drug interactions before adding a new medicine to the regimen.",
-  "Never assume a handwritten prescription. Verify unclear orders immediately.",
-  "Right patient, right drug, right dose, right route, right time - every case.",
-  "Insulin is a high-alert medication. Double-check every dose before dispensing.",
-  "A missed contraindication can be more dangerous than a missed diagnosis.",
-  "Check renal and hepatic function before recommending dose adjustments.",
-  "Store look-alike and sound-alike medicines separately to prevent mix-ups.",
-  "Patient counseling is part of the treatment - not an optional extra.",
-  "Always confirm the expiry date before dispensing or stocking medicines.",
-  "Document every intervention. Good records protect both patients and pharmacists.",
-  "Generic substitution is valuable, but only when clinically appropriate.",
-  "If a medicine requires refrigeration, never leave it at room temperature unnecessarily.",
-  "Quality begins with accurate inventory and proper storage conditions.",
-  "The safest pharmacist is the one who never stops double-checking."
-];
 const DASHBOARD_CARD_HOVER = {
   y: -6,
   scale: 1.012,
@@ -223,8 +201,8 @@ function Dashboard() {
   const userId = profile?.user_id;
   const { data: weaknessMap } = useWeaknessMap(userId);
   const { data: weekly } = useWeeklyTotals(userId);
-  const tip =
-  MENTOR_TIPS[Math.floor(Math.random() * MENTOR_TIPS.length)];
+  // Stable for the day rather than re-rolled on every render. See tipOfTheDay.
+  const tip = tipOfTheDay();
 
   const { data: scores = [], isPending: scoresPending, isError: scoresFailed,
           refetch: refetchScores } = useQuery({
