@@ -20,6 +20,7 @@ import { PageTransition } from "@/components/PageTransition";
 import {
   SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, OG_IMAGE, canonical,
 } from "@/lib/site";
+import { Analytics } from "@vercel/analytics/react";
 
 function NotFoundComponent() {
   return (
@@ -178,6 +179,12 @@ function RootComponent() {
           <Outlet />
         </PageTransition>
         <TutorialBot />
+        {/* Page views and which modes get played, so there is something better
+            than a guess about what to build next. Deliberately this one rather
+            than a tag manager: it sets no cookies and builds no profile of a
+            visitor, which is why there is no consent banner in the way of the
+            first thing anybody sees. */}
+        <Analytics />
         {/* Toasts are drawn by sonner outside our stylesheet, so the theme has
             to be handed to it explicitly or they stay dark on a light page. */}
         <Toaster position="top-right" theme={theme} richColors />

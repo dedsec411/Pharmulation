@@ -1,3 +1,4 @@
+import { canonical } from "@/lib/site";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -10,7 +11,7 @@ import { joinCodeProblem, normaliseJoinCode } from "@/lib/educator/codes";
 import { redeemJoinCode, stashJoinCode } from "@/lib/educator/join";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Sign up - Pharmulation" }] }),
+  head: () => ({ meta: [{ title: "Sign up - Pharmulation" }, { name: "description", content: "Create a free Pharmulation account and start dispensing practice prescriptions in the browser. No card, no install." }], links: [{ rel: "canonical", href: canonical("/signup") }] }),
   component: SignupPage,
 });
 

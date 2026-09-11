@@ -1,3 +1,4 @@
+import { canonical } from "@/lib/site";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Pharmulation" },
       { property: "og:description", content: "Train Like a Real Pharmacist. Anywhere. Anytime." },
     ],
+    links: [{ rel: "canonical", href: canonical("/") }]
   }),
   component: Landing,
 });

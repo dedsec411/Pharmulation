@@ -1,3 +1,4 @@
+import { canonical } from "@/lib/site";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/leaderboard")({
       { title: "Leaderboard - Pharmulation" },
       { name: "description", content: "Top pharmacists on Pharmulation." },
     ],
+    links: [{ rel: "canonical", href: canonical("/leaderboard") }]
   }),
   component: LeaderboardPage,
 });

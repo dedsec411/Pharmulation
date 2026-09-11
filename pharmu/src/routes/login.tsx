@@ -1,3 +1,4 @@
+import { canonical } from "@/lib/site";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -8,7 +9,7 @@ import { BackButton } from "@/components/BackButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in - Pharmulation" }] }),
+  head: () => ({ meta: [{ title: "Sign in - Pharmulation" }, { name: "description", content: "Sign in to Pharmulation to pick up your training where you left off - your streak, your weakness map and your class assignments." }], links: [{ rel: "canonical", href: canonical("/login") }] }),
   component: LoginPage,
 });
 
