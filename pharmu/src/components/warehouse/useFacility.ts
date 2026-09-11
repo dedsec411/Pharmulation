@@ -126,6 +126,7 @@ export function useFacility() {
         runwayWeeks: cashRunwayWeeks(cash, periods),
         month: monthToDate(periods),
         events: (state.events ?? []) as Row[],
+        inspections: (state.inspections ?? []) as Row[],
         licences: (state.licences ?? []) as Row[],
         register: (state.register ?? []) as Row[],
         paperwork: state.paperwork,

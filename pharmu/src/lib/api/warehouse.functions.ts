@@ -161,7 +161,7 @@ export const getFacilityState = createServerFn({ method: "GET" })
     if (!facility) return { ok: false as const, error: "No pharmacy open." };
     const period = Number(facility.current_period);
 
-    const [catalogue, stock, orders, periods, events, licences, register, paperwork] =
+    const [catalogue, stock, orders, periods, events, licences, register, paperwork, inspections] =
       await Promise.all([
         db.from("wh_catalogue").select("*, drugs(name, category)").eq("facility_id", facility.id),
         db.from("wh_stock").select("*").eq("facility_id", facility.id).gt("qty", 0),
@@ -173,6 +173,11 @@ export const getFacilityState = createServerFn({ method: "GET" })
         db.from("wh_licences").select("*").eq("facility_id", facility.id),
         db.from("wh_cd_register").select("*, drugs(name)").eq("facility_id", facility.id),
         db.from("wh_paperwork").select("kind").eq("facility_id", facility.id).eq("period_no", period),
+        // Inspection reports are resolved the moment they are written, so they
+        // never appear in the open list - but a learner has to be able to go
+        // back and read what the inspector actually found.
+        db.from("wh_events").select("*").eq("facility_id", facility.id).eq("kind", "inspection")
+          .order("period_no", { ascending: false }).limit(5),
       ]);
 
     const held = (licences.data ?? []).map(toLicence);
@@ -186,6 +191,7 @@ export const getFacilityState = createServerFn({ method: "GET" })
       orders: orders.data ?? [],
       periods: periods.data ?? [],
       events: events.data ?? [],
+      inspections: inspections.data ?? [],
       licences: licences.data ?? [],
       register: register.data ?? [],
       // What this week's paperwork looks like, so the interface can show what

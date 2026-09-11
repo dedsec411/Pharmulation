@@ -8,8 +8,10 @@ import { OpenPharmacy } from "@/components/warehouse/OpenPharmacy";
 import { WeekBoard } from "@/components/warehouse/WeekBoard";
 import { StockRoom } from "@/components/warehouse/StockRoom";
 import { OrderDesk } from "@/components/warehouse/OrderDesk";
+import { NoticeBoard } from "@/components/warehouse/NoticeBoard";
 import {
   useAdvanceWeek, useFacility, useOpenPharmacy, usePutAway, usePlaceOrder,
+  useResolveEvent,
 } from "@/components/warehouse/useFacility";
 import { SUPPLIER_NAME } from "@/lib/warehouse/supplier";
 import { money } from "@/lib/warehouse/view";
@@ -37,6 +39,7 @@ function Warehousing() {
   const advance = useAdvanceWeek();
   const putAway = usePutAway();
   const order = usePlaceOrder();
+  const resolve = useResolveEvent();
   const [tab, setTab] = useState("week");
 
   if (isLoading) {
@@ -112,6 +115,14 @@ function Warehousing() {
           <TabsTrigger value="week">Week</TabsTrigger>
           <TabsTrigger value="stock">Stock</TabsTrigger>
           <TabsTrigger value="ordering">Ordering</TabsTrigger>
+          <TabsTrigger value="notices" className="gap-1.5">
+            Notices
+            {facility.events.length > 0 && (
+              <span className="rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-destructive-foreground">
+                {facility.events.length}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="week">
@@ -140,6 +151,15 @@ function Warehousing() {
             facility={facility}
             placing={order.isPending}
             onOrder={(lines) => order.mutate({ supplier: SUPPLIER_NAME, lines })}
+          />
+        </TabsContent>
+
+        <TabsContent value="notices">
+          <NoticeBoard
+            facility={facility}
+            busy={resolve.isPending}
+            onGoTo={setTab}
+            onResolve={(eventId, action) => resolve.mutate({ eventId, action })}
           />
         </TabsContent>
       </Tabs>
