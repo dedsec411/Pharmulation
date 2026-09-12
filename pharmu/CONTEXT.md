@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **640 tests across 30 files, all passing**.
+current baseline is **681 tests across 34 files, all passing**.
 
 ---
 
@@ -189,6 +189,26 @@ Faculty create classes with a 6-character join code (alphabet excludes I, O, 0,
 - student: `/class` page, `src/lib/educator/join.ts` and `student-work.ts`
 - `useStudentWork` is the single source of truth for done/overdue — the
   dashboard list and the class page tiles both read it so they cannot disagree
+
+### The guide (tutorials)
+`src/components/TutorialBot.tsx` renders a permanent **Guide tab on the right
+edge** of every signed-in page. Content is in `src/lib/tutorial.ts` (tested),
+"seen" tracking in `src/lib/tutorial-seen.ts`, cross-component opening via
+`src/lib/tutorial-store.ts`.
+
+- The full tour opens by itself on a first dashboard visit; each mode's guide
+  opens the first time that mode is played, fired from `DifficultySelect`'s
+  `choose()` so it never opens behind the difficulty modal.
+- Two views: **Walk me through** (stepped, first run) and **All steps** (the
+  lot, plus an index of every other guide — the only route back to the tour).
+- **The case clock stops while the guide is open** (`shouldTick` in
+  `useTimer.ts`). Reading instructions must not cost a learner their score.
+- **The guest account remembers in sessionStorage, not localStorage**, and
+  ignores `profiles.onboarding_completed`. It is shared: at a stand it is
+  whoever picked up the laptop thirty seconds ago, so every visitor gets the
+  tour. See `shouldAutoRunTour`.
+- If you add a mode, add a guide and a `modeGuideKey` entry — a test fails
+  otherwise.
 
 ### Weakness map
 `src/lib/game/weakness.ts` — drug class × clinical skill, built from
