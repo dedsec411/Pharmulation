@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchRandomCase, type Difficulty, type Mode } from "@/lib/game/shared";
+import { difficultyPool } from "@/lib/game/case-selection";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useActiveCaseStore } from "@/lib/active-case-store";
@@ -39,12 +40,12 @@ export function useCaseLoader(mode: Mode, difficulty?: Difficulty | null) {
 
     // OTC is not loaded here: it runs its own AI consultation off the
     // authored case bank in lib/game/otc-cases.ts.
-    const c = await fetchTemplateCase(mode, difficulty, profile?.user_id, profile?.level)
-      ?? await fetchRandomCase(mode, difficulty);
+    const c = await fetchTemplateCase(mode, difficulty, profile?.user_id)
+      ?? await fetchRandomCase(mode, difficulty, profile?.user_id);
     setCaseData(c);
     setActiveCase(c);
     setLoading(false);
-  }, [mode, difficulty, profile?.user_id, profile?.level, reloadKey, setActiveCase]);
+  }, [mode, difficulty, profile?.user_id, reloadKey, setActiveCase]);
 
   useEffect(() => { load(); }, [load, reloadKey]);
   useEffect(() => () => setActiveCase(null), [setActiveCase]);
@@ -79,9 +80,11 @@ async function fetchTemplateCase(
   mode: Mode,
   selectedDifficulty: Difficulty,
   userId?: string,
-  playerLevel = 1,
 ) {
-  const difficulties = weightedDifficulties(selectedDifficulty, playerLevel);
+  // The difficulty asked for is the difficulty served. This used to widen with
+  // player level - below level four Expert also drew Trainee templates, and
+  // from level eight it drew all four, so choosing Expert changed nothing.
+  const difficulties = difficultyPool(selectedDifficulty);
   const { data: templates, error } = await supabase
     .from("case_templates")
     .select("*")
@@ -285,16 +288,6 @@ function pickDistractors(correctDrug: DrugRow, allDrugs: DrugRow[], count: numbe
     (drug.category === correctDrug.category || drug.drug_class === correctDrug.drug_class)
   );
   return shuffle(sameCategory).slice(0, count);
-}
-
-function weightedDifficulties(selected: Difficulty, level: number): Difficulty[] {
-  if (level >= 8) return uniqueDifficulties([selected, "medium", "hard", "easy"]);
-  if (level >= 4) return uniqueDifficulties([selected, "easy", "medium"]);
-  return uniqueDifficulties([selected, "easy"]);
-}
-
-function uniqueDifficulties(values: Difficulty[]) {
-  return [...new Set(values)];
 }
 
 function randomItem<T>(items: T[]): T {

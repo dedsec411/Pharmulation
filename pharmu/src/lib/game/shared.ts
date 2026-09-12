@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { pickNextCase, seenMap } from "./case-selection";
 import { applyCaseResult } from "@/lib/supabase-rpc";
 import { useAuthStore } from "@/lib/auth-store";
 import { toast } from "sonner";
@@ -224,22 +225,76 @@ export function liveScoreFromPoints(i: LiveScoreInput & { points: number }) {
   return computeScoreFromPoints({ ...i, timeTakenSec: 1, timeLimitSec: 1, timedOut: false });
 }
 
-export async function fetchRandomCase(mode: Mode, difficulty?: Difficulty | null) {
+/**
+ * A case from the fixed pool, avoiding what this player has just played.
+ *
+ * The pick used to be a uniform random draw with no memory at all. Several
+ * mode-and-difficulty buckets hold one or two cases - Expert OTC holds exactly
+ * one - so that meant the same case every time. `user_seen_cases` already had
+ * a `case_id` column for this and nothing had ever written to it.
+ *
+ * The player id is optional because the Lens and the preview paths call this
+ * without one; without it the behaviour is the old random draw, which is the
+ * right answer for somebody with no history to avoid.
+ */
+export async function fetchRandomCase(
+  mode: Mode,
+  difficulty?: Difficulty | null,
+  userId?: string | null,
+) {
   let query = supabase
     .from("cases")
     .select("*")
     .eq("mode", mode);
   if (difficulty) query = query.eq("difficulty", difficulty);
 
-  let { data, error } = await query;
-  if (error) throw error;
+  const first = await query;
+  if (first.error) throw first.error;
+  let data = first.data;
+  let substituted = false;
   if ((!data || data.length === 0) && difficulty) {
+    // Last resort. A playable case beats a dead end in front of an audience,
+    // but it is not the difficulty that was asked for, so say so loudly rather
+    // than letting a bucket quietly go missing.
+    console.warn(`[cases] no ${mode} case at ${difficulty}; serving another difficulty`);
     const fallback = await supabase.from("cases").select("*").eq("mode", mode);
     if (fallback.error) throw fallback.error;
     data = fallback.data;
+    substituted = true;
   }
   if (!data || data.length === 0) return null;
-  return data[Math.floor(Math.random() * data.length)];
+
+  const seen = userId ? await fetchSeenCaseIds(userId, mode) : new Map<string, number>();
+  const chosen = pickNextCase(data as Array<{ id: string }>, seen);
+  if (!chosen) return null;
+  if (userId && !substituted) void rememberCaseSeen(userId, mode, chosen.id);
+  return chosen as any;
+}
+
+async function fetchSeenCaseIds(userId: string, mode: Mode) {
+  const { data, error } = await supabase
+    .from("user_seen_cases")
+    .select("case_id, last_seen_at")
+    .eq("user_id", userId)
+    .eq("mode", mode)
+    .not("case_id", "is", null);
+  if (error) {
+    // Losing this history serves a repeat, which is the old behaviour and
+    // survivable. Failing to hand over a case is not.
+    console.error("[supabase] could not read case history:", error);
+    return new Map<string, number>();
+  }
+  return seenMap(data ?? []);
+}
+
+async function rememberCaseSeen(userId: string, mode: Mode, caseId: string) {
+  const { error } = await supabase
+    .from("user_seen_cases")
+    .upsert(
+      { user_id: userId, mode, case_id: caseId, last_seen_at: new Date().toISOString() },
+      { onConflict: "user_id,case_id" },
+    );
+  if (error) console.error("[supabase] could not record the case as seen:", error);
 }
 
 export async function submitScore(args: {
