@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **681 tests across 34 files, all passing**.
+current baseline is **706 tests across 34 files, all passing**.
 
 ---
 
@@ -210,6 +210,26 @@ edge** of every signed-in page. Content is in `src/lib/tutorial.ts` (tested),
 - If you add a mode, add a guide and a `modeGuideKey` entry — a test fails
   otherwise.
 
+### No free answers
+`src/lib/game/no-free-answers.ts` (tested). Two rules every mode must follow:
+
+1. **Option order is shuffled** with `shuffledBySeed(items, "<caseId>:<question>")`,
+   and answers are judged by *value*, never by index. The correct answer used
+   to be written first or second — in Industry's fourteen process questions it
+   was never third or fourth once.
+2. **No control opens on a passing value.** `wrongStart({min,max,floor,ceiling,step,seed})`
+   returns something outside the acceptable band, away from its edge. Pass the
+   *same* bounds the slider itself renders, or the opening value lands off the
+   end of its own track.
+
+Both are seeded per case so a replay shows the same screen — a disputed mark
+has to be reproducible. What was removed is the systematic bias, not the
+reproducibility.
+
+If you add a question or a dial, use these. There are tests asserting the
+answer lands in every position roughly equally, and that a "sound" carton's
+accept button is not always at the top.
+
 ### Weakness map
 `src/lib/game/weakness.ts` — drug class × clinical skill, built from
 `scores.errors_detail`. Warehousing and industry are deliberately excluded;
@@ -303,6 +323,11 @@ Now: 896 medicines, 1,286 brand names, 4 modes, 65 case files, all countable.
 Do not reintroduce unverifiable claims.
 
 **Open items:**
+- **The guest demo account has been deleted from Supabase** (auth user, its
+  `profiles` row and all its seeded scores are gone, as of 13 September 2026).
+  `GUEST_EMAIL`/`GUEST_PASSWORD` in `.env` no longer authenticate, so "Try it
+  as a guest" fails with "Could not start the demo". It needs recreating and
+  re-seeding before the showcase, or the button removing.
 - `PRESCRIPTOAI_API_KEY` must be set in the Vercel project or the scanner
   reports itself unconfigured
 - `SITE_URL` in `src/lib/site.ts` is `https://pharmulation.vercel.app`; if a
