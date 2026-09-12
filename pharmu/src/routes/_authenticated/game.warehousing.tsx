@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { GameHeader } from "@/components/game/GameHeader";
 import { FeedbackScreen } from "@/components/game/FeedbackScreen";
@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { shuffledBySeed } from "@/lib/game/no-free-answers";
+import { NO_SHIFT, buildWarehouseShift, describeShift } from "@/lib/game/warehouse-case";
 import { CartonCheck } from "@/components/game/CartonCheck";
 import {
   buildGoodsIn, conditionMatches, correctDecision, decisionFeedback, describeCondition,
@@ -184,7 +185,33 @@ function WarehouseGame() {
   // judgement calls than Trainee, rather than the same work scored harder.
   const content = difficultyContent(difficulty);
   const { caseData, loading, next } = useCaseLoader("warehousing", difficulty);
-  const s = caseData?.shipment_json;
+
+  /**
+   * A fresh shift per load, rather than the delivery stored on the case row.
+   *
+   * The eight authored deliveries are still the source of every medicine,
+   * storage requirement and zone the generator uses - it just deals them into a
+   * new combination each time.
+   *
+   * The seed is per play, not per case. Trainee warehousing has three case
+   * rows, so seeding on the case id alone handed back the same three shifts
+   * for ever once the rotation came round - and a page reload restarted any
+   * counter, which put it back to one shift per case. The generator stays
+   * deterministic given a seed; it is the seed that is fresh each time.
+   */
+  const shiftSeed = useRef("");
+  const lastCase = useRef<unknown>(null);
+  if (caseData && lastCase.current !== caseData) {
+    lastCase.current = caseData;
+    shiftSeed.current = `${caseData.id}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+  }
+  const s = useMemo(
+    () => (caseData
+      ? buildWarehouseShift(shiftSeed.current, (difficulty ?? "medium"))
+      : NO_SHIFT),
+    [caseData, difficulty],
+  );
+  const shiftLabel = useMemo(() => describeShift(s), [s]);
   const [phase, setPhase] = useState<Phase>("receiving");
 
   // goods-in
@@ -255,7 +282,7 @@ function WarehouseGame() {
     setExpiryAns({}); setAuditIdx(0); setAuditAns({}); setReconChecked({}); setResult(null);
   }, [caseData?.id]);
 
-  if (loading || !caseData || !s) {
+  if (loading || !caseData || !s.shipments.length) {
     return (
       <>
         {difficultyModal}
@@ -566,7 +593,7 @@ function WarehouseGame() {
     return (
       <FeedbackScreen
         score={result.score} xpGain={result.xpGain} timeTaken={timer.taken}
-        mentorTip={caseData.mentor_tip} explanation={caseData.explanation}
+        mentorTip={caseData.mentor_tip} explanation={shiftLabel.explanation}
         breakdown={[
           { label: "Points earned", delta: Math.max(0, points) },
           { label: "Errors", delta: -errors * 5 },
@@ -575,7 +602,7 @@ function WarehouseGame() {
         errors={errPanel.errors}
         examiner={{
           caseRef: String(caseData?.id ?? "case"),
-          caseTitle: String(caseData?.title ?? "Clinical case"),
+          caseTitle: shiftLabel.title,
           mode: String(caseData?.mode ?? "warehousing"),
         }}
         onNext={next}

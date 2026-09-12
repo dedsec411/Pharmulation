@@ -118,6 +118,17 @@ export type GeneratedShift = {
   reconciliation: Array<{ item: string; expected: number; actual: number; investigate: boolean }>;
 };
 
+/**
+ * An empty shift, for the render that happens before a case has arrived.
+ *
+ * The mode guards on `loading` before it draws anything, so this is never on
+ * screen; it exists so the shift can be a value rather than a maybe and the
+ * phase handlers do not each have to re-prove it is there.
+ */
+export const NO_SHIFT: GeneratedShift = {
+  zones: [], shipments: [], dispatch: [], expiring: [], reconciliation: [],
+};
+
 /** Initials, so a batch number looks like it belongs to its medicine. */
 function batchPrefix(drug: string): string {
   const letters = drug.replace(/[^A-Za-z ]/g, "").split(/\s+/).filter(Boolean);
