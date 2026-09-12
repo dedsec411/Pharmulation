@@ -101,8 +101,9 @@ Four, all timed cases scored the same way:
   consultation. The fullest mode; contains compounding too.
 - **Clinical** (`/game/hospital`) — build medication orders, check interactions.
 - **Industry** (`/game/industry`) — run a tablet batch from formula to release.
-- **Warehousing** (`/game/warehousing`) — six phases: goods-in, receiving,
-  dispatch, expiry, audit, reconcile. Reads `cases.shipment_json`.
+- **Warehousing** (`/game/warehousing`) — six phases: receiving, dispatch,
+  expiry, audit, reconcile, then the challan/GRN close. Reads
+  `cases.shipment_json`.
 
 Modes removed earlier and gone for good: emergency, cosmetic, oncology. The
 Postgres `case_mode` enum still lists them; that is harmless and deliberate.
@@ -154,11 +155,16 @@ Mapping lives in `src/lib/lens/from-prescriptoai.ts`.
   an invented one
 - never log the payload
 
-### Goods-in (the challan check)
-The warehousing mode opens at the receiving bay: carton condition, then the
-three-way match of purchase order against delivery challan against goods
-received note. `src/lib/game/goods-in.ts`, screen in
+### The challan close (last phase of warehousing)
+Carton condition, then the three-way match of purchase order against delivery
+challan against goods received note. `src/lib/game/goods-in.ts`, screen in
 `src/components/game/CartonCheck.tsx`.
+
+It runs **last**, after reconciliation, and is wired to what came before: each
+carton shows the zone the learner sent that stock to (or that they quarantined
+it), and flags a product the stock count disputed. Moving it there means it
+reads as the close of a shift rather than a screen of its own — don't move it
+back to the front without also removing those links.
 
 The case files say nothing about paperwork, so the documents are generated from
 the case id — deterministically, so a replay meets the same delivery. Only
