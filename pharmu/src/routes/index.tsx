@@ -11,6 +11,7 @@ import { PillBackground } from "@/components/PillBackground";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogoVideo } from "@/components/LogoVideo";
 import { useThemeStore } from "@/lib/theme-store";
+import { GuestButton } from "@/components/GuestButton";
 import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/components/ui/accordion";
@@ -172,6 +173,9 @@ export default function Landing() {
               <Link to="/login" className="w-44 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.74_0.14_180/0.6)] transition hover:scale-[1.03] active:scale-[0.98] sm:w-auto sm:px-8 sm:py-3.5 sm:text-base">
                 Start Training
               </Link>
+              {/* For somebody who has walked up to a stand and will not sign up
+                  to find out whether this is worth their time. */}
+              <GuestButton className="w-44 sm:w-auto" label="Try it as a guest" />
             </div>
           </div>
         </motion.div>

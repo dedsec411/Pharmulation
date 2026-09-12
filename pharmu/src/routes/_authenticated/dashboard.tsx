@@ -18,6 +18,7 @@ import { publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { unwrapList } from "@/lib/supabase-query";
 import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 import { MENTOR_IMAGE, tipOfTheDay, nextTip } from "@/lib/mentor";
+import { GUEST_USER_ID } from "@/lib/api/guest.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard - Pharmulation" }] }),
@@ -246,10 +247,12 @@ function Dashboard() {
 
   const { data: topPlayers = [], isPending: boardPending } = useQuery({
     queryKey: ["mini-lb"],
-    queryFn: async () => unwrapList(
-      await supabase.rpc("get_public_profiles", { limit_count: 5 }),
+    queryFn: async () => (unwrapList(
+      // Six asked for, five shown: the demo account is dropped if it is in
+      // there, so the panel is not one short whenever a visitor has played.
+      await supabase.rpc("get_public_profiles", { limit_count: 6 }),
       "the leaderboard",
-    ) as any[],
+    ) as any[]).filter((p) => p.user_id !== GUEST_USER_ID).slice(0, 5),
   });
 
   const xpToNext = (profile?.level ?? 1) * 500;

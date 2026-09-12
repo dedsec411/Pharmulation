@@ -1,4 +1,5 @@
 import { canonical } from "@/lib/site";
+import { GUEST_USER_ID } from "@/lib/api/guest.functions";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -57,10 +58,12 @@ function LeaderboardPage() {
     queryKey: ["leaderboard", scope, filter],
     queryFn: async () => {
       if (filter === "all") {
-        return unwrapList(
+        // The shared demo account is kept off the board. Visitors playing it
+        // at a stand would otherwise climb past people who earned their place.
+        return (unwrapList(
           await supabase.rpc("get_public_profiles", { limit_count: 50 }),
           "the leaderboard",
-        ) as any[];
+        ) as any[]).filter((p) => p.user_id !== GUEST_USER_ID);
       }
       const sinceIso =
         scope === "weekly"

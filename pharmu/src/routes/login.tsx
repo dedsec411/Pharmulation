@@ -1,4 +1,5 @@
 import { canonical } from "@/lib/site";
+import { GuestButton } from "@/components/GuestButton";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -92,6 +93,15 @@ function LoginPage() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+
+        {/* Somebody who only wants to look around should not have to make an
+            account to do it. */}
+        <div className="mt-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">or</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+        <GuestButton className="mt-4 w-full" label="Look around as a guest" />
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           New here? <Link to="/signup" className="text-primary font-medium">Create an account</Link>
