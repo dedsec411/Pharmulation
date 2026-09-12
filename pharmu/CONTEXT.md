@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **706 tests across 34 files, all passing**.
+current baseline is **745 tests across 37 files, all passing**.
 
 ---
 
@@ -209,6 +209,27 @@ edge** of every signed-in page. Content is in `src/lib/tutorial.ts` (tested),
   tour. See `shouldAutoRunTour`.
 - If you add a mode, add a guide and a `modeGuideKey` entry — a test fails
   otherwise.
+
+### Case variety and difficulty
+- **Difficulty is served as asked.** `difficultyPool` in `case-selection.ts`.
+  It used to widen with player level — from level 8 Expert and Trainee drew the
+  same pool. Don't reintroduce that.
+- **No repeats until a bucket is exhausted.** `pickNextCase` prefers unseen,
+  then least-recently-seen, recorded in `user_seen_cases.case_id`.
+  **That table's unique index on (user_id, case_id) is partial, so an upsert
+  with `onConflict` silently fails** — insert or update explicitly.
+- **Difficulty changes the content**, via `DIFFICULTY_CONTENT` in `shared.ts`:
+  consignments, audit calls, decoy ingredients, and whether tolerances are
+  printed on the bench. Tests assert nothing gets easier as you climb.
+- **Warehousing shifts are generated** (`warehouse-case.ts`), seeded per play.
+  Every medicine/requirement/zone triple is lifted verbatim from the authored
+  cases and the generator may emit no other combination — `drugs` has no
+  storage column, so deriving one would be inventing a storage condition for a
+  real product. **Adding to `VERIFIED_SHIPMENTS` needs a pharmacist.**
+
+Still on fixed pools with no generator: Rx (7 templates, none `hard`), OTC,
+Clinical, Industry. Industry varies through its form/product picker rather than
+its case rows, so it is less exposed.
 
 ### No free answers
 `src/lib/game/no-free-answers.ts` (tested). Two rules every mode must follow:
