@@ -1,11 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { CalendarClock, Check, GraduationCap, Lock, Timer } from "lucide-react";
-import { useMyAssignments, useMyEnrollments, useRedeemPendingJoinCode } from "@/lib/educator/join";
+import { useRedeemPendingJoinCode } from "@/lib/educator/join";
+import { useStudentWork } from "@/lib/educator/student-work";
 import { MODE_LABEL, PUBLIC_MODE_GROUPS, type Mode } from "@/lib/game/shared";
-import { supabase } from "@/integrations/supabase/client";
-import { useMyAssessments, windowState } from "@/lib/educator/assessment";
+import { windowState } from "@/lib/educator/assessment";
 
 /**
  * Work a lecturer has set, on the student's own dashboard.
@@ -25,59 +24,18 @@ function routeForMode(mode: string | null): string | null {
   return group ? `/game/${group.key}` : null;
 }
 
-type CompletedScore = { mode: string; completed_at: string };
-
-/**
- * Cases finished since the oldest outstanding assignment was posted.
- *
- * Scoped to that date rather than a fixed number of recent rows: five would
- * miss work done a fortnight ago, and the whole history is more than the
- * question needs. Enabled only once there is an assignment to answer, so a
- * student in no class makes no extra request.
- */
-function useScoresSince(userId: string | undefined, since: string | null) {
-  return useQuery<CompletedScore[]>({
-    queryKey: ["assignment-progress", userId, since],
-    enabled: !!userId && !!since,
-    queryFn: async (): Promise<CompletedScore[]> => {
-      const { data, error } = await supabase.from("scores")
-        .select("mode, completed_at")
-        .eq("user_id", userId!)
-        .gte("completed_at", since!)
-        .limit(500);
-      if (error) throw error;
-      return (data ?? []) as CompletedScore[];
-    },
-  });
-}
-
 export function AssignedWork({ userId }: { userId?: string }) {
   useRedeemPendingJoinCode(userId);
 
-  const { data: classes = [] } = useMyEnrollments(userId);
-  const { data: assignments = [] } = useMyAssignments(classes.map((c) => c.id));
+  // Shared with the class page's summary tiles. A tile reading "2 still to do"
+  // above a list showing three would be worse than showing neither, so the
+  // done and overdue rules live in one place and both read the same answer.
+  const { classes, assignments, assessments, ordered, outstanding, hasAnything } =
+    useStudentWork(userId);
 
-  const oldest = assignments.length
-    ? assignments.reduce((min, a) => (a.created_at < min ? a.created_at : min), assignments[0].created_at)
-    : null;
-  const { data: recentScores = [] } = useScoresSince(userId, oldest);
-  const { data: assessments = [] } = useMyAssessments(classes.map((c) => c.id), userId);
-
-  if (!assignments.length && !assessments.length) return null;
+  if (!hasAnything) return null;
 
   const nameFor = (id: string) => classes.find((c) => c.id === id)?.name ?? "Your class";
-
-  const rows = assignments.map((a) => {
-    const posted = new Date(a.created_at).getTime();
-    const done = recentScores.some((s) =>
-      (!a.mode || s.mode === a.mode) && new Date(s.completed_at).getTime() >= posted);
-    const overdue = !done && !!a.due_at && new Date(a.due_at).getTime() < Date.now();
-    return { ...a, done, overdue };
-  });
-
-  // Finished work stays visible but sinks, so the list opens on what is left.
-  const ordered = [...rows].sort((a, b) => Number(a.done) - Number(b.done));
-  const outstanding = rows.filter((r) => !r.done).length;
 
   return (
     <section className="mt-6">
@@ -153,9 +111,15 @@ export function AssignedWork({ userId }: { userId?: string }) {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className={`glass-card flex flex-wrap items-center gap-4 p-4 ${a.done ? "opacity-60" : ""}`}
+              /* Stacked on a phone. In one row, the title was competing with a
+                 full date and a button across 390px and lost: "Two clinical
+                 reviews" became "Two ...", and the class name wrapped to five
+                 lines. The date and the action sit together underneath instead,
+                 and sm:contents dissolves that wrapper on a wider screen so the
+                 original single row is unchanged. */
+              className={`glass-card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 ${a.done ? "opacity-60" : ""}`}
             >
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 sm:flex-1">
                 <p className="truncate font-semibold">
                   {a.title || (a.mode ? MODE_LABEL[a.mode as Mode] : "Assigned case")}
                 </p>
@@ -165,6 +129,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
                 </p>
               </div>
 
+              <div className="flex flex-wrap items-center justify-between gap-3 sm:contents">
               {a.due_at && (
                 <p className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
                   a.overdue ? "text-rose-400" : "text-muted-foreground"
@@ -189,6 +154,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
                   Start
                 </Link>
               ) : null}
+              </div>
             </motion.div>
           );
         })}
