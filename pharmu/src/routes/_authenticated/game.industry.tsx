@@ -16,6 +16,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { Check, X as XIcon, Thermometer, Droplets, FlaskConical, Pill, CupSoda, PackageCheck, Sparkles, Cog, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
+import { shuffledBySeed, wrongStart } from "@/lib/game/no-free-answers";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
@@ -110,6 +111,24 @@ function stableShuffle<T>(items: T[], seed: string) {
     .map((item, index) => ({ item, key: seededHash(`${seed}:${index}:${JSON.stringify(item)}`) }))
     .sort((a, b) => a.key - b.key)
     .map(({ item }) => item);
+}
+
+/**
+ * The bounds of the weighing control.
+ *
+ * Pulled out because the starting value has to be computed before `active`
+ * state has landed, and a second copy of these formulas would eventually
+ * disagree with the slider the player actually sees - putting the opening
+ * value off the end of its own track.
+ */
+type Weighable = { max?: number; target?: number; unit?: string };
+
+function weighingCeiling(ing: Weighable): number {
+  return Math.max(Number(ing?.max ?? 0) * 1.6, Number(ing?.target ?? 0) * 2, 10);
+}
+
+function weighingStepFor(ing: Weighable): number {
+  return String(ing?.unit ?? "").toLowerCase().includes("kg") ? 0.01 : 0.5;
 }
 
 function displayWeight(value: number, unit = "g") {
@@ -634,17 +653,31 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
     setResult(null); setReleaseFlash(null);
     setBatchCount(parseBatchCount(f?.batchSize));
     if (f?.env) {
-      // randomize: 60% chance OK, 40% chance out of range
-      const okRun = Math.random() < 0.6;
-      if (okRun) {
-        setTemp(Math.round((f.env.tempRange[0] + f.env.tempRange[1]) / 2));
-        setHumidity(Math.round((f.env.humidityRange[0] + f.env.humidityRange[1]) / 2));
-      } else {
-        setTemp(f.env.tempRange[1] + 4);
-        setHumidity(f.env.humidityRange[1] + 15);
-      }
+      // The room always needs conditioning now. It used to open dead centre of
+      // specification six runs in ten, which made confirming it a free twenty
+      // points and left the "proceed at the current readings" trap - the one
+      // thing this step exists to teach - unreachable most of the time.
+      const [tLow, tHigh] = f.env.tempRange;
+      const [hLow, hHigh] = f.env.humidityRange;
+      const seed = `${caseData?.id ?? "industry"}:env`;
+      // Bounds match the sliders exactly, or the opening value would sit off
+      // the end of the track the player has to move.
+      setTemp(wrongStart({
+        min: tLow, max: tHigh, floor: tLow - 8, ceiling: tHigh + 8, step: 1, seed: `${seed}:temp`,
+      }));
+      setHumidity(wrongStart({
+        min: hLow, max: hHigh, floor: Math.max(0, hLow - 20), ceiling: hHigh + 25, step: 1, seed: `${seed}:rh`,
+      }));
     }
-    setDryTemp(f?.process?.drying?.min ?? 50);
+    const drying = f?.process?.drying;
+    setDryTemp(drying
+      // Opened on the bottom of its own acceptable band, so "Run drying"
+      // passed without the slider ever being touched.
+      ? wrongStart({
+          min: Number(drying.min), max: Number(drying.max),
+          floor: 20, ceiling: 120, step: 1, seed: `${caseData?.id ?? "industry"}:drying`,
+        })
+      : 50);
   }, [caseData?.id, f]);
 
   const rawIngredients = f?.ingredients ?? [];
@@ -670,10 +703,8 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
     return stableShuffle(items, `${caseData?.id ?? "industry"}:${productChoice.form}:${productChoice.type}`);
   }, [caseData?.id, productChoice.form, productChoice.type, rawIngredients, distractors]);
   const activeIngredient = active ? ingredients.find((i: any) => i.name === active) : null;
-  const weighingMax = activeIngredient
-    ? Math.max(Number(activeIngredient.max) * 1.6, Number(activeIngredient.target) * 2, 10)
-    : 500;
-  const weighingStep = activeIngredient?.unit?.toLowerCase?.().includes("kg") ? 0.01 : 0.5;
+  const weighingMax = activeIngredient ? weighingCeiling(activeIngredient) : 500;
+  const weighingStep = activeIngredient ? weighingStepFor(activeIngredient) : 0.5;
   const activeWeightOk = activeIngredient ? slider >= activeIngredient.min && slider <= activeIngredient.max : false;
 
   if (loading || !caseData || !f) {
@@ -702,10 +733,22 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
     setSlider(0);
   }
 
+  /**
+   * Put the scale somewhere that has to be corrected.
+   *
+   * It used to open on the ingredient's exact target, so "Weigh" was a free
+   * pass on every ingredient in the batch and the tolerances printed in the
+   * master formula never had to be read.
+   */
   function startWeigh(name: string) {
     setActive(name);
     const ing = ingredients.find((i: any) => i.name === name);
-    setSlider(ing ? ing.target : 100);
+    if (!ing) { setSlider(100); return; }
+    setSlider(wrongStart({
+      min: Number(ing.min), max: Number(ing.max),
+      floor: 0, ceiling: weighingCeiling(ing), step: weighingStepFor(ing),
+      seed: `${caseData?.id ?? "industry"}:weigh:${name}`,
+    }));
   }
 
   function confirmWeigh() {
@@ -1262,6 +1305,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                 stage={STAGES[stageIdx]}
                 label={f.stageLabels?.[STAGES[stageIdx]] ?? STAGES[stageIdx]}
                 spec={f.process[STAGES[stageIdx]]}
+                seed={`${caseData?.id ?? "industry"}:${STAGES[stageIdx]}`}
                 dryTemp={dryTemp} setDryTemp={setDryTemp}
                 onAnswer={(ok: boolean) => chooseStage(STAGES[stageIdx], ok)}
               />
@@ -1484,8 +1528,18 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
   );
 }
 
-function StagePicker({ stage, label, spec, dryTemp, setDryTemp, onAnswer }: any) {
+function StagePicker({ stage, label, spec, seed, dryTemp, setDryTemp, onAnswer }: any) {
   const stageLabel = label ?? stage;
+  // Judged on which answer was picked, not on where it sat. The right one was
+  // written first or second in every one of these questions, so a player who
+  // never looked past the second option was never wrong.
+  const choices = useMemo(
+    () => shuffledBySeed<{ label: string; correct: boolean }>(
+      (spec?.options ?? []).map((label: string, i: number) => ({ label, correct: i === spec.correct })),
+      `${seed}:${stage}`,
+    ),
+    [spec, seed, stage],
+  );
   if (stage === "drying") {
     const ok = dryTemp >= spec.min && dryTemp <= spec.max;
     return (
@@ -1506,10 +1560,10 @@ function StagePicker({ stage, label, spec, dryTemp, setDryTemp, onAnswer }: any)
       <p className="text-xs uppercase tracking-wider text-muted-foreground capitalize">Step - {stageLabel}</p>
       <h4 className="mt-1 text-lg font-bold">{spec.prompt}</h4>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {spec.options.map((o: string, i: number) => (
-          <button key={i} onClick={() => onAnswer(i === spec.correct)}
-            className="rounded-xl border border-border/40 p-3 text-left text-sm hover:border-primary/40">
-            {o}
+        {choices.map((o) => (
+          <button key={o.label} onClick={() => onAnswer(o.correct)}
+            className="rounded-xl border border-border/40 p-3 text-left text-sm transition hover:border-primary/40 active:scale-[0.99]">
+            {o.label}
           </button>
         ))}
       </div>
