@@ -227,13 +227,30 @@ export type ShipmentLike = {
  * make roughly half the delivery worth stopping. Doing it in that order is what
  * keeps a carton marked "in order" from quietly failing the shelf-life rule.
  */
+/**
+ * The term this order was placed on, read off what the line actually supplies.
+ *
+ * The longest rung that still leaves most of the consignment acceptable. A
+ * buyer who writes eighteen months onto a line the market ships at seven is
+ * refusing nearly every delivery, and no buyer does that for long - the term
+ * settles at what can be met.
+ *
+ * Taking the longest rung that left merely *one* carton acceptable was tried
+ * and made the phase monotonous: two thirds of every delivery failed on dates,
+ * which crowded out every other kind of check and meant a damaged carton never
+ * appeared at all.
+ */
 function shelfLifeTerm(monthsLeft: Array<number | null>): number {
   const dated = monthsLeft.filter((m): m is number => m !== null);
   const shortest = SHELF_LIFE_LADDER[SHELF_LIFE_LADDER.length - 1];
   if (!dated.length) return shortest;
-  // Nothing reaching even the shortest rung is a consignment that should be
-  // turned away whole, and the phase says so rather than pretending otherwise.
-  return SHELF_LIFE_LADDER.find((term) => dated.some((m) => m >= term)) ?? shortest;
+  const passes = (term: number) => dated.filter((m) => m >= term).length;
+  const half = Math.ceil(dated.length / 2);
+  return SHELF_LIFE_LADDER.find((term) => passes(term) >= half)
+    // Nothing reaching even the shortest rung is a consignment to turn away
+    // whole, and the phase says so rather than softening the term to hide it.
+    ?? SHELF_LIFE_LADDER.find((term) => passes(term) >= 1)
+    ?? shortest;
 }
 
 export function buildGoodsIn(
@@ -297,13 +314,25 @@ export function buildGoodsIn(
   const clean = cartons.filter((c) => !c.findings.length);
   let toPlace = target - (cartons.length - clean.length);
 
+  // Drawn without replacement: two cartons in one delivery failing the same
+  // way teaches half as much as two failing differently.
+  const pool = shuffle(AUTHORED, rng);
   for (const carton of clean) {
     if (toPlace <= 0) break;
-    applyFault(carton, pick(rng, AUTHORED), rng);
+    applyFault(carton, pool[toPlace - 1] ?? pick(rng, AUTHORED), rng);
     toPlace -= 1;
   }
 
   return cartons;
+}
+
+function shuffle<T>(items: readonly T[], rng: Rng): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 function applyFault(carton: Carton, fault: FindingCode, rng: Rng) {

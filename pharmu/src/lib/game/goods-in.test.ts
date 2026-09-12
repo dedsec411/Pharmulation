@@ -313,3 +313,43 @@ describe("against the deliveries the real cases carry", () => {
     expect(cartons.every((c) => c.findings.includes("short-shelf-life"))).toBe(true);
   });
 });
+
+describe("the mix of checks a learner meets", () => {
+  it("never fails two cartons of one delivery the same authored way", () => {
+    for (const spread of Object.values(REAL_SPREADS)) {
+      for (const seed of ["a", "b", "c", "d", "e", "f"]) {
+        const authored = buildGoodsIn(seed, atMonths(spread), NOW)
+          .flatMap((c) => c.findings)
+          .filter((f) => f !== "short-shelf-life");
+        expect(new Set(authored).size).toBe(authored.length);
+      }
+    }
+  });
+
+  // Dates crowding out everything else is what the shelf-life term was
+  // rebalanced to stop: a damaged carton never appeared at all, so the
+  // condition check had nothing to catch in any of the eight cases.
+  it("puts every kind of check in front of somebody working through the cases", () => {
+    const seen = new Set<string>();
+    for (const spread of Object.values(REAL_SPREADS)) {
+      for (const seed of ["a", "b", "c"]) {
+        for (const carton of buildGoodsIn(seed, atMonths(spread), NOW)) {
+          carton.findings.forEach((f) => seen.add(f));
+        }
+      }
+    }
+    expect([...seen].sort()).toEqual(["batch-mismatch", "damaged", "qty-mismatch", "short-shelf-life"]);
+  });
+
+  it("leaves dates deciding some cartons but never most of them", () => {
+    let dated = 0, total = 0;
+    for (const spread of Object.values(REAL_SPREADS)) {
+      for (const carton of buildGoodsIn("case-a", atMonths(spread), NOW)) {
+        total += 1;
+        if (carton.findings.includes("short-shelf-life")) dated += 1;
+      }
+    }
+    expect(dated).toBeGreaterThan(0);
+    expect(dated).toBeLessThan(total / 2);
+  });
+});
