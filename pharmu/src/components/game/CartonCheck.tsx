@@ -127,7 +127,7 @@ function CartonGraphic({
   }, [carton.serial, carton.gtin]);
 
   return (
-    <div className="mt-3 overflow-hidden rounded-xl border border-black/20 p-3 shadow-[0_24px_60px_-34px_rgba(0,0,0,0.75)]" style={{ background: KRAFT }}>
+    <div className="mt-3 overflow-hidden rounded-xl border border-black/20 px-5 py-4 shadow-[0_24px_60px_-34px_rgba(0,0,0,0.75)]" style={{ background: KRAFT }}>
       <div className="relative">
         {/* Flap seam and the manufacturer's seal across it. */}
         <div className="relative mb-3 h-5">
@@ -200,19 +200,28 @@ function CartonGraphic({
           </div>
         </div>
 
-        {/* Damage, drawn. The prose underneath carries the same information. */}
+        {/* Damage, drawn. The prose underneath carries the same information,
+            and both are placed clear of the barcode and the serial: a stain
+            sitting over the two fields the learner is being asked to read is
+            an obstacle, not a defect. */}
         {!condition.outer && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -right-3 -top-3 size-16 bg-[#8a6034]"
-            style={{ clipPath: "polygon(100% 0,100% 100%,72% 64%,86% 40%,54% 46%,30% 8%,66% 18%)" }}
+            className="pointer-events-none absolute -right-4 -top-4 size-20"
+            style={{
+              background: "linear-gradient(135deg,#9a6f42 0%,#7d5730 60%,#5f3f20 100%)",
+              clipPath: "polygon(100% 0,100% 78%,84% 58%,92% 40%,62% 44%,46% 12%,70% 14%,52% 0)",
+            }}
           />
         )}
         {!condition.moisture && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-2 left-2 h-20 w-28 rounded-full opacity-70 mix-blend-multiply"
-            style={{ background: "radial-gradient(ellipse at 40% 60%, #7a5330 0%, rgba(122,83,48,0.45) 55%, transparent 72%)" }}
+            className="pointer-events-none absolute inset-y-0 -left-4 w-16 opacity-80 mix-blend-multiply"
+            style={{
+              background:
+                "linear-gradient(90deg,#6f4a28 0%,rgba(122,83,48,0.65) 45%,rgba(150,110,70,0.28) 78%,transparent 100%)",
+            }}
           />
         )}
       </div>
