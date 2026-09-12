@@ -5,7 +5,7 @@ for someone who has never seen the codebase, and it is deliberately specific
 about the things that have already gone wrong, because those are the ones that
 will go wrong again.
 
-Last updated: 12 September 2026.
+Last updated: 13 September 2026.
 
 ---
 
@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **597 tests across 29 files, all passing**.
+current baseline is **640 tests across 30 files, all passing**.
 
 ---
 
@@ -101,8 +101,8 @@ Four, all timed cases scored the same way:
   consultation. The fullest mode; contains compounding too.
 - **Clinical** (`/game/hospital`) — build medication orders, check interactions.
 - **Industry** (`/game/industry`) — run a tablet batch from formula to release.
-- **Warehousing** (`/game/warehousing`) — five phases: receiving, dispatch,
-  expiry, audit, reconcile. Reads `cases.shipment_json`.
+- **Warehousing** (`/game/warehousing`) — six phases: goods-in, receiving,
+  dispatch, expiry, audit, reconcile. Reads `cases.shipment_json`.
 
 Modes removed earlier and gone for good: emergency, cosmetic, oncology. The
 Postgres `case_mode` enum still lists them; that is harmless and deliberate.
@@ -119,7 +119,7 @@ not routed. It still lives at:
 - `src/lib/api/warehouse.functions.ts` + `src/lib/warehouse/run.ts`
 - `wh_*` tables in the database, migrations already applied
 
-**257 of the 597 tests belong to it and still pass.** Do not delete it and do
+**257 of those tests belong to it and still pass.** Do not delete it and do
 not "clean up" the dead code. To bring it back:
 
 ```bash
@@ -153,6 +153,27 @@ Mapping lives in `src/lib/lens/from-prescriptoai.ts`.
 - the patient's real name is dropped at the mapping boundary; the case carries
   an invented one
 - never log the payload
+
+### Goods-in (the challan check)
+The warehousing mode opens at the receiving bay: carton condition, then the
+three-way match of purchase order against delivery challan against goods
+received note. `src/lib/game/goods-in.ts`, screen in
+`src/components/game/CartonCheck.tsx`.
+
+The case files say nothing about paperwork, so the documents are generated from
+the case id — deterministically, so a replay meets the same delivery. Only
+logistics metadata is invented: quantities in packs, an invented supplier,
+document numbers, a GTIN with a real check digit. The medicine, batch, expiry
+and storage condition all come from the case, and no price appears anywhere.
+
+**The minimum shelf life is read off the purchase order, not hardcoded.** A
+fixed threshold was tried twice and rotted both times: expiry dates in the case
+files are absolute and the calendar keeps moving, so by September 2026 a flat
+twelve-month rule failed seventeen of twenty-three batches. The term is now
+chosen per delivery as the longest of 18/12/9/6 months that still leaves most
+of the consignment acceptable. If those case expiries are ever refreshed, the
+tests in `goods-in.test.ts` carry the eight real spreads and should be updated
+with them.
 
 ### Educator / class platform
 Faculty create classes with a 6-character join code (alphabet excludes I, O, 0,
