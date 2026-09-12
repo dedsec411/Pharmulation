@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { shuffledBySeed, wrongStart } from "@/lib/game/no-free-answers";
 import { difficultyContent } from "@/lib/game/shared";
+import { groupByRole, roleFor } from "@/lib/game/excipients";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
@@ -649,7 +650,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
 
   useEffect(() => {
     setPhase("formula"); setPoints(0); setErrors(0); setQcErrors(0); setContaminated(false); setAdjusting(false);
-    setHints(0); setWeighed({}); setActive(null); setSlider(0);
+    setHints(0); setWeighed({}); setActive(null); setSlider(0); setBenchTab("All");
     setEnvFixed(false); setStageIdx(0); setStageResults({} as any); setQcAnswers({});
     setResult(null); setReleaseFlash(null);
     setBatchCount(parseBatchCount(f?.batchSize));
@@ -704,10 +705,17 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   const allWeighingItems = useMemo(() => {
     const items = [
       ...rawIngredients.map((i: any) => ({ name: i.name, role: i.role, isReal: true })),
-      ...distractors.slice(0, content.distractors).map((n: string) => ({ name: n, role: "Distractor", isReal: false })),
+      // The role this material genuinely has, not "Distractor" - printing that
+      // under every decoy answered the step before it was asked.
+      ...distractors.slice(0, content.distractors).map((n: string) => ({ name: n, role: roleFor(n), isReal: false })),
     ];
     return stableShuffle(items, `${caseData?.id ?? "industry"}:${productChoice.form}:${productChoice.type}`);
   }, [caseData?.id, productChoice.form, productChoice.type, rawIngredients, distractors, content.distractors]);
+  const benchGroups = useMemo(() => groupByRole(allWeighingItems), [allWeighingItems]);
+  const [benchTab, setBenchTab] = useState<string>("All");
+  const benchItems = benchTab === "All"
+    ? allWeighingItems
+    : (benchGroups.find((g) => g.role === benchTab)?.items ?? allWeighingItems);
   const activeIngredient = active ? ingredients.find((i: any) => i.name === active) : null;
   const weighingMax = activeIngredient ? weighingCeiling(activeIngredient) : 500;
   const weighingStep = activeIngredient ? weighingStepFor(activeIngredient) : 0.5;
@@ -1131,8 +1139,37 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
             <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Step 2 - Weighing</p>
               <h3 className="mt-1 text-lg font-bold">Ingredient inventory</h3>
+
+              {/* Grouped by what each material is for. The tabs are an index,
+                  not a hint: every group mixes what belongs in this batch with
+                  what does not, because the roles are real. */}
+              <div className="mt-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Filter the inventory by what each material is for">
+                {["All", ...benchGroups.map((g) => g.role)].map((role) => {
+                  const count = role === "All" ? allWeighingItems.length
+                    : (benchGroups.find((g) => g.role === role)?.items.length ?? 0);
+                  const on = benchTab === role;
+                  return (
+                    <button
+                      key={role}
+                      type="button"
+                      role="tab"
+                      aria-selected={on}
+                      onClick={() => setBenchTab(role)}
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-[0.97] ${
+                        on
+                          ? "border-primary/60 bg-primary/15 text-primary"
+                          : "border-border/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      }`}
+                    >
+                      {role}
+                      <span className="ml-1.5 tabular-nums opacity-70">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {allWeighingItems.map((it: any) => {
+                {benchItems.map((it: any) => {
                   const done = weighed[it.name]?.ok;
                   return (
                     <button key={it.name} disabled={done} onClick={() => startWeigh(it.name)}
@@ -1145,6 +1182,9 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                   );
                 })}
               </div>
+              {!benchItems.length && (
+                <p className="mt-3 text-sm text-muted-foreground">Nothing on the bench under that heading.</p>
+              )}
             </div>
 
             <div className="rounded-2xl border border-amber-300/25 bg-card/60 p-5 shadow-[0_18px_55px_-38px_rgba(245,158,11,0.8)] backdrop-blur">
