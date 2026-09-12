@@ -27,7 +27,7 @@ import {
 // had drifted to a shorter list, so the same step offered different answers
 // depending on which mode you reached it from.
 import { DurationSlider, InstructionPicker } from "@/components/game/dispensing";
-import { formatDuration, normalizeDuration } from "@/lib/game/dosing";
+import { LABEL_TIMINGS, formatDuration, normalizeDuration, normalizeTiming } from "@/lib/game/dosing";
 
 // ─── Route ───────────────────────────────────────────────────────────────────
 export const Route = createFileRoute("/_authenticated/game/community")({
@@ -43,7 +43,8 @@ export const Route = createFileRoute("/_authenticated/game/community")({
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FREQS     = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"];
-const TIMINGS   = ["morning", "with food", "before sleep", "as needed"];
+// From the shared list, so the picker can always produce what a case asks for.
+const TIMINGS: string[] = [...LABEL_TIMINGS];
 
 function CommunityFloatingPills({ className = "" }: { className?: string }) {
   return (
@@ -558,7 +559,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     const correctAns = caseData?.correct_answer_json?.labels?.[drug];
     const ok = correctAns &&
       ans.frequency === correctAns.frequency &&
-      ans.timing === correctAns.timing &&
+      normalizeTiming(ans.timing) === normalizeTiming(correctAns.timing) &&
       normalizeDuration(ans.duration) === normalizeDuration(correctAns.duration);
     if (ok) {
       // Worth less for each attempt it took to get the label right.

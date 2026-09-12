@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   LABEL_FREQUENCIES, LABEL_TIMINGS, MAX_COURSE_DAYS, ONGOING,
-  durationDays, formatDuration, normalizeDuration, regimenForDrug, regimenSig,
-  frequencyFromText, timingFromText,
+  durationDays, formatDuration, normalizeDuration, normalizeTiming,
+  regimenForDrug, regimenSig, frequencyFromText, timingFromText,
 } from "./dosing";
 
 // The dosage strings exactly as they are stored in the drugs table.
@@ -162,5 +162,42 @@ describe("dose-array notation", () => {
 
   it("still reads p.c. as with food", () => {
     expect(timingFromText("OD p.c.", "once daily")).toBe("with food");
+  });
+});
+
+describe("normalizeTiming", () => {
+  it("compares by the instruction, not the wording", () => {
+    expect(normalizeTiming("at bedtime")).toBe(normalizeTiming("before sleep"));
+    expect(normalizeTiming("At Bedtime ")).toBe("before sleep");
+  });
+
+  it("keeps instructions that are genuinely different apart", () => {
+    expect(normalizeTiming("before breakfast")).not.toBe(normalizeTiming("morning"));
+    expect(normalizeTiming("with food")).not.toBe(normalizeTiming("with or without food"));
+  });
+
+  it("leaves anything it does not know alone", () => {
+    expect(normalizeTiming("with a full glass of water")).toBe("with a full glass of water");
+  });
+
+  /**
+   * The bug this exists for: seven authored answers used wordings the picker
+   * could not produce, so those labels could not be marked correct however
+   * carefully the prescription was read.
+   */
+  it("can produce every timing the case files actually use", () => {
+    const authored = [
+      "morning", "with food", "before sleep", "as needed",
+      "with or without food", "at bedtime", "before breakfast", "any time",
+    ];
+    for (const timing of authored) {
+      const target = normalizeTiming(timing);
+      expect(LABEL_TIMINGS.some((option) => normalizeTiming(option) === target)).toBe(true);
+    }
+  });
+
+  it("offers no two options that mean the same thing", () => {
+    const normalised = LABEL_TIMINGS.map(normalizeTiming);
+    expect(new Set(normalised).size).toBe(normalised.length);
   });
 });

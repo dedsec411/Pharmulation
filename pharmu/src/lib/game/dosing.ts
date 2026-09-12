@@ -16,7 +16,40 @@
  */
 
 export const LABEL_FREQUENCIES = ["once daily", "twice daily", "three times daily", "four times daily", "as needed"] as const;
-export const LABEL_TIMINGS = ["morning", "with food", "before sleep", "as needed"] as const;
+/**
+ * The timings a label can carry.
+ *
+ * Four of these were added after checking what the case files actually
+ * contain: seven authored answers used wordings the picker could not produce
+ * ("before breakfast", "with or without food", "any time", "at bedtime"), so
+ * those labels could not be marked correct however carefully they were read.
+ *
+ * "before breakfast" is kept separate from "morning" deliberately - it means
+ * on an empty stomach, which is a different instruction to a patient.
+ */
+export const LABEL_TIMINGS = [
+  "morning", "before breakfast", "with food", "with or without food",
+  "before sleep", "any time", "as needed",
+] as const;
+
+/**
+ * Wording that means the same instruction.
+ *
+ * Only exact synonyms belong here. "at bedtime" and "before sleep" are the
+ * same words; anything needing a pharmacist to rule on equivalence is left to
+ * be answered as written, and the case data corrected instead.
+ */
+const TIMING_SYNONYMS: Record<string, string> = {
+  "at bedtime": "before sleep",
+  "at night": "before sleep",
+  "on an empty stomach": "before breakfast",
+};
+
+/** Compares a timing by what it instructs, the way durations already compare by value. */
+export function normalizeTiming(value: string): string {
+  const clean = String(value ?? "").trim().toLowerCase();
+  return TIMING_SYNONYMS[clean] ?? clean;
+}
 
 /**
  * Auxiliary label instructions - the cautionary line under the directions.
