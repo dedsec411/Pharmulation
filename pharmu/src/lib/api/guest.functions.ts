@@ -18,7 +18,16 @@ import { createClient } from "@supabase/supabase-js";
  * meant to be reset anyway.
  */
 
-export const GUEST_USER_ID = "88e9ca8d-d8ea-416c-baa1-6a94ca0410ac";
+/**
+ * The demo account, for the client-side checks that need to recognise it -
+ * keeping it off the leaderboard, and letting the tour run for every visitor
+ * rather than once per browser.
+ *
+ * It changes if the account is ever recreated, because Supabase assigns the id
+ * and the admin API will not take one. Server-side checks key on GUEST_EMAIL
+ * instead, which survives that.
+ */
+export const GUEST_USER_ID = "0365782b-d8d1-476f-b36a-5508dface7cf";
 
 export type GuestSession =
   | { ok: true; accessToken: string; refreshToken: string }

@@ -20,10 +20,37 @@ export type AccountActionResult = { ok: true } | { ok: false; message: string };
  * Takes no user id on purpose: it always acts on the verified caller, so it
  * cannot be pointed at anyone else's account.
  */
+/**
+ * Is this the shared demo account?
+ *
+ * Resolved from the auth record rather than a hardcoded id: the id changes
+ * whenever the account is recreated, and the one thing that must not depend on
+ * remembering to update a constant is the guard that stops it being deleted.
+ */
+async function isSharedDemoAccount(userId: string): Promise<boolean> {
+  const guestEmail = process.env.GUEST_EMAIL?.trim().toLowerCase();
+  if (!guestEmail) return false;
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (error || !data?.user?.email) return false;
+  return data.user.email.trim().toLowerCase() === guestEmail;
+}
+
 export const deleteOwnAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AccountActionResult> => {
     try {
+      // The demo account is shared. It is an ordinary account in every other
+      // respect, which means a visitor at a stand who opened Settings could -
+      // and did - permanently delete the account every other visitor uses,
+      // taking the "Try it as a guest" button down with it. Checked by email
+      // rather than id because recreating the account assigns a new id.
+      if (await isSharedDemoAccount(context.userId)) {
+        return {
+          ok: false,
+          message: "This is the shared demo account, so it cannot be deleted. Sign up for your own to keep your progress.",
+        };
+      }
+
       const { error } = await supabaseAdmin.auth.admin.deleteUser(context.userId);
       if (error) {
         console.error("Account deletion failed", error);
