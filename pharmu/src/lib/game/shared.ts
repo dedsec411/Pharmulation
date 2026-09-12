@@ -304,7 +304,7 @@ export async function fetchRandomCase(
   const seen = userId ? await fetchSeenCaseIds(userId, mode) : new Map<string, number>();
   const chosen = pickNextCase(data as Array<{ id: string }>, seen);
   if (!chosen) return null;
-  if (userId && !substituted) void rememberCaseSeen(userId, mode, chosen.id);
+  if (userId && !substituted) void rememberCaseSeen(userId, mode, chosen.id, seen.has(chosen.id));
   return chosen as any;
 }
 
@@ -324,13 +324,29 @@ async function fetchSeenCaseIds(userId: string, mode: Mode) {
   return seenMap(data ?? []);
 }
 
-async function rememberCaseSeen(userId: string, mode: Mode, caseId: string) {
-  const { error } = await supabase
-    .from("user_seen_cases")
-    .upsert(
-      { user_id: userId, mode, case_id: caseId, last_seen_at: new Date().toISOString() },
-      { onConflict: "user_id,case_id" },
-    );
+/**
+ * Insert or update, chosen here rather than left to an upsert.
+ *
+ * The unique index on (user_id, case_id) is partial - it only covers rows
+ * where case_id is not null, because the same table also stores generated
+ * cases keyed on a template and a seed. Postgres will not infer a partial
+ * index as an ON CONFLICT arbiter, so the upsert failed on every single write
+ * and the history stayed empty while the code looked correct.
+ *
+ * Nothing is lost by deciding here: the caller has just read the history to
+ * pick the case, so it already knows whether this row exists.
+ */
+async function rememberCaseSeen(userId: string, mode: Mode, caseId: string, exists: boolean) {
+  const now = new Date().toISOString();
+  const { error } = exists
+    ? await supabase
+        .from("user_seen_cases")
+        .update({ last_seen_at: now })
+        .eq("user_id", userId)
+        .eq("case_id", caseId)
+    : await supabase
+        .from("user_seen_cases")
+        .insert({ user_id: userId, mode, case_id: caseId, last_seen_at: now });
   if (error) console.error("[supabase] could not record the case as seen:", error);
 }
 
