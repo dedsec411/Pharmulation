@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { GUEST_USER_ID } from "@/lib/api/guest.functions";
 import {
   forgetGuides, hasSeenGuide, initialView, isSharedAccount, markGuideSeen, seenKey,
+  shouldAutoRunTour,
 } from "./tutorial-seen";
 
 /** A storage bin that behaves, for the ordinary cases. */
@@ -85,5 +86,32 @@ describe("initialView", () => {
   it("walks a first-timer through and lets everybody else scan", () => {
     expect(initialView(false)).toBe("walkthrough");
     expect(initialView(true)).toBe("contents");
+  });
+});
+
+describe("shouldAutoRunTour", () => {
+  const real = "11111111-2222-3333-4444-555555555555";
+
+  it("runs for somebody genuinely new", () => {
+    expect(shouldAutoRunTour({ userId: real, seenLocally: false, onboardingCompleted: false })).toBe(true);
+  });
+
+  it("does not run twice in the same browser", () => {
+    expect(shouldAutoRunTour({ userId: real, seenLocally: true, onboardingCompleted: false })).toBe(false);
+  });
+
+  it("does not walk somebody through it again on a second device", () => {
+    expect(shouldAutoRunTour({ userId: real, seenLocally: false, onboardingCompleted: true })).toBe(false);
+  });
+
+  // The demo account has been marked onboarded since the first visitor
+  // finished the tour. That flag says somebody has seen it, not that the
+  // person holding the laptop now has.
+  it("still runs for the demo account whatever the account flag says", () => {
+    expect(shouldAutoRunTour({ userId: GUEST_USER_ID, seenLocally: false, onboardingCompleted: true })).toBe(true);
+  });
+
+  it("but not twice within one demo session", () => {
+    expect(shouldAutoRunTour({ userId: GUEST_USER_ID, seenLocally: true, onboardingCompleted: true })).toBe(false);
   });
 });

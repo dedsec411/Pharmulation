@@ -78,3 +78,27 @@ export function forgetGuides(bin: Bin | null, userId: string, guideKeys: string[
 export function initialView(seen: boolean): "walkthrough" | "contents" {
   return seen ? "contents" : "walkthrough";
 }
+
+/**
+ * Whether the full tour should open by itself.
+ *
+ * Three signals, and they disagree on purpose. `seenLocally` is this browser;
+ * `onboardingCompleted` is the account, so somebody who did the tour on a
+ * laptop is not walked through it again on a phone.
+ *
+ * The demo account is the exception, and it is the reason this is a function
+ * rather than an `&&`. Its `onboarding_completed` has been true since the
+ * first visitor finished the tour, and it says only that *somebody* has - not
+ * that the person holding the laptop now has. For the one account that exists
+ * so strangers can find their way around, that flag is the wrong answer, so
+ * it is ignored and the session is trusted instead.
+ */
+export function shouldAutoRunTour(input: {
+  userId: string;
+  seenLocally: boolean;
+  onboardingCompleted: boolean;
+}): boolean {
+  if (input.seenLocally) return false;
+  if (isSharedAccount(input.userId)) return true;
+  return !input.onboardingCompleted;
+}

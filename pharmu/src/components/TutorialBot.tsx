@@ -13,7 +13,7 @@ import { MENTOR_IMAGE } from "@/lib/mentor";
 import {
   GUIDES, guideForPath, hasGuide, type GuideIcon, type TutorialGuide,
 } from "@/lib/tutorial";
-import { binFor, hasSeenGuide, markGuideSeen } from "@/lib/tutorial-seen";
+import { binFor, hasSeenGuide, markGuideSeen, shouldAutoRunTour } from "@/lib/tutorial-seen";
 import { useTutorialStore } from "@/lib/tutorial-store";
 
 /**
@@ -80,12 +80,16 @@ export function TutorialBot() {
    */
   useEffect(() => {
     if (!mounted || !userId || !pathname.includes("/dashboard") || pathname.includes("/educator")) return;
-    if (hasSeenGuide(bin, userId, "tour")) return;
+    if (!shouldAutoRunTour({
+      userId,
+      seenLocally: hasSeenGuide(bin, userId, "tour"),
+      onboardingCompleted: !!profile?.onboarding_completed,
+    })) return;
     const timer = window.setTimeout(() => {
       useTutorialStore.getState().openGuide("tour", "walkthrough");
     }, 800);
     return () => window.clearTimeout(timer);
-  }, [mounted, userId, bin, pathname]);
+  }, [mounted, userId, bin, pathname, profile?.onboarding_completed]);
 
   // The landing page sells the product and the auth pages are two fields.
   // Neither wants a mentor hovering over it, which is how it was before.
@@ -96,6 +100,8 @@ export function TutorialBot() {
 
   function finish() {
     remember(guide.key);
+    // Written so a second device does not repeat it; read back by
+    // shouldAutoRunTour, which ignores it for the shared demo account.
     if (guide.key === "tour") void completeOnboarding();
     close();
   }
