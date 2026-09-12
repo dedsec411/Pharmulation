@@ -125,6 +125,8 @@ export type Carton = {
   dc: { number: string; batch: string; qty: number; date: string };
   /** Everything wrong with this consignment. Empty means accept it. */
   findings: FindingCode[];
+  /** The day's stock count put this product down for investigation. */
+  flaggedAtStockCount: boolean;
 };
 
 export type LabelField = {
@@ -208,6 +210,29 @@ const DEFECT_NOTES: Record<ConditionKey, string> = {
 /** Faults that have to be written in, as opposed to ones the case data already carries. */
 const AUTHORED: FindingCode[] = ["batch-mismatch", "qty-mismatch", "damaged"];
 
+/** A row of the stock count the learner has already worked through this case. */
+export type StockCountRow = {
+  item?: string;
+  expected?: number;
+  actual?: number;
+  investigate?: boolean;
+};
+
+/**
+ * Same product, allowing for the stock count naming it slightly differently.
+ *
+ * The count says "Amoxicillin 500mg" where the manifest says "Amoxicillin
+ * 500mg caps". Comparing the squashed names by prefix catches that without
+ * pairing two different medicines: six characters in, no two entries in the
+ * catalogue that matter here still agree by accident.
+ */
+function sameProduct(a: string, b: string): boolean {
+  const squash = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const [x, y] = [squash(a), squash(b)];
+  if (x.length < 6 || y.length < 6) return false;
+  return x.startsWith(y) || y.startsWith(x);
+}
+
 export type ShipmentLike = {
   id?: string;
   drug?: string;
@@ -257,6 +282,7 @@ export function buildGoodsIn(
   caseId: string,
   shipments: ShipmentLike[],
   now: Date = new Date(),
+  stockCount: StockCountRow[] = [],
 ): Carton[] {
   const chosen = (shipments ?? []).slice(0, MAX_CARTONS);
   if (!chosen.length) return [];
@@ -304,6 +330,9 @@ export function buildGoodsIn(
       po: { number: poNumber, qty, raisedOn: iso(addMonths(now, -1)), minShelfLifeMonths },
       dc: { number: `DC-${intBetween(rng, 1000, 9999)}`, batch, qty, date: dcDate },
       findings: dated && months < minShelfLifeMonths ? ["short-shelf-life"] : [],
+      flaggedAtStockCount: (stockCount ?? []).some(
+        (row) => row.investigate && row.item && sameProduct(product, String(row.item)),
+      ),
     };
   });
 
@@ -448,6 +477,18 @@ export function labelFields(carton: Carton): LabelField[] {
     { label: "Serial number", value: carton.serial, verify: "Unique to this carton. It is what traces this box if anything is queried later." },
   ];
   return fields.map((f, i) => ({ ...f, n: i + 1 }));
+}
+
+/**
+ * What the day's stock count already said about this product.
+ *
+ * Deliberately a prompt to count rather than a hint at the answer: a flagged
+ * line is one a store recounts, and recounting it often finds nothing. Saying
+ * which way it will come out would replace the check with a tell.
+ */
+export function stockCountNote(carton: Carton): string | null {
+  if (!carton.flaggedAtStockCount) return null;
+  return `The stock count you just closed put ${carton.product} down for investigation. A receipt signed for more than arrived is one of the places a variance like that starts, so count this one rather than reading it off the challan.`;
 }
 
 /** The condition record in words, for the feedback panel. */

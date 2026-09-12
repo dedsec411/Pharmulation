@@ -3,7 +3,7 @@ import {
   ACCEPT_OPTION, CONDITION_ROWS, MAX_CARTONS, SOUND_CONDITION,
   buildGoodsIn, conditionMatches, correctDecision, decisionFeedback, describeCondition,
   findingLabel, gs1CheckDigit,
-  isDecisionCorrect, labelFields, monthsBetween, readStrength,
+  isDecisionCorrect, labelFields, monthsBetween, readStrength, stockCountNote,
   type ShipmentLike,
 } from "./goods-in";
 
@@ -351,5 +351,48 @@ describe("the mix of checks a learner meets", () => {
     }
     expect(dated).toBeGreaterThan(0);
     expect(dated).toBeLessThan(total / 2);
+  });
+});
+
+describe("what the stock count already said", () => {
+  const flagged = [
+    { item: "Amoxicillin 500mg", expected: 1200, actual: 1188, investigate: true },
+    { item: "Paracetamol 500mg", expected: 3000, actual: 3000, investigate: false },
+  ];
+
+  it("recognises the count naming a product slightly differently", () => {
+    // The count says "Amoxicillin 500mg"; the manifest says "…500mg caps".
+    const cartons = buildGoodsIn("case-a", LONG_DATED, NOW, flagged);
+    const amox = cartons.find((c) => c.product.startsWith("Amoxicillin"))!;
+    expect(amox.flaggedAtStockCount).toBe(true);
+    expect(stockCountNote(amox)).toContain("Amoxicillin");
+  });
+
+  it("says nothing about a product the count did not dispute", () => {
+    const cartons = buildGoodsIn("case-a", LONG_DATED, NOW, flagged);
+    const insulin = cartons.find((c) => c.product.startsWith("Insulin"))!;
+    expect(insulin.flaggedAtStockCount).toBe(false);
+    expect(stockCountNote(insulin)).toBeNull();
+  });
+
+  it("does not pair two different medicines", () => {
+    const cartons = buildGoodsIn("case-a", LONG_DATED, NOW, [
+      { item: "Morphine 5mg/mL", investigate: true },
+    ]);
+    expect(cartons.some((c) => c.flaggedAtStockCount)).toBe(false);
+  });
+
+  // The prompt is to count, not a hint at the answer: a flagged line gets
+  // recounted in a real store and often comes out fine.
+  it("does not give away which way the count will come out", () => {
+    const cartons = buildGoodsIn("case-a", LONG_DATED, NOW, flagged);
+    for (const carton of cartons) {
+      const note = stockCountNote(carton);
+      if (note) expect(note).not.toMatch(/short|mismatch|does not match the challan/i);
+    }
+  });
+
+  it("works for a case with no stock count at all", () => {
+    expect(buildGoodsIn("case-a", LONG_DATED, NOW).every((c) => !c.flaggedAtStockCount)).toBe(true);
   });
 });

@@ -175,7 +175,7 @@ function WarehouseGame() {
   const { difficulty, difficultyModal } = useDifficultyChoice("warehousing");
   const { caseData, loading, next } = useCaseLoader("warehousing", difficulty);
   const s = caseData?.shipment_json;
-  const [phase, setPhase] = useState<Phase>("goodsIn");
+  const [phase, setPhase] = useState<Phase>("receiving");
 
   // goods-in
   const [goodsInIdx, setGoodsInIdx] = useState(0);
@@ -224,12 +224,14 @@ function WarehouseGame() {
   // delivery every time this component re-renders, and a new carton appearing
   // mid-decision would invalidate the answer being reasoned about.
   const cartons = useMemo(
-    () => (s ? buildGoodsIn(String(caseData?.id ?? ""), s.shipments ?? []) : []),
+    () => (s
+      ? buildGoodsIn(String(caseData?.id ?? ""), s.shipments ?? [], new Date(), s.reconciliation ?? [])
+      : []),
     [caseData?.id, s],
   );
 
   useEffect(() => {
-    setPhase(cartons.length ? "goodsIn" : "receiving");
+    setPhase("receiving");
     setGoodsInIdx(0); setConditions({}); setDcTried({});
     setPoints(0); setErrors(0); setPlaced({});
     setActiveShip(null); setLandedShip(null); setRegisterOpen(null); setRegisterData({ qty: "", receiver: "" });
@@ -295,7 +297,7 @@ function WarehouseGame() {
     setPoints((p) => p + earned);
     toastScore(earned, carton.findings.length ? "Discrepancy raised" : "Booked in");
     if (idx + 1 < cartons.length) setGoodsInIdx((i) => i + 1);
-    else setPhase("receiving");
+    else finish(false, { points: earned });
   }
 
   function placeShipment(zoneOrQuarantine: string) {
@@ -477,16 +479,35 @@ function WarehouseGame() {
   }
 
   function finishReconcile() {
+    // Totalled locally rather than read back off state. These used to be
+    // queued with setPoints and then handed straight to finish(), which read
+    // the value from the render it was called in - so every reconciliation
+    // row a learner got right, and every one they got wrong, was dropped from
+    // the score and from the error count before either reached the database.
+    let delta = 0;
+    let wrong = 0;
     s.reconciliation.forEach((r: any, i: number) => {
       const checked = !!reconChecked[i];
-      if (checked === r.investigate) { setPoints((p) => p + 20); }
-      else { setErrors((e) => e + 1); setPoints((p) => p - 10); }
+      if (checked === r.investigate) delta += 20;
+      else { wrong += 1; delta -= 10; }
     });
-    finish(false);
+    setPoints((p) => p + delta);
+    setErrors((e) => e + wrong);
+    if (cartons.length) { setPhase("goodsIn"); return; }
+    finish(false, { points: delta, errors: wrong });
   }
 
-  async function finish(timedOut: boolean) {
-    let totalPoints = points;
+  /**
+   * `extra` carries anything awarded in the same handler that called this.
+   * State queued with setPoints has not landed yet at this point, so a phase
+   * that scores and finishes in one go has to hand its own total over.
+   */
+  async function finish(
+    timedOut: boolean,
+    extra: { points?: number; errors?: number } = {},
+  ) {
+    let totalPoints = points + (extra.points ?? 0);
+    const totalErrors = errors + (extra.errors ?? 0);
     if (contaminated) totalPoints -= 30;
     // Was `computeScore(...) - 100`, which hardcoded the *medium* base, so easy
     // cases (base 90) silently lost 10 points and hard ones (base 120) gained 20.
@@ -516,8 +537,8 @@ function WarehouseGame() {
     const { xpGain } = await submitScore({
       userId: profile!.user_id, caseId: caseData.id, mode: "warehousing",
       difficulty: caseData?.difficulty,
-      score: finalScore, timeTaken: timer.taken, errors,
-      correctDrugs: Math.max(0, totalDecisions - errors),
+      score: finalScore, timeTaken: timer.taken, errors: totalErrors,
+      correctDrugs: Math.max(0, totalDecisions - totalErrors),
       totalDrugs: totalDecisions || 1,
       errorsDetail: errPanel.errors,
     });
@@ -547,7 +568,7 @@ function WarehouseGame() {
   }
 
   const phaseLabel: Record<Phase, string> = {
-    goodsIn: "Goods-in (challan check)",
+    goodsIn: "Challan and GRN",
     receiving: "Receiving stock", dispatch: "Dispatch (FEFO)", expiry: "Expiry management",
     audit: "Operations audit", reconcile: "Reconciliation", done: "Done",
   };
@@ -579,6 +600,7 @@ function WarehouseGame() {
             index={goodsInIdx}
             total={cartons.length}
             recorded={conditions[cartons[goodsInIdx].shipmentId] ?? null}
+            placedIn={placed[cartons[goodsInIdx].shipmentId] ?? null}
             ruledOut={dcTried[goodsInIdx] ?? []}
             onRecord={(drafted) => recordCondition(cartons[goodsInIdx], drafted)}
             onDecide={(option) => decideCarton(cartons[goodsInIdx], option)}
@@ -816,8 +838,8 @@ function WarehouseGame() {
                 })}
               </tbody>
             </table>
-            <button onClick={finishReconcile} className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground">
-              Finalize and submit
+            <button onClick={finishReconcile} className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]">
+              {cartons.length ? "Close the count and sign the challan →" : "Finalize and submit"}
             </button>
           </section>
         )}

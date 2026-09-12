@@ -1,13 +1,20 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCheck, Eye, FileText, PackageCheck, ScanLine } from "lucide-react";
+import { ClipboardCheck, Eye, FileText, History, PackageCheck, ScanLine } from "lucide-react";
 import {
   ACCEPT_OPTION, CONDITION_ROWS, DECISION_OPTIONS,
-  labelFields, type Carton, type ConditionKey, type ConditionRecord,
+  labelFields, stockCountNote, type Carton, type ConditionKey, type ConditionRecord,
 } from "@/lib/game/goods-in";
 
 /**
- * The receiving bay, as the person standing at it sees it.
+ * Closing the challan at the end of the shift.
+ *
+ * The physical check happens at the bay, but the goods received note is raised
+ * and the challan matched before the driver's copy goes back - which is why
+ * this sits at the end of the case rather than the front, against stock the
+ * learner has already booked in, dispatched from and counted. Each carton says
+ * what they did with it earlier, so the paperwork is the close of the shift
+ * they just worked rather than a screen of its own.
  *
  * Two things happen here and they happen in this order, because that is the
  * order they happen in a real store: you write down the state of the box in
@@ -27,6 +34,8 @@ type Props = {
   total: number;
   /** Set once the condition has been written to the GRN; unlocks the decision. */
   recorded: ConditionRecord | null;
+  /** The zone this stock went to earlier in the shift, or "quarantine". */
+  placedIn: string | null;
   ruledOut: string[];
   onRecord: (drafted: ConditionRecord) => void;
   onDecide: (option: string) => void;
@@ -35,7 +44,7 @@ type Props = {
 const KRAFT = "linear-gradient(155deg,#dcb98d 0%,#cba272 48%,#b78a58 100%)";
 
 export function CartonCheck({
-  carton, index, total, recorded, ruledOut, onRecord, onDecide,
+  carton, index, total, recorded, placedIn, ruledOut, onRecord, onDecide,
 }: Props) {
   const [draft, setDraft] = useState<Partial<ConditionRecord>>({});
   const fields = useMemo(() => labelFields(carton), [carton]);
@@ -46,7 +55,7 @@ export function CartonCheck({
       <header className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] p-4 backdrop-blur-xl dark:bg-slate-950/55">
         <div className="min-w-0">
           <p className="text-xs font-black uppercase tracking-[0.24em] text-sky-600 dark:text-sky-300">
-            New delivery - check carton details
+            Closing the delivery - check carton details
           </p>
           <h2 className="mt-1 truncate text-lg font-bold sm:text-xl">{carton.supplier}</h2>
           <p className="text-xs text-muted-foreground">
@@ -55,6 +64,11 @@ export function CartonCheck({
         </div>
         <p className="shrink-0 rounded-full border border-sky-300/30 px-3 py-1 text-xs font-semibold tabular-nums text-sky-700 dark:text-sky-200">
           Carton {index + 1} of {total}
+        </p>
+        <p className="w-full text-xs text-muted-foreground">
+          The stock you worked through this shift, back on the paperwork. The driver's
+          copy goes back signed, so anything wrong with a consignment has to be on it
+          before the challan leaves.
         </p>
       </header>
 
@@ -72,6 +86,7 @@ export function CartonCheck({
             <Eye className="mt-0.5 size-4 shrink-0 text-sky-500" aria-hidden="true" />
             <span><span className="font-semibold text-foreground">What you can see: </span>{carton.conditionNote}</span>
           </p>
+          <Earlier carton={carton} placedIn={placedIn} />
         </div>
 
         <div className="min-w-0 space-y-4">
@@ -111,6 +126,35 @@ export function CartonCheck({
         </ol>
       </details>
     </section>
+  );
+}
+
+/**
+ * What already happened to this consignment today.
+ *
+ * The point of closing the paperwork last is that there is a shift behind it.
+ * Without this the screen would be the same screen wherever it sat in the case.
+ */
+function Earlier({ carton, placedIn }: { carton: Carton; placedIn: string | null }) {
+  const countNote = stockCountNote(carton);
+  if (!placedIn && !countNote) return null;
+  return (
+    <div className="mt-3 space-y-2 rounded-xl border border-sky-300/25 bg-sky-400/5 p-3 text-sm">
+      <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700 dark:text-sky-300">
+        <History className="size-3.5" aria-hidden="true" /> Earlier this shift
+      </p>
+      {placedIn === "quarantine" ? (
+        <p className="text-muted-foreground">
+          You held this in <span className="font-semibold text-foreground">quarantine</span>,
+          so the note has to say the stock is not available and why.
+        </p>
+      ) : placedIn ? (
+        <p className="text-muted-foreground">
+          You booked this into <span className="font-semibold text-foreground">{placedIn}</span>.
+        </p>
+      ) : null}
+      {countNote && <p className="text-muted-foreground">{countNote}</p>}
+    </div>
   );
 }
 
