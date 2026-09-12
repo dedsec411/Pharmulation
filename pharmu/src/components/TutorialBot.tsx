@@ -1,187 +1,102 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { PharmacistChat } from "@/components/PharmacistChat";
 import {
-  BookOpen,
-  Bot,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  FlaskConical,
-  HeartPulse,
-  Package,
-  Pill,
-  Stethoscope,
-  Trophy,
-  X,
+  BookOpen, Bot, Camera, Check, CheckCircle2, ChevronLeft, ChevronRight,
+  Compass, FlaskConical, GraduationCap, HeartPulse, LifeBuoy, ListChecks,
+  Package, Pill, PlayCircle, Search, Trophy, X, type LucideIcon,
 } from "lucide-react";
 import { MENTOR_IMAGE } from "@/lib/mentor";
+import {
+  GUIDES, guideForPath, hasGuide, type GuideIcon, type TutorialGuide,
+} from "@/lib/tutorial";
+import { binFor, hasSeenGuide, markGuideSeen } from "@/lib/tutorial-seen";
+import { useTutorialStore } from "@/lib/tutorial-store";
 
-type TutorialStep = {
-  title: string;
-  body: string;
+/**
+ * The guide, and the tab that brings it back.
+ *
+ * What was here before ran once and then had nowhere to go: dismissing it
+ * wrote a "done" flag that nothing ever read, and the only floating button on
+ * screen opened the chat. Somebody who skipped the tour on their first
+ * afternoon could not find it again at all.
+ *
+ * So the guide now lives on the right-hand edge and stays there. It opens two
+ * ways depending on who is asking: a first-timer is walked through it a step
+ * at a time, and somebody coming back for a reminder gets the whole thing
+ * listed, because they are looking for one answer rather than a tour.
+ */
+
+const ICONS: Record<GuideIcon, LucideIcon> = {
+  compass: Compass, trophy: Trophy, book: BookOpen, pill: Pill, heart: HeartPulse,
+  flask: FlaskConical, package: Package, search: Search, cap: GraduationCap,
+  camera: Camera, bot: Bot,
 };
-
-type TutorialGuide = {
-  key: string;
-  label: string;
-  role: string;
-  icon: typeof Stethoscope;
-  steps: TutorialStep[];
-};
-
-const STORAGE_PREFIX = "pharmulation_tutorial_";
-const FIRST_RUN_KEY = "pharmulation_tutorial_first_run_done";
-
-const GUIDES: Record<string, TutorialGuide> = {
-  home: {
-    key: "home",
-    label: "Website tour",
-    role: "Pharmacist mentor",
-    icon: Stethoscope,
-    steps: [
-      { title: "Welcome to Pharmulation", body: "This is your pharmacy training simulator. Start training, check the leaderboard, or sign in to save progress." },
-      { title: "Training modes", body: "Each mode is built around a real workflow: Rx cases, OTC consultation, clinical orders, industry, and warehousing." },
-      { title: "Your mentor", body: "I will appear throughout the site. You can skip a guide, finish it, or reopen it from the floating help button." },
-    ],
-  },
-  dashboard: {
-    key: "dashboard",
-    label: "Dashboard tour",
-    role: "Pharmacist mentor",
-    icon: Trophy,
-    steps: [
-      { title: "Your command center", body: "The dashboard shows XP, streaks, daily challenges, recent scores, and quick access to the main training modes." },
-      { title: "Daily challenge", body: "Use the daily challenge for quick XP. It points you toward a focused case for the day." },
-      { title: "Mode cards", body: "Pick a training card to jump directly into a mode. Your completed case count appears under each one." },
-    ],
-  },
-  modes: {
-    key: "modes",
-    label: "Modes tour",
-    role: "Pharmacist mentor",
-    icon: BookOpen,
-    steps: [
-      { title: "Choose a mode", body: "Each card opens a different pharmacy skill area. Start with Community Pharmacy if you want the broadest beginner flow." },
-      { title: "Timers and difficulty", body: "Cases are timed. When a mode opens, choose difficulty to control scoring pressure and challenge level." },
-      { title: "Progression", body: "Harder modes and cleaner performance earn better scores. Read mentor tips before rushing decisions." },
-    ],
-  },
-  community: {
-    key: "community",
-    label: "Community tutorial",
-    role: "Community pharmacist",
-    icon: Pill,
-    steps: [
-      { title: "Pick RX or OTC", body: "Community starts by asking whether you want Rx Cases or OTC Consultation. Choose the workflow you want to practice." },
-      { title: "Rx Cases", body: "Read the prescription sheet, collect the correct medicines, then review info and labels before finishing." },
-      { title: "OTC Consultation", body: "Ask the right follow-up questions, recommend a medicine, choose the dose, and counsel the patient." },
-      { title: "Watch the timer", body: "Leaving while the timer runs can lose progress. Finish the case or confirm before exiting." },
-    ],
-  },
-  clinical: {
-    key: "clinical",
-    label: "Clinical tutorial",
-    role: "Clinical pharmacist",
-    icon: HeartPulse,
-    steps: [
-      { title: "Review the patient file", body: "Check diagnosis, allergies, current medicines, labs, and the physician order before adding anything." },
-      { title: "Build medication orders", body: "Search for medicines, add correct drug orders, and set dose, route, and frequency." },
-      { title: "Watch interactions", body: "Interaction and renal alerts matter. Use them to correct unsafe plans before submitting." },
-    ],
-  },
-  industry: {
-    key: "industry",
-    label: "Industry tutorial",
-    role: "Industrial pharmacist",
-    icon: FlaskConical,
-    steps: [
-      { title: "Choose what to manufacture", body: "First pick a dosage form such as tablet, syrup, capsule, or semi-solid. Then select its product type." },
-      { title: "Master formula", body: "Read the formula carefully. Ingredients, target weights, process conditions, and QC expectations guide the whole batch." },
-      { title: "Manufacture step by step", body: "Weigh ingredients, control the environment, complete process stages, judge QC, then release or reject the batch." },
-    ],
-  },
-  warehousing: {
-    key: "warehousing",
-    label: "Warehousing tutorial",
-    role: "Warehouse pharmacist",
-    icon: Package,
-    steps: [
-      { title: "Inspect stock", body: "Check deliveries, expiry dates, batch details, and storage requirements before accepting or placing items." },
-      { title: "Use FEFO", body: "First expired, first out keeps stock safe and reduces waste." },
-      { title: "Cold chain matters", body: "Temperature-sensitive products need correct storage. Quarantine stock when conditions are unsafe." },
-    ],
-  },
-  generic: {
-    key: "generic",
-    label: "Page tutorial",
-    role: "Pharmacist mentor",
-    icon: Bot,
-    steps: [
-      { title: "Need a hand?", body: "I can guide you around this page. Use Next to continue, Finish to mark it done, or Skip to hide this guide." },
-      { title: "Look for actions", body: "Primary buttons start tasks, cards open workflows, and mentor tips explain what matters clinically." },
-    ],
-  },
-};
-
-function guideForPath(pathname: string): TutorialGuide {
-  if (pathname === "/") return GUIDES.home;
-  if (pathname.includes("/dashboard")) return GUIDES.dashboard;
-  if (pathname.includes("/modes")) return GUIDES.modes;
-  if (pathname.includes("/game/community")) return GUIDES.community;
-  if (pathname.includes("/game/hospital")) return GUIDES.clinical;
-  if (pathname.includes("/game/industry")) return GUIDES.industry;
-  if (pathname.includes("/game/warehousing")) return GUIDES.warehousing;
-  return GUIDES.generic;
-}
-
-function storageKey(key: string) {
-  return `${STORAGE_PREFIX}${key}`;
-}
 
 export function TutorialBot() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { profile, setProfile } = useAuthStore();
-  const guide = useMemo(() => guideForPath(pathname), [pathname]);
+  const { open, requestedKey, view, openForPage, close, setView } = useTutorialStore();
+
   const [step, setStep] = useState(0);
-  const [tutorialOpen, setTutorialOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  const userId = profile?.user_id ?? null;
+  const pageGuide = useMemo(() => guideForPath(pathname), [pathname]);
+  const guide: TutorialGuide = requestedKey ? (GUIDES[requestedKey] ?? pageGuide) : pageGuide;
+
+  // Storage is read after mount only. Touching it during render would differ
+  // between the server pass and the browser and tear the page on hydration.
+  useEffect(() => { setMounted(true); }, []);
+
+  const bin = useMemo(() => (mounted && userId ? binFor(userId) : null), [mounted, userId]);
+
+  useEffect(() => { setStep(0); }, [guide.key, view]);
+
+  const remember = useCallback((key: string) => {
+    if (userId) markGuideSeen(bin, userId, key);
+  }, [bin, userId]);
+
+  /**
+   * The first sight of the app.
+   *
+   * Held to the dashboard because that is the first signed-in page anybody
+   * lands on, and delayed a beat so the tour does not race the page it is
+   * describing onto the screen.
+   */
   useEffect(() => {
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    setStep(0);
-  }, [guide.key, ready]);
-
-  useEffect(() => {
-    if (!ready || !profile || profile.onboarding_completed || pathname !== "/dashboard") return;
-    const alreadyRan = localStorage.getItem(`${FIRST_RUN_KEY}_${profile.user_id}`) === "done";
-    if (alreadyRan) return;
-
+    if (!mounted || !userId || !pathname.includes("/dashboard") || pathname.includes("/educator")) return;
+    if (hasSeenGuide(bin, userId, "tour")) return;
     const timer = window.setTimeout(() => {
-      setStep(0);
-      setTutorialOpen(true);
-    }, 900);
-
+      useTutorialStore.getState().openGuide("tour", "walkthrough");
+    }, 800);
     return () => window.clearTimeout(timer);
-  }, [pathname, profile, ready]);
+  }, [mounted, userId, bin, pathname]);
 
-  if (!ready) return null;
-  if (pathname === "/" || pathname.includes("/login") || pathname.includes("/signup")) return null;
+  // The landing page sells the product and the auth pages are two fields.
+  // Neither wants a mentor hovering over it, which is how it was before.
+  const inApp = hasGuide(pathname);
+  if (!mounted || !inApp) return null;
 
-  const current = guide.steps[step];
-  const isLast = step === guide.steps.length - 1;
+  const seen = userId ? hasSeenGuide(bin, userId, guide.key) : false;
 
-  async function completeFirstRunIfNeeded() {
+  function finish() {
+    remember(guide.key);
+    if (guide.key === "tour") void completeOnboarding();
+    close();
+  }
+
+  /**
+   * Kept in step with the database for a real account so a second device does
+   * not repeat the tour. The demo account writes nothing: it is shared, and
+   * marking it complete would take the tour away from the next visitor.
+   */
+  async function completeOnboarding() {
     if (!profile || profile.onboarding_completed) return;
-    localStorage.setItem(`${FIRST_RUN_KEY}_${profile.user_id}`, "done");
     const { data, error } = await supabase
       .from("profiles")
       .update({ onboarding_completed: true })
@@ -189,35 +104,23 @@ export function TutorialBot() {
       .select("*")
       .maybeSingle();
     if (error) {
-      // Non-blocking: the tutorial has already been shown, so log rather than
-      // interrupting the user with a toast over the guide.
       console.error("[supabase] failed to mark onboarding complete:", error);
       return;
     }
     if (data) setProfile(data as typeof profile);
   }
 
-  async function markDone() {
-    localStorage.setItem(storageKey(guide.key), "done");
-    await completeFirstRunIfNeeded();
-    setTutorialOpen(false);
-    setStep(0);
-  }
-
-  async function skipAll() {
-    Object.keys(GUIDES).forEach((key) => localStorage.setItem(storageKey(key), "done"));
-    await completeFirstRunIfNeeded();
-    setTutorialOpen(false);
-    setStep(0);
-  }
+  const Icon = ICONS[guide.icon] ?? Bot;
+  const current = guide.steps[Math.min(step, guide.steps.length - 1)];
+  const isLast = step === guide.steps.length - 1;
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setChatOpen((open) => !open)}
+        onClick={() => setChatOpen((o) => !o)}
         className="group fixed bottom-5 left-5 z-50 grid size-16 place-items-center rounded-2xl border border-primary/35 bg-card/80 text-primary shadow-[0_18px_45px_-18px_oklch(0.74_0.14_180/0.9)] backdrop-blur-xl transition hover:-translate-y-1 hover:bg-primary/15"
-        aria-label="Open pharmacist chat"
+        aria-label="Ask the pharmacist mentor a question"
       >
         <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full border border-background bg-primary text-[9px] font-black text-primary-foreground shadow-lg">
           Hi
@@ -231,127 +134,203 @@ export function TutorialBot() {
 
       <PharmacistChat open={chatOpen} onClose={() => setChatOpen(false)} />
 
+      {/* The permanent way back in. Vertical so it costs almost no width on a
+          phone, and hidden while the panel it opens is already open. */}
+      {!open && (
+        <button
+          type="button"
+          onClick={() => openForPage(seen ? "contents" : "walkthrough")}
+          className="fixed right-0 top-1/2 z-40 flex -translate-y-1/2 items-center gap-1.5 rounded-l-xl border border-r-0 border-primary/35 bg-card/90 py-3 pl-2.5 pr-2 text-primary shadow-[0_12px_36px_-18px_oklch(0.74_0.14_180/0.9)] backdrop-blur-xl transition hover:bg-primary/15"
+          aria-label={`Open the guide for ${guide.label}`}
+        >
+          <LifeBuoy className="size-4" aria-hidden="true" />
+          <span className="text-[11px] font-bold uppercase tracking-[0.16em] [writing-mode:vertical-rl]">
+            Guide
+          </span>
+          {!seen && (
+            <span className="absolute -left-1 top-2 size-2 rounded-full bg-primary" aria-hidden="true" />
+          )}
+        </button>
+      )}
+
       <AnimatePresence>
-        {tutorialOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 grid place-items-end bg-background/35 p-4 backdrop-blur-[2px] sm:place-items-end"
-          >
-            <motion.section
-              initial={{ opacity: 0, y: 24, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 24, scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-              className="w-full max-w-md overflow-hidden rounded-3xl border border-border/50 bg-card/95 shadow-2xl backdrop-blur-xl"
+        {open && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={close}
+              className="fixed inset-0 z-40 bg-background/40 backdrop-blur-[2px]"
+              aria-hidden="true"
+            />
+            <motion.aside
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${guide.label} guide`}
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 34 }}
+              className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border/50 bg-card/95 shadow-2xl backdrop-blur-xl"
             >
-              <div className="relative overflow-hidden border-b border-border/40 bg-primary/10 p-4">
-                <motion.img
-                  src={MENTOR_IMAGE}
-                  alt=""
-                  aria-hidden="true"
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.28 }}
-                  className="pointer-events-none absolute -bottom-8 right-10 hidden h-40 w-32 object-contain object-bottom opacity-90 drop-shadow-[0_18px_28px_rgba(0,0,0,0.25)] sm:block"
-                />
+              <header className="relative shrink-0 overflow-hidden border-b border-border/40 bg-primary/10 p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative grid size-14 place-items-center overflow-hidden rounded-2xl border border-primary/25 bg-background/45 text-primary shadow-inner">
-                      <img src={MENTOR_IMAGE} alt="" className="h-16 w-14 object-contain object-top" />
-                      <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full border border-border bg-background text-[9px] font-black text-primary">Rx</span>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-primary/25 bg-background/45 text-primary">
+                      <img src={MENTOR_IMAGE} alt="" className="h-14 w-12 object-contain object-top" />
                     </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Dr. Hakim</p>
-                      <h2 className="text-lg font-black leading-tight">{guide.label}</h2>
-                      <p className="text-xs text-muted-foreground">{guide.role}</p>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Dr. Hakim</p>
+                      <h2 className="truncate text-lg font-black leading-tight">{guide.label}</h2>
+                      <p className="truncate text-xs text-muted-foreground">{guide.role}</p>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setTutorialOpen(false)}
-                    className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    aria-label="Close tutorial"
+                    onClick={close}
+                    className="shrink-0 rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    aria-label="Close the guide"
                   >
                     <X className="size-4" />
                   </button>
                 </div>
-              </div>
 
-              <div className="p-5">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`${guide.key}-${step}`}
-                    initial={{ opacity: 0, x: 14 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -14 }}
-                    transition={{ duration: 0.18 }}
-                  >
-                    <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-primary">Step {step + 1}/{guide.steps.length}</span>
-                      <span>Guided tutorial</span>
-                    </div>
-                    <h3 className="text-xl font-bold">{current.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{current.body}</p>
-                  </motion.div>
-                </AnimatePresence>
-
-                <div className="mt-5 flex gap-1.5">
-                  {guide.steps.map((_, i) => (
-                    <span key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-8 bg-primary" : "w-2 bg-border"}`} />
+                {/* Both ways of reading it stay reachable, whichever it opened
+                    in - somebody part-way through a walkthrough often wants to
+                    see how much is left. */}
+                <div className="mt-3 flex gap-1 rounded-full bg-background/50 p-1 text-xs font-semibold">
+                  {([
+                    { id: "walkthrough" as const, label: "Walk me through", icon: PlayCircle },
+                    { id: "contents" as const, label: "All steps", icon: ListChecks },
+                  ]).map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setView(tab.id)}
+                      aria-pressed={view === tab.id}
+                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 transition ${
+                        view === tab.id
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <tab.icon className="size-3.5" aria-hidden="true" /> {tab.label}
+                    </button>
                   ))}
                 </div>
+              </header>
 
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={markDone}
-                      className="rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    >
-                      Skip
-                    </button>
-                    <button
-                      type="button"
-                      onClick={skipAll}
-                      className="rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    >
-                      Skip all
-                    </button>
+              <div className="min-h-0 flex-1 overflow-y-auto p-5">
+                {view === "contents" ? (
+                  <div>
+                    <p className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                      {guide.blurb}
+                    </p>
+                    <ol className="mt-5 space-y-4">
+                      {guide.steps.map((s, i) => (
+                        <li key={s.title} className="flex gap-3">
+                          <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-primary/15 text-[11px] font-black tabular-nums text-primary">
+                            {i + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-semibold leading-snug">{s.title}</p>
+                            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+                            {s.action && (
+                              <p className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-primary">
+                                <Check className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                                {s.action}
+                              </p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
                   </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      disabled={step === 0}
-                      onClick={() => setStep((n) => Math.max(0, n - 1))}
-                      className="inline-flex items-center gap-1 rounded-full border border-border/50 px-4 py-2 text-sm font-semibold transition hover:bg-muted disabled:opacity-40"
+                ) : (
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${guide.key}-${step}`}
+                      initial={{ opacity: 0, x: 14 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -14 }}
+                      transition={{ duration: 0.18 }}
                     >
-                      <ChevronLeft className="size-4" /> Back
-                    </button>
-                    {isLast ? (
-                      <button
-                        type="button"
-                        onClick={markDone}
-                        className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
-                      >
-                        <CheckCircle2 className="size-4" /> Finish
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setStep((n) => Math.min(guide.steps.length - 1, n + 1))}
-                        className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
-                      >
-                        Next <ChevronRight className="size-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                      <div className="mb-3 flex items-center gap-2 text-xs font-semibold">
+                        <span className="rounded-full bg-primary/15 px-2 py-0.5 tabular-nums text-primary">
+                          Step {step + 1} of {guide.steps.length}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold leading-snug">{current.title}</h3>
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{current.body}</p>
+                      {current.action && (
+                        <p className="mt-4 flex items-start gap-2 rounded-xl border border-primary/25 bg-primary/5 p-3 text-sm font-medium text-primary">
+                          <Check className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                          {current.action}
+                        </p>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                )}
               </div>
-            </motion.section>
-          </motion.div>
+
+              <footer className="shrink-0 border-t border-border/40 p-4">
+                {view === "contents" ? (
+                  <button
+                    type="button"
+                    onClick={finish}
+                    className="w-full rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition active:scale-[0.99]"
+                  >
+                    Close the guide
+                  </button>
+                ) : (
+                  <>
+                    <div className="mb-3 flex gap-1.5" aria-hidden="true">
+                      {guide.steps.map((_, i) => (
+                        <span
+                          key={i}
+                          className={`h-1.5 flex-1 rounded-full transition-all ${i <= step ? "bg-primary" : "bg-border"}`}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={finish}
+                        className="rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                      >
+                        Skip
+                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={step === 0}
+                          onClick={() => setStep((n) => Math.max(0, n - 1))}
+                          className="inline-flex items-center gap-1 rounded-full border border-border/50 px-4 py-2 text-sm font-semibold transition hover:bg-muted disabled:opacity-40"
+                        >
+                          <ChevronLeft className="size-4" aria-hidden="true" /> Back
+                        </button>
+                        {isLast ? (
+                          <button
+                            type="button"
+                            onClick={finish}
+                            className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"
+                          >
+                            <CheckCircle2 className="size-4" aria-hidden="true" /> Done
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setStep((n) => Math.min(guide.steps.length - 1, n + 1))}
+                            className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"
+                          >
+                            Next <ChevronRight className="size-4" aria-hidden="true" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </footer>
+            </motion.aside>
+          </>
         )}
       </AnimatePresence>
     </>

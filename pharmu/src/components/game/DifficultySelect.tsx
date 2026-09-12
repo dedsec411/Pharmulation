@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Activity, ArrowLeft, Gauge, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
+import { useModeTutorialTrigger } from "@/lib/use-mode-tutorial";
+import { modeGuideKey } from "@/lib/tutorial";
 import {
   DIFFICULTY_LABEL,
   DIFFICULTY_RULES,
@@ -47,6 +49,7 @@ function storageKey(mode: Mode) {
  */
 export function useDifficultyChoice(mode: Mode, onCancel?: () => void) {
   const navigate = useNavigate();
+  const openModeTutorial = useModeTutorialTrigger();
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [open, setOpen] = useState(true);
 
@@ -59,6 +62,11 @@ export function useDifficultyChoice(mode: Mode, onCancel?: () => void) {
     localStorage.setItem(storageKey(mode), next);
     setDifficulty(next);
     setOpen(false);
+    // First time in this mode, the mentor explains it before they start
+    // guessing at it. Fired from here rather than from the modes because this
+    // is where the difficulty modal closes - the guide would otherwise open
+    // behind it.
+    openModeTutorial(modeGuideKey(mode));
   }
 
   function cancel() {
