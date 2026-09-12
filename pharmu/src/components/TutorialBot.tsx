@@ -17,6 +17,16 @@ import { binFor, hasSeenGuide, markGuideSeen } from "@/lib/tutorial-seen";
 import { useTutorialStore } from "@/lib/tutorial-store";
 
 /**
+ * Everything the panel can be asked for, in the order somebody would want it.
+ *
+ * The tab opens whatever belongs to the page you are on, which is right for
+ * "what is this screen" but wrong for "remind me how the whole thing works" -
+ * after the tour is finished the dashboard tab offers the dashboard, and the
+ * tour itself becomes unreachable. This list is the way back to any of them.
+ */
+const INDEX = ["tour", "dashboard", "modes", "community", "clinical", "industry", "warehousing", "class", "drugs"];
+
+/**
  * The guide, and the tab that brings it back.
  *
  * What was here before ran once and then had nowhere to go: dismissing it
@@ -39,7 +49,7 @@ const ICONS: Record<GuideIcon, LucideIcon> = {
 export function TutorialBot() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { profile, setProfile } = useAuthStore();
-  const { open, requestedKey, view, openForPage, close, setView } = useTutorialStore();
+  const { open, requestedKey, view, openForPage, openGuide, close, setView } = useTutorialStore();
 
   const [step, setStep] = useState(0);
   const [chatOpen, setChatOpen] = useState(false);
@@ -243,6 +253,29 @@ export function TutorialBot() {
                         </li>
                       ))}
                     </ol>
+
+                    <div className="mt-7 border-t border-border/40 pt-5">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                        Other guides
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {INDEX.filter((key) => key !== guide.key && GUIDES[key]).map((key) => {
+                          const other = GUIDES[key];
+                          const OtherIcon = ICONS[other.icon] ?? Bot;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => openGuide(key, "contents")}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs font-semibold transition hover:border-primary/50 hover:bg-primary/10"
+                            >
+                              <OtherIcon className="size-3.5 text-primary" aria-hidden="true" />
+                              {other.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <AnimatePresence mode="wait">

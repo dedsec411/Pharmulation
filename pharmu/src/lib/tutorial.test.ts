@@ -115,3 +115,24 @@ describe("the guides themselves", () => {
     expect(text).toContain("right");
   });
 });
+
+/**
+ * The panel lists these as "other guides", which is the only way back to the
+ * tour once it has been finished. A key here that no longer exists would
+ * render a button that opens nothing.
+ */
+describe("the guide index the panel offers", () => {
+  const INDEX = ["tour", "dashboard", "modes", "community", "clinical", "industry", "warehousing", "class", "drugs"];
+
+  it("names only guides that exist", () => {
+    for (const key of INDEX) expect(GUIDES[key]).toBeDefined();
+  });
+
+  it("can always get somebody back to the full tour", () => {
+    expect(INDEX).toContain("tour");
+  });
+
+  it("offers every mode, so a guide is reachable without entering the mode", () => {
+    for (const key of MODE_GUIDE_KEYS) expect(INDEX).toContain(key);
+  });
+});
