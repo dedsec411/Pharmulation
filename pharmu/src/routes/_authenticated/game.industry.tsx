@@ -17,6 +17,7 @@ import { Check, X as XIcon, Thermometer, Droplets, FlaskConical, Pill, CupSoda, 
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { shuffledBySeed, wrongStart } from "@/lib/game/no-free-answers";
+import { difficultyContent } from "@/lib/game/shared";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
@@ -680,6 +681,11 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
       : 50);
   }, [caseData?.id, f]);
 
+  // Expert weighs among four decoys with no range printed on the bench; Trainee
+  // gets one decoy and the range in front of them. The batch record carries the
+  // ranges at every level, so this asks for the record to be consulted rather
+  // than withholding it.
+  const content = difficultyContent(caseData?.difficulty);
   const rawIngredients = f?.ingredients ?? [];
   const batchScale = baseBatchCount > 0 && batchCount > 0 ? batchCount / baseBatchCount : 1;
   const batchSizeLabel = formatBatchSize(f?.batchSize, batchCount || baseBatchCount || 1);
@@ -698,10 +704,10 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   const allWeighingItems = useMemo(() => {
     const items = [
       ...rawIngredients.map((i: any) => ({ name: i.name, role: i.role, isReal: true })),
-      ...distractors.map((n: string) => ({ name: n, role: "Distractor", isReal: false })),
+      ...distractors.slice(0, content.distractors).map((n: string) => ({ name: n, role: "Distractor", isReal: false })),
     ];
     return stableShuffle(items, `${caseData?.id ?? "industry"}:${productChoice.form}:${productChoice.type}`);
-  }, [caseData?.id, productChoice.form, productChoice.type, rawIngredients, distractors]);
+  }, [caseData?.id, productChoice.form, productChoice.type, rawIngredients, distractors, content.distractors]);
   const activeIngredient = active ? ingredients.find((i: any) => i.name === active) : null;
   const weighingMax = activeIngredient ? weighingCeiling(activeIngredient) : 500;
   const weighingStep = activeIngredient ? weighingStepFor(activeIngredient) : 0.5;
@@ -1149,11 +1155,17 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                 <div className="mt-3 space-y-3">
                   <p className="text-lg font-bold">{active}</p>
                   <p className="text-2xl font-mono tabular-nums">{displayWeight(slider, activeIngredient?.unit)}</p>
-                  {activeIngredient && (
+                  {activeIngredient && (content.showTolerances ? (
                     <p className="text-xs text-muted-foreground">
                       Target {displayWeight(activeIngredient.target, activeIngredient.unit)} - Range {displayWeight(activeIngredient.min, activeIngredient.unit)}-{displayWeight(activeIngredient.max, activeIngredient.unit)}
                     </p>
-                  )}
+                  ) : (
+                    // Withheld from the bench, not from the operator: the batch
+                    // record still carries every range and is a click away.
+                    <p className="text-xs text-muted-foreground">
+                      Target and tolerance are in the batch record.
+                    </p>
+                  ))}
                   <BalanceScale
                     value={slider}
                     max={weighingMax}

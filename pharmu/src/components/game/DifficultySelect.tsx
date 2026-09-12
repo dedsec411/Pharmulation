@@ -7,6 +7,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useModeTutorialTrigger } from "@/lib/use-mode-tutorial";
 import { modeGuideKey } from "@/lib/tutorial";
 import {
+  DIFFICULTY_CONTENT,
   DIFFICULTY_LABEL,
   DIFFICULTY_RULES,
   MODE_LABEL,
@@ -14,28 +15,34 @@ import {
   type Mode,
 } from "@/lib/game/shared";
 
+/**
+ * What each level actually changes, written from the table that changes it.
+ *
+ * The numbers are interpolated rather than typed out because this panel is the
+ * only place a player is told what they are choosing, and a description that
+ * has drifted from the behaviour is worse than none. Until recently there was
+ * nothing to describe: difficulty moved the clock and the multipliers and
+ * nothing else, so the three cards were three ways of scoring identical work.
+ */
 const OPTIONS: Array<{
   difficulty: Difficulty;
   icon: any;
   desc: string;
 }> = [
-  // Descriptions state what actually changes, so the choice is informed:
-  // time allowed, scoring weights, how much the mentor reveals after a
-  // mistake, and how forthcoming the AI patient is in OTC.
   {
     difficulty: "easy",
     icon: Activity,
-    desc: "25% more time. Gentle penalties. After a mistake the mentor explains it and shows you the correct answer. Patients answer openly.",
+    desc: `25% more time and gentle penalties. ${DIFFICULTY_CONTENT.easy.cartons} consignments to check, ${DIFFICULTY_CONTENT.easy.auditScenarios} judgement calls, ${DIFFICULTY_CONTENT.easy.distractors} decoy on the bench, and every tolerance printed beside its control. After a mistake the mentor explains it and shows you the correct answer. Patients answer openly.`,
   },
   {
     difficulty: "medium",
     icon: Gauge,
-    desc: "Standard time and scoring. The mentor still reveals the correct answer after a mistake. Patients answer what you ask, no more.",
+    desc: `Standard time and scoring. ${DIFFICULTY_CONTENT.medium.cartons} consignments, ${DIFFICULTY_CONTENT.medium.auditScenarios} judgement calls, ${DIFFICULTY_CONTENT.medium.distractors} decoys, tolerances still shown. The mentor reveals the correct answer after a mistake. Patients answer what you ask, no more.`,
   },
   {
     difficulty: "hard",
     icon: ShieldAlert,
-    desc: "15% less time. Bigger rewards, harsher penalties. The mentor explains why you were wrong but withholds the answer. Patients are vague and volunteer nothing.",
+    desc: `15% less time, bigger rewards, harsher penalties. ${DIFFICULTY_CONTENT.hard.cartons} consignments, ${DIFFICULTY_CONTENT.hard.auditScenarios} judgement calls, ${DIFFICULTY_CONTENT.hard.distractors} decoys, and tolerances only in the batch record. The mentor explains why you were wrong but withholds the answer. Patients are vague and volunteer nothing.`,
   },
 ];
 

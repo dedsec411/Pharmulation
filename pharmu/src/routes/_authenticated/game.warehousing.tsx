@@ -11,7 +11,7 @@ import { ModeAmbientLayer } from "@/components/game/ModeAmbientLayer";
 import { useTimer } from "@/lib/game/useTimer";
 import {
   computeScoreFromPoints, liveScoreFromPoints, submitScore, modeTimeLimit, toastScore,
-  bumpCounterBadge, retryRewardFactor,
+  bumpCounterBadge, retryRewardFactor, difficultyContent,
 } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
 import { AlertTriangle, Barcode, Flag, Lock, Package, Thermometer } from "lucide-react";
@@ -48,7 +48,7 @@ type AuditScenario = {
   whatToKnow: string;
 };
 
-function buildAuditScenarios(s: any, caseId: string): AuditScenario[] {
+function buildAuditScenarios(s: any, caseId: string, count: number): AuditScenario[] {
   const shipments = Array.isArray(s.shipments) ? s.shipments : [];
   const expiring = Array.isArray(s.expiring) ? s.expiring : [];
   const reconciliation = Array.isArray(s.reconciliation) ? s.reconciliation : [];
@@ -170,7 +170,7 @@ function buildAuditScenarios(s: any, caseId: string): AuditScenario[] {
   // The correct action was written into a fixed slot - first in two of these
   // five - and the order never changed between plays, so the audit could be
   // answered from memory of where the answer sat rather than from the case.
-  return scenarios.slice(0, 4).map((scenario) => ({
+  return scenarios.slice(0, Math.max(1, count)).map((scenario) => ({
     ...scenario,
     options: shuffledBySeed(scenario.options, `${caseId}:audit:${scenario.id}`),
   }));
@@ -180,6 +180,9 @@ function WarehouseGame() {
   const onExit = useGameExit("/modes");
   const { profile } = useAuthStore();
   const { difficulty, difficultyModal } = useDifficultyChoice("warehousing");
+  // How much of a shift this is: Expert checks more consignments and takes more
+  // judgement calls than Trainee, rather than the same work scored harder.
+  const content = difficultyContent(difficulty);
   const { caseData, loading, next } = useCaseLoader("warehousing", difficulty);
   const s = caseData?.shipment_json;
   const [phase, setPhase] = useState<Phase>("receiving");
@@ -227,17 +230,20 @@ function WarehouseGame() {
     setExternalPaused: timer.setExternalPaused,
   });
   const auditScenarios = useMemo(
-    () => (s ? buildAuditScenarios(s, String(caseData?.id ?? "")) : []),
-    [caseData?.id, s],
+    () => (s ? buildAuditScenarios(s, String(caseData?.id ?? ""), content.auditScenarios) : []),
+    [caseData?.id, s, content.auditScenarios],
   );
   // Built once per case rather than per render: the delivery has to be the same
   // delivery every time this component re-renders, and a new carton appearing
   // mid-decision would invalidate the answer being reasoned about.
   const cartons = useMemo(
     () => (s
-      ? buildGoodsIn(String(caseData?.id ?? ""), s.shipments ?? [], new Date(), s.reconciliation ?? [])
+      ? buildGoodsIn(
+          String(caseData?.id ?? ""), s.shipments ?? [], new Date(),
+          s.reconciliation ?? [], content.cartons,
+        )
       : []),
-    [caseData?.id, s],
+    [caseData?.id, s, content.cartons],
   );
 
   useEffect(() => {

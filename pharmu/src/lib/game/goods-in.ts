@@ -48,7 +48,12 @@ const SHELF_LIFE_LADDER = [18, 12, 9, 6];
 /** Assumed shelf life, used only to print a manufacturing date on the carton. */
 const ASSUMED_SHELF_LIFE_MONTHS = 24;
 
-/** At most this many cartons get the full check - the phase shares a clock with four others. */
+/**
+ * The default number of consignments checked, when no difficulty says otherwise.
+ *
+ * The phase shares a clock with five others, so this is a cap rather than a
+ * target: Trainee sees fewer, Expert more.
+ */
 export const MAX_CARTONS = 3;
 
 export type ConditionKey = "outer" | "moisture" | "seal" | "tape";
@@ -284,8 +289,9 @@ export function buildGoodsIn(
   shipments: ShipmentLike[],
   now: Date = new Date(),
   stockCount: StockCountRow[] = [],
+  maxCartons: number = MAX_CARTONS,
 ): Carton[] {
-  const chosen = (shipments ?? []).slice(0, MAX_CARTONS);
+  const chosen = (shipments ?? []).slice(0, Math.max(1, maxCartons));
   if (!chosen.length) return [];
 
   const rng = makeRng(`goods-in:${caseId}`);

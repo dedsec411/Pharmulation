@@ -56,6 +56,43 @@ export const DIFFICULTY_RULES: Record<Difficulty, {
 };
 
 /**
+ * What difficulty changes about the case itself.
+ *
+ * Until now it changed the clock, the scoring multipliers and how much the
+ * mentor gave away after a mistake - and nothing else. No mode read the
+ * difficulty when building its content, so Expert and Trainee handed you the
+ * same work and scored it differently, which is not the same as being harder.
+ *
+ * These are the levers that do not require inventing anything: how much wrong
+ * stock is mixed in with the right stock, how many consignments and judgement
+ * calls a shift contains, and whether the acceptable range is printed next to
+ * the control or has to be looked up in the batch record. The record is one
+ * click away at every level, so Expert is asking you to consult it rather than
+ * withholding it.
+ */
+export const DIFFICULTY_CONTENT: Record<Difficulty, {
+  /** Wrong items mixed in among the right ones, on a bench or a shelf. */
+  distractors: number;
+  /** Consignments to check at goods-in. */
+  cartons: number;
+  /** Judgement calls in the operations audit. */
+  auditScenarios: number;
+  /** Is the acceptable range printed beside the control, or only in the record? */
+  showTolerances: boolean;
+}> = {
+  easy: { distractors: 1, cartons: 2, auditScenarios: 2, showTolerances: true },
+  medium: { distractors: 2, cartons: 3, auditScenarios: 3, showTolerances: true },
+  hard: { distractors: 4, cartons: 4, auditScenarios: 4, showTolerances: false },
+};
+
+export function difficultyContent(difficulty?: Difficulty | string | null) {
+  const key = (difficulty === "easy" || difficulty === "hard" || difficulty === "medium")
+    ? difficulty
+    : "medium";
+  return DIFFICULTY_CONTENT[key];
+}
+
+/**
  * Modes played against a clock, which is currently all of them.
  *
  * The distinction exists because warehousing was briefly a persistent facility
