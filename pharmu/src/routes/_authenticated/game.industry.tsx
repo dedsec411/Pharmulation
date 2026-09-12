@@ -1057,7 +1057,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{productChoice.form} dosage form - Batch size: {batchSizeLabel}</p>
                 </div>
                 <div className="rounded border border-amber-200/25 bg-foreground/5 px-3 py-2 font-mono text-xs text-slate-800 dark:text-slate-200 backdrop-blur">
-                  <p>BMR No. PHM-{caseData.id?.slice?.(0, 5) ?? "00001"}</p>
+                  <p><Abbr term="BMR" /> No. PHM-{caseData.id?.slice?.(0, 5) ?? "00001"}</p>
                   <p>Revision 01</p>
                 </div>
               </div>
@@ -1117,7 +1117,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
               ))}
             </ul>
             <button onClick={acknowledgeFormula} className="relative mt-5 rounded-full bg-amber-500 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_0_28px_-12px_rgba(245,158,11,0.9)] hover:bg-amber-400">
-              Acknowledge BMR
+              I have read the batch record
             </button>
           </section>
         )}
