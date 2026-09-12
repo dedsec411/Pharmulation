@@ -55,17 +55,17 @@ export const DIFFICULTY_RULES: Record<Difficulty, {
 };
 
 /**
- * Modes played against a clock.
+ * Modes played against a clock, which is currently all of them.
  *
- * Warehousing is not one of them. It is a facility that advances only when the
- * learner closes a week, so there is no case to race and no limit to scale -
- * and the type says so, rather than leaving a number in the table that every
- * screen would go on displaying.
+ * The distinction exists because warehousing was briefly a persistent facility
+ * with no case to race. That version is parked rather than deleted, so the
+ * type stays: putting it back is a matter of taking warehousing out of this
+ * record again, and the compiler then finds every screen that assumed a timer.
  */
-export type TimedMode = Exclude<Mode, "warehousing">;
+export type TimedMode = Mode;
 
 export function isTimedMode(mode: string): mode is TimedMode {
-  return mode !== "warehousing" && mode in MODE_TIMERS;
+  return mode in MODE_TIMERS;
 }
 
 /** Baseline seconds per case, at medium difficulty. */
@@ -76,6 +76,7 @@ export const MODE_TIMERS: Record<TimedMode, number> = {
   otc: 360,
   hospital: 240,
   industry: 360,
+  warehousing: 300,
 };
 
 /**

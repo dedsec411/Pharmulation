@@ -38,7 +38,7 @@ const MODES: ModeCard[] = [
 },
   { slug: "hospital", to: "/game/hospital", label: "Clinical", desc: "Build medication orders, check interactions.", icon: Hospital, emoji: "🏥", tag: "Medium", accent: "#6366F1", ink: "#4038B8", tint: "from-[#6366F1]/25 to-[#A78BFA]/10" },
   { slug: "industry", to: "/game/industry", label: "Industry", desc: "Run a tablet batch from formula to release.", icon: Factory, emoji: "🏭", tag: "Medium", accent: "#F59E0B", ink: "#9A5B06", tint: "from-[#F59E0B]/25 to-[#FBBF24]/10" },
-  { slug: "warehousing", to: "/game/warehousing", label: "Warehousing", desc: "Run a pharmacy week by week: licences, buying, storage, cash.", icon: Package, emoji: "📦", tag: "Ongoing", accent: "#0EA5E9", ink: "#0A6C99", tint: "from-[#0EA5E9]/25 to-[#38BDF8]/10" },
+  { slug: "warehousing", to: "/game/warehousing", label: "Warehousing", desc: "Receive stock, FEFO, cold chain & reconciliation.", icon: Package, emoji: "📦", tag: "Medium", accent: "#0EA5E9", ink: "#0A6C99", tint: "from-[#0EA5E9]/25 to-[#38BDF8]/10" },
 ];
 
 function Modes() {

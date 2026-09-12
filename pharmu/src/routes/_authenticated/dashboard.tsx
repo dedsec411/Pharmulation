@@ -82,7 +82,7 @@ const DAILY_CHALLENGES = [
   { label: "Rx Case", mode: "rx", difficulty: "Medium", to: "/game/community", bonus: "2x XP" },
   { label: "Clinical Review", mode: "hospital", difficulty: "Hard", to: "/game/hospital", bonus: "2x XP" },
   { label: "Industry Batch", mode: "industry", difficulty: "Medium", to: "/game/industry", bonus: "1.5x XP" },
-  { label: "Run Your Pharmacy", mode: "warehousing", difficulty: "Ongoing", to: "/game/warehousing", bonus: "1.5x XP" },
+  { label: "Warehouse Audit", mode: "warehousing", difficulty: "Medium", to: "/game/warehousing", bonus: "1.5x XP" },
 ];
 
 // Typewriter hook
