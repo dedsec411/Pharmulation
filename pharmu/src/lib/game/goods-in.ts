@@ -96,7 +96,14 @@ export type Carton = {
   supplier: string;
   /** What the carton really looks like. The learner has to record this. */
   condition: ConditionRecord;
-  conditionNote: string | null;
+  /**
+   * What you can see, in words.
+   *
+   * Always written, including for a sound carton. A note that appeared only
+   * when something was wrong would answer the condition check before the
+   * learner had looked at anything.
+   */
+  conditionNote: string;
   monthsToExpiry: number;
   po: { number: string; qty: number; raisedOn: string };
   dc: { number: string; batch: string; qty: number; date: string };
@@ -172,6 +179,9 @@ export function readStrength(product: string): string | null {
   return match ? match[1].replace(/\s+/g, "") : null;
 }
 
+export const SOUND_NOTE =
+  "The carton is square and dry, still strapped, and the manufacturer's seal across the flap is unbroken.";
+
 const DEFECT_NOTES: Record<ConditionKey, string> = {
   outer: "One corner of the outer carton is crushed and split; the inner packs show through the tear.",
   moisture: "A dried water stain runs up one side and the board is soft where it dried.",
@@ -238,7 +248,7 @@ export function buildGoodsIn(
       serial: makeSerial(rng),
       supplier,
       condition: { ...SOUND_CONDITION },
-      conditionNote: null,
+      conditionNote: SOUND_NOTE,
       monthsToExpiry: months,
       po: { number: poNumber, qty, raisedOn: iso(addMonths(now, -1)) },
       dc: { number: `DC-${intBetween(rng, 1000, 9999)}`, batch, qty, date: dcDate },
@@ -373,4 +383,46 @@ export function labelFields(carton: Carton): LabelField[] {
     { label: "Serial number", value: carton.serial, verify: "Unique to this carton. It is what traces this box if anything is queried later." },
   ];
   return fields.map((f, i) => ({ ...f, n: i + 1 }));
+}
+
+/** The condition record in words, for the feedback panel. */
+export function describeCondition(record: ConditionRecord): string {
+  const faults = CONDITION_ROWS.filter((r) => !record[r.key]).map((r) => r.bad.toLowerCase());
+  return faults.length ? faults.join(", ") : "no damage, dry, sealed, tape intact";
+}
+
+/**
+ * Why a call was wrong, in the three ways it can be.
+ *
+ * Kept here beside the rule that judged it so the explanation cannot drift from
+ * the grading, which is the thing a learner disputing a mark will compare.
+ */
+export function decisionFeedback(carton: Carton, option: string): {
+  errorType: string; whyWrong: string; whatToKnow: string;
+} {
+  const named = findingFor(option);
+
+  if (!carton.findings.length) {
+    return {
+      errorType: "Sound consignment refused",
+      whyWrong: `Nothing on this carton fails a check. The batch matches the challan, the count matches, ${carton.expiry ? `${carton.expiryLabel} leaves about ${carton.monthsToExpiry} months against a ${MIN_SHELF_LIFE_MONTHS}-month term, ` : ""}and the carton is sound. A refused delivery is a day of supply lost and a credit note to chase for nothing.`,
+      whatToKnow: "A discrepancy is raised against a fault you can point at on the paperwork. When every line agrees, sign for it and raise the GRN.",
+    };
+  }
+
+  const real = explainFinding(carton.findings[0], carton);
+
+  if (named === null) {
+    return {
+      errorType: "Faulty consignment accepted",
+      whyWrong: real.whyWrong,
+      whatToKnow: real.whatToKnow,
+    };
+  }
+
+  return {
+    errorType: "Wrong discrepancy raised",
+    whyWrong: `That is not what is wrong with this consignment. ${real.whyWrong}`,
+    whatToKnow: real.whatToKnow,
+  };
 }

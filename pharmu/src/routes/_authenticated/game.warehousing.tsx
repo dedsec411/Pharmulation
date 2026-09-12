@@ -18,6 +18,11 @@ import { AlertTriangle, Barcode, Flag, Lock, Package, Thermometer } from "lucide
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
+import { CartonCheck } from "@/components/game/CartonCheck";
+import {
+  buildGoodsIn, conditionMatches, correctDecision, decisionFeedback, describeCondition,
+  isDecisionCorrect, type Carton, type ConditionRecord,
+} from "@/lib/game/goods-in";
 
 export const Route = createFileRoute("/_authenticated/game/warehousing")({
   head: () => ({ meta: [{ title: "Warehousing - Pharmulation" }] }),
@@ -26,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/game/warehousing")({
   notFoundComponent: () => <div className="p-5 sm:p-8">Not found</div>,
 });
 
-type Phase = "receiving" | "dispatch" | "expiry" | "audit" | "reconcile" | "done";
+type Phase = "goodsIn" | "receiving" | "dispatch" | "expiry" | "audit" | "reconcile" | "done";
 
 type AuditScenario = {
   id: string;
@@ -170,7 +175,12 @@ function WarehouseGame() {
   const { difficulty, difficultyModal } = useDifficultyChoice("warehousing");
   const { caseData, loading, next } = useCaseLoader("warehousing", difficulty);
   const s = caseData?.shipment_json;
-  const [phase, setPhase] = useState<Phase>("receiving");
+  const [phase, setPhase] = useState<Phase>("goodsIn");
+
+  // goods-in
+  const [goodsInIdx, setGoodsInIdx] = useState(0);
+  const [conditions, setConditions] = useState<Record<string, ConditionRecord>>({});
+  const [dcTried, setDcTried] = useState<Record<number, string[]>>({});
 
   const [points, setPoints] = useState(0);
   const [errors, setErrors] = useState(0);
@@ -210,9 +220,18 @@ function WarehouseGame() {
     setExternalPaused: timer.setExternalPaused,
   });
   const auditScenarios = useMemo(() => s ? buildAuditScenarios(s) : [], [caseData?.id, s]);
+  // Built once per case rather than per render: the delivery has to be the same
+  // delivery every time this component re-renders, and a new carton appearing
+  // mid-decision would invalidate the answer being reasoned about.
+  const cartons = useMemo(
+    () => (s ? buildGoodsIn(String(caseData?.id ?? ""), s.shipments ?? []) : []),
+    [caseData?.id, s],
+  );
 
   useEffect(() => {
-    setPhase("receiving"); setPoints(0); setErrors(0); setPlaced({});
+    setPhase(cartons.length ? "goodsIn" : "receiving");
+    setGoodsInIdx(0); setConditions({}); setDcTried({});
+    setPoints(0); setErrors(0); setPlaced({});
     setActiveShip(null); setLandedShip(null); setRegisterOpen(null); setRegisterData({ qty: "", receiver: "" });
     setContaminated(false); setHints(0); setDispatchIdx(0); setDispatchAns({});
     setExpiryAns({}); setAuditIdx(0); setAuditAns({}); setReconChecked({}); setResult(null);
@@ -225,6 +244,58 @@ function WarehouseGame() {
         <CaseLoading label="Booking in the delivery" />
       </>
     );
+  }
+
+  /**
+   * The goods received note carries what was actually on the bay, whatever was
+   * ticked. A note that records a torn carton as sound is the document every
+   * later mistake hides behind, so a mis-read is marked and corrected rather
+   * than carried forward into the decision that follows it.
+   */
+  function recordCondition(carton: Carton, drafted: ConditionRecord) {
+    if (conditionMatches(carton, drafted)) {
+      setPoints((p) => p + 10);
+      toastScore(10, "Condition recorded");
+    } else {
+      setErrors((e) => e + 1);
+      setPoints((p) => p - 5);
+      toastScore(-5, "Condition mis-recorded");
+      errPanel.logError({
+        errorType: "Carton condition recorded wrongly",
+        wrongChoice: `Recorded as ${describeCondition(drafted)}`,
+        correctChoice: `Actually ${describeCondition(carton.condition)}`,
+        whyWrong: `${carton.conditionNote} The goods received note is the only record of how the carton arrived, and once it is signed clean any damage found later is yours to prove.`,
+        whatToKnow: "Check the outer carton before it is opened and while the driver is still there. Photograph anything that is not sound and write it on the copy of the challan that goes back with them.",
+      });
+    }
+    setConditions((m) => ({ ...m, [carton.shipmentId]: carton.condition }));
+  }
+
+  function decideCarton(carton: Carton, option: string) {
+    const idx = goodsInIdx;
+    if (!isDecisionCorrect(carton, option)) {
+      // Stay on the carton. The explanation is only worth anything while the
+      // decision it belongs to can still be changed.
+      setDcTried((m) => ({ ...m, [idx]: [...(m[idx] ?? []), option] }));
+      setErrors((e) => e + 1);
+      setPoints((p) => p - 12);
+      toastScore(-12, "Wrong call at the bay");
+      const feedback = decisionFeedback(carton, option);
+      errPanel.logError({
+        errorType: feedback.errorType,
+        wrongChoice: option,
+        correctChoice: correctDecision(carton),
+        whyWrong: feedback.whyWrong,
+        whatToKnow: feedback.whatToKnow,
+      });
+      return;
+    }
+
+    const earned = Math.round(20 * retryRewardFactor((dcTried[idx] ?? []).length));
+    setPoints((p) => p + earned);
+    toastScore(earned, carton.findings.length ? "Discrepancy raised" : "Booked in");
+    if (idx + 1 < cartons.length) setGoodsInIdx((i) => i + 1);
+    else setPhase("receiving");
   }
 
   function placeShipment(zoneOrQuarantine: string) {
@@ -436,6 +507,7 @@ function WarehouseGame() {
     // profile page, leaderboard and educator roster along with everyone
     // else's real numbers.
     const totalDecisions =
+      cartons.length * 2 +
       (s.shipments?.length ?? 0) +
       (s.dispatch?.length ?? 0) +
       (s.expiring?.length ?? 0) +
@@ -475,6 +547,7 @@ function WarehouseGame() {
   }
 
   const phaseLabel: Record<Phase, string> = {
+    goodsIn: "Goods-in (challan check)",
     receiving: "Receiving stock", dispatch: "Dispatch (FEFO)", expiry: "Expiry management",
     audit: "Operations audit", reconcile: "Reconciliation", done: "Done",
   };
@@ -497,6 +570,21 @@ function WarehouseGame() {
 
       <main className="relative mx-auto max-w-7xl overflow-hidden px-4 py-4">
         <ModeAmbientLayer mode="warehousing" intensity="screen" />
+        {phase === "goodsIn" && cartons[goodsInIdx] && (
+          <CartonCheck
+            /* Keyed so the four condition toggles start blank on the next
+               carton rather than carrying the last one's answers over. */
+            key={cartons[goodsInIdx].shipmentId}
+            carton={cartons[goodsInIdx]}
+            index={goodsInIdx}
+            total={cartons.length}
+            recorded={conditions[cartons[goodsInIdx].shipmentId] ?? null}
+            ruledOut={dcTried[goodsInIdx] ?? []}
+            onRecord={(drafted) => recordCondition(cartons[goodsInIdx], drafted)}
+            onDecide={(option) => decideCarton(cartons[goodsInIdx], option)}
+          />
+        )}
+
         {phase === "receiving" && (
           <section className="relative z-10 grid gap-4 lg:grid-cols-[1fr_1.3fr]">
             <div className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-4 shadow-[0_24px_80px_-48px_rgba(56,189,248,0.8)] backdrop-blur-xl">

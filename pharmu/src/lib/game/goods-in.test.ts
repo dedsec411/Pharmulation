@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   ACCEPT_OPTION, CONDITION_ROWS, MAX_CARTONS, MIN_SHELF_LIFE_MONTHS, SOUND_CONDITION,
-  buildGoodsIn, conditionMatches, correctDecision, findingLabel, gs1CheckDigit,
+  buildGoodsIn, conditionMatches, correctDecision, decisionFeedback, describeCondition,
+  findingLabel, gs1CheckDigit,
   isDecisionCorrect, labelFields, monthsBetween, readStrength,
   type ShipmentLike,
 } from "./goods-in";
@@ -215,5 +216,40 @@ describe("labelFields", () => {
     for (const field of labelFields(buildGoodsIn("case-a", LONG_DATED, NOW)[0])) {
       expect(field.verify.length).toBeGreaterThan(10);
     }
+  });
+});
+
+describe("decisionFeedback", () => {
+  const cartons = buildGoodsIn("case-a", LONG_DATED, NOW);
+  const sound = cartons.find((c) => !c.findings.length)!;
+  const faulty = cartons.find((c) => c.findings.length)!;
+
+  it("names the three ways a call goes wrong", () => {
+    expect(decisionFeedback(sound, findingLabel("damaged")).errorType).toBe("Sound consignment refused");
+    expect(decisionFeedback(faulty, ACCEPT_OPTION).errorType).toBe("Faulty consignment accepted");
+    const wrong = (["batch-mismatch", "qty-mismatch", "damaged", "short-shelf-life"] as const)
+      .find((c) => !faulty.findings.includes(c))!;
+    expect(decisionFeedback(faulty, findingLabel(wrong)).errorType).toBe("Wrong discrepancy raised");
+  });
+
+  it("always says what was actually wrong with a faulty carton", () => {
+    for (const seed of ["a", "b", "c", "d", "e", "f"]) {
+      for (const carton of buildGoodsIn(seed, LONG_DATED, NOW)) {
+        if (!carton.findings.length) continue;
+        const feedback = decisionFeedback(carton, ACCEPT_OPTION);
+        expect(feedback.whyWrong.length).toBeGreaterThan(40);
+        expect(feedback.whatToKnow.length).toBeGreaterThan(40);
+      }
+    }
+  });
+});
+
+describe("describeCondition", () => {
+  it("reads as a sound carton when nothing is flagged", () => {
+    expect(describeCondition(SOUND_CONDITION)).toContain("no damage");
+  });
+
+  it("lists only what was flagged", () => {
+    expect(describeCondition({ ...SOUND_CONDITION, seal: false })).toBe("seal broken");
   });
 });
