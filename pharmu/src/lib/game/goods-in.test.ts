@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   ACCEPT_OPTION, CONDITION_ROWS, MAX_CARTONS, SOUND_CONDITION,
-  buildGoodsIn, conditionMatches, correctDecision, decisionFeedback, describeCondition,
+  buildGoodsIn, conditionMatches, correctDecision, decisionFeedback, decisionOptionsFor,
+  describeCondition,
   findingLabel, gs1CheckDigit,
   isDecisionCorrect, labelFields, monthsBetween, readStrength, stockCountNote,
   type ShipmentLike,
@@ -394,5 +395,35 @@ describe("what the stock count already said", () => {
 
   it("works for a case with no stock count at all", () => {
     expect(buildGoodsIn("case-a", LONG_DATED, NOW).every((c) => !c.flaggedAtStockCount)).toBe(true);
+  });
+});
+
+describe("where the calls sit on the form", () => {
+  it("offers all five, once each, however they are ordered", () => {
+    const carton = buildGoodsIn("case-a", LONG_DATED, NOW)[0];
+    const shown = decisionOptionsFor(carton).map((o) => o.value);
+    expect(new Set(shown).size).toBe(5);
+    expect(shown).toContain(ACCEPT_OPTION);
+  });
+
+  it("shows the same form when a carton is reopened", () => {
+    const carton = buildGoodsIn("case-a", LONG_DATED, NOW)[0];
+    expect(decisionOptionsFor(carton)).toEqual(decisionOptionsFor(carton));
+  });
+
+  // The bug: accept was written first and stayed first, so a sound
+  // consignment could be cleared by pressing the top button without reading
+  // the three-way match at all.
+  it("does not put accept at the top of every carton", () => {
+    const positions = new Set<number>();
+    for (const spread of Object.values(REAL_SPREADS)) {
+      for (const seed of ["a", "b", "c", "d", "e"]) {
+        for (const carton of buildGoodsIn(seed, atMonths(spread), NOW)) {
+          positions.add(decisionOptionsFor(carton).findIndex((o) => o.value === ACCEPT_OPTION));
+        }
+      }
+    }
+    expect(positions.size).toBeGreaterThan(2);
+    expect(positions.has(0)).toBe(true);
   });
 });

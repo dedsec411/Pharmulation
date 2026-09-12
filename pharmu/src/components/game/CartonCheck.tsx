@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ClipboardCheck, Eye, FileText, History, PackageCheck, ScanLine } from "lucide-react";
 import {
-  ACCEPT_OPTION, CONDITION_ROWS, DECISION_OPTIONS,
+  ACCEPT_OPTION, CONDITION_ROWS, decisionOptionsFor,
   labelFields, stockCountNote, type Carton, type ConditionKey, type ConditionRecord,
 } from "@/lib/game/goods-in";
 
@@ -441,7 +441,7 @@ function ThreeWayMatch({
           </p>
         )}
         <div className="mt-2 grid gap-2">
-          {DECISION_OPTIONS.map((option) => {
+          {decisionOptionsFor(carton).map((option) => {
             const out = ruledOut.includes(option.value);
             const accept = option.value === ACCEPT_OPTION;
             return (

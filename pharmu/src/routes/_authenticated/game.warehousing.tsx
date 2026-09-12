@@ -18,6 +18,7 @@ import { AlertTriangle, Barcode, Flag, Lock, Package, Thermometer } from "lucide
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
+import { shuffledBySeed } from "@/lib/game/no-free-answers";
 import { CartonCheck } from "@/components/game/CartonCheck";
 import {
   buildGoodsIn, conditionMatches, correctDecision, decisionFeedback, describeCondition,
@@ -47,7 +48,7 @@ type AuditScenario = {
   whatToKnow: string;
 };
 
-function buildAuditScenarios(s: any): AuditScenario[] {
+function buildAuditScenarios(s: any, caseId: string): AuditScenario[] {
   const shipments = Array.isArray(s.shipments) ? s.shipments : [];
   const expiring = Array.isArray(s.expiring) ? s.expiring : [];
   const reconciliation = Array.isArray(s.reconciliation) ? s.reconciliation : [];
@@ -166,7 +167,13 @@ function buildAuditScenarios(s: any): AuditScenario[] {
     });
   }
 
-  return scenarios.slice(0, 4);
+  // The correct action was written into a fixed slot - first in two of these
+  // five - and the order never changed between plays, so the audit could be
+  // answered from memory of where the answer sat rather than from the case.
+  return scenarios.slice(0, 4).map((scenario) => ({
+    ...scenario,
+    options: shuffledBySeed(scenario.options, `${caseId}:audit:${scenario.id}`),
+  }));
 }
 
 function WarehouseGame() {
@@ -219,7 +226,10 @@ function WarehouseGame() {
     mentorTip: caseData?.mentor_tip,
     setExternalPaused: timer.setExternalPaused,
   });
-  const auditScenarios = useMemo(() => s ? buildAuditScenarios(s) : [], [caseData?.id, s]);
+  const auditScenarios = useMemo(
+    () => (s ? buildAuditScenarios(s, String(caseData?.id ?? "")) : []),
+    [caseData?.id, s],
+  );
   // Built once per case rather than per render: the delivery has to be the same
   // delivery every time this component re-renders, and a new carton appearing
   // mid-decision would invalidate the answer being reasoned about.
@@ -687,19 +697,24 @@ function WarehouseGame() {
             <div className="mt-5 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/[0.04] dark:bg-slate-900/35 p-4">
               <div className="mb-3 h-2 rounded-full bg-gradient-to-r from-sky-300/50 via-slate-300 dark:via-slate-700 to-sky-300/30" />
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {[...s.dispatch[dispatchIdx].batches]
-                  .sort((a: any, b: any) => String(a.expiry).localeCompare(String(b.expiry)))
+                {/* Sorted earliest-first, highlighted, and labelled "front" -
+                    which is exactly the answer FEFO is asking for. The whole
+                    phase could be played by clicking the marked card without
+                    reading a single expiry date. Shelf slots are now just
+                    slots. */}
+                {shuffledBySeed(
+                  s.dispatch[dispatchIdx].batches as any[],
+                  `${caseData?.id ?? ""}:fefo:${dispatchIdx}`,
+                )
                   .map((b: any, i: number) => (
                     <motion.button
                       key={b.batch}
                       onClick={() => answerDispatch(b.batch)}
                       whileTap={{ y: 8, scale: 0.98 }}
-                      className={`relative min-h-28 rounded-lg border p-3 text-left text-sm shadow-[0_16px_36px_-28px_rgba(56,189,248,0.9)] transition hover:-translate-y-1 hover:border-sky-300/60 hover:bg-sky-400/10 ${
-                        i === 0 ? "border-sky-300/55 bg-sky-400/15" : "border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55"
-                      }`}
+                      className="relative min-h-28 rounded-lg border border-sky-300/20 bg-slate-900/[0.07] p-3 text-left text-sm shadow-[0_16px_36px_-28px_rgba(56,189,248,0.9)] transition hover:-translate-y-1 hover:border-sky-300/60 hover:bg-sky-400/10 dark:bg-slate-950/55"
                     >
                       <span className="absolute right-3 top-3 rounded border border-sky-200/30 px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-sky-100/70">
-                        {i === 0 ? "front" : `row ${i + 1}`}
+                        {`slot ${i + 1}`}
                       </span>
                       <Package className="mb-3 size-7 text-sky-200/80" />
                       <p className="font-semibold">{b.batch}</p>
@@ -724,7 +739,10 @@ function WarehouseGame() {
                       <p className="text-xs text-muted-foreground">Batch {it.batch} · expires {it.expiry} {it.hasOrder ? "· has active order" : "· no orders"}</p>
                     </div>
                     <div className="flex gap-1">
-                      {["Mark for Priority Dispatch", "Mark for Return to Supplier"].map((a) => {
+                      {shuffledBySeed(
+                        ["Mark for Priority Dispatch", "Mark for Return to Supplier"],
+                        `${caseData?.id ?? ""}:expiry:${i}`,
+                      ).map((a) => {
                         const ruledOut = (expiryTried[i] ?? []).includes(a);
                         return (
                           <button key={a} disabled={!!expiryAns[i] || ruledOut} onClick={() => answerExpiry(i, a)}

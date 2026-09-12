@@ -1,4 +1,5 @@
 import { makeRng, intBetween, pick, type Rng } from "./seeded-random";
+import { shuffledBySeed } from "./no-free-answers";
 
 /**
  * Goods-in: the delivery challan check that happens before anything is put away.
@@ -400,6 +401,18 @@ export const DECISION_OPTIONS: Array<{ value: string; finding: FindingCode | nul
   { value: "Raise a discrepancy - shelf life is short of the term on the purchase order", finding: "short-shelf-life" },
   { value: "Raise a discrepancy - carton damaged or seal broken", finding: "damaged" },
 ];
+
+/**
+ * The five calls, in an order that is not the same every carton.
+ *
+ * Accept was written first and stayed first, so a sound consignment could be
+ * cleared by pressing the top button without reading the match at all - and
+ * once that worked twice, the discrepancy reasons underneath never got read
+ * either. Seeded on the carton so re-opening one shows the same form.
+ */
+export function decisionOptionsFor(carton: Carton) {
+  return shuffledBySeed(DECISION_OPTIONS, `${carton.shipmentId}:${carton.dc.number}:call`);
+}
 
 export function findingFor(option: string): FindingCode | null {
   return DECISION_OPTIONS.find((o) => o.value === option)?.finding ?? null;
