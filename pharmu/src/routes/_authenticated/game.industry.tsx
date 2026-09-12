@@ -19,6 +19,7 @@ import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { shuffledBySeed, wrongStart } from "@/lib/game/no-free-answers";
 import { difficultyContent } from "@/lib/game/shared";
 import { groupByRole, roleFor } from "@/lib/game/excipients";
+import { Abbr } from "@/components/Abbr";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 

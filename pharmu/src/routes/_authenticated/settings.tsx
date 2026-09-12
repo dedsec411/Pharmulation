@@ -74,6 +74,12 @@ function SettingsPage() {
           <Toggle label="Sound effects" desc="Chimes for answers, level-ups and timers" checked={s.soundEnabled} onChange={s.setSound} />
           <Toggle label="Mentor tips" desc="Show tip popups during gameplay" checked={s.mentorTipsEnabled} onChange={s.setMentorTips} />
           <Toggle label="Timer warnings" desc="Audible ticking in the last 30 seconds" checked={s.timerWarningsEnabled} onChange={s.setTimerWarnings} />
+          <Toggle
+            label="Plain English"
+            desc="Write short forms out in full - FEFO becomes First Expired, First Out"
+            checked={s.plainEnglish}
+            onChange={s.setPlainEnglish}
+          />
         </section>
 
         <section className="glass-card p-6 space-y-3">

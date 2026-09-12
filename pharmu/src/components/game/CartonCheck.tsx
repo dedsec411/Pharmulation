@@ -5,6 +5,7 @@ import {
   ACCEPT_OPTION, CONDITION_ROWS, decisionOptionsFor,
   labelFields, stockCountNote, type Carton, type ConditionKey, type ConditionRecord,
 } from "@/lib/game/goods-in";
+import { Abbr } from "@/components/Abbr";
 
 /**
  * Closing the challan at the end of the shift.
@@ -59,7 +60,7 @@ export function CartonCheck({
           </p>
           <h2 className="mt-1 truncate text-lg font-bold sm:text-xl">{carton.supplier}</h2>
           <p className="text-xs text-muted-foreground">
-            Challan {carton.dc.number} dated {carton.dc.date} &middot; against {carton.po.number}
+            <Abbr term="DC" /> {carton.dc.number} dated {carton.dc.date} &middot; against <Abbr term="PO" /> {carton.po.number}
           </p>
         </div>
         <p className="shrink-0 rounded-full border border-sky-300/30 px-3 py-1 text-xs font-semibold tabular-nums text-sky-700 dark:text-sky-200">
@@ -319,7 +320,7 @@ function ConditionPanel({
       </fieldset>
       {recorded ? (
         <p className="mt-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-          Condition written to the goods received note.
+          Condition written to the <Abbr term="GRN" />.
         </p>
       ) : (
         <button
@@ -338,7 +339,7 @@ function ConditionPanel({
 const COLUMNS: Array<{ key: "po" | "dc" | "grn"; head: string }> = [
   { key: "po", head: "Purchase order" },
   { key: "dc", head: "Delivery challan" },
-  { key: "grn", head: "Goods received" },
+  { key: "grn", head: "Goods received note" },
 ];
 
 /** Ordered, claimed, found - the three documents a receipt has to agree with. */

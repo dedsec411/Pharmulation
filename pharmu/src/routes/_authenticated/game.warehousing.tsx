@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { shuffledBySeed } from "@/lib/game/no-free-answers";
+import { Abbr } from "@/components/Abbr";
 import { NO_SHIFT, buildWarehouseShift, describeShift } from "@/lib/game/warehouse-case";
 import { CartonCheck } from "@/components/game/CartonCheck";
 import {
@@ -611,8 +612,8 @@ function WarehouseGame() {
   }
 
   const phaseLabel: Record<Phase, string> = {
-    goodsIn: "Challan and GRN",
-    receiving: "Receiving stock", dispatch: "Dispatch (FEFO)", expiry: "Expiry management",
+    goodsIn: "Challan and goods received note",
+    receiving: "Receiving stock", dispatch: "Dispatch (first expired, first out)", expiry: "Expiry management",
     audit: "Operations audit", reconcile: "Reconciliation", done: "Done",
   };
 
@@ -724,9 +725,9 @@ function WarehouseGame() {
 
         {phase === "dispatch" && s.dispatch[dispatchIdx] && (
           <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-50px_rgba(56,189,248,0.85)] backdrop-blur-xl">
-            <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">FEFO dispatch {dispatchIdx + 1} / {s.dispatch.length}</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80"><Abbr term="FEFO" /> dispatch {dispatchIdx + 1} / {s.dispatch.length}</p>
             <h3 className="mt-1 text-lg font-bold">Pick a batch of {s.dispatch[dispatchIdx].drug}</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">Use FEFO - the earliest expiry sits at the front of the shelf.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Use <Abbr term="FEFO" /> - the earliest expiry goes out first, wherever it is on the shelf.</p>
             <div className="mt-5 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/[0.04] dark:bg-slate-900/35 p-4">
               <div className="mb-3 h-2 rounded-full bg-gradient-to-r from-sky-300/50 via-slate-300 dark:via-slate-700 to-sky-300/30" />
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

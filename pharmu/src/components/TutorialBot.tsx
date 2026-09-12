@@ -15,6 +15,8 @@ import {
 } from "@/lib/tutorial";
 import { binFor, hasSeenGuide, markGuideSeen, shouldAutoRunTour } from "@/lib/tutorial-seen";
 import { useTutorialStore } from "@/lib/tutorial-store";
+import { useSettings } from "@/lib/settings-store";
+import { glossaryAlphabetical } from "@/lib/glossary";
 
 /**
  * Everything the panel can be asked for, in the order somebody would want it.
@@ -51,6 +53,8 @@ export function TutorialBot() {
   const { profile, setProfile } = useAuthStore();
   const { open, requestedKey, view, openForPage, openGuide, close, setView } = useTutorialStore();
 
+  const plainEnglish = useSettings((state) => state.plainEnglish);
+  const setPlainEnglish = useSettings((state) => state.setPlainEnglish);
   const [step, setStep] = useState(0);
   const [chatOpen, setChatOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -259,6 +263,40 @@ export function TutorialBot() {
                         </li>
                       ))}
                     </ol>
+
+                    {/* The demo jury could not read the screens because the
+                        short forms assume you already know them. This is the
+                        one place somebody looking for help will already be. */}
+                    <div className="mt-7 border-t border-border/40 pt-5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                          Short forms
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setPlainEnglish(!plainEnglish)}
+                          aria-pressed={plainEnglish}
+                          className={`rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-[0.97] ${
+                            plainEnglish
+                              ? "border-primary/60 bg-primary/15 text-primary"
+                              : "border-border/50 text-muted-foreground hover:border-primary/40"
+                          }`}
+                        >
+                          {plainEnglish ? "Plain English is on" : "Write them out in full"}
+                        </button>
+                      </div>
+                      <dl className="mt-3 space-y-2.5">
+                        {glossaryAlphabetical().map((entry) => (
+                          <div key={entry.term} className="flex gap-3">
+                            <dt className="w-14 shrink-0 text-sm font-black tabular-nums text-primary">{entry.term}</dt>
+                            <dd className="min-w-0">
+                              <p className="text-sm font-semibold leading-snug">{entry.full}</p>
+                              <p className="mt-0.5 text-xs text-muted-foreground">{entry.plain}</p>
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
 
                     <div className="mt-7 border-t border-border/40 pt-5">
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
