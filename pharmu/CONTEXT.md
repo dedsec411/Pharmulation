@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **745 tests across 37 files, all passing**.
+current baseline is **764 tests across 39 files, all passing**.
 
 ---
 
@@ -231,6 +231,21 @@ Still on fixed pools with no generator: Rx (7 templates, none `hard`), OTC,
 Clinical, Industry. Industry varies through its form/product picker rather than
 its case rows, so it is less exposed.
 
+### Short forms (the jury's objection)
+`src/lib/glossary.ts` (21 entries, tested) + `src/components/Abbr.tsx`.
+`<Abbr term="FEFO" />` renders the short form with hover *and* tap definitions
+— tap matters, `title` does nothing on a phone. A **Plain English** switch
+(Settings, and in the guide panel) expands every short form at once. The guide
+panel also carries the full glossary. Don't delete the abbreviations: they are
+what a pharmacist meets at work.
+
+### The guest demo account
+It is an ordinary account, so **Settings → delete account once destroyed it**
+and took the landing-page button down with it. `deleteOwnAccount` now refuses
+for the demo, checked against `GUEST_EMAIL` server-side rather than an id,
+because recreating the account assigns a new one. If it is ever recreated,
+update `GUEST_USER_ID` in `guest.functions.ts` (leaderboard filters + tour).
+
 ### No free answers
 `src/lib/game/no-free-answers.ts` (tested). Two rules every mode must follow:
 
@@ -344,11 +359,6 @@ Now: 896 medicines, 1,286 brand names, 4 modes, 65 case files, all countable.
 Do not reintroduce unverifiable claims.
 
 **Open items:**
-- **The guest demo account has been deleted from Supabase** (auth user, its
-  `profiles` row and all its seeded scores are gone, as of 13 September 2026).
-  `GUEST_EMAIL`/`GUEST_PASSWORD` in `.env` no longer authenticate, so "Try it
-  as a guest" fails with "Could not start the demo". It needs recreating and
-  re-seeding before the showcase, or the button removing.
 - `PRESCRIPTOAI_API_KEY` must be set in the Vercel project or the scanner
   reports itself unconfigured
 - `SITE_URL` in `src/lib/site.ts` is `https://pharmulation.vercel.app`; if a
