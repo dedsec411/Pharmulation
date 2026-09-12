@@ -58,8 +58,12 @@ export function CartonCheck({
         </p>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[1.05fr_1fr]">
-        <div className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] p-4 backdrop-blur-xl dark:bg-slate-950/55">
+      {/* min-w-0 on both columns: a grid item's automatic minimum size is its
+          content, so the match table's min width would otherwise set a floor
+          for the whole column and push the phase off the side of a phone.
+          items-start stops the shorter column stretching into an empty box. */}
+      <div className="grid items-start gap-4 lg:grid-cols-[1.05fr_1fr]">
+        <div className="min-w-0 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] p-4 backdrop-blur-xl dark:bg-slate-950/55">
           <p className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-sky-600 dark:text-sky-300">
             <PackageCheck className="size-3.5" aria-hidden="true" /> On the bay
           </p>
@@ -70,7 +74,7 @@ export function CartonCheck({
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <ConditionPanel
             draft={draft}
             recorded={recorded}
@@ -156,7 +160,7 @@ function CartonGraphic({
                 <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black tabular-nums text-white" aria-hidden="true">
                   {f.n}
                 </span>
-                <dt className="w-24 shrink-0 text-[10px] uppercase tracking-wide text-slate-500">{f.label}</dt>
+                <dt className="w-24 shrink-0 text-[10px] uppercase tracking-wide text-slate-500 sm:w-32">{f.label}</dt>
                 <dd className={`min-w-0 flex-1 break-words text-xs font-semibold ${f.label === "Product name" ? "text-sm" : ""}`}>
                   {f.value}
                 </dd>
@@ -278,7 +282,13 @@ function ConditionPanel({
   );
 }
 
-/** Ordered, claimed, found. The mismatch is only marked once the call has been made. */
+const COLUMNS: Array<{ key: "po" | "dc" | "grn"; head: string }> = [
+  { key: "po", head: "Purchase order" },
+  { key: "dc", head: "Delivery challan" },
+  { key: "grn", head: "Goods received" },
+];
+
+/** Ordered, claimed, found - the three documents a receipt has to agree with. */
 function ThreeWayMatch({
   carton, recorded, ruledOut, onDecide,
 }: {
@@ -293,7 +303,7 @@ function ThreeWayMatch({
     : null;
 
   const rows: Array<{ label: string; po: string; dc: string; grn: string }> = [
-    { label: "Document", po: carton.po.number, dc: carton.dc.number, grn: "Raised on accept" },
+    { label: "Document", po: carton.po.number, dc: carton.dc.number, grn: "Raised on acceptance" },
     { label: "Batch", po: "As supplied", dc: carton.dc.batch, grn: carton.batch },
     { label: "Quantity", po: `${carton.po.qty} packs`, dc: `${carton.dc.qty} packs`, grn: `${carton.qty} packs counted` },
     {
@@ -321,23 +331,46 @@ function ThreeWayMatch({
         What you ordered, what the supplier says they sent, and what is actually in front of you.
       </p>
 
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full min-w-[30rem] border-collapse text-left text-xs">
+      {/* Two renderings of one array. A phone got the table in a horizontal
+          scroller, which left "goods received" - the column that carries what
+          is actually in front of you - off the right edge and easy to miss
+          entirely. The comparison is the whole point of the screen, so on a
+          small screen each line stacks instead. */}
+      <dl className="mt-3 space-y-2 sm:hidden">
+        {rows.map((r) => (
+          <div key={r.label} className="rounded-xl border border-border/40 p-2.5">
+            <dt className="text-xs font-bold">{r.label}</dt>
+            <dd className="mt-1 space-y-0.5">
+              {COLUMNS.map((col) => (
+                <div key={col.key} className="flex justify-between gap-3 text-xs">
+                  <span className="text-muted-foreground">{col.head}</span>
+                  <span className="text-right tabular-nums">{r[col.key]}</span>
+                </div>
+              ))}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-3 hidden overflow-x-auto sm:block">
+        <table className="w-full min-w-[26rem] border-collapse text-left text-xs">
           <thead>
             <tr className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               <th scope="col" className="py-1.5 pr-2 font-semibold">Line</th>
-              <th scope="col" className="py-1.5 pr-2 font-semibold">Purchase order</th>
-              <th scope="col" className="py-1.5 pr-2 font-semibold">Delivery challan</th>
-              <th scope="col" className="py-1.5 font-semibold">Goods received</th>
+              {COLUMNS.map((col) => (
+                <th key={col.key} scope="col" className="py-1.5 pr-2 font-semibold">{col.head}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.label} className="border-t border-border/40 align-top">
                 <th scope="row" className="py-2 pr-2 font-semibold">{r.label}</th>
-                <td className="py-2 pr-2 text-muted-foreground">{r.po}</td>
-                <td className="py-2 pr-2 tabular-nums">{r.dc}</td>
-                <td className="py-2 tabular-nums">{r.grn}</td>
+                {COLUMNS.map((col) => (
+                  <td key={col.key} className={`py-2 pr-2 tabular-nums ${col.key === "po" ? "text-muted-foreground" : ""}`}>
+                    {r[col.key]}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
