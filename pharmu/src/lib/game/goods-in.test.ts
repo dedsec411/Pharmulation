@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ACCEPT_OPTION, CONDITION_ROWS, MAX_CARTONS, MIN_SHELF_LIFE_MONTHS, SOUND_CONDITION,
+  ACCEPT_OPTION, CONDITION_ROWS, MAX_CARTONS, SOUND_CONDITION,
   buildGoodsIn, conditionMatches, correctDecision, decisionFeedback, describeCondition,
   findingLabel, gs1CheckDigit,
   isDecisionCorrect, labelFields, monthsBetween, readStrength,
@@ -104,7 +104,7 @@ describe("buildGoodsIn", () => {
     for (const seed of ["a", "b", "c", "d", "e", "f"]) {
       for (const carton of buildGoodsIn(seed, mixed, NOW)) {
         if (!carton.findings.length) {
-          expect(carton.monthsToExpiry).toBeGreaterThanOrEqual(MIN_SHELF_LIFE_MONTHS);
+          expect(carton.monthsToExpiry).toBeGreaterThanOrEqual(carton.po.minShelfLifeMonths);
         }
       }
     }
@@ -251,5 +251,65 @@ describe("describeCondition", () => {
 
   it("lists only what was flagged", () => {
     expect(describeCondition({ ...SOUND_CONDITION, seal: false })).toBe("seal broken");
+  });
+});
+
+/**
+ * The spreads the eight warehousing cases actually deliver, in months from
+ * today. Five of them had no batch reaching twelve months, which is what a
+ * fixed threshold turned into "refuse everything".
+ */
+const REAL_SPREADS: Record<string, number[]> = {
+  "morning receiving": [7, 12, 3],
+  "cold-chain heavy day": [6, 3, 1],
+  "controlled receipt": [10, 7, 3],
+  "excursion detected": [5, 8, 2],
+  "routine ambient": [18, 15, 21],
+  "insulin shipment": [7, 9, 8],
+  "vitamins": [11, 13, 16],
+  "multi-product FEFO": [6, 11],
+};
+
+function atMonths(months: number[]): ShipmentLike[] {
+  return months.map((m, i) => {
+    const expiry = new Date(NOW);
+    expiry.setMonth(expiry.getMonth() + m);
+    return {
+      id: `S${i + 1}`, drug: `Medicine ${i + 1} 10mg`, batch: `MED-${i + 1}0${m}`,
+      expiry: expiry.toISOString().slice(0, 10), requirement: "Store below 25°C",
+    };
+  });
+}
+
+describe("against the deliveries the real cases carry", () => {
+  for (const [name, spread] of Object.entries(REAL_SPREADS)) {
+    it(`leaves ${name} with something to accept and something to stop`, () => {
+      for (const seed of ["a", "b", "c", "d"]) {
+        const cartons = buildGoodsIn(`${seed}-${name}`, atMonths(spread), NOW);
+        expect(cartons.some((c) => !c.findings.length)).toBe(true);
+        expect(cartons.some((c) => c.findings.length)).toBe(true);
+      }
+    });
+  }
+
+  it("writes the term it judged by onto the order the learner can read", () => {
+    for (const spread of Object.values(REAL_SPREADS)) {
+      const cartons = buildGoodsIn("case-a", atMonths(spread), NOW);
+      const term = cartons[0].po.minShelfLifeMonths;
+      expect([6, 9, 12, 18]).toContain(term);
+      expect(Math.max(...spread)).toBeGreaterThanOrEqual(term);
+      for (const carton of cartons) {
+        expect(carton.po.minShelfLifeMonths).toBe(term);
+        expect(carton.findings.includes("short-shelf-life")).toBe(carton.monthsToExpiry < term);
+      }
+    }
+  });
+
+  // A delivery where nothing has any life left should read as one to turn away,
+  // not be rescued into looking acceptable by dropping the term far enough.
+  it("does not soften the term below what a buyer would ever write", () => {
+    const cartons = buildGoodsIn("case-a", atMonths([2, 1, 3]), NOW);
+    expect(cartons[0].po.minShelfLifeMonths).toBe(6);
+    expect(cartons.every((c) => c.findings.includes("short-shelf-life"))).toBe(true);
   });
 });

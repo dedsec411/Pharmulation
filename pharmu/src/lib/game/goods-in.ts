@@ -25,8 +25,24 @@ import { makeRng, intBetween, pick, type Rng } from "./seeded-random";
  * built for, and the quantity checks teach the same lesson without it.
  */
 
-/** How long stock must have left when it lands, as a term of the purchase order. */
-export const MIN_SHELF_LIFE_MONTHS = 12;
+/**
+ * Minimum shelf life at receipt, as a buyer actually writes it - longest first.
+ *
+ * This is a term of the order, not a law, and a real buyer sets it against what
+ * the market supplies for that line: eighteen months on a fast ambient product,
+ * six on something short-cycle. So the term is chosen per delivery rather than
+ * fixed, as the longest rung that still leaves something in the consignment
+ * acceptable.
+ *
+ * A fixed number was tried first and rotted. The expiry dates in the case files
+ * are absolute and the calendar kept moving, so by the time this was written a
+ * flat twelve-month rule failed seventeen of twenty-three batches and five of
+ * the eight cases had no acceptable carton at all - which teaches "always
+ * refuse" rather than "check it against the order". Reading the term off the
+ * purchase order in front of you is the real skill anyway, and it is the one
+ * thing here that cannot go stale.
+ */
+const SHELF_LIFE_LADDER = [18, 12, 9, 6];
 
 /** Assumed shelf life, used only to print a manufacturing date on the carton. */
 const ASSUMED_SHELF_LIFE_MONTHS = 24;
@@ -105,7 +121,7 @@ export type Carton = {
    */
   conditionNote: string;
   monthsToExpiry: number;
-  po: { number: string; qty: number; raisedOn: string };
+  po: { number: string; qty: number; raisedOn: string; minShelfLifeMonths: number };
   dc: { number: string; batch: string; qty: number; date: string };
   /** Everything wrong with this consignment. Empty means accept it. */
   findings: FindingCode[];
@@ -211,6 +227,15 @@ export type ShipmentLike = {
  * make roughly half the delivery worth stopping. Doing it in that order is what
  * keeps a carton marked "in order" from quietly failing the shelf-life rule.
  */
+function shelfLifeTerm(monthsLeft: Array<number | null>): number {
+  const dated = monthsLeft.filter((m): m is number => m !== null);
+  const shortest = SHELF_LIFE_LADDER[SHELF_LIFE_LADDER.length - 1];
+  if (!dated.length) return shortest;
+  // Nothing reaching even the shortest rung is a consignment that should be
+  // turned away whole, and the phase says so rather than pretending otherwise.
+  return SHELF_LIFE_LADDER.find((term) => dated.some((m) => m >= term)) ?? shortest;
+}
+
 export function buildGoodsIn(
   caseId: string,
   shipments: ShipmentLike[],
@@ -222,15 +247,24 @@ export function buildGoodsIn(
   const rng = makeRng(`goods-in:${caseId}`);
   const supplier = pick(rng, SUPPLIERS);
   const poNumber = `PO-${now.getFullYear()}-${String(intBetween(rng, 100, 999))}`;
-  const dcDate = iso(addMonths(now, 0));
+  const dcDate = iso(now);
+
+  // The dates decide the term, so they are read before a single carton is
+  // built. Doing it the other way round is what produced a delivery where
+  // every line was short and refusing everything was the only right answer.
+  const monthsLeft = chosen.map((sh) => {
+    const expiry = new Date(String(sh.expiry ?? ""));
+    return Number.isNaN(expiry.getTime()) ? null : monthsBetween(now, expiry);
+  });
+  const minShelfLifeMonths = shelfLifeTerm(monthsLeft);
 
   const cartons: Carton[] = chosen.map((sh, index) => {
     const product = String(sh.drug ?? "Unlabelled stock");
     const batch = String(sh.batch ?? "-");
     const expiryIso = String(sh.expiry ?? "");
     const expiryDate = new Date(expiryIso);
-    const dated = !Number.isNaN(expiryDate.getTime());
-    const months = dated ? monthsBetween(now, expiryDate) : MIN_SHELF_LIFE_MONTHS;
+    const dated = monthsLeft[index] !== null;
+    const months = monthsLeft[index] ?? minShelfLifeMonths;
     const qty = intBetween(rng, 4, 24) * 5;
 
     return {
@@ -250,9 +284,9 @@ export function buildGoodsIn(
       condition: { ...SOUND_CONDITION },
       conditionNote: SOUND_NOTE,
       monthsToExpiry: months,
-      po: { number: poNumber, qty, raisedOn: iso(addMonths(now, -1)) },
+      po: { number: poNumber, qty, raisedOn: iso(addMonths(now, -1)), minShelfLifeMonths },
       dc: { number: `DC-${intBetween(rng, 1000, 9999)}`, batch, qty, date: dcDate },
-      findings: dated && months < MIN_SHELF_LIFE_MONTHS ? ["short-shelf-life"] : [],
+      findings: dated && months < minShelfLifeMonths ? ["short-shelf-life"] : [],
     };
   });
 
@@ -303,7 +337,9 @@ export const DECISION_OPTIONS: Array<{ value: string; finding: FindingCode | nul
   { value: ACCEPT_OPTION, finding: null },
   { value: "Raise a discrepancy - batch on the challan is not the batch on the carton", finding: "batch-mismatch" },
   { value: "Raise a discrepancy - quantity received does not match the challan", finding: "qty-mismatch" },
-  { value: `Raise a discrepancy - less than ${MIN_SHELF_LIFE_MONTHS} months shelf life left`, finding: "short-shelf-life" },
+  // Deliberately does not name a number: the term is on the purchase order in
+  // front of them, and looking it up is the check.
+  { value: "Raise a discrepancy - shelf life is short of the term on the purchase order", finding: "short-shelf-life" },
   { value: "Raise a discrepancy - carton damaged or seal broken", finding: "damaged" },
 ];
 
@@ -345,8 +381,8 @@ export function explainFinding(code: FindingCode, carton: Carton): {
       };
     case "short-shelf-life":
       return {
-        whyWrong: `${carton.expiryLabel} leaves about ${Math.max(0, carton.monthsToExpiry)} months, under the ${MIN_SHELF_LIFE_MONTHS} months this order was placed on. Short-dated stock that cannot move in time is written off, not dispensed.`,
-        whatToKnow: `Purchase orders carry a minimum shelf life at receipt for a reason. Check the expiry against that term at the bay, while refusing it is still free.`,
+        whyWrong: `${carton.expiryLabel} leaves about ${Math.max(0, carton.monthsToExpiry)} months, under the ${carton.po.minShelfLifeMonths} months ${carton.po.number} was placed on. Short-dated stock that cannot move in time is written off, not dispensed.`,
+        whatToKnow: "Purchase orders carry a minimum shelf life at receipt for a reason. Read the term off the order and check the expiry against it at the bay, while refusing the consignment is still free.",
       };
     case "damaged":
       return {
@@ -375,7 +411,7 @@ export function labelFields(carton: Carton): LabelField[] {
       : []),
     { label: "Batch number", value: carton.batch, verify: "Matches the delivery challan exactly. This is the only handle a recall has." },
     { label: "Manufacturing date", value: carton.mfgLabel, verify: "Present and legible, and consistent with the expiry printed beside it." },
-    { label: "Expiry date", value: carton.expiryLabel, verify: `At least ${MIN_SHELF_LIFE_MONTHS} months away, as the order was placed on.` },
+    { label: "Expiry date", value: carton.expiryLabel, verify: `At least the ${carton.po.minShelfLifeMonths} months ${carton.po.number} was placed on.` },
     { label: "Quantity", value: `${carton.qty} packs`, verify: "Counted, not read. The challan figure is a claim until you check it." },
     { label: "Manufacturer", value: carton.supplier, verify: "A licensed supplier you hold an agreement with." },
     { label: "Handling", value: carton.storage, verify: "Tells you which zone it goes to, and whether it should have arrived cold." },
@@ -405,7 +441,7 @@ export function decisionFeedback(carton: Carton, option: string): {
   if (!carton.findings.length) {
     return {
       errorType: "Sound consignment refused",
-      whyWrong: `Nothing on this carton fails a check. The batch matches the challan, the count matches, ${carton.expiry ? `${carton.expiryLabel} leaves about ${carton.monthsToExpiry} months against a ${MIN_SHELF_LIFE_MONTHS}-month term, ` : ""}and the carton is sound. A refused delivery is a day of supply lost and a credit note to chase for nothing.`,
+      whyWrong: `Nothing on this carton fails a check. The batch matches the challan, the count matches, ${carton.expiry ? `${carton.expiryLabel} leaves about ${carton.monthsToExpiry} months against the ${carton.po.minShelfLifeMonths}-month term on ${carton.po.number}, ` : ""}and the carton is sound. A refused delivery is a day of supply lost and a credit note to chase for nothing.`,
       whatToKnow: "A discrepancy is raised against a fault you can point at on the paperwork. When every line agrees, sign for it and raise the GRN.",
     };
   }

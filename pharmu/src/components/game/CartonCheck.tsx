@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ClipboardCheck, Eye, FileText, PackageCheck, ScanLine } from "lucide-react";
 import {
-  ACCEPT_OPTION, CONDITION_ROWS, DECISION_OPTIONS, MIN_SHELF_LIFE_MONTHS,
+  ACCEPT_OPTION, CONDITION_ROWS, DECISION_OPTIONS,
   labelFields, type Carton, type ConditionKey, type ConditionRecord,
 } from "@/lib/game/goods-in";
 
@@ -298,7 +298,7 @@ function ThreeWayMatch({
     { label: "Quantity", po: `${carton.po.qty} packs`, dc: `${carton.dc.qty} packs`, grn: `${carton.qty} packs counted` },
     {
       label: "Expiry",
-      po: `Min ${MIN_SHELF_LIFE_MONTHS} months at receipt`,
+      po: `Min ${carton.po.minShelfLifeMonths} months at receipt`,
       dc: "-",
       grn: carton.expiry
         ? `${carton.expiryLabel} (${Math.max(0, carton.monthsToExpiry)} months left)`
