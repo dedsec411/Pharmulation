@@ -195,6 +195,10 @@ export function LookalikeDrill({
           })}
         </div>
       </main>
+      {/* The explanation of what was actually handed over. Without this the
+          mode scores a wrong pick and says nothing, which is the one thing it
+          exists to do. */}
+      {errPanel.panel}
     </>
   );
 }
