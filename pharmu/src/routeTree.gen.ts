@@ -18,6 +18,7 @@ import { Route as EducatorRouteRouteImport } from './routes/educator/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EducatorIndexRouteImport } from './routes/educator/index'
+import { Route as EducatorLiveRouteImport } from './routes/educator/live'
 import { Route as EducatorDashboardRouteImport } from './routes/educator/dashboard'
 import { Route as EducatorClassesRouteImport } from './routes/educator/classes'
 import { Route as EducatorAssignRouteImport } from './routes/educator/assign'
@@ -27,6 +28,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedModesRouteImport } from './routes/_authenticated/modes'
+import { Route as AuthenticatedLiveRouteImport } from './routes/_authenticated/live'
 import { Route as AuthenticatedDrugsRouteImport } from './routes/_authenticated/drugs'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClassRouteImport } from './routes/_authenticated/class'
@@ -81,6 +83,11 @@ const EducatorIndexRoute = EducatorIndexRouteImport.update({
   path: '/',
   getParentRoute: () => EducatorRouteRoute,
 } as any)
+const EducatorLiveRoute = EducatorLiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => EducatorRouteRoute,
+} as any)
 const EducatorDashboardRoute = EducatorDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -124,6 +131,11 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
 const AuthenticatedModesRoute = AuthenticatedModesRouteImport.update({
   id: '/modes',
   path: '/modes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLiveRoute = AuthenticatedLiveRouteImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDrugsRoute = AuthenticatedDrugsRouteImport.update({
@@ -189,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/class': typeof AuthenticatedClassRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/drugs': typeof AuthenticatedDrugsRoute
+  '/live': typeof AuthenticatedLiveRoute
   '/modes': typeof AuthenticatedModesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -198,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/educator/assign': typeof EducatorAssignRoute
   '/educator/classes': typeof EducatorClassesRoute
   '/educator/dashboard': typeof EducatorDashboardRoute
+  '/educator/live': typeof EducatorLiveRoute
   '/educator/': typeof EducatorIndexRoute
   '/assessment/$assessmentId': typeof AuthenticatedAssessmentAssessmentIdRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
@@ -216,6 +230,7 @@ export interface FileRoutesByTo {
   '/class': typeof AuthenticatedClassRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/drugs': typeof AuthenticatedDrugsRoute
+  '/live': typeof AuthenticatedLiveRoute
   '/modes': typeof AuthenticatedModesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -225,6 +240,7 @@ export interface FileRoutesByTo {
   '/educator/assign': typeof EducatorAssignRoute
   '/educator/classes': typeof EducatorClassesRoute
   '/educator/dashboard': typeof EducatorDashboardRoute
+  '/educator/live': typeof EducatorLiveRoute
   '/educator': typeof EducatorIndexRoute
   '/assessment/$assessmentId': typeof AuthenticatedAssessmentAssessmentIdRoute
   '/game/community': typeof AuthenticatedGameCommunityRoute
@@ -246,6 +262,7 @@ export interface FileRoutesById {
   '/_authenticated/class': typeof AuthenticatedClassRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/drugs': typeof AuthenticatedDrugsRoute
+  '/_authenticated/live': typeof AuthenticatedLiveRoute
   '/_authenticated/modes': typeof AuthenticatedModesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -255,6 +272,7 @@ export interface FileRoutesById {
   '/educator/assign': typeof EducatorAssignRoute
   '/educator/classes': typeof EducatorClassesRoute
   '/educator/dashboard': typeof EducatorDashboardRoute
+  '/educator/live': typeof EducatorLiveRoute
   '/educator/': typeof EducatorIndexRoute
   '/_authenticated/assessment/$assessmentId': typeof AuthenticatedAssessmentAssessmentIdRoute
   '/_authenticated/game/community': typeof AuthenticatedGameCommunityRoute
@@ -276,6 +294,7 @@ export interface FileRouteTypes {
     | '/class'
     | '/dashboard'
     | '/drugs'
+    | '/live'
     | '/modes'
     | '/profile'
     | '/settings'
@@ -285,6 +304,7 @@ export interface FileRouteTypes {
     | '/educator/assign'
     | '/educator/classes'
     | '/educator/dashboard'
+    | '/educator/live'
     | '/educator/'
     | '/assessment/$assessmentId'
     | '/game/community'
@@ -303,6 +323,7 @@ export interface FileRouteTypes {
     | '/class'
     | '/dashboard'
     | '/drugs'
+    | '/live'
     | '/modes'
     | '/profile'
     | '/settings'
@@ -312,6 +333,7 @@ export interface FileRouteTypes {
     | '/educator/assign'
     | '/educator/classes'
     | '/educator/dashboard'
+    | '/educator/live'
     | '/educator'
     | '/assessment/$assessmentId'
     | '/game/community'
@@ -332,6 +354,7 @@ export interface FileRouteTypes {
     | '/_authenticated/class'
     | '/_authenticated/dashboard'
     | '/_authenticated/drugs'
+    | '/_authenticated/live'
     | '/_authenticated/modes'
     | '/_authenticated/profile'
     | '/_authenticated/settings'
@@ -341,6 +364,7 @@ export interface FileRouteTypes {
     | '/educator/assign'
     | '/educator/classes'
     | '/educator/dashboard'
+    | '/educator/live'
     | '/educator/'
     | '/_authenticated/assessment/$assessmentId'
     | '/_authenticated/game/community'
@@ -426,6 +450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EducatorIndexRouteImport
       parentRoute: typeof EducatorRouteRoute
     }
+    '/educator/live': {
+      id: '/educator/live'
+      path: '/live'
+      fullPath: '/educator/live'
+      preLoaderRoute: typeof EducatorLiveRouteImport
+      parentRoute: typeof EducatorRouteRoute
+    }
     '/educator/dashboard': {
       id: '/educator/dashboard'
       path: '/dashboard'
@@ -487,6 +518,13 @@ declare module '@tanstack/react-router' {
       path: '/modes'
       fullPath: '/modes'
       preLoaderRoute: typeof AuthenticatedModesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/live': {
+      id: '/_authenticated/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof AuthenticatedLiveRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/drugs': {
@@ -560,6 +598,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClassRoute: typeof AuthenticatedClassRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDrugsRoute: typeof AuthenticatedDrugsRoute
+  AuthenticatedLiveRoute: typeof AuthenticatedLiveRoute
   AuthenticatedModesRoute: typeof AuthenticatedModesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -575,6 +614,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClassRoute: AuthenticatedClassRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDrugsRoute: AuthenticatedDrugsRoute,
+  AuthenticatedLiveRoute: AuthenticatedLiveRoute,
   AuthenticatedModesRoute: AuthenticatedModesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -595,6 +635,7 @@ interface EducatorRouteRouteChildren {
   EducatorAssignRoute: typeof EducatorAssignRoute
   EducatorClassesRoute: typeof EducatorClassesRoute
   EducatorDashboardRoute: typeof EducatorDashboardRoute
+  EducatorLiveRoute: typeof EducatorLiveRoute
   EducatorIndexRoute: typeof EducatorIndexRoute
 }
 
@@ -604,6 +645,7 @@ const EducatorRouteRouteChildren: EducatorRouteRouteChildren = {
   EducatorAssignRoute: EducatorAssignRoute,
   EducatorClassesRoute: EducatorClassesRoute,
   EducatorDashboardRoute: EducatorDashboardRoute,
+  EducatorLiveRoute: EducatorLiveRoute,
   EducatorIndexRoute: EducatorIndexRoute,
 }
 
