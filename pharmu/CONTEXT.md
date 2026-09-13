@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **859 tests across 46 files, all passing**.
+current baseline is **911 tests across 49 files, all passing**.
 
 ---
 
@@ -190,19 +190,42 @@ Faculty create classes with a 6-character join code (alphabet excludes I, O, 0,
 - `useStudentWork` is the single source of truth for done/overdue — the
   dashboard list and the class page tiles both read it so they cannot disagree
 
-### The guide (tutorials)
-`src/components/TutorialBot.tsx` renders a permanent **Guide tab on the right
-edge** of every signed-in page. Content is in `src/lib/tutorial.ts` (tested),
-"seen" tracking in `src/lib/tutorial-seen.ts`, cross-component opening via
-`src/lib/tutorial-store.ts`.
+### The guide (Dr. Hakim, who flies)
+`src/components/TutorialBot.tsx` wires a guide who waits in the **bottom-left
+corner** of every signed-in page and flies to the controls he explains, with
+the rest of the page dimmed. The decisions live in tested modules:
 
-- The full tour opens by itself on a first dashboard visit; each mode's guide
-  opens the first time that mode is played, fired from `DifficultySelect`'s
-  `choose()` so it never opens behind the difficulty modal.
-- Two views: **Walk me through** (stepped, first run) and **All steps** (the
-  lot, plus an index of every other guide — the only route back to the tour).
-- **The case clock stops while the guide is open** (`shouldTick` in
-  `useTimer.ts`). Reading instructions must not cost a learner their score.
+- `src/lib/guide-flight.ts` — where he lands and where his bubble goes: below
+  the target, then above, then beside, and over it only when nothing else
+  fits. Scrolling allows for the sticky bar.
+- `src/lib/tutorial-spots.ts` — what he says at each control. An element opts
+  in with `data-tour="id"`, the screen it belongs to with
+  `data-tour-scene="id"`. **Marking a control means writing its words**: the
+  tests read the source in both directions and fail on either gap. No doses or
+  ranges in the words.
+- `src/lib/tutorial.ts` — the written guides. A step's optional `target` flies
+  to that control when it is on screen and is said from the middle when not.
+- `src/lib/tutorial-store.ts` — what he is doing, `pausesClock`, `guideLocked`.
+- `src/components/guide/*` — the avatar (springs, so a target that scrolls
+  moves the end of the flight), spotlight, bubble, menu, What's-this outlines,
+  and the library (written guides + short forms).
+
+- **The first time a screen appears he comes over by himself**, once per
+  screen per account. A `MutationObserver` watches for scenes; it is throttled,
+  not debounced, because the ambient animations never stop mutating the page.
+- A mode's first case gets its overview then the case bar and first screen as
+  **one** tour, fired from `DifficultySelect`'s `choose()`. `holding` stops a
+  smaller tour jumping in ahead of it. Pressing on from the overview re-reads
+  the page, because on a slow load the case arrives after the tour starts.
+- The full tour still opens on a first dashboard visit (`shouldAutoRunTour`)
+  and marks the dashboard's own introduction as done.
+- **Never over a modal** (`pageIsCovered`: a fixed full-screen layer that takes
+  clicks) and **never in a graded sitting or a live session** (`guideLocked`),
+  where stopping the clock would be an unfair pause.
+- **The case clock stops while he covers the page** — touring, What's-this, the
+  library (`shouldTick` in `useTimer.ts`). Not for the menu: a menu left open
+  would be a free pause the case bar charges for.
+- Settings → "Dr. Hakim comes over" stops the uninvited visits; tapping still works.
 - **The guest account remembers in sessionStorage, not localStorage**, and
   ignores `profiles.onboarding_completed`. It is shared: at a stand it is
   whoever picked up the laptop thirty seconds ago, so every visitor gets the
