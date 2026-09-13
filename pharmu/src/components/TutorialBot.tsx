@@ -196,8 +196,27 @@ export function TutorialBot() {
   }
 
   function next() {
-    if (index >= steps.length - 1) finishTour();
-    else setIndex((i) => i + 1);
+    if (index < steps.length - 1) {
+      setIndex((i) => i + 1);
+      return;
+    }
+    // A mode's overview starts a beat after the difficulty is picked, which on
+    // a slow load is before the case has arrived - so the controls it promises
+    // may not have existed when the tour began. Look again before finishing,
+    // and carry straight on into them rather than ending and starting a second
+    // tour a moment later.
+    if (useTutorialStore.getState().request?.kind === "new") {
+      const found = findAnchors().map(({ id, scene }) => ({ id, scene }));
+      const covered = new Set(scenesCovered(steps));
+      const fresh = scenesToIntroduce(scenesOnPage(found), seen).filter((scene) => !covered.has(scene));
+      const more = newHereSteps(null, found, fresh);
+      if (more.length) {
+        setTour((t) => ({ ...t, steps: [...t.steps, ...more] }));
+        setIndex((i) => i + 1);
+        return;
+      }
+    }
+    finishTour();
   }
 
   function back() {
@@ -294,7 +313,9 @@ export function TutorialBot() {
   const callout = placeCallout({ target: onScreen, viewport, bubble: { width, height: bubbleHeight } });
   const frame = onScreen ? spotlightFrame(onScreen, viewport) : null;
   const isLast = index >= steps.length - 1;
-  const primaryLabel = isLast ? "Done" : step?.list ? "Show me" : "Next";
+  // The overview always offers to show the controls, even when none were on
+  // the page yet: next() looks again when it is pressed.
+  const primaryLabel = step?.list ? "Show me" : isLast ? "Done" : "Next";
 
   function onAvatar() {
     const s = useTutorialStore.getState();
