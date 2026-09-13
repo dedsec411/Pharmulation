@@ -14,6 +14,7 @@ import {
 } from "@/lib/game/shared";
 import { buildLookalikeDrill, explainWrongPack, type ShelfPack } from "@/lib/game/lookalike-case";
 import { BRANDS_SCANNED, LOOKALIKE_PAIRS } from "@/lib/game/lookalike-pairs";
+import type { Difficulty } from "@/lib/game/shared";
 
 /**
  * The look-alike drill.
@@ -35,11 +36,30 @@ import { BRANDS_SCANNED, LOOKALIKE_PAIRS } from "@/lib/game/lookalike-pairs";
 
 const CROSS_CLASS = LOOKALIKE_PAIRS.filter((p) => p.crossClass).length;
 
-export function LookalikeDrill({ onBack }: { onBack: () => void }) {
+type Props = {
+  onBack: () => void;
+  /**
+   * Set when the drill is being run inside a live session: everybody in the
+   * room gets the same seed, which is what makes it the same drill, and the
+   * difficulty is the host's rather than each player's.
+   */
+  sharedSeed?: string;
+  fixedDifficulty?: Difficulty;
+  /** Reports the result back to the session so the board can show it. */
+  onFinished?: (result: { score: number; errors: number }) => void;
+  /** A live session has already briefed the room; the host did it out loud. */
+  skipBriefing?: boolean;
+};
+
+export function LookalikeDrill({
+  onBack, sharedSeed, fixedDifficulty, onFinished, skipBriefing,
+}: Props) {
   const onExit = useGameExit("/modes");
   const { profile } = useAuthStore();
-  const { difficulty, difficultyModal } = useDifficultyChoice("rx", onBack);
-  const [started, setStarted] = useState(false);
+  const chosen = useDifficultyChoice("rx", onBack);
+  const difficulty = fixedDifficulty ?? chosen.difficulty;
+  const difficultyModal = fixedDifficulty ? null : chosen.difficultyModal;
+  const [started, setStarted] = useState(!!skipBriefing);
   const [index, setIndex] = useState(0);
   const [points, setPoints] = useState(0);
   const [errors, setErrors] = useState(0);
@@ -47,11 +67,13 @@ export function LookalikeDrill({ onBack }: { onBack: () => void }) {
   const [result, setResult] = useState<{ score: number; xpGain: number } | null>(null);
 
   const questions = useMemo(
-    () => (difficulty ? buildLookalikeDrill(`${profile?.user_id ?? "guest"}:${Date.now()}`, difficulty) : []),
+    () => (difficulty
+      ? buildLookalikeDrill(sharedSeed ?? `${profile?.user_id ?? "guest"}:${Date.now()}`, difficulty)
+      : []),
     // Built once per run: a new shelf appearing mid-decision would invalidate
     // the answer being reasoned about.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [difficulty],
+    [difficulty, sharedSeed],
   );
 
   const LIMIT = modeTimeLimit("rx", difficulty);
@@ -94,6 +116,7 @@ export function LookalikeDrill({ onBack }: { onBack: () => void }) {
       errorsDetail: errPanel.errors,
     });
     setResult({ score, xpGain });
+    onFinished?.({ score, errors });
   }
 
   function pick(pack: ShelfPack) {

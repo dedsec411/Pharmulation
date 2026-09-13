@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, redirect, useLocation } from "@tanstack/react-router";
-import { GraduationCap, LayoutDashboard, Users, ClipboardList, BarChart3, Timer } from "lucide-react";
+import { GraduationCap, LayoutDashboard, Users, ClipboardList, BarChart3, Timer, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useMyInstitution } from "@/lib/educator/queries";
@@ -52,6 +52,7 @@ const NAV = [
   { to: "/educator/assign", label: "Assign", icon: ClipboardList },
   { to: "/educator/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/educator/assessment", label: "Assessments", icon: Timer },
+  { to: "/educator/live", label: "Live", icon: Radio },
 ];
 
 function EducatorShell() {
