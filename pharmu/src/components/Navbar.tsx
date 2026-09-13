@@ -51,14 +51,15 @@ export function Navbar() {
    * class, and showing them a student page with nothing in it would be a dead
    * end rather than a feature.
    */
+  // `tour` is what the guide flies to; see src/lib/tutorial-spots.ts.
   const links = [
-    { to: "/dashboard", label: "Dashboard" },
-    { to: "/modes", label: "Modes" },
+    { to: "/dashboard", label: "Dashboard", tour: "nav-dashboard" },
+    { to: "/modes", label: "Modes", tour: "nav-modes" },
     ...(isFaculty
-      ? [{ to: "/educator/dashboard", label: "Faculty" }]
-      : [{ to: "/class", label: "Class" }]),
-    { to: "/drugs", label: "Drug DB" },
-    { to: "/leaderboard", label: "Leaderboard" },
+      ? [{ to: "/educator/dashboard", label: "Faculty", tour: "nav-faculty" }]
+      : [{ to: "/class", label: "Class", tour: "nav-class" }]),
+    { to: "/drugs", label: "Drug DB", tour: "nav-drugs" },
+    { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard" },
   ] as const;
 
   return (
@@ -68,8 +69,8 @@ export function Navbar() {
           <LogoVideo className="aspect-video w-full" />
         </Link>
         <div className="hidden md:flex items-center gap-1 text-sm">
-          {[...links, { to: "/profile", label: "Profile" } as const].map((l) => (
-            <Link key={l.to} to={l.to}
+          {[...links, { to: "/profile", label: "Profile", tour: "nav-profile" } as const].map((l) => (
+            <Link key={l.to} to={l.to} data-tour={l.tour}
               className="rounded-full border border-transparent px-4 py-2 text-muted-foreground transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/10 hover:text-foreground hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]"
               activeProps={{ className: "rounded-full border border-primary/35 bg-primary/10 px-4 py-2 text-primary shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]" }}>
               {l.label}
@@ -77,10 +78,12 @@ export function Navbar() {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <ThemeToggle />
+          <div data-tour="theme-toggle">
+            <ThemeToggle />
+          </div>
 
           <div className="relative">
-          <button onClick={() => setOpen((o) => !o)}
+          <button onClick={() => setOpen((o) => !o)} data-tour="account-menu"
             className="flex items-center gap-2 rounded-full glass px-3 py-1.5 transition duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]">
             <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground grid place-items-center text-xs font-bold">{initials}</div>
             <span className="hidden sm:block text-sm">{displayName}</span>

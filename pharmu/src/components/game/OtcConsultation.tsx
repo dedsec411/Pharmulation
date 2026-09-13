@@ -376,7 +376,7 @@ export function OtcConsultation({
       />
 
       <main className="relative mx-auto grid max-w-5xl gap-4 px-4 py-6 lg:grid-cols-[1fr_2fr]">
-        <aside className="relative z-10 h-fit rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur">
+        <aside className="relative z-10 h-fit rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur" data-tour-scene="otc-consult" data-tour="otc-patient">
           <div className="mb-3 flex items-center gap-2">
             <User className="size-4 text-primary" />
             <p className="text-xs uppercase tracking-wider text-muted-foreground">At the counter</p>
@@ -407,13 +407,15 @@ export function OtcConsultation({
             className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur"
           >
             {step === "consult" && (
-              <OtcPatientChat
-                otcCase={otcCase}
-                difficulty={difficulty}
-                messages={messages}
-                setMessages={setMessages}
-                onComplete={endConsultation}
-              />
+              <div data-tour-scene="otc-consult" data-tour="otc-chat">
+                <OtcPatientChat
+                  otcCase={otcCase}
+                  difficulty={difficulty}
+                  messages={messages}
+                  setMessages={setMessages}
+                  onComplete={endConsultation}
+                />
+              </div>
             )}
 
             {step === "grading" && (
@@ -442,12 +444,14 @@ export function OtcConsultation({
                     Not that one. Already ruled out: {tried.join(", ")}
                   </p>
                 )}
-                <DispensingShelf
-                  drugs={shelfDrugs}
-                  onDispense={dispense}
-                  onRefer={refer}
-                  referLabel="This needs a doctor - do not sell"
-                />
+                <div data-tour-scene="otc-dispense" data-tour="otc-shelf">
+                  <DispensingShelf
+                    drugs={shelfDrugs}
+                    onDispense={dispense}
+                    onRefer={refer}
+                    referLabel="This needs a doctor - do not sell"
+                  />
+                </div>
               </>
             )}
 
@@ -456,7 +460,9 @@ export function OtcConsultation({
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
                   Label the medicine
                 </p>
-                <LabelForm drug={dispensed.drug} brand={dispensed.brand} onSubmit={submitLabel} />
+                <div data-tour-scene="otc-label" data-tour="otc-label">
+                  <LabelForm drug={dispensed.drug} brand={dispensed.brand} onSubmit={submitLabel} />
+                </div>
               </>
             )}
           </motion.div>

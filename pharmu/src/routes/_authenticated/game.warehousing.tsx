@@ -652,8 +652,8 @@ function WarehouseGame() {
         )}
 
         {phase === "receiving" && (
-          <section className="relative z-10 grid gap-4 lg:grid-cols-[1fr_1.3fr]">
-            <div className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-4 shadow-[0_24px_80px_-48px_rgba(56,189,248,0.8)] backdrop-blur-xl">
+          <section className="relative z-10 grid gap-4 lg:grid-cols-[1fr_1.3fr]" data-tour-scene="wh-receiving">
+            <div data-tour="wh-manifests" className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-4 shadow-[0_24px_80px_-48px_rgba(56,189,248,0.8)] backdrop-blur-xl">
               <p className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-sky-200/80"><Package className="size-3.5" /> Incoming manifests</p>
               <ul className="mt-3 space-y-2">
                 {s.shipments.map((sh: any) => {
@@ -699,7 +699,7 @@ function WarehouseGame() {
               </button>
             </div>
 
-            <div className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-4 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+            <div data-tour="wh-zones" className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-4 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
               <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">Warehouse zones</p>
               {!activeShip && <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">Select a manifest, then choose a zone.</p>}
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -724,13 +724,13 @@ function WarehouseGame() {
         )}
 
         {phase === "dispatch" && s.dispatch[dispatchIdx] && (
-          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-50px_rgba(56,189,248,0.85)] backdrop-blur-xl">
+          <section data-tour-scene="wh-dispatch" className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-50px_rgba(56,189,248,0.85)] backdrop-blur-xl">
             <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80"><Abbr term="FEFO" /> dispatch {dispatchIdx + 1} / {s.dispatch.length}</p>
             <h3 className="mt-1 text-lg font-bold">Pick a batch of {s.dispatch[dispatchIdx].drug}</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">Use <Abbr term="FEFO" /> - the earliest expiry goes out first, wherever it is on the shelf.</p>
             <div className="mt-5 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/[0.04] dark:bg-slate-900/35 p-4">
               <div className="mb-3 h-2 rounded-full bg-gradient-to-r from-sky-300/50 via-slate-300 dark:via-slate-700 to-sky-300/30" />
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-tour="wh-fefo">
                 {/* Sorted earliest-first, highlighted, and labelled "front" -
                     which is exactly the answer FEFO is asking for. The whole
                     phase could be played by clicking the marked card without
@@ -761,10 +761,10 @@ function WarehouseGame() {
         )}
 
         {phase === "expiry" && (
-          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+          <section data-tour-scene="wh-expiry" className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Expiry management</p>
             <h3 className="mt-1 text-lg font-bold">Items approaching expiry</h3>
-            <ul className="mt-3 space-y-2">
+            <ul className="mt-3 space-y-2" data-tour="wh-expiry">
               {s.expiring.map((it: any, i: number) => (
                 <li key={i} className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
                   <div className="flex items-center justify-between">
@@ -804,8 +804,8 @@ function WarehouseGame() {
         )}
 
         {phase === "audit" && auditScenarios[auditIdx] && (
-          <section className="relative z-10 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <aside className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-5 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+          <section className="relative z-10 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]" data-tour-scene="wh-audit">
+            <aside data-tour="wh-audit-board" className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-5 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Operations audit</p>
               <h3 className="mt-1 text-lg font-bold">Deviation dashboard</h3>
               <div className="mt-4 space-y-2">
@@ -832,7 +832,7 @@ function WarehouseGame() {
               </div>
             </aside>
 
-            <div className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+            <div data-tour="wh-audit-decision" className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">
                 Audit decision {auditIdx + 1} / {auditScenarios.length}
               </p>
@@ -862,10 +862,10 @@ function WarehouseGame() {
         )}
 
         {phase === "reconcile" && (
-          <section className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.75)] backdrop-blur-xl">
+          <section data-tour-scene="wh-count" className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.75)] backdrop-blur-xl">
             <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">Printed stocktake sheet</p>
             <h3 className="mt-1 text-lg font-bold">Check items needing investigation</h3>
-            <table className="mt-4 w-full overflow-hidden rounded-xl border border-sky-300/20 bg-slate-900/[0.05] dark:bg-slate-900/40 text-sm">
+            <table data-tour="wh-count" className="mt-4 w-full overflow-hidden rounded-xl border border-sky-300/20 bg-slate-900/[0.05] dark:bg-slate-900/40 text-sm">
               <thead className="border-b border-sky-300/20 bg-sky-400/10 text-xs uppercase text-sky-100/75">
                 <tr><th className="p-2 text-left">Item</th><th className="p-2 text-right">Expected</th><th className="p-2 text-right">Actual</th><th className="p-2 text-center">Investigate?</th></tr>
               </thead>

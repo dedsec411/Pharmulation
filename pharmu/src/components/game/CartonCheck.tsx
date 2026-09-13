@@ -52,7 +52,7 @@ export function CartonCheck({
   const complete = CONDITION_ROWS.every((r) => draft[r.key] !== undefined);
 
   return (
-    <section className="relative z-10 space-y-4">
+    <section className="relative z-10 space-y-4" data-tour-scene="wh-challan">
       <header className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] p-4 backdrop-blur-xl dark:bg-slate-950/55">
         <div className="min-w-0">
           <p className="text-xs font-black uppercase tracking-[0.24em] text-sky-600 dark:text-sky-300">
@@ -78,7 +78,7 @@ export function CartonCheck({
           for the whole column and push the phase off the side of a phone.
           items-start stops the shorter column stretching into an empty box. */}
       <div className="grid items-start gap-4 lg:grid-cols-[1.05fr_1fr]">
-        <div className="min-w-0 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] p-4 backdrop-blur-xl dark:bg-slate-950/55">
+        <div data-tour="wh-carton" className="min-w-0 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] p-4 backdrop-blur-xl dark:bg-slate-950/55">
           <p className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-sky-600 dark:text-sky-300">
             <PackageCheck className="size-3.5" aria-hidden="true" /> On the bay
           </p>
@@ -91,20 +91,24 @@ export function CartonCheck({
         </div>
 
         <div className="min-w-0 space-y-4">
-          <ConditionPanel
-            draft={draft}
-            recorded={recorded}
-            complete={complete}
-            onPick={(key, value) => setDraft((d) => ({ ...d, [key]: value }))}
-            onSubmit={() => onRecord(draft as ConditionRecord)}
-          />
+          <div data-tour="wh-condition">
+            <ConditionPanel
+              draft={draft}
+              recorded={recorded}
+              complete={complete}
+              onPick={(key, value) => setDraft((d) => ({ ...d, [key]: value }))}
+              onSubmit={() => onRecord(draft as ConditionRecord)}
+            />
+          </div>
 
-          <ThreeWayMatch
-            carton={carton}
-            recorded={recorded}
-            ruledOut={ruledOut}
-            onDecide={onDecide}
-          />
+          <div data-tour="wh-match">
+            <ThreeWayMatch
+              carton={carton}
+              recorded={recorded}
+              ruledOut={ruledOut}
+              onDecide={onDecide}
+            />
+          </div>
         </div>
       </div>
 

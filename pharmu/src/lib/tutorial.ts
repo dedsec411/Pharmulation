@@ -18,6 +18,12 @@ export type TutorialStep = {
   body: string;
   /** The one thing to actually do, when a step has one. */
   action?: string;
+  /**
+   * The `data-tour` id of the control this step is about. When it is on
+   * screen the guide flies to it; when it is not, the step is said from the
+   * middle of the screen, so a guide opened from another page still reads.
+   */
+  target?: string;
 };
 
 /** Named rather than imported so the guides stay free of React. */
@@ -54,6 +60,7 @@ export const GUIDES: Record<string, TutorialGuide> = {
         title: "Four modes, four jobs",
         body: "Community Pharmacy is dispensing and OTC advice. Clinical is ward work - orders, interactions, renal dosing. Industry runs a manufacturing batch from formula to release. Warehousing is the supply chain: receiving, FEFO dispatch, expiry, audit and the delivery paperwork.",
         action: "Open Modes from the top navigation to see all four.",
+        target: "dash-modes",
       },
       {
         title: "A case is timed",
@@ -70,19 +77,22 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "Score, XP and level",
         body: "Each case scores out of a base set by difficulty, adjusted for time taken, hints used and errors made. XP is half your score. XP raises your level, and finishing cases on consecutive days builds a streak.",
+        target: "dash-standing",
       },
       {
         title: "Your weak spots are tracked",
         body: "Clinical errors are sorted by drug class and by skill, so your profile can tell you that you are fine on dosing but keep missing renal adjustment. Warehousing and industry faults are tracked separately, as operational rather than clinical.",
         action: "Check the weakness map on your dashboard after a few cases.",
+        target: "dash-week",
       },
       {
         title: "If your university uses this",
         body: "A lecturer can give you a six-character join code. Joining a class puts their assignments and timed assessments on your Class page, and lets them see where the whole cohort is going wrong. Everything else works without one.",
+        target: "nav-class",
       },
       {
-        title: "I stay on the right-hand edge",
-        body: "This guide never goes away. The Guide tab on the right edge of the screen reopens it on any page, and it always shows the guide for wherever you are. Every mode has its own.",
+        title: "Then I wait in the corner",
+        body: "When we finish I fly back to the bottom-left corner. Tap me on any page and I will show you around that screen, explain anything you point at, or answer a question. The first time you reach something new, I come over by myself.",
       },
     ],
   },
@@ -97,22 +107,27 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "The top row is your standing",
         body: "Level and XP, your current streak, cases completed and average accuracy. Accuracy is decisions you got right across every case, not a pass mark.",
+        target: "dash-standing",
       },
       {
         title: "Quick play",
         body: "The mode cards drop you straight into a case. The count under each one is how many of that mode you have finished.",
+        target: "dash-modes",
       },
       {
         title: "The weakness map",
         body: "Built from the mistakes you have actually made, sorted by drug class and clinical skill. A low bar is not a judgement, it is the next thing to practise.",
+        target: "dash-week",
       },
       {
         title: "Work set for you",
         body: "If you are in a class, assignments and open assessments appear here and on your Class page. The two read from the same rule, so they can never disagree about what is outstanding.",
+        target: "dash-assigned",
       },
       {
         title: "Read a prescription with your camera",
         body: "Prescription Lens turns a photograph of a real prescription into a playable case. The image is never stored and the patient's name never leaves the reader - the case you get carries an invented one.",
+        target: "lens-entry",
       },
     ],
   },
@@ -127,6 +142,7 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "Start with Community",
         body: "It is the broadest and the most forgiving. Dispensing a prescription and advising an OTC customer are the two things almost every pharmacist does most days.",
+        target: "modes-grid",
       },
       {
         title: "Then Clinical",
@@ -153,15 +169,18 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "Two counters, pick one",
         body: "Rx Cases is dispensing against a written prescription. OTC Consultation is someone walking in with a symptom and no prescription. They train different things and are scored the same way.",
+        target: "community-rx",
       },
       {
         title: "Rx: read the whole sheet first",
         body: "Prescriber, patient, age, allergies, then the items. The trap in most cases is on the sheet, not in the shelves - a dose that does not suit the age, or a medicine the allergy box rules out.",
+        target: "rx-prescription",
       },
       {
         title: "Rx: collect the right packs",
         body: "Pick each prescribed medicine from the shelves. Brand names matter here: the catalogue carries real Pakistani brands, so the pack you reach for has to be the right molecule at the right strength.",
         action: "Tap a shelf item to add it. Wrong picks cost points.",
+        target: "rx-shelf",
       },
       {
         title: "Rx: compounding, when it comes up",
@@ -170,14 +189,17 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "Rx: information and the label",
         body: "Last two stages. Answer what the patient needs to be told, then build the dispensing label. A correct medicine with a wrong label is still a dispensing error.",
+        target: "rx-label-form",
       },
       {
         title: "OTC: ask before you recommend",
         body: "The patient answers what you ask and, on the harder settings, volunteers nothing. Ask about duration, other medicines, pregnancy and red flags before reaching for anything.",
+        target: "otc-chat",
       },
       {
         title: "OTC: know when not to sell",
         body: "Some consultations are meant to end in a referral. Recommending a product to someone who needs a doctor is the error the mode is built to catch.",
+        target: "otc-shelf",
       },
     ],
   },
@@ -192,10 +214,12 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "The file comes first",
         body: "Diagnosis, allergies, current medicines, observations and labs. Renal function especially - a lot of what this mode tests is whether you adjusted a dose for a kidney that cannot clear it.",
+        target: "clinical-file",
       },
       {
         title: "Build the order",
         body: "Search the catalogue, add the medicine, then set dose, route and frequency. All four have to be right; a correct drug at a wrong frequency is a wrong order.",
+        target: "clinical-orders",
       },
       {
         title: "Alerts are information, not obstacles",
@@ -204,6 +228,7 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "Submit when the whole order is safe",
         body: "You are judged on the finished order, not on each click. Review what you have built against the file before submitting.",
+        target: "clinical-submit",
       },
     ],
   },
@@ -218,22 +243,27 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "Choose what you are making",
         body: "First a dosage form - tablet, capsule, syrup, semi-solid - then the product type within it. The form decides which process controls the rest of the batch will hold you to.",
+        target: "industry-forms",
       },
       {
         title: "The master formula is the answer sheet",
         body: "Ingredients, target weights, process conditions and QC limits are all in it. Almost every question later in the batch is answerable from this page, so read it before moving on.",
+        target: "industry-formula",
       },
       {
         title: "Weigh accurately",
         body: "Each ingredient has a target and a tolerance. Outside tolerance is a deviation, and deviations follow the batch to release.",
+        target: "industry-station",
       },
       {
         title: "Environment and process",
         body: "Temperature, humidity and the conditions for each stage. Getting these wrong can contaminate the batch, which costs you at the end whatever else you did well.",
+        target: "industry-gauges",
       },
       {
         title: "QC, then release or reject",
         body: "The batch is tested against the formula's limits and you decide whether it goes out. Releasing a failing batch is the most expensive mistake in this mode, and rejecting a sound one is not free either.",
+        target: "industry-qc-tests",
       },
     ],
   },
@@ -253,6 +283,7 @@ export const GUIDES: Record<string, TutorialGuide> = {
         title: "Receiving: read the temperature log",
         body: "Each delivery names a storage requirement and most carry a temperature log. Put stock in the zone its label demands - and if the log shows the cold chain broke, it goes to quarantine, not to a shelf.",
         action: "Select a manifest, then choose its zone.",
+        target: "wh-manifests",
       },
       {
         title: "Receiving: controlled drugs are different",
@@ -261,18 +292,22 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "Dispatch: first expired, first out",
         body: "When several batches of the same medicine are in stock, the one expiring soonest leaves first. Picking a later batch means the earlier one expires on the shelf.",
+        target: "wh-fefo",
       },
       {
         title: "Expiry: it depends on the orders",
         body: "Near-expiry stock with an order against it goes to priority dispatch. Near-expiry stock nobody wants goes back to the supplier while it is still worth a credit.",
+        target: "wh-expiry",
       },
       {
         title: "The audit and the count",
         body: "Judgement calls on cold-chain deviations, controlled-stock discrepancies, recalls and segregation. Then the stock count, where you decide which variances need investigating rather than closing.",
+        target: "wh-audit-decision",
       },
       {
         title: "Last: close the challan",
         body: "The paperwork for the stock you handled. Record the condition of each carton, then match three documents - what you ordered, what the supplier says they sent, and what is actually in front of you. Accept it, or raise a discrepancy and say which.",
+        target: "wh-match",
       },
       {
         title: "Check the term, not a number",
@@ -351,12 +386,12 @@ export const GUIDES: Record<string, TutorialGuide> = {
     icon: "bot",
     steps: [
       {
-        title: "I am always on the right",
-        body: "The Guide tab on the right edge opens this panel anywhere in the app, and shows the guide for whatever page you are on.",
+        title: "Tap me for help, anywhere",
+        body: "I wait in the bottom-left corner of every page. Tap me and I will show you around the screen you are on, or explain one thing you point at.",
       },
       {
         title: "Ask me directly",
-        body: "The mentor button in the bottom-left corner opens a chat if you want to ask something this guide does not answer.",
+        body: "The same menu opens a chat, for anything the tour does not answer. The written guides and every short form are in there too.",
       },
     ],
   },

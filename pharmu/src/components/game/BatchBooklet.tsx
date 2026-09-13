@@ -21,6 +21,7 @@ export function BatchBooklet(props: BookletInput) {
   return (
     <>
       <button
+        data-tour="industry-record"
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-400/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-200 transition hover:bg-amber-400/20"

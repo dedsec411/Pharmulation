@@ -119,6 +119,7 @@ export function WeeklyReportBanner({
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, height: 0 }}
+        data-tour="dash-week"
         className="glass-card mt-6 p-5"
       >
         <div className="flex items-start justify-between gap-3">

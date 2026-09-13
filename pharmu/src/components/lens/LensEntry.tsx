@@ -23,6 +23,7 @@ export function LensEntry({ className = "" }: { className?: string }) {
       <motion.button
         type="button"
         onClick={() => setOpen(true)}
+        data-tour="lens-entry"
         whileHover={{ y: -3 }}
         whileTap={{ scale: 0.99 }}
         className={`group relative w-full overflow-hidden rounded-2xl border border-primary/40 bg-gradient-to-r from-primary/15 via-primary/8 to-transparent p-5 text-left transition duration-300 hover:border-primary/70 ${className}`}

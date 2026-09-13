@@ -156,8 +156,8 @@ export function LookalikeDrill({
         score={liveScoreFromPoints({ difficulty, hintsUsed: 0, pauseUsed: timer.pauseUsed, points })}
         onExit={onExit}
       />
-      <main className="mx-auto max-w-4xl px-4 py-6">
-        <section className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur sm:p-6">
+      <main className="mx-auto max-w-4xl px-4 py-6" data-tour-scene="lookalike-drill">
+        <section className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur sm:p-6" data-tour="lookalike-prescribed">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">The prescription says</p>
           {/* Brand only, and large. What a prescriber writes is a brand, and
               reading it is the whole task - a dose here would have to be
@@ -171,7 +171,7 @@ export function LookalikeDrill({
         <p className="mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-muted-foreground">
           <ScanSearch className="size-3.5" aria-hidden="true" /> On the shelf
         </p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2" data-tour="lookalike-shelf">
           {question.shelf.map((pack) => {
             const out = ruledOut.includes(pack.brand);
             return (

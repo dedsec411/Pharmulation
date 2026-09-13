@@ -299,7 +299,7 @@ function CommunityGame() {
 
 function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc" | "lookalike") => void }) {
   return (
-    <main className="relative mx-auto max-w-5xl px-4 py-10">
+    <main className="relative mx-auto max-w-5xl px-4 py-10" data-tour-scene="community-picker">
       <CommunityFloatingPills className="opacity-45" />
       {/* Without this there was no way back to the mode list except the
           browser button. */}
@@ -323,6 +323,7 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc" | "lookal
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <button
             onClick={() => onPick("rx")}
+            data-tour="community-rx"
             className="group rounded-2xl border border-blue-500/25 bg-blue-500/10 p-5 text-left transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-blue-500/15"
           >
             <div className="flex items-center justify-between gap-3">
@@ -344,6 +345,7 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc" | "lookal
 
           <button
             onClick={() => onPick("otc")}
+            data-tour="community-otc"
             className="group rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-5 text-left transition hover:-translate-y-0.5 hover:border-emerald-400/60 hover:bg-emerald-500/15"
           >
             <div className="flex items-center justify-between gap-3">
@@ -367,6 +369,7 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc" | "lookal
               workflow, and it carries the figure that makes it worth opening. */}
           <button
             onClick={() => onPick("lookalike")}
+            data-tour="community-lookalike"
             className="group rounded-2xl border border-amber-500/25 bg-amber-500/10 p-5 text-left transition hover:-translate-y-0.5 hover:border-amber-400/60 hover:bg-amber-500/15 md:col-span-2"
           >
             <div className="flex items-center justify-between gap-3">
@@ -794,10 +797,10 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
       </div>
 
       {phase === "collect" && (
-        <main className="relative mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.2fr]">
+        <main className="relative mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.2fr]" data-tour-scene="rx-collect">
           <CommunityFloatingPills className="opacity-35" />
           {/* Prescription panel */}
-          <div className="relative z-10 rounded-xl border border-border/40 bg-card/50 p-4 backdrop-blur">
+          <div className="relative z-10 rounded-xl border border-border/40 bg-card/50 p-4 backdrop-blur" data-tour="rx-prescription">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
@@ -843,6 +846,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
             {/* Dispensing tray */}
             <motion.div
               layout
+              data-tour="rx-tray"
               className="sticky top-20 z-30 rounded-2xl border border-primary/40 bg-gradient-to-b from-card/95 to-background/90 p-3 shadow-[0_20px_55px_-22px_oklch(0.74_0.14_180/0.85),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-xl"
             >
               <div className="pointer-events-none absolute inset-x-5 top-1 h-px bg-foreground/20" />
@@ -887,7 +891,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
               </button>
             </motion.div>
 
-            <div className="rounded-2xl border border-border/35 bg-card/35 p-3 shadow-inner backdrop-blur">
+            <div className="rounded-2xl border border-border/35 bg-card/35 p-3 shadow-inner backdrop-blur" data-tour="rx-shelf">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
@@ -1427,14 +1431,14 @@ function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
   return (
     // The prescription stays on screen while labelling: checking the label
     // against the script is the actual dispensing check, not a convenience.
-    <main className="mx-auto grid max-w-5xl gap-5 px-4 py-6 lg:grid-cols-[1fr_1fr] lg:items-start">
+    <main className="mx-auto grid max-w-5xl gap-5 px-4 py-6 lg:grid-cols-[1fr_1fr] lg:items-start" data-tour-scene="rx-label">
       <div className="order-2 lg:order-1">
         <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Prescription</p>
         <PrescriptionSheet caseData={caseData} />
       </div>
       <div className="order-1 lg:order-2">
       <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Label {count}</p>
-      <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
+      <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur" data-tour="rx-label-form">
         <h2 className="text-xl font-bold">{drug}</h2>
         <p className="text-sm text-muted-foreground">Choose label instructions</p>
         <OptionPicker label="Frequency" options={FREQS}     value={freq}     onChange={setFreq} />

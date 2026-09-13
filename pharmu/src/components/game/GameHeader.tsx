@@ -101,7 +101,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
   return (
     <>
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+    <header data-tour-scene="case-header" className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="mx-auto grid max-w-7xl gap-2 px-3 py-2 sm:px-4 md:h-16 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center md:gap-3 md:py-0">
         <div className="flex min-w-0 items-center gap-2">
           <button
@@ -128,6 +128,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
         <div className="order-3 flex min-w-0 justify-center md:order-none">
           <div
+            data-tour="case-timer"
             className="relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-foreground/10 bg-slate-900/[0.04] dark:bg-black/30 px-3 py-1.5 shadow-inner backdrop-blur-xl sm:py-2 md:min-w-[310px] md:max-w-none md:px-4"
             style={{ boxShadow: `inset 0 0 26px oklch(0 0 0 / 0.35), 0 0 24px -14px ${state.glowColor}` }}
           >
@@ -188,6 +189,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           {!hidePause && (
             <Button
               variant="ghost" size="icon"
+              data-tour="case-pause"
               onClick={togglePause}
               className="shrink-0 text-muted-foreground hover:text-foreground"
               title={paused ? "Resume" : "Pause"}
@@ -202,7 +204,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
       </div>
 
       {onHint && !sittingLocked && (
-        <div className="border-t border-border/35 bg-card/35">
+        <div className="border-t border-border/35 bg-card/35" data-tour="case-hint">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-2 sm:px-4">
             <div className="flex min-w-0 items-center gap-2 text-xs sm:text-sm">
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/12 text-primary">

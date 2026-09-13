@@ -110,9 +110,17 @@ describe("the guides themselves", () => {
     expect(text).toContain("challan");
   });
 
-  it("tells a first-time user where the guide lives afterwards", () => {
+  it("tells a first-time user where the guide waits afterwards", () => {
     const text = GUIDES.tour.steps.map((s) => s.body).join(" ").toLowerCase();
-    expect(text).toContain("right");
+    expect(text).toContain("corner");
+  });
+
+  // The right-edge tab is gone. A guide still sending people to it would be
+  // pointing at nothing.
+  it("no longer sends anybody to a Guide tab on the right edge", () => {
+    const text = JSON.stringify(GUIDES).toLowerCase();
+    expect(text).not.toContain("right edge");
+    expect(text).not.toContain("guide tab");
   });
 });
 

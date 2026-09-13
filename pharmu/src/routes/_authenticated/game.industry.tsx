@@ -425,10 +425,12 @@ function OfficialStamp({ label = "GMP CONTROLLED" }: { label?: string }) {
  * being told afterwards whether it was allowed.
  */
 function EnvSlider({
-  label, unit, value, onChange, min, max, step, range,
+  label, unit, value, onChange, min, max, step, range, tour,
 }: {
   label: string; unit: string; value: number; onChange: (value: number) => void;
   min: number; max: number; step: number; range: [number, number];
+  /** What the guide flies to; see src/lib/tutorial-spots.ts. */
+  tour?: string;
 }) {
   const span = Math.max(1, max - min);
   const left = ((range[0] - min) / span) * 100;
@@ -436,7 +438,7 @@ function EnvSlider({
   const inRange = value >= range[0] && value <= range[1];
 
   return (
-    <div className="mt-3 first:mt-0">
+    <div className="mt-3 first:mt-0" data-tour={tour}>
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">{label}</p>
         <span className={`rounded-full border px-3 py-1 text-xs font-bold ${
@@ -485,7 +487,7 @@ function ProductChoiceScreen({ onPick }: { onPick: (choice: ProductChoice) => vo
   const active = PRODUCT_FORMS.find((item) => item.form === selectedForm) ?? PRODUCT_FORMS[0];
 
   return (
-    <main className="mx-auto grid min-h-[70vh] max-w-6xl place-items-center px-4 py-10">
+    <main className="mx-auto grid min-h-[70vh] max-w-6xl place-items-center px-4 py-10" data-tour-scene="industry-product">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -499,7 +501,7 @@ function ProductChoiceScreen({ onPick }: { onPick: (choice: ProductChoice) => vo
           </p>
         </div>
 
-        <div className="mt-8 grid gap-3 md:grid-cols-4">
+        <div className="mt-8 grid gap-3 md:grid-cols-4" data-tour="industry-forms">
           {PRODUCT_FORMS.map((item) => {
             const Icon = item.icon;
             const selected = item.form === selectedForm;
@@ -521,7 +523,7 @@ function ProductChoiceScreen({ onPick }: { onPick: (choice: ProductChoice) => vo
           })}
         </div>
 
-        <div className="mt-8 rounded-2xl border border-border/40 bg-background/35 p-4">
+        <div className="mt-8 rounded-2xl border border-border/40 bg-background/35 p-4" data-tour="industry-types">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-primary">{active.form} types</p>
@@ -981,7 +983,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
       <main className="relative z-10 mx-auto max-w-7xl px-4 py-4">
         {/* Env gauges always visible after formula */}
         {phase !== "formula" && (
-          <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4" data-tour-scene="industry-bench" data-tour="industry-gauges">
             <EnvironmentGauge
               kind="temperature" label="Temperature" value={temp} unit="°C"
               band={{ low: f.env.tempRange[0], high: f.env.tempRange[1] }}
@@ -1000,7 +1002,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         {/* The record stays reachable at every phase - a production pharmacist
             works from it rather than from memory. */}
         {phase !== "formula" && (
-          <div className="mb-4 flex justify-end">
+          <div className="mb-4 flex justify-end" data-tour-scene="industry-bench">
             <BatchBooklet
               product={batchProduct}
               batchSize={batchSizeLabel}
@@ -1014,7 +1016,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "formula" && (
-          <section className="relative overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 text-slate-900 dark:text-slate-100 shadow-[0_24px_70px_-42px_rgba(245,158,11,0.65)] backdrop-blur-xl">
+          <section data-tour-scene="industry-record" className="relative overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 text-slate-900 dark:text-slate-100 shadow-[0_24px_70px_-42px_rgba(245,158,11,0.65)] backdrop-blur-xl">
             <OfficialStamp />
             <div className="relative border-b border-amber-200/25 pb-3">
               <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-amber-700 dark:text-amber-300">Batch Manufacturing Record</p>
@@ -1029,7 +1031,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                 </div>
               </div>
             </div>
-            <div className="relative mt-4 rounded-xl border border-amber-200/20 bg-amber-400/5 p-4 backdrop-blur">
+            <div className="relative mt-4 rounded-xl border border-amber-200/20 bg-amber-400/5 p-4 backdrop-blur" data-tour="industry-batch-size">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <label htmlFor="industry-batch-size" className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
@@ -1069,7 +1071,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                 <span>{formatBatchSize(f.batchSize, maxBatchCount)}</span>
               </div>
             </div>
-            <ul className="relative mt-4 divide-y divide-amber-200/15 rounded-xl border border-amber-200/20 bg-slate-900/[0.04] dark:bg-slate-950/35 backdrop-blur">
+            <ul data-tour="industry-formula" className="relative mt-4 divide-y divide-amber-200/15 rounded-xl border border-amber-200/20 bg-slate-900/[0.04] dark:bg-slate-950/35 backdrop-blur">
               {ingredients.map((i: any) => (
                 <li key={i.name} className="grid grid-cols-[26px_1fr_auto] items-center gap-3 p-3 text-sm">
                   <span className="grid h-4 w-4 place-items-center border border-amber-200/40 bg-amber-400/10 text-[10px]">
@@ -1083,7 +1085,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                 </li>
               ))}
             </ul>
-            <button onClick={acknowledgeFormula} className="relative mt-5 rounded-full bg-amber-500 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_0_28px_-12px_rgba(245,158,11,0.9)] hover:bg-amber-400">
+            <button onClick={acknowledgeFormula} data-tour="industry-ack" className="relative mt-5 rounded-full bg-amber-500 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_0_28px_-12px_rgba(245,158,11,0.9)] hover:bg-amber-400">
               I have read the batch record
             </button>
           </section>
@@ -1103,8 +1105,8 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
             <div className="min-w-0 space-y-4">
 
         {phase === "weighing" && (
-          <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
+          <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]" data-tour-scene="industry-weighing">
+            <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur" data-tour="industry-inventory">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Step 2 - Weighing</p>
               <h3 className="mt-1 text-lg font-bold">Ingredient inventory</h3>
 
@@ -1155,7 +1157,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
               )}
             </div>
 
-            <div className="rounded-2xl border border-amber-300/25 bg-card/60 p-5 shadow-[0_18px_55px_-38px_rgba(245,158,11,0.8)] backdrop-blur">
+            <div className="rounded-2xl border border-amber-300/25 bg-card/60 p-5 shadow-[0_18px_55px_-38px_rgba(245,158,11,0.8)] backdrop-blur" data-tour="industry-station">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Weighing station</p>
               {!active ? (
                 <p className="mt-4 text-sm text-muted-foreground">Select an ingredient from the inventory.</p>
@@ -1221,7 +1223,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "env" && (
-          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
+          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur" data-tour-scene="industry-env">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Step 3 - Environmental check</p>
             <h3 className="mt-1 text-lg font-bold">Verify mixing room conditions</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -1234,7 +1236,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
               const deviation = envDeviation();
               return (
                 <>
-                  <div className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+                  <div data-tour="industry-room-status" className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
                     deviation.any
                       ? "border-amber-400/45 bg-amber-400/10 text-amber-700 dark:text-amber-100"
                       : "border-emerald-400/40 bg-emerald-400/10 text-emerald-700 dark:text-emerald-100"
@@ -1256,6 +1258,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                     <div className="mt-4 grid gap-2 sm:grid-cols-2">
                       <button
                         onClick={() => setAdjusting(true)}
+                        data-tour="industry-change-conditions"
                         className="rounded-xl border border-primary/45 bg-primary/10 p-3 text-left text-sm font-semibold text-primary transition hover:bg-primary/15"
                       >
                         Change conditions
@@ -1265,6 +1268,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                       </button>
                       <button
                         onClick={proceedEnvironment}
+                        data-tour="industry-proceed"
                         className={`rounded-xl border p-3 text-left text-sm font-semibold transition ${
                           deviation.any
                             ? "border-destructive/45 text-destructive hover:bg-destructive/10"
@@ -1278,15 +1282,15 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                       </button>
                     </div>
                   ) : (
-                    <div className="mt-4 rounded-xl border border-primary/25 bg-primary/5 p-4">
+                    <div className="mt-4 rounded-xl border border-primary/25 bg-primary/5 p-4" data-tour-scene="industry-room-controls">
                       <EnvSlider
-                        label="Temperature" unit=" deg C"
+                        label="Temperature" unit=" deg C" tour="industry-temp-slider"
                         value={temp} onChange={setTemp}
                         min={roomBounds?.temp.min ?? f.env.tempRange[0] - 8} max={roomBounds?.temp.max ?? f.env.tempRange[1] + 8}
                         step={1} range={f.env.tempRange}
                       />
                       <EnvSlider
-                        label="Relative humidity" unit="% RH"
+                        label="Relative humidity" unit="% RH" tour="industry-humidity-slider"
                         value={humidity} onChange={setHumidity}
                         min={roomBounds?.humidity.min ?? 0} max={roomBounds?.humidity.max ?? f.env.humidityRange[1] + 25}
                         step={1} range={f.env.humidityRange}
@@ -1294,6 +1298,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                       <div className="mt-4 flex flex-wrap gap-2">
                         <button
                           onClick={confirmEnvironment}
+                          data-tour="industry-confirm-room"
                           className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
                         >
                           Confirm and weigh
@@ -1314,8 +1319,8 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "process" && (
-          <section className="space-y-4">
-            <div className="flex flex-wrap items-center gap-1 rounded-2xl border border-border/40 bg-card/60 p-3 backdrop-blur">
+          <section className="space-y-4" data-tour-scene="industry-process">
+            <div className="flex flex-wrap items-center gap-1 rounded-2xl border border-border/40 bg-card/60 p-3 backdrop-blur" data-tour="industry-stages">
               {STAGES.map((s, i) => {
                 const done = stageResults[s] !== undefined;
                 const active = i === stageIdx;
@@ -1330,7 +1335,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
               })}
             </div>
 
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
+            <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur" data-tour="industry-stage">
               <StagePicker
                 stage={STAGES[stageIdx]}
                 label={f.stageLabels?.[STAGES[stageIdx]] ?? STAGES[stageIdx]}
@@ -1344,10 +1349,10 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "qc" && (
-          <section className="overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 text-slate-900 dark:text-slate-100 shadow-[0_20px_60px_-38px_rgba(245,158,11,0.65)] backdrop-blur-xl">
+          <section data-tour-scene="industry-qc" className="overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 text-slate-900 dark:text-slate-100 shadow-[0_20px_60px_-38px_rgba(245,158,11,0.65)] backdrop-blur-xl">
             <p className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Step 5 - Quality Control</p>
             <h3 className="mt-1 text-lg font-bold">Judge each test</h3>
-            <ul className="mt-3 space-y-3">
+            <ul className="mt-3 space-y-3" data-tour="industry-qc-tests">
               {f.qc.map((t: any, i: number) => {
                 const ans = qcAnswers[i];
                 const stamped = ans !== undefined;
@@ -1395,13 +1400,13 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "release" && (
-          <section className="relative overflow-hidden rounded-3xl border border-amber-300/30 bg-slate-900/[0.07] dark:bg-black/55 p-5 sm:p-8 text-center shadow-[0_24px_80px_-42px_rgba(245,158,11,0.9)] backdrop-blur">
+          <section data-tour-scene="industry-release" className="relative overflow-hidden rounded-3xl border border-amber-300/30 bg-slate-900/[0.07] dark:bg-black/55 p-5 sm:p-8 text-center shadow-[0_24px_80px_-42px_rgba(245,158,11,0.9)] backdrop-blur">
             <div className="pointer-events-none absolute inset-0 opacity-30"
               style={{ backgroundImage: "linear-gradient(rgba(251,191,36,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(251,191,36,0.08) 1px, transparent 1px)", backgroundSize: "22px 22px" }} />
             <FlaskConical className="relative mx-auto size-12 text-amber-700 dark:text-amber-300" />
             <h3 className="relative mt-3 text-2xl font-black uppercase tracking-wide">Final batch decision</h3>
             <p className="relative mt-1 text-sm text-muted-foreground">Based on QC results and production records, authorize the batch.</p>
-            <div className="relative mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="relative mt-6 grid gap-4 sm:grid-cols-2" data-tour="industry-release">
               <button
                 onClick={() => releaseDecision(true)}
                 className="rounded-2xl border border-emerald-300/50 bg-emerald-500 px-8 py-6 font-mono text-3xl font-black uppercase tracking-[0.18em] text-emerald-950 shadow-[0_0_44px_-12px_rgba(16,185,129,0.95)] transition hover:scale-[1.02] hover:bg-emerald-400"

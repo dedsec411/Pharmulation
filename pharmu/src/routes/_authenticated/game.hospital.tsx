@@ -314,8 +314,8 @@ export function HospitalGame({ mode }: { mode: TimedMode }) {
       <GameHeader title={caseData.title ?? "Clinical"} onExit={onExit} remaining={timer.remaining} pct={timer.pct}
         paused={timer.paused} togglePause={timer.togglePause} score={0} hideScore
         onHint={() => { setHints((n) => n + 1); toastScore(-SCORE_WEIGHTS.hint, "hint used"); toast.info(`Hint: ${caseData.mentor_tip}`); }} />
-      <main className="relative z-10 mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.3fr]">
-        <aside className="relative rounded-2xl border border-indigo-300/20 bg-slate-900/[0.07] dark:bg-slate-900/55 p-4 text-slate-900 dark:text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl">
+      <main className="relative z-10 mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.3fr]" data-tour-scene="clinical-order">
+        <aside data-tour="clinical-file" className="relative rounded-2xl border border-indigo-300/20 bg-slate-900/[0.07] dark:bg-slate-900/55 p-4 text-slate-900 dark:text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl">
           <div className="absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-indigo-200/20 bg-slate-200 dark:bg-slate-700/70 shadow-inner backdrop-blur" />
           <CaseFileSlides
             caseId={String(caseData.id ?? "case")}
@@ -328,7 +328,7 @@ export function HospitalGame({ mode }: { mode: TimedMode }) {
         </aside>
 
         <section className="space-y-3">
-          <div className="overflow-hidden rounded-2xl border border-indigo-300/25 bg-slate-900/[0.08] dark:bg-black/70 p-4 font-mono shadow-[0_18px_60px_-34px_oklch(0.60_0.20_270)] backdrop-blur">
+          <div data-tour="clinical-formulary" className="overflow-hidden rounded-2xl border border-indigo-300/25 bg-slate-900/[0.08] dark:bg-black/70 p-4 font-mono shadow-[0_18px_60px_-34px_oklch(0.60_0.20_270)] backdrop-blur">
             <div className="mb-3 flex items-center justify-between gap-3 border-b border-indigo-300/15 pb-2">
               <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-200">
                 <Database className="h-4 w-4" /> Hospital formulary
@@ -378,7 +378,7 @@ export function HospitalGame({ mode }: { mode: TimedMode }) {
             )}
           </div>
 
-          <div className="rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur">
+          <div className="rounded-2xl border border-border/40 bg-card/60 p-4 backdrop-blur" data-tour="clinical-orders">
             <p className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
               <HeartPulse className="h-3.5 w-3.5 text-primary" /> Order builder
             </p>
@@ -420,7 +420,7 @@ export function HospitalGame({ mode }: { mode: TimedMode }) {
                 </AnimatePresence>
               </motion.ul>
             )}
-            <button onClick={submit} disabled={orders.length === 0}
+            <button onClick={submit} disabled={orders.length === 0} data-tour="clinical-submit"
               className="mt-3 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
               Submit order
             </button>

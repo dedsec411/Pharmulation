@@ -57,7 +57,7 @@ function Modes() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10" data-tour-scene="modes">
         <div className="mb-6">
           <BackButton to="/dashboard" />
         </div>
@@ -68,7 +68,7 @@ function Modes() {
             a fifth mode, it is a way of bringing your own case. */}
         <LensEntry className="mt-6" />
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="modes-grid">
           {MODES.map((m) => {
             const Icon = m.icon;
             const locked = m.gated && count < 10;

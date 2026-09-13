@@ -38,7 +38,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
   const nameFor = (id: string) => classes.find((c) => c.id === id)?.name ?? "Your class";
 
   return (
-    <section className="mt-6">
+    <section className="mt-6" data-tour="dash-assigned">
       <h2 className="flex items-center gap-2 text-lg font-bold">
         <GraduationCap className="size-5 text-primary" /> Set by your class
       </h2>

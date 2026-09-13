@@ -266,7 +266,7 @@ function Dashboard() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5" data-tour-scene="dashboard">
 
         {/* MENTOR TIP - top, first thing you see */}
         <MentorTipBanner tip={tip} />
@@ -274,6 +274,7 @@ function Dashboard() {
         {/* PLAYER CARD + DAILY CHALLENGE */}
         <div className="grid lg:grid-cols-3 gap-5">
           <motion.div
+            data-tour="dash-standing"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             whileHover={DASHBOARD_CARD_HOVER}
             whileTap={{ scale: 0.99 }}
@@ -344,6 +345,7 @@ function Dashboard() {
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             whileHover={DASHBOARD_CARD_HOVER}
             whileTap={{ scale: 0.99 }}
+            data-tour="dash-daily"
             className="glass-card p-6 bg-gradient-to-br from-primary/15 to-transparent border-primary/30 transition duration-300 hover:border-primary/50"
           >
             <div className="flex items-start justify-between gap-3">
@@ -392,7 +394,7 @@ function Dashboard() {
             <h2 className="text-lg font-bold">Pick your training mode</h2>
             <p className="mt-1 text-sm text-muted-foreground">Each session is timed · Earn XP · Unlock badges</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="dash-modes">
             {Object.entries(MODE_META).map(([key, m], i) => {
               const Icon = m.icon;
               return (
