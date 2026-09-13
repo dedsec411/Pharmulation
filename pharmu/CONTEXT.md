@@ -226,6 +226,16 @@ the rest of the page dimmed. The decisions live in tested modules:
   library (`shouldTick` in `useTimer.ts`). Not for the menu: a menu left open
   would be a free pause the case bar charges for.
 - Settings → "Dr. Hakim comes over" stops the uninvited visits; tapping still works.
+- While he covers the page **focus stays with him** and Tab wraps inside his
+  bubble, library or outlines. Otherwise the stopped clock was a pause you
+  could keep working through by keyboard.
+- Controls in the sticky bar (nav, case clock) are **never scrolled to** —
+  they are always on screen, and scrolling towards them sent the page to the
+  top. When he is done, the page goes back where the reader was, if he moved it.
+- **Skip on an introduction covers the whole current page**, including screens
+  that finished loading after it began.
+- `useDifficultyChoice` takes `{ guideKey }` for anything that borrows a mode's
+  difficulty without being that mode. The look-alike drill passes `null`.
 - **The guest account remembers in sessionStorage, not localStorage**, and
   ignores `profiles.onboarding_completed`. It is shared: at a stand it is
   whoever picked up the laptop thirty seconds ago, so every visitor gets the
