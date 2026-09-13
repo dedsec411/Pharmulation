@@ -56,7 +56,8 @@ export function LookalikeDrill({
 }: Props) {
   const onExit = useGameExit("/modes");
   const { profile } = useAuthStore();
-  const chosen = useDifficultyChoice("rx", onBack);
+  // The drill introduces its own screen when it appears; it is not an Rx case.
+  const chosen = useDifficultyChoice("rx", onBack, { guideKey: null });
   const difficulty = fixedDifficulty ?? chosen.difficulty;
   const difficultyModal = fixedDifficulty ? null : chosen.difficultyModal;
   const [started, setStarted] = useState(!!skipBriefing);

@@ -50,12 +50,17 @@ describe("modeGuideKey", () => {
   // The mode tutorial opens off the mode a case is loaded for, so every mode
   // that still exists has to resolve to a guide - a new mode added without one
   // would silently open nothing.
+  // This used to skip any mode that resolved to nothing, which is exactly how
+  // rx and otc - the two modes the difficulty picker actually reports for
+  // Community - went without an overview and nothing failed.
   it("covers every mode the product actually ships", () => {
     for (const mode of Object.keys(MODE_LABEL)) {
       const key = modeGuideKey(mode);
-      if (key === null) continue;
-      expect(GUIDES[key]).toBeDefined();
+      expect(key, mode).not.toBeNull();
+      expect(GUIDES[key!]).toBeDefined();
     }
+    expect(modeGuideKey("rx")).toBe("community");
+    expect(modeGuideKey("otc")).toBe("community");
     for (const mode of ["community", "hospital", "industry", "warehousing"]) {
       expect(modeGuideKey(mode)).not.toBeNull();
     }

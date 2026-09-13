@@ -59,7 +59,7 @@ export const GUIDES: Record<string, TutorialGuide> = {
       {
         title: "Four modes, four jobs",
         body: "Community Pharmacy is dispensing and OTC advice. Clinical is ward work - orders, interactions, renal dosing. Industry runs a manufacturing batch from formula to release. Warehousing is the supply chain: receiving, FEFO dispatch, expiry, audit and the delivery paperwork.",
-        action: "Open Modes from the top navigation to see all four.",
+        action: "Open Modes from the menu at the top to see all four.",
         target: "dash-modes",
       },
       {
@@ -423,8 +423,13 @@ export function guideForPath(pathname: string): TutorialGuide {
 
 /** The mode whose guide opens by itself, or null for a page that has none. */
 export function modeGuideKey(mode: string): string | null {
+  // Community is one guide for two game modes. The difficulty picker reports
+  // the game mode - rx or otc - never "community", so without these two the
+  // Community overview never played for anybody.
   const map: Record<string, string> = {
     community: "community",
+    rx: "community",
+    otc: "community",
     hospital: "clinical",
     industry: "industry",
     warehousing: "warehousing",

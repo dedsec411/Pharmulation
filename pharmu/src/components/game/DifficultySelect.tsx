@@ -54,7 +54,17 @@ function storageKey(mode: Mode) {
  * @param onCancel where to go if the player backs out. Defaults to the mode
  *   list; Community passes its own so Back returns to the Rx/OTC picker.
  */
-export function useDifficultyChoice(mode: Mode, onCancel?: () => void) {
+export function useDifficultyChoice(
+  mode: Mode,
+  onCancel?: () => void,
+  /**
+   * Which guide introduces this the first time, when it is not the mode's own.
+   * The look-alike drill borrows the Rx timer and difficulty, but it is not an
+   * Rx case, and the Rx/OTC overview in front of it would be the wrong lesson.
+   * Null for none.
+   */
+  options?: { guideKey?: string | null },
+) {
   const navigate = useNavigate();
   const openModeTutorial = useModeTutorialTrigger();
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
@@ -73,7 +83,7 @@ export function useDifficultyChoice(mode: Mode, onCancel?: () => void) {
     // guessing at it. Fired from here rather than from the modes because this
     // is where the difficulty modal closes - the guide would otherwise open
     // behind it.
-    openModeTutorial(modeGuideKey(mode));
+    openModeTutorial(options?.guideKey !== undefined ? options.guideKey : modeGuideKey(mode));
   }
 
   function cancel() {
