@@ -13,13 +13,15 @@ import {
   awardBadge, bumpCounterBadge,
 } from "@/lib/game/shared";
 import { useAuthStore } from "@/lib/auth-store";
-import { Check, X as XIcon, Thermometer, Droplets, FlaskConical, Pill, CupSoda, PackageCheck, Sparkles, Cog, ClipboardCheck } from "lucide-react";
+import { Check, X as XIcon, FlaskConical, Pill, CupSoda, PackageCheck, Sparkles, Cog, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { shuffledBySeed, wrongStart } from "@/lib/game/no-free-answers";
 import { difficultyContent } from "@/lib/game/shared";
 import { groupByRole, roleFor } from "@/lib/game/excipients";
 import { Abbr } from "@/components/Abbr";
+import { BalanceDial, EnvironmentGauge } from "@/components/game/Instruments";
+import { envBounds } from "@/lib/game/gauge";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useDifficultyChoice } from "@/components/game/DifficultySelect";
 
@@ -415,53 +417,6 @@ function OfficialStamp({ label = "GMP CONTROLLED" }: { label?: string }) {
   );
 }
 
-function BalanceScale({ value, max, min, target, unit, ok }: { value: number; max: number; min?: number; target?: number; unit?: string; ok: boolean }) {
-  const pct = Math.max(0, Math.min(100, max > 0 ? (value / max) * 100 : 0));
-  const angle = -54 + pct * 1.08;
-  return (
-    <div className={`rounded-2xl border p-4 ${ok ? "border-emerald-300/40 bg-emerald-950/20" : "border-red-400/45 bg-red-950/20"}`}>
-      <div className="relative mx-auto h-36 max-w-xs rounded-t-full border border-foreground/10 bg-slate-900/[0.05] dark:bg-black/45 shadow-inner">
-        <div className="absolute inset-4 rounded-t-full border-t border-x border-foreground/10" />
-        <div className="absolute bottom-4 left-1/2 h-24 w-1 origin-bottom rounded-full bg-current transition-transform duration-150"
-          style={{ transform: `translateX(-50%) rotate(${angle}deg)`, color: ok ? "rgb(16 185 129)" : "rgb(239 68 68)", boxShadow: `0 0 18px ${ok ? "rgba(16,185,129,.65)" : "rgba(239,68,68,.65)"}` }} />
-        <div className="absolute bottom-3 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border border-foreground/20 bg-white dark:bg-slate-900" />
-        <div className="absolute bottom-3 left-5 text-[10px] font-bold text-muted-foreground">0</div>
-        <div className="absolute bottom-3 right-5 text-[10px] font-bold text-muted-foreground">{displayWeight(max, unit)}</div>
-        {min !== undefined && target !== undefined && (
-          <div className="absolute inset-x-8 bottom-9 h-1 rounded-full bg-foreground/10">
-            <div className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full bg-emerald-400/80"
-              style={{ left: `${Math.max(0, (min / max) * 100)}%`, width: `${Math.max(4, ((target - min) / max) * 200)}%` }} />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function IndustrialGauge({ icon: Icon, label, value, unit, range }: any) {
-  const min = Number(range?.[0] ?? 0);
-  const max = Number(range?.[1] ?? 100);
-  const gaugeMin = Math.min(0, min - (max - min));
-  const gaugeMax = max + (max - min);
-  const pct = Math.max(0, Math.min(1, (value - gaugeMin) / (gaugeMax - gaugeMin || 1)));
-  const angle = -130 + pct * 260;
-  const ok = value >= min && value <= max;
-  return (
-    <div className={`relative overflow-hidden rounded-2xl border p-3 text-xs ${ok ? "border-emerald-400/35 bg-emerald-500/5" : "border-red-400/45 bg-red-500/10"}`}>
-      <div className="flex items-center gap-1.5 text-muted-foreground"><Icon className="size-3.5" /> {label}</div>
-      <div className="relative mx-auto mt-2 h-24 w-28">
-        <div className="absolute inset-x-0 top-0 h-24 rounded-t-full border border-foreground/15 bg-slate-900/[0.04] dark:bg-black/35 shadow-inner" />
-        <div className="absolute right-2 top-8 h-8 w-8 rounded-full border border-red-400/30 bg-red-500/10" />
-        <div className="absolute bottom-2 left-1/2 h-16 w-1 origin-bottom rounded-full bg-amber-300 transition-transform"
-          style={{ transform: `translateX(-50%) rotate(${angle}deg)`, boxShadow: "0 0 12px rgba(251,191,36,0.65)" }} />
-        <div className="absolute bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-slate-200" />
-      </div>
-      <div className={`mt-1 text-center font-mono text-lg font-black tabular-nums ${ok ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>{value}{unit}</div>
-      <div className="text-center text-[10px] text-muted-foreground">Safe {min}-{max}{unit}</div>
-    </div>
-  );
-}
-
 /**
  * A room control with its acceptable band drawn on the track.
  *
@@ -662,14 +617,15 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
       // thing this step exists to teach - unreachable most of the time.
       const [tLow, tHigh] = f.env.tempRange;
       const [hLow, hHigh] = f.env.humidityRange;
+      const reach = envBounds(f.env);
       const seed = `${caseData?.id ?? "industry"}:env`;
-      // Bounds match the sliders exactly, or the opening value would sit off
-      // the end of the track the player has to move.
+      // The same reach the sliders and gauges use, or the opening value would
+      // sit off the end of the track the player has to move.
       setTemp(wrongStart({
-        min: tLow, max: tHigh, floor: tLow - 8, ceiling: tHigh + 8, step: 1, seed: `${seed}:temp`,
+        min: tLow, max: tHigh, floor: reach.temp.min, ceiling: reach.temp.max, step: 1, seed: `${seed}:temp`,
       }));
       setHumidity(wrongStart({
-        min: hLow, max: hHigh, floor: Math.max(0, hLow - 20), ceiling: hHigh + 25, step: 1, seed: `${seed}:rh`,
+        min: hLow, max: hHigh, floor: reach.humidity.min, ceiling: reach.humidity.max, step: 1, seed: `${seed}:rh`,
       }));
     }
     const drying = f?.process?.drying;
@@ -688,6 +644,9 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   // ranges at every level, so this asks for the record to be consulted rather
   // than withholding it.
   const content = difficultyContent(caseData?.difficulty);
+  // One reach for the room controls, shared by the sliders, the gauges and the
+  // value the room opens at - three copies of it had drifted apart.
+  const roomBounds = f?.env ? envBounds(f.env) : null;
   const rawIngredients = f?.ingredients ?? [];
   const batchScale = baseBatchCount > 0 && batchCount > 0 ? batchCount / baseBatchCount : 1;
   const batchSizeLabel = formatBatchSize(f?.batchSize, batchCount || baseBatchCount || 1);
@@ -1023,8 +982,16 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         {/* Env gauges always visible after formula */}
         {phase !== "formula" && (
           <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <IndustrialGauge icon={Thermometer} label="Temp" value={temp} unit=" deg C" range={f.env.tempRange} />
-            <IndustrialGauge icon={Droplets} label="Humidity" value={humidity} unit="%" range={f.env.humidityRange} />
+            <EnvironmentGauge
+              kind="temperature" label="Temperature" value={temp} unit="°C"
+              band={{ low: f.env.tempRange[0], high: f.env.tempRange[1] }}
+              scale={roomBounds?.temp ?? { min: f.env.tempRange[0] - 8, max: f.env.tempRange[1] + 8 }}
+            />
+            <EnvironmentGauge
+              kind="humidity" label="Humidity" value={humidity} unit="%"
+              band={{ low: f.env.humidityRange[0], high: f.env.humidityRange[1] }}
+              scale={roomBounds?.humidity ?? { min: 0, max: f.env.humidityRange[1] + 25 }}
+            />
             <InfoChip label="Batch" value={batchSizeLabel} />
             <InfoChip label="Errors" value={String(errors)} />
           </div>
@@ -1195,7 +1162,6 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
               ) : (
                 <div className="mt-3 space-y-3">
                   <p className="text-lg font-bold">{active}</p>
-                  <p className="text-2xl font-mono tabular-nums">{displayWeight(slider, activeIngredient?.unit)}</p>
                   {activeIngredient && (content.showTolerances ? (
                     <p className="text-xs text-muted-foreground">
                       Target {displayWeight(activeIngredient.target, activeIngredient.unit)} - Range {displayWeight(activeIngredient.min, activeIngredient.unit)}-{displayWeight(activeIngredient.max, activeIngredient.unit)}
@@ -1207,17 +1173,28 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                       Target and tolerance are in the batch record.
                     </p>
                   ))}
-                  <BalanceScale
+                  {/* guided follows the Expert rule: the tolerance lives in the
+                      batch record, so at Expert the balance shows a weight and
+                      whether it has settled - not a green band to steer into,
+                      and not a slider or button that turns green inside it. */}
+                  <BalanceDial
                     value={slider}
-                    max={weighingMax}
-                    min={activeIngredient?.min}
-                    target={activeIngredient?.target}
-                    unit={activeIngredient?.unit}
-                    ok={activeWeightOk}
+                    scale={{ min: 0, max: weighingMax }}
+                    band={{ low: Number(activeIngredient?.min ?? 0), high: Number(activeIngredient?.max ?? 0) }}
+                    target={Number(activeIngredient?.target ?? 0)}
+                    guided={content.showTolerances}
+                    format={(v) => displayWeight(v, activeIngredient?.unit)}
+                    tickFormat={(v) => `${Math.round(v)} ${activeIngredient?.unit ?? "g"}`}
                   />
                   <input type="range" min={0} max={weighingMax} step={weighingStep} value={slider}
-                    onChange={(e) => setSlider(Number(e.target.value))} className={`w-full ${activeWeightOk ? "accent-emerald-500" : "accent-red-500"}`} />
-                  <button onClick={confirmWeigh} className={`w-full rounded-full py-2 text-sm font-semibold text-white ${activeWeightOk ? "bg-emerald-600 hover:bg-emerald-500" : "bg-red-600 hover:bg-red-500"}`}>
+                    onChange={(e) => setSlider(Number(e.target.value))}
+                    aria-label={`Weight of ${active ?? "ingredient"}`}
+                    className={`w-full ${!content.showTolerances ? "accent-primary" : activeWeightOk ? "accent-emerald-500" : "accent-red-500"}`} />
+                  <button onClick={confirmWeigh} className={`w-full rounded-full py-2 text-sm font-semibold transition active:scale-[0.99] ${
+                    !content.showTolerances
+                      ? "bg-primary text-primary-foreground hover:brightness-110"
+                      : activeWeightOk ? "bg-emerald-600 text-white hover:bg-emerald-500" : "bg-red-600 text-white hover:bg-red-500"
+                  }`}>
                     Confirm weight
                   </button>
                 </div>
@@ -1305,13 +1282,13 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                       <EnvSlider
                         label="Temperature" unit=" deg C"
                         value={temp} onChange={setTemp}
-                        min={f.env.tempRange[0] - 8} max={f.env.tempRange[1] + 8}
+                        min={roomBounds?.temp.min ?? f.env.tempRange[0] - 8} max={roomBounds?.temp.max ?? f.env.tempRange[1] + 8}
                         step={1} range={f.env.tempRange}
                       />
                       <EnvSlider
                         label="Relative humidity" unit="% RH"
                         value={humidity} onChange={setHumidity}
-                        min={Math.max(0, f.env.humidityRange[0] - 20)} max={f.env.humidityRange[1] + 25}
+                        min={roomBounds?.humidity.min ?? 0} max={roomBounds?.humidity.max ?? f.env.humidityRange[1] + 25}
                         step={1} range={f.env.humidityRange}
                       />
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -1450,16 +1427,6 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
   );
 }
 
-function Gauge({ icon: Icon, label, value, unit, range }: any) {
-  const ok = value >= range[0] && value <= range[1];
-  return (
-    <div className={`rounded-xl border p-2 text-xs ${ok ? "border-primary/40 bg-primary/5" : "border-destructive/40 bg-destructive/10"}`}>
-      <div className="flex items-center gap-1.5 text-muted-foreground"><Icon className="size-3" /> {label}</div>
-      <div className="mt-1 text-lg font-bold tabular-nums">{value}{unit}</div>
-      <div className="text-[10px] text-muted-foreground">Safe {range[0]}-{range[1]}{unit}</div>
-    </div>
-  );
-}
 function InfoChip({ label, value }: any) {
   return (
     <div className="rounded-xl border border-border/40 bg-muted/30 p-2 text-xs">
