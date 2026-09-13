@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **764 tests across 39 files, all passing**.
+current baseline is **801 tests across 41 files, all passing**.
 
 ---
 
@@ -230,6 +230,22 @@ edge** of every signed-in page. Content is in `src/lib/tutorial.ts` (tested),
 Still on fixed pools with no generator: Rx (7 templates, none `hard`), OTC,
 Clinical, Industry. Industry varies through its form/product picker rather than
 its case rows, so it is less exposed.
+
+### Look-alike brand names (the differentiator)
+`src/lib/game/lookalike.ts` measures how close two brand names are; the result
+is committed as `lookalike-pairs.ts` (**generated — regenerate, don't hand-edit**).
+Over all 1,286 Pakistani brands it finds **55 pairs within two edits, every one
+crossing therapeutic classes** — Clopid/Lopid, Amoxil/Doxil, Neoral/Nizoral.
+Several appear on the international ISMP confused-name lists, which says the
+method finds real pairs; the rest appear to be unpublished for this market.
+
+The drill is on the Community picker and scores as `rx`.
+
+**They are candidates, not findings.** The measurement is orthographic only.
+Confirming any pair has actually been confused in a Pakistani pharmacy needs
+incident data and a pharmacist — say that whenever the figure is quoted. The
+drill itself asserts no pharmacology: the task is "the prescription says this
+one, hand over this one", and a test fails if a dose ever appears.
 
 ### Short forms (the jury's objection)
 `src/lib/glossary.ts` (21 entries, tested) + `src/components/Abbr.tsx`.
