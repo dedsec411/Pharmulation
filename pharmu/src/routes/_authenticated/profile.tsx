@@ -14,6 +14,8 @@ import { ClassSignpost } from "@/components/game/ClassSignpost";
 import { useWeaknessMap } from "@/lib/game/useWeaknessMap";
 import { hasEnoughHistory } from "@/lib/game/weakness";
 import { cpdHoursFromCases, CPD_MILESTONES, generateCertificatePdf, nextCpdMilestone } from "@/lib/cpd";
+import { buildCompetenceRecord } from "@/lib/educator/competence";
+import { competenceFileName, generateCompetencePdf } from "@/lib/educator/competence-pdf";
 import { PUBLIC_MODE_GROUPS, publicModeCount, publicModeLabel } from "@/lib/game/shared";
 import { toast } from "sonner";
 import { BackButton } from "@/components/BackButton";
@@ -30,6 +32,7 @@ function ProfilePage() {
   const userId = profile?.user_id;
   const [tab, setTab] = useState<"overview" | "badges" | "history" | "certificates">("overview");
   const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
+  const [buildingEvidence, setBuildingEvidence] = useState(false);
   const [claimingHours, setClaimingHours] = useState<number | null>(null);
 
   const { data: scores = [] } = useQuery({
@@ -150,6 +153,50 @@ function ProfilePage() {
       await downloadCert(profile!.full_name || "Pharmacist", hours, new Date(data.issued_at), data.id);
     } finally {
       setClaimingHours(null);
+    }
+  }
+
+  /**
+   * The evidence record.
+   *
+   * Built from this learner's own score rows at the moment it is asked for,
+   * rather than stored: it is a statement about a period, and a stale copy of
+   * one is worse than none. Nothing is written to the database, so there is no
+   * row to go out of date.
+   */
+  async function downloadEvidence() {
+    if (!userId || buildingEvidence) return;
+    setBuildingEvidence(true);
+    try {
+      const { data, error } = await supabase
+        .from("scores")
+        // The generated Supabase types are behind the database and do not know
+        // about scores.difficulty. Nothing in the record reads it, so the
+        // simplest fix is not to ask for it.
+        .select("mode, accuracy, score, errors_made, completed_at, errors_detail")
+        .eq("user_id", userId)
+        .order("completed_at", { ascending: true });
+      if (error) { toast.error("Could not read your case history."); return; }
+      const record = buildCompetenceRecord(data ?? []);
+      if (!record.casesCompleted) {
+        toast.info("Complete a case first - there is nothing to evidence yet.");
+        return;
+      }
+      const name = profile?.full_name || "Learner";
+      const blob = await generateCompetencePdf({
+        learnerName: name, learnerEmail: profile?.email, record,
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = competenceFileName(name);
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("[evidence]", err);
+      toast.error("Could not build the record. Please try again.");
+    } finally {
+      setBuildingEvidence(false);
     }
   }
 
@@ -397,6 +444,29 @@ function ProfilePage() {
 
         {tab === "certificates" && (
           <div className="mt-6 space-y-3">
+            {/* Separate from the CPD certificates above it on purpose: that is
+                a keepsake for hours completed, this is a record of what was
+                actually done and got wrong, for somebody else to sign. */}
+            <div className="glass-card p-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="font-bold">Practice evidence record</p>
+                  <p className="mt-1 max-w-prose text-xs text-muted-foreground">
+                    Every case you have completed, the errors you made, which of them stopped, and
+                    which are still happening - with a signature block for a preceptor. It reports
+                    what you did; it does not assess or certify competence.
+                  </p>
+                </div>
+                <button
+                  onClick={downloadEvidence}
+                  disabled={buildingEvidence}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition active:scale-[0.98] disabled:opacity-60"
+                >
+                  <Download className="h-4 w-4" /> {buildingEvidence ? "Building..." : "Download record"}
+                </button>
+              </div>
+            </div>
+
             {certs.length === 0 && (
               <div className="glass-card p-6 sm:p-10 text-center text-muted-foreground">
                 <Trophy className="h-8 w-8 mx-auto mb-2 text-primary" />
