@@ -93,6 +93,7 @@ export function GuideLibrary({ guideKey, onClose, onWalk, onOpen }: Props) {
             <button
               ref={closeButton}
               type="button"
+              data-guide-focus=""
               onClick={onClose}
               className="shrink-0 rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
               aria-label="Close the guide"

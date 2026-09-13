@@ -116,6 +116,7 @@ export function PickLayer({ home, viewport, reduced, onPick, onCancel }: Props) 
         </p>
         <button
           type="button"
+          data-guide-focus=""
           onClick={onCancel}
           className="absolute bottom-2.5 right-3 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground transition hover:brightness-110"
         >

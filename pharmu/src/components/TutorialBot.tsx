@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, useReducedMotion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,13 +8,13 @@ import { useSettings } from "@/lib/settings-store";
 import { PharmacistChat } from "@/components/PharmacistChat";
 import { GUIDES, guideForPath, hasGuide } from "@/lib/tutorial";
 import { binFor, hasSeenGuide, markGuideSeen, shouldAutoRunTour } from "@/lib/tutorial-seen";
-import { guideLocked, useTutorialStore } from "@/lib/tutorial-store";
+import { guideLocked, pausesClock, useTutorialStore } from "@/lib/tutorial-store";
 import {
   SPOTS, guideSteps, newHereSteps, sceneSeenKey, scenesCovered, scenesToIntroduce, screenSteps, spotStep,
   type TourStep,
 } from "@/lib/tutorial-spots";
 import { bubbleWidth, dockPoint, placeCallout, spotlightFrame, visiblePart, type Size } from "@/lib/guide-flight";
-import { findAnchors, pageIsCovered, scenesOnPage } from "@/components/guide/dom";
+import { findAnchors, pageIsCovered, scenesOnPage, takeGuideScrolled } from "@/components/guide/dom";
 import { useTrackedRect } from "@/components/guide/useTrackedRect";
 import { FlyingHakim } from "@/components/guide/FlyingHakim";
 import { Spotlight } from "@/components/guide/Spotlight";
@@ -104,6 +104,15 @@ export function TutorialBot() {
   const bin = useMemo(() => (mounted && userId ? binFor(userId) : null), [mounted, userId]);
   const seen = useCallback((key: string) => (userId ? hasSeenGuide(bin, userId, key) : false), [bin, userId]);
 
+  // Whether somebody has had the full tour, on any device. The browser flag
+  // alone said no for a real account that did the tour on another machine, and
+  // they were walked round the dashboard again as a "new" screen.
+  const tourDone = useCallback(
+    () => !!userId && !shouldAutoRunTour({ userId, seenLocally: seen("tour"), onboardingCompleted: !!profile?.onboarding_completed }),
+    [userId, seen, profile?.onboarding_completed],
+  );
+  const seenForIntro = useCallback((key: string) => (key === "tour" ? tourDone() : seen(key)), [seen, tourDone]);
+
   // A tour is about the page it started on. Leaving the page leaves its
   // controls behind, and a promised introduction with them.
   useEffect(() => {
@@ -136,7 +145,7 @@ export function TutorialBot() {
       const one = spotStep(found.find((a) => a.id === request.spotId) ?? { id: request.spotId, scene: null });
       steps = one ? [one] : [];
     } else {
-      const scenes = scenesToIntroduce(scenesOnPage(found), seen);
+      const scenes = scenesToIntroduce(scenesOnPage(found), seenForIntro);
       steps = newHereSteps(request.guideKey ? (GUIDES[request.guideKey] ?? null) : null, found, scenes);
       // Screens with nothing to say would otherwise be offered again on every
       // change to the page, forever.
@@ -176,11 +185,19 @@ export function TutorialBot() {
     if (data) setProfile(data as typeof profile);
   }
 
-  /** Done and Skip end the same way: what was shown is remembered either way. */
-  function finishTour() {
+  /**
+   * Done and Skip both remember what was shown. Skip on an introduction also
+   * covers screens that arrived after it began - a slow case load - because
+   * somebody who said "not now" does not want the guide back a second later
+   * for the rest of the same page.
+   */
+  function finishTour(skipped: boolean) {
     const store = useTutorialStore.getState();
     const req = store.request;
     const keys = scenesCovered(steps).map(sceneSeenKey);
+    if (skipped && req?.kind === "new") {
+      keys.push(...scenesToIntroduce(scenesOnPage(findAnchors()), seenForIntro).map(sceneSeenKey));
+    }
     if (req?.kind === "guide") keys.push(req.guideKey);
     if (req?.kind === "new" && req.guideKey) keys.push(req.guideKey);
     if (req?.kind === "guide" && req.guideKey === "tour") {
@@ -208,7 +225,7 @@ export function TutorialBot() {
     if (useTutorialStore.getState().request?.kind === "new") {
       const found = findAnchors().map(({ id, scene }) => ({ id, scene }));
       const covered = new Set(scenesCovered(steps));
-      const fresh = scenesToIntroduce(scenesOnPage(found), seen).filter((scene) => !covered.has(scene));
+      const fresh = scenesToIntroduce(scenesOnPage(found), seenForIntro).filter((scene) => !covered.has(scene));
       const more = newHereSteps(null, found, fresh);
       if (more.length) {
         setTour((t) => ({ ...t, steps: [...t.steps, ...more] }));
@@ -216,7 +233,7 @@ export function TutorialBot() {
         return;
       }
     }
-    finishTour();
+    finishTour(false);
   }
 
   function back() {
@@ -230,8 +247,25 @@ export function TutorialBot() {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        if (touring) finishTour();
+        if (touring) finishTour(true);
         else useTutorialStore.getState().dock();
+        return;
+      }
+      // Round and round inside the guide while it covers the page, the way a
+      // dialog should. Without this, Tab past his last button left the page
+      // for the browser's own controls, and the next Tab landed on the page.
+      if (event.key === "Tab" && pausesClock(useTutorialStore.getState().activity)) {
+        const focusable = Array.from(document.querySelectorAll<HTMLElement>(
+          "[data-guide-layer] button:not([disabled]), [data-guide-layer] a[href], [data-guide-layer] [tabindex]:not([tabindex='-1'])",
+        )).filter((el) => el.tabIndex >= 0 && el.getBoundingClientRect().width > 0);
+        if (focusable.length) {
+          const at = focusable.indexOf(document.activeElement as HTMLElement);
+          const to = event.shiftKey
+            ? (at <= 0 ? focusable.length - 1 : at - 1)
+            : (at === -1 || at === focusable.length - 1 ? 0 : at + 1);
+          event.preventDefault();
+          focusable[to].focus({ preventScroll: true });
+        }
         return;
       }
       if (!touring) return;
@@ -252,6 +286,48 @@ export function TutorialBot() {
   useEffect(() => {
     if (activity === "menu") setSpotCount(countSpots());
   }, [activity]);
+
+  // While he covers the page, keyboard focus stays with him. The spotlight
+  // takes the page's clicks for the same reason the clock stops - but Tab
+  // walked straight past it to the controls underneath, which made a stopped
+  // clock a pause you could keep working through.
+  const covering = pausesClock(activity);
+  useEffect(() => {
+    if (!covering) return;
+    const keep = (event: FocusEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest?.("[data-guide-layer]")) return;
+      document.querySelector<HTMLElement>("[data-guide-layer] [data-guide-focus]")?.focus({ preventScroll: true });
+    };
+    document.addEventListener("focusin", keep);
+    return () => document.removeEventListener("focusin", keep);
+  }, [covering]);
+
+  // And when he is done the reader goes back where they were. A tour scrolls
+  // to each control in turn, and finishing one halfway down a screen somebody
+  // was reading the top of reads as the page jumping. Captured on the first
+  // render of a tour, which is before any stop has been resolved or scrolled to.
+  const before = useRef<{ path: string; scrollY: number; focus: HTMLElement | null } | null>(null);
+  useEffect(() => {
+    if (covering) {
+      if (!before.current) {
+        takeGuideScrolled();
+        const active = document.activeElement as HTMLElement | null;
+        before.current = {
+          path: window.location.pathname,
+          scrollY: window.scrollY,
+          focus: active && active !== document.body && !active.closest("[data-guide-layer]") ? active : null,
+        };
+      }
+      return;
+    }
+    const saved = before.current;
+    before.current = null;
+    // Another page scrolls itself; putting the last page's position on it would be wrong.
+    if (!saved || saved.path !== window.location.pathname) return;
+    if (takeGuideScrolled()) window.scrollTo({ top: saved.scrollY, behavior: reduced ? "auto" : "smooth" });
+    if (saved.focus?.isConnected) saved.focus.focus({ preventScroll: true });
+  }, [covering, reduced]);
 
   /**
    * Coming over by himself.
@@ -274,20 +350,17 @@ export function TutorialBot() {
       if (store.activity !== "docked" || store.holding || store.chatOpen) return;
       if (document.visibilityState === "hidden" || pageIsCovered()) return;
       const onDashboard = pathname.includes("/dashboard") && !pathname.includes("/educator");
-      if (onDashboard && shouldAutoRunTour({
-        userId,
-        seenLocally: seen("tour"),
-        onboardingCompleted: !!profile?.onboarding_completed,
-      })) {
+      if (onDashboard && !tourDone()) {
         store.startTour({ kind: "guide", guideKey: "tour" });
         return;
       }
-      if (scenesToIntroduce(scenesOnPage(findAnchors()), seen).length) {
+      if (scenesToIntroduce(scenesOnPage(findAnchors()), seenForIntro).length) {
         store.startTour({ kind: "new", guideKey: null });
       }
     };
+    // Short, because the case clock is still running until he arrives.
     const schedule = () => {
-      if (!timer) timer = window.setTimeout(run, 900);
+      if (!timer) timer = window.setTimeout(run, 600);
     };
     const observer = new MutationObserver(schedule);
     observer.observe(document.body, { childList: true, subtree: true });
@@ -301,7 +374,7 @@ export function TutorialBot() {
       unsubscribe();
       if (timer) window.clearTimeout(timer);
     };
-  }, [mounted, userId, inApp, locked, coaching, pathname, seen, profile?.onboarding_completed]);
+  }, [mounted, userId, inApp, locked, coaching, pathname, tourDone, seenForIntro]);
 
   // The landing page sells the product and the auth pages are two fields.
   if (!mounted || !inApp || locked) return null;
@@ -348,7 +421,7 @@ export function TutorialBot() {
             primaryLabel={primaryLabel}
             onNext={next}
             onBack={back}
-            onSkip={finishTour}
+            onSkip={() => finishTour(true)}
             onHeight={setBubbleHeight}
             reduced={reduced}
           />

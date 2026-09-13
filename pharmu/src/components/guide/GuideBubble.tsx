@@ -74,7 +74,7 @@ export function GuideBubble({
         />
       </div>
 
-      <div className="max-h-[min(62vh,520px)] overflow-y-auto px-4 pb-3 pt-2">
+      <div className="max-h-[min(62vh,520px,calc(100dvh_-_11rem))] overflow-y-auto px-4 pb-3 pt-2">
         <div className="flex items-center justify-between gap-3">
           <p className="min-w-0 truncate text-[10px] font-black uppercase tracking-[0.2em] text-primary">{step.eyebrow}</p>
           {total > 1 && (
@@ -137,6 +137,7 @@ export function GuideBubble({
           <button
             ref={primary}
             type="button"
+            data-guide-focus=""
             onClick={onNext}
             className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
           >

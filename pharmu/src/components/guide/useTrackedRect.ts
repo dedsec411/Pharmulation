@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { scrollDelta, type Rect } from "@/lib/guide-flight";
-import { findAnchor, rectOf, stickyTop } from "./dom";
+import { findAnchor, inStickyBar, noteGuideScroll, rectOf, stickyTop } from "./dom";
 
 const same = (a: Rect | null, b: Rect | null) =>
   a === b ||
@@ -26,10 +26,13 @@ export function useTrackedRect(id: string | null, reduced: boolean): Rect | null
       return;
     }
     let el = findAnchor(id);
-    if (el) {
+    if (el && !inStickyBar(el)) {
       const viewport = { width: document.documentElement.clientWidth, height: window.innerHeight };
       const delta = scrollDelta(rectOf(el), viewport, stickyTop());
-      if (delta !== null) window.scrollBy({ top: delta, behavior: reduced ? "auto" : "smooth" });
+      if (delta !== null) {
+        noteGuideScroll();
+        window.scrollBy({ top: delta, behavior: reduced ? "auto" : "smooth" });
+      }
     }
 
     // Undefined, not null, so the first frame always reports. Starting from

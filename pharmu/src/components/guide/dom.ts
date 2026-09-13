@@ -69,8 +69,38 @@ export function pageIsCovered(): boolean {
   });
 }
 
+const STICKY_BAR = "header.sticky, nav.sticky";
+
 /** The bottom of the sticky bar, so a target is never scrolled up underneath it. */
 export function stickyTop(): number {
-  const bar = document.querySelector("header.sticky, nav.sticky");
+  const bar = document.querySelector(STICKY_BAR);
   return bar ? Math.max(0, bar.getBoundingClientRect().bottom) : 0;
+}
+
+/**
+ * Whether a control lives in the sticky bar - the navigation, the case clock.
+ *
+ * Those are always on screen, and scrolling can never move them into the room
+ * below the bar, because they are the bar. Treating them like page content
+ * sent the whole page flying back to the top every time the tour stopped at a
+ * nav link or the timer.
+ */
+export function inStickyBar(el: Element): boolean {
+  return !!el.closest(STICKY_BAR);
+}
+
+/**
+ * Whether the guide itself scrolled the page since this was last asked.
+ *
+ * Only then is the reader put back afterwards. Somebody who scrolled the page
+ * themselves while pointing at things with What's this meant to be there.
+ */
+let guideScrolled = false;
+export function noteGuideScroll(): void {
+  guideScrolled = true;
+}
+export function takeGuideScrolled(): boolean {
+  const was = guideScrolled;
+  guideScrolled = false;
+  return was;
 }
