@@ -80,6 +80,12 @@ function SettingsPage() {
             checked={s.plainEnglish}
             onChange={s.setPlainEnglish}
           />
+          <Toggle
+            label="Dr. Hakim comes over"
+            desc="He flies over to explain a screen the first time you reach it. Off, he waits until you tap him"
+            checked={s.guideCoaching}
+            onChange={s.setGuideCoaching}
+          />
         </section>
 
         <section className="glass-card p-6 space-y-3">

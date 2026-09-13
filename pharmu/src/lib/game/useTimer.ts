@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useTutorialStore } from "@/lib/tutorial-store";
+import { selectPausesClock, useTutorialStore } from "@/lib/tutorial-store";
 
 /**
  * Whether the clock should be running.
@@ -30,7 +30,7 @@ export function useTimer(seconds: number, onTimeout: () => void) {
   const [pauseUsed, setPauseUsed] = useState(false);
   // Read rather than passed in: the guide is mounted at the root and opens
   // itself, so no mode is in a position to hand this down.
-  const guideOpen = useTutorialStore((state) => state.open);
+  const guideOpen = useTutorialStore(selectPausesClock);
   const onTimeoutRef = useRef(onTimeout);
   onTimeoutRef.current = onTimeout;
 

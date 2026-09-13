@@ -15,27 +15,85 @@ import { create } from "zustand";
  * restyled. One explicit request, sent from the place that knows.
  */
 
-type View = "walkthrough" | "contents";
+/** What somebody asked the guide to show them. */
+export type TourRequest =
+  /** A guide's steps in order, flying to each step's control where it is on screen. */
+  | { kind: "guide"; guideKey: string }
+  /** Everything explained on the screen right now. */
+  | { kind: "screen" }
+  /** One control, picked with What's this. */
+  | { kind: "spot"; spotId: string; backToPicking?: boolean }
+  /** What is new here: a mode's overview if given, then screens not introduced before. */
+  | { kind: "new"; guideKey: string | null };
+
+export type GuideActivity = "docked" | "menu" | "touring" | "picking" | "library";
 
 type TutorialState = {
-  open: boolean;
-  /** Which guide to show, or null to follow whatever page is on screen. */
-  requestedKey: string | null;
-  view: View;
-  /** Open a specific guide - used when a mode starts. */
-  openGuide: (key: string, view?: View) => void;
-  /** Open whatever belongs to the current page. */
-  openForPage: (view?: View) => void;
-  close: () => void;
-  setView: (view: View) => void;
+  activity: GuideActivity;
+  request: TourRequest | null;
+  /** Bumped on every request, so asking for the same tour twice restarts it. */
+  requestId: number;
+  /** Which written guide the library is showing. */
+  libraryKey: string | null;
+  chatOpen: boolean;
+  /**
+   * A mode's introduction has been promised and is about to start. Holds the
+   * page-watching introductions off meanwhile: the difficulty modal closing is
+   * exactly when a new screen appears, and without this a smaller tour of that
+   * screen would jump in ahead of the mode's own.
+   */
+  holding: boolean;
+  startTour: (request: TourRequest) => void;
+  openMenu: () => void;
+  startPicking: () => void;
+  openLibrary: (key?: string | null) => void;
+  setChatOpen: (open: boolean) => void;
+  hold: (on: boolean) => void;
+  dock: () => void;
 };
 
 export const useTutorialStore = create<TutorialState>((set) => ({
-  open: false,
-  requestedKey: null,
-  view: "contents",
-  openGuide: (key, view = "walkthrough") => set({ open: true, requestedKey: key, view }),
-  openForPage: (view = "contents") => set({ open: true, requestedKey: null, view }),
-  close: () => set({ open: false, requestedKey: null }),
-  setView: (view) => set({ view }),
+  activity: "docked",
+  request: null,
+  requestId: 0,
+  libraryKey: null,
+  chatOpen: false,
+  holding: false,
+  startTour: (request) =>
+    set((s) => ({ activity: "touring", request, requestId: s.requestId + 1, holding: false, chatOpen: false })),
+  openMenu: () => set({ activity: "menu", chatOpen: false }),
+  startPicking: () => set({ activity: "picking", request: null }),
+  openLibrary: (key = null) => set({ activity: "library", libraryKey: key, request: null }),
+  setChatOpen: (open) => set((s) => ({ chatOpen: open, activity: open ? "docked" : s.activity, request: open ? null : s.request })),
+  hold: (on) => set({ holding: on }),
+  dock: () => set({ activity: "docked", request: null }),
 }));
+
+/**
+ * Whether the case clock should stop for what the guide is doing.
+ *
+ * A tour, the What's-this outlines and the written guides all cover the page,
+ * so reading them must not cost the case time. The menu does not: it is one
+ * tap from closing, and a menu somebody left open would be a free pause the
+ * case bar charges points for.
+ */
+export function pausesClock(activity: GuideActivity): boolean {
+  return activity === "touring" || activity === "picking" || activity === "library";
+}
+
+export const selectPausesClock = (state: TutorialState) => pausesClock(state.activity);
+
+/**
+ * Where the guide does not appear at all.
+ *
+ * A graded sitting withholds hints, and a guide that could stop the clock
+ * would be a better hint than any of them. A live session is a race run on one
+ * seed for the whole room: stopping the clock there would hand whoever opened
+ * the guide time nobody else got, and on the host's projected board it is
+ * clutter over the scores.
+ */
+export function guideLocked(input: { pathname: string; sitting: boolean }): boolean {
+  if (input.sitting) return true;
+  const path = input.pathname.toLowerCase();
+  return path.startsWith("/live") || path.startsWith("/educator/live") || path.startsWith("/assessment");
+}
