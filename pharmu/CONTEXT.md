@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **801 tests across 41 files, all passing**.
+current baseline is **837 tests across 45 files, all passing**.
 
 ---
 
@@ -246,6 +246,31 @@ Confirming any pair has actually been confused in a Pakistani pharmacy needs
 incident data and a pharmacist — say that whenever the figure is quoted. The
 drill itself asserts no pharmacology: the task is "the prescription says this
 one, hand over this one", and a test fails if a dose ever appears.
+
+### Live cohort sessions
+**Needs `supabase/migrations/20260913120000_live_sessions.sql` applied by hand.**
+Nothing works until it is run in the SQL editor; the pages degrade with a toast
+rather than a white screen, which is verified.
+
+Host at `/educator/live`, players at `/live`. Everybody plays the same drill
+because the questions generate from a `seed` stored on the session. Polled
+every 2s rather than subscribed — a hall on conference wifi recovers from a
+missed poll, not from a dropped socket.
+
+Two schema rules worth keeping: joining goes through the SECURITY DEFINER
+`join_live_session_by_code` so nobody can enumerate running sessions, and the
+"can I see my session's participants" check uses a SECURITY DEFINER helper —
+**a policy on `live_participants` that selects from `live_participants`
+recurses and Postgres fails the query.**
+
+### Practice evidence record
+`src/lib/educator/competence.ts` + `competence-pdf.ts`, downloaded from
+Profile → Certificates. Reads back `errors_detail`, which nothing else did.
+
+It is an **evidence record, not a certificate of competence** — keep that
+wording. An error is "resolved" only if it has not recurred in the later half
+*and* there are ≥4 cases; no trend is reported below 4 cases; a change under 3
+points is "steady". Don't loosen those: it is a document somebody signs.
 
 ### Short forms (the jury's objection)
 `src/lib/glossary.ts` (21 entries, tested) + `src/components/Abbr.tsx`.
