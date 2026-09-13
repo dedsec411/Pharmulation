@@ -352,7 +352,12 @@ async function rememberCaseSeen(userId: string, mode: Mode, caseId: string, exis
 
 export async function submitScore(args: {
   userId: string;
-  caseId: string;
+  /**
+   * Null for a case with no `cases` row - a generated one, or a drill built
+   * entirely from the catalogue. The column is nullable for exactly that, and
+   * the type said otherwise, so every such caller had to cast.
+   */
+  caseId: string | null;
   mode: Mode;
   score: number;
   timeTaken: number;

@@ -21,13 +21,15 @@ import { toast } from "sonner";
 
 import {
   ArrowLeft, FileText, Pill, Check, X as XIcon,
-  Tags, Trash2, User, ShoppingBag, ClipboardList,
+  Tags, Trash2, User, ShoppingBag, ClipboardList, ShieldAlert,
 } from "lucide-react";
 // The one duration control, shared with OTC. This route had a second copy that
 // had drifted to a shorter list, so the same step offered different answers
 // depending on which mode you reached it from.
 import { DurationSlider, InstructionPicker } from "@/components/game/dispensing";
 import { LABEL_TIMINGS, formatDuration, normalizeDuration, normalizeTiming } from "@/lib/game/dosing";
+import { LookalikeDrill } from "@/components/game/LookalikeDrill";
+import { BRANDS_SCANNED, LOOKALIKE_PAIRS } from "@/lib/game/lookalike-pairs";
 
 // ─── Route ───────────────────────────────────────────────────────────────────
 export const Route = createFileRoute("/_authenticated/game/community")({
@@ -281,19 +283,21 @@ function SubmodeBadge({ mode }: { mode: "rx" | "otc" }) {
 
 // ─── Root component ───────────────────────────────────────────────────────────
 function CommunityGame() {
-  // We randomly pick from BOTH rx and otc cases
-
-  // Choose which loader to use — alternate or random per session
-  const [activeMode, setActiveMode] = useState<"rx" | "otc" | null>(null);
+  // Rx and OTC are the two counters. The look-alike drill is a third thing you
+  // can practise from the same counter: not a workflow, one repeated decision.
+  const [activeMode, setActiveMode] = useState<"rx" | "otc" | "lookalike" | null>(null);
 
   if (!activeMode) {
     return <CommunityModePicker onPick={setActiveMode} />;
+  }
+  if (activeMode === "lookalike") {
+    return <LookalikeDrill onBack={() => setActiveMode(null)} />;
   }
 
   return <CommunityRun activeMode={activeMode} onBack={() => setActiveMode(null)} />;
 }
 
-function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void }) {
+function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc" | "lookalike") => void }) {
   return (
     <main className="relative mx-auto max-w-5xl px-4 py-10">
       <CommunityFloatingPills className="opacity-45" />
@@ -311,7 +315,8 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void 
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Community Pharmacy</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Choose your training type</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Pick whether you want to practice prescription dispensing or OTC patient consultation.
+            Dispensing against a prescription, advising across the counter, or the safety drill on
+            brand names close enough to reach for by mistake.
           </p>
         </div>
 
@@ -355,6 +360,31 @@ function CommunityModePicker({ onPick }: { onPick: (mode: "rx" | "otc") => void 
             </p>
             <span className="mt-5 inline-flex text-sm font-semibold text-emerald-700 dark:text-emerald-200 transition group-hover:translate-x-1">
               Play OTC &rarr;
+            </span>
+          </button>
+
+          {/* Full width under the two counters: it is a drill rather than a
+              workflow, and it carries the figure that makes it worth opening. */}
+          <button
+            onClick={() => onPick("lookalike")}
+            className="group rounded-2xl border border-amber-500/25 bg-amber-500/10 p-5 text-left transition hover:-translate-y-0.5 hover:border-amber-400/60 hover:bg-amber-500/15 md:col-span-2"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="grid size-12 place-items-center rounded-2xl bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                <ShieldAlert className="size-6" />
+              </span>
+              <span className="rounded-full border border-amber-400/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-200">
+                Safety
+              </span>
+            </div>
+            <h2 className="mt-5 text-xl font-bold">Look-alike names</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              We measured all {BRANDS_SCANNED.toLocaleString()} brand names in this catalogue against each other
+              and found {LOOKALIKE_PAIRS.length} pairs within two letters &mdash; almost all of them different
+              classes of medicine. The prescription says one. The shelf has both.
+            </p>
+            <span className="mt-5 inline-flex text-sm font-semibold text-amber-700 dark:text-amber-200 transition group-hover:translate-x-1">
+              Start the safety drill &rarr;
             </span>
           </button>
         </div>
