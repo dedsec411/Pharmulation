@@ -32,12 +32,16 @@ export function useTrackedRect(id: string | null, reduced: boolean): Rect | null
       if (delta !== null) window.scrollBy({ top: delta, behavior: reduced ? "auto" : "smooth" });
     }
 
-    let last: Rect | null = null;
+    // Undefined, not null, so the first frame always reports. Starting from
+    // null meant a step whose control is hidden - the Class link on a phone -
+    // matched "nothing" and never replaced the previous step's box, leaving
+    // the spotlight on the last control while the bubble talked about another.
+    let last: Rect | null | undefined = undefined;
     let frame = 0;
     const tick = () => {
       if (!el || !el.isConnected) el = findAnchor(id);
       const next = el ? rectOf(el) : null;
-      if (!same(next, last)) {
+      if (last === undefined || !same(next, last)) {
         last = next;
         setRect(next);
       }
