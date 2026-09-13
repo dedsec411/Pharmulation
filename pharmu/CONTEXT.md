@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **837 tests across 45 files, all passing**.
+current baseline is **859 tests across 46 files, all passing**.
 
 ---
 
@@ -271,6 +271,26 @@ It is an **evidence record, not a certificate of competence** — keep that
 wording. An error is "resolved" only if it has not recurred in the later half
 *and* there are ≥4 cases; no trend is reported below 4 cases; a change under 3
 points is "steady". Don't loosen those: it is a document somebody signs.
+
+### Bench instruments (Industry)
+`src/lib/game/gauge.ts` is the only geometry: a reading becomes a fraction of
+the scale, and the needle angle, ticks and arcs all come from that fraction
+(tested, including that the needle tip lands on the arc point). The dials in
+`src/components/game/Instruments.tsx` draw from it. The old ones swept a
+different angle from their face, so **0 g did not read 0** - don't draw a dial
+from its own numbers again.
+
+- `envBounds` is the one reach for the room controls, shared by the sliders,
+  the gauges and the room's opening value.
+- **Don't pass colours through a motion element's `style`.** A `motion.path`
+  given `style={{ fill }}` applied it once on mount and never updated - the
+  needle stayed blue while the card said "Too hot". Use the `fill` attribute.
+- The balance is `guided` only when `showTolerances` is on. At Expert it shows
+  a weight and Settling/Stable, no band, and the slider and Confirm button stay
+  neutral, or they give away the tolerance the batch record is meant to hold.
+- The room gauges still print their acceptable range at Expert. The difficulty
+  picker says tolerances are "only in the batch record" at Expert, so that is
+  an open inconsistency to decide on.
 
 ### Short forms (the jury's objection)
 `src/lib/glossary.ts` (21 entries, tested) + `src/components/Abbr.tsx`.
