@@ -37,13 +37,16 @@ export function OptionPicker({
   return (
     <div className="mt-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">{label}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+      {/* Two even columns of full-size choices on a phone: as 30px pills these
+          were the smallest controls on the screen and the ones that are scored. */}
+      <div className="mt-2 flex flex-wrap gap-2 max-sm:grid max-sm:grid-cols-2">
         {options.map((option) => (
           <button
             key={option}
             type="button"
+            aria-pressed={value === option}
             onClick={() => onChange(option)}
-            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+            className={`rounded-full border px-3 py-1.5 text-xs transition max-sm:min-h-11 max-sm:rounded-xl max-sm:text-sm max-sm:leading-tight ${
               value === option
                 ? "border-primary bg-primary/15 text-primary"
                 : "border-border/40 text-muted-foreground hover:border-primary/40"
@@ -74,6 +77,8 @@ export function DurationSlider({ value, onChange }: { value: string; onChange: (
         </span>
       </div>
 
+      {/* A 40px-tall box on a phone: the thumb looks the same, but a finger
+          landing anywhere on the strip moves it, not only on the 16px line. */}
       <input
         type="range"
         min={1}
@@ -83,7 +88,7 @@ export function DurationSlider({ value, onChange }: { value: string; onChange: (
         disabled={ongoing}
         onChange={(event) => onChange(formatDuration(Number(event.target.value)))}
         aria-label="Duration in days"
-        className="mt-4 w-full accent-primary disabled:opacity-40"
+        className="mt-4 w-full accent-primary disabled:opacity-40 max-sm:h-10"
       />
 
       {/* Every day is selectable; only a few are labelled, so the scale stays
@@ -99,7 +104,7 @@ export function DurationSlider({ value, onChange }: { value: string; onChange: (
           The px term corrects for the thumb: its centre travels from half a
           thumb-width in to half a thumb-width short of the end, so 0% and 100%
           on the track are not 0% and 100% of the element. */}
-      <div className="relative mt-1 h-3 text-[9px] font-semibold text-muted-foreground">
+      <div className="relative mt-1 h-3 text-[9px] font-semibold text-muted-foreground max-sm:h-4 max-sm:text-[11px]">
         {[1, 7, 14, 21, MAX_COURSE_DAYS].map((mark) => {
           const pct = ((mark - 1) / (MAX_COURSE_DAYS - 1)) * 100;
           return (
@@ -123,7 +128,7 @@ export function DurationSlider({ value, onChange }: { value: string; onChange: (
         role="switch"
         aria-checked={ongoing}
         onClick={() => onChange(ongoing ? formatDuration(7) : ONGOING)}
-        className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+        className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold transition max-sm:min-h-11 max-sm:text-sm ${
           ongoing
             ? "border-primary bg-primary/15 text-primary"
             : "border-border/40 text-muted-foreground hover:border-primary/40"
@@ -181,7 +186,7 @@ export function InstructionPicker({
               type="button"
               aria-pressed={selected}
               onClick={() => toggle(option)}
-              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+              className={`rounded-full border px-3 py-1.5 text-xs transition max-sm:min-h-11 max-sm:px-4 max-sm:text-sm ${
                 selected
                   ? "border-primary bg-primary/15 text-primary"
                   : "border-border/40 text-muted-foreground hover:border-primary/40"
@@ -200,7 +205,7 @@ export function InstructionPicker({
             if (custom) setCustomText("");
             setCustom(!custom);
           }}
-          className={`rounded-full border px-3 py-1.5 text-xs transition ${
+          className={`rounded-full border px-3 py-1.5 text-xs transition max-sm:min-h-11 max-sm:px-4 max-sm:text-sm ${
             custom
               ? "border-primary bg-primary/15 text-primary"
               : "border-border/40 text-muted-foreground hover:border-primary/40"
@@ -217,7 +222,7 @@ export function InstructionPicker({
           onChange={(event) => setCustomText(event.target.value)}
           maxLength={120}
           placeholder="Write the instruction as it should read on the label"
-          className="mt-2 w-full rounded-xl border border-border/40 bg-background/50 px-3 py-2 text-sm outline-none focus:border-primary/60"
+          className="mt-2 w-full rounded-xl border border-border/40 bg-background/50 px-3 py-2 text-sm outline-none focus:border-primary/60 max-sm:min-h-11"
         />
       )}
     </div>
@@ -234,7 +239,7 @@ export function LabelForm({
   const [instruction, setInstruction] = useState<string[]>([]);
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
+    <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur max-sm:p-4">
       <h2 className="text-xl font-bold">{brand ? `${brand} (${drug})` : drug}</h2>
       <p className="text-sm text-muted-foreground">Write the label the patient will read.</p>
       <OptionPicker label="Frequency" options={LABEL_FREQUENCIES} value={frequency} onChange={setFrequency} />
@@ -245,7 +250,7 @@ export function LabelForm({
         type="button"
         disabled={!frequency || !timing}
         onClick={() => onSubmit({ frequency, timing, duration, instruction: instruction.length ? instruction : undefined })}
-        className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
+        className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40 max-sm:min-h-11 max-sm:w-full"
       >
         Submit label
       </button>
@@ -309,35 +314,38 @@ export function DispensingShelf({
   return (
     <>
       {!category && (
-        <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
-          <div className="flex items-center justify-between">
+        <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur max-sm:p-4">
+          <div className="flex items-center justify-between max-sm:gap-3">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Medicine categories</p>
               <p className="mt-1 text-sm text-muted-foreground">Select a category to open the shelf.</p>
             </div>
-            <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary max-sm:shrink-0 max-sm:whitespace-nowrap max-sm:text-[11px]">
               {categoryStats.length} groups
             </span>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {/* Two columns of name-and-count tiles on a phone, as on the Rx
+              shelf: sixteen full cards with the same icon and the same line
+              ran to 2,000px before the first medicine. */}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 max-sm:grid-cols-2 max-sm:gap-2">
             {categoryStats.map((c) => (
               <button
                 key={c.name}
                 type="button"
                 onClick={() => setCategory(c.name)}
-                className="rounded-2xl border border-border/40 bg-muted/20 p-4 text-left transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5"
+                className="rounded-2xl border border-border/40 bg-muted/20 p-4 text-left transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5 max-sm:flex max-sm:min-h-16 max-sm:flex-col max-sm:justify-center max-sm:gap-0.5 max-sm:p-3"
               >
-                <div className="flex items-start justify-between">
-                  <span className="grid size-9 place-items-center rounded-xl border border-primary/25 bg-primary/10">
+                <div className="flex items-start justify-between max-sm:contents">
+                  <span className="grid size-9 place-items-center rounded-xl border border-primary/25 bg-primary/10 max-sm:hidden">
                     <Pill className="size-4 text-primary" />
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground max-sm:order-2 max-sm:text-[11px] max-sm:font-semibold max-sm:normal-case max-sm:tracking-normal">
                     {c.count} meds
                   </span>
                 </div>
-                <p className="mt-3 font-bold">{c.name}</p>
-                <p className="text-xs text-muted-foreground">Open shelf and select a dispensing brand</p>
+                <p className="mt-3 font-bold max-sm:order-1 max-sm:mt-0 max-sm:text-sm max-sm:leading-snug">{c.name}</p>
+                <p className="text-xs text-muted-foreground max-sm:hidden">Open shelf and select a dispensing brand</p>
               </button>
             ))}
           </div>
@@ -346,7 +354,7 @@ export function DispensingShelf({
             <button
               type="button"
               onClick={onRefer}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-5 py-2.5 text-sm font-bold text-amber-400 transition hover:bg-amber-400/15"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-5 py-2.5 text-sm font-bold text-amber-400 transition hover:bg-amber-400/15 max-sm:min-h-11"
             >
               <ShieldAlert className="size-4" /> {referLabel}
             </button>
@@ -355,7 +363,7 @@ export function DispensingShelf({
       )}
 
       {category && (
-        <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur">
+        <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur max-sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">{category} shelf</p>
@@ -364,7 +372,7 @@ export function DispensingShelf({
             <button
               type="button"
               onClick={() => setCategory("")}
-              className="rounded-full border border-border/50 px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+              className="rounded-full border border-border/50 px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:border-primary/50 hover:text-foreground max-sm:min-h-11 max-sm:shrink-0 max-sm:whitespace-nowrap max-sm:px-4"
             >
               All categories
             </button>
@@ -387,14 +395,16 @@ export function DispensingShelf({
       )}
 
       {brandDrug && (
+        // Scrolls itself when a medicine has more brands than a phone screen
+        // holds; my-auto keeps the card centred whenever it fits.
         <div
-          className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto overscroll-contain bg-black/70 p-4 backdrop-blur-sm"
           onClick={() => setBrandDrug(null)}
         >
           <motion.div
             initial={{ y: 24, opacity: 0, scale: 0.97 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
-            className="w-full max-w-md rounded-2xl border border-border/40 bg-card p-5 shadow-2xl"
+            className="my-auto w-full max-w-md rounded-2xl border border-border/40 bg-card p-5 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
@@ -407,7 +417,7 @@ export function DispensingShelf({
                 type="button"
                 onClick={() => setBrandDrug(null)}
                 aria-label="Close brand selection"
-                className="rounded-full border border-border/50 p-1.5 text-muted-foreground hover:text-foreground"
+                className="rounded-full border border-border/50 p-1.5 text-muted-foreground hover:text-foreground max-sm:grid max-sm:size-11 max-sm:place-items-center max-sm:p-0"
               >
                 <XIcon className="size-4" />
               </button>

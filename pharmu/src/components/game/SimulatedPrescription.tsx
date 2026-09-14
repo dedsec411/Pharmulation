@@ -35,12 +35,16 @@ function buildMedicationLines(caseData: any) {
   return ["Medication as prescribed"];
 }
 
+// The printed fields are 10px on a desk-width sheet. On a phone the sheet is
+// one column with room to spare, and these hold the patient's age, weight and
+// observations - so there they are set at 12px (units at 11px), not left at a
+// size meant for two columns.
 function InfoRow({ label, value, unit }: { label: string; value?: ReactNode; unit?: string }) {
   return (
     <div className="mb-1 flex min-w-0 items-end gap-1 border-b border-slate-950 pb-0.5">
-      <span className="shrink-0 text-[10px] font-bold">{label}</span>
-      <span className="min-h-[15px] min-w-0 flex-1 break-words text-[10px] leading-tight">{value ?? ""}</span>
-      {unit && <span className="shrink-0 text-[9px] text-slate-700">{unit}</span>}
+      <span className="shrink-0 text-[10px] font-bold max-sm:text-xs">{label}</span>
+      <span className="min-h-[15px] min-w-0 flex-1 break-words text-[10px] leading-tight max-sm:text-xs">{value ?? ""}</span>
+      {unit && <span className="shrink-0 text-[9px] text-slate-700 max-sm:text-[11px]">{unit}</span>}
     </div>
   );
 }
@@ -70,9 +74,9 @@ function WritingBox({
 function VitalRow({ label, value, unit }: { label: string; value?: ReactNode; unit: string }) {
   return (
     <div className="mb-1 flex items-center gap-1">
-      <span className="w-12 shrink-0 text-[10px] font-bold">{label}</span>
-      <span className="min-h-[15px] flex-1 border-b border-slate-950 px-1 text-[10px] leading-tight">{value}</span>
-      <span className="shrink-0 text-[9px] text-slate-700">{unit}</span>
+      <span className="w-12 shrink-0 text-[10px] font-bold max-sm:w-14 max-sm:text-xs">{label}</span>
+      <span className="min-h-[15px] flex-1 border-b border-slate-950 px-1 text-[10px] leading-tight max-sm:text-xs">{value}</span>
+      <span className="shrink-0 text-[9px] text-slate-700 max-sm:text-[11px]">{unit}</span>
     </div>
   );
 }
@@ -130,7 +134,7 @@ export function SimulatedPrescription({
       exit={{ opacity: 0, y: -4 }}
       className="flex justify-center rounded-lg border border-border/40 bg-slate-900/[0.04] dark:bg-slate-950/30 px-2 py-5 sm:px-5"
     >
-      <div className="relative w-full max-w-[680px] -rotate-[0.35deg] bg-white px-5 py-4 text-slate-950 shadow-[0_24px_55px_rgba(0,0,0,0.45)]">
+      <div className="relative w-full max-w-[680px] -rotate-[0.35deg] bg-white px-5 py-4 text-slate-950 shadow-[0_24px_55px_rgba(0,0,0,0.45)] max-sm:px-3">
         <div className="pointer-events-none absolute inset-0 grid place-items-center overflow-hidden">
           <div className="-rotate-12 border-2 border-red-500/15 px-8 py-2 text-center text-3xl font-black uppercase tracking-[0.24em] text-red-500/10">
             Training Only
@@ -153,7 +157,7 @@ export function SimulatedPrescription({
             <span className="ml-2 inline-grid h-7 w-7 place-items-center rounded-full border-2 border-slate-950 align-middle text-[10px] font-bold">
               24hr
             </span>
-            <p className="mt-1 text-[8px] font-bold uppercase text-red-600">Simulation template - not valid for dispensing</p>
+            <p className="mt-1 text-[8px] font-bold uppercase text-red-600 max-sm:text-[11px]">Simulation template - not valid for dispensing</p>
           </div>
 
           <div className="my-2 text-center text-sm font-bold underline">Department: {department}</div>
@@ -176,7 +180,7 @@ export function SimulatedPrescription({
               <InfoRow label="Contact:" value={patient.contact ?? picture.contact} />
               <div className="mt-1 flex gap-4">
                 {([["Smoker", picture.smoker], ["Non-Smoker", !picture.smoker]] as const).map(([label, ticked]) => (
-                  <span key={label} className="flex items-center gap-1 text-[10px] font-bold">
+                  <span key={label} className="flex items-center gap-1 text-[10px] font-bold max-sm:text-xs">
                     <span className="grid h-[11px] w-[11px] place-items-center border border-slate-950 text-[10px] font-black leading-none">
                       {ticked ? "✓" : ""}
                     </span> {label}
@@ -240,14 +244,14 @@ export function SimulatedPrescription({
             </div>
             <div className="text-center">
               <div className="mb-1 text-[11px] font-bold uppercase">Sign &amp; Stamp</div>
-              <div className="grid h-10 place-items-center border border-slate-950 text-[10px] font-bold text-red-600">
+              <div className="grid h-10 place-items-center border border-slate-950 text-[10px] font-bold text-red-600 max-sm:text-[11px]">
                 Simulation only
               </div>
             </div>
           </div>
 
           <div className="mt-2 flex gap-1 border-t-2 border-slate-950 pt-1">
-            <span className="shrink-0 text-[10px] font-bold">Advise / Follow-Up:-</span>
+            <span className="shrink-0 text-[10px] font-bold max-sm:text-[11px]">Advise / Follow-Up:-</span>
             <WritingBox minHeight="44px" className="flex-1">
               <p className="max-w-full break-words text-[12px] leading-[22px]" style={handwriting}>{advice}</p>
             </WritingBox>

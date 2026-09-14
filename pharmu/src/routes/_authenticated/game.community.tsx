@@ -50,7 +50,9 @@ const TIMINGS: string[] = [...LABEL_TIMINGS];
 
 function CommunityFloatingPills({ className = "" }: { className?: string }) {
   return (
-    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden="true">
+    // Not on a phone: five pills drifting behind one narrow column of cards is
+    // motion competing with the case for the same few hundred pixels.
+    <div className={`pointer-events-none absolute inset-0 overflow-hidden max-sm:hidden ${className}`} aria-hidden="true">
       <span className="floating-pill absolute left-[5%] top-[14%] h-3 w-12 rounded-full bg-gradient-to-r from-primary to-foreground/80 shadow-[0_0_22px_oklch(0.74_0.14_180/0.4)]" />
       <span className="floating-pill absolute right-[10%] top-[22%] h-4 w-14 rounded-full bg-gradient-to-r from-cyan-300 to-primary [animation-delay:-2.5s]" />
       <span className="floating-pill absolute bottom-[18%] left-[16%] h-3 w-10 rounded-full bg-gradient-to-r from-foreground/85 to-emerald-300 [animation-delay:-5s]" />
@@ -806,7 +808,9 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                 <FileText className="h-4 w-4 text-primary" />
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">Rx Cases</p>
               </div>
-              <button onClick={() => setShowClean((s) => !s)} className="text-xs text-primary hover:underline">
+              {/* A 68x16 text link on a phone, where the typed view is the one a
+                  small screen reads most easily - so there it is a real button. */}
+              <button onClick={() => setShowClean((s) => !s)} className="text-xs text-primary hover:underline max-sm:min-h-11 max-sm:rounded-full max-sm:border max-sm:border-primary/30 max-sm:px-4 max-sm:font-semibold max-sm:hover:no-underline">
                 {showClean ? "Show handwritten" : "Show typed"}
               </button>
             </div>
@@ -844,17 +848,20 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
           {/* Drug shelf + tray */}
           <div className="relative z-10 space-y-3">
             {/* Dispensing tray */}
+            {/* In the page's flow on a phone. Pinned at top-20 it slid under the
+                case bar, which is 116px tall there with its hint strip, and
+                the shelf showed through the tray while it sat over "Use hint". */}
             <motion.div
               layout
               data-tour="rx-tray"
-              className="sticky top-20 z-30 rounded-2xl border border-primary/40 bg-gradient-to-b from-card/95 to-background/90 p-3 shadow-[0_20px_55px_-22px_oklch(0.74_0.14_180/0.85),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-xl"
+              className="sticky top-20 z-30 max-sm:static rounded-2xl border border-primary/40 bg-gradient-to-b from-card/95 to-background/90 p-3 shadow-[0_20px_55px_-22px_oklch(0.74_0.14_180/0.85),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-xl"
             >
               <div className="pointer-events-none absolute inset-x-5 top-1 h-px bg-foreground/20" />
               <p className="mb-2 flex items-center justify-between gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <ClipboardList className="h-3.5 w-3.5 text-primary" /> Dispensing tray
                 </span>
-                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary max-sm:text-[11px]">
                   {collected.length} selected
                 </span>
               </p>
@@ -877,7 +884,9 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                         <span className="font-semibold">{c}</span>
                         {selectedBrands[c] && <span className="ml-2 text-xs text-primary">{selectedBrands[c]}</span>}
                       </span>
-                      <button onClick={() => removeDrug(c)} className="text-muted-foreground hover:text-destructive">
+                      {/* Named, and a full-size target on a phone: it was a bare
+                          14px icon, and it is the only way to undo a pick. */}
+                      <button onClick={() => removeDrug(c)} aria-label={`Remove ${c}`} className="text-muted-foreground hover:text-destructive max-sm:-my-2 max-sm:-mr-2 max-sm:grid max-sm:size-11 max-sm:shrink-0 max-sm:place-items-center">
                         <Trash2 className="size-3.5" />
                       </button>
                     </motion.li>
@@ -886,7 +895,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                 </motion.ul>
               )}
               <button onClick={confirmCollection} disabled={collected.length === 0}
-                className="mt-3 w-full rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_10px_30px_-15px_oklch(0.74_0.14_180/0.9)] transition hover:brightness-110 disabled:opacity-40">
+                className="mt-3 w-full rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_10px_30px_-15px_oklch(0.74_0.14_180/0.9)] transition hover:brightness-110 disabled:opacity-40 max-sm:min-h-11">
                 Confirm collection &gt;
               </button>
             </motion.div>
@@ -904,37 +913,42 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                 {category ? (
                   <button
                     onClick={() => setCategory("")}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-primary max-sm:min-h-11 max-sm:shrink-0 max-sm:px-4"
                   >
                     <ArrowLeft className="size-3.5" />
                     Categories
                   </button>
                 ) : (
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary max-sm:shrink-0 max-sm:whitespace-nowrap max-sm:text-[11px]">
                     {categoryStats.length} groups
                   </span>
                 )}
               </div>
               {!category ? (
-                <div className="grid gap-3 sm:grid-cols-2">
+                /* Two columns of name-and-count tiles on a phone. Sixteen cards
+                   one above another, each with the same pill icon and the same
+                   line of instruction, ran to 2,000px before the first shelf.
+                   The icon and the repeated line are hidden there - the heading
+                   above already says what a category opens. */
+                <div className="grid gap-3 sm:grid-cols-2 max-sm:grid-cols-2 max-sm:gap-2">
                   {categoryStats.map((c) => (
                     <motion.button
                       key={c.name}
                       whileHover={{ y: -4, boxShadow: "0 20px 44px -24px oklch(0.74 0.14 180 / 0.85)" }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setCategory(c.name)}
-                      className="group rounded-2xl border border-border/40 bg-card/70 p-4 text-left transition hover:border-primary/60 hover:bg-primary/10"
+                      className="group rounded-2xl border border-border/40 bg-card/70 p-4 text-left transition hover:border-primary/60 hover:bg-primary/10 max-sm:flex max-sm:min-h-16 max-sm:flex-col max-sm:justify-center max-sm:gap-0.5 max-sm:p-3"
                     >
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        <span className="grid size-10 place-items-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary/15">
+                      <div className="mb-4 flex items-start justify-between gap-3 max-sm:contents">
+                        <span className="grid size-10 place-items-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary/15 max-sm:hidden">
                           <Pill className="size-5" />
                         </span>
-                        <span className="rounded-full border border-border/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <span className="rounded-full border border-border/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground max-sm:order-2 max-sm:border-0 max-sm:p-0 max-sm:text-[11px] max-sm:normal-case max-sm:tracking-normal">
                           {c.count} meds
                         </span>
                       </div>
-                      <p className="text-base font-bold">{c.name}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Open shelf and select a dispensing brand</p>
+                      <p className="text-base font-bold max-sm:order-1 max-sm:text-sm max-sm:leading-snug">{c.name}</p>
+                      <p className="mt-1 text-xs text-muted-foreground max-sm:hidden">Open shelf and select a dispensing brand</p>
                     </motion.button>
                   ))}
                 </div>
@@ -965,8 +979,11 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                         }`}
                       >
                         <p className="text-sm font-semibold">{d.name}</p>
-                        <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{d.generic_name ?? d.category}</p>
-                        <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                        {/* On a phone the generic reads in ordinary letters at
+                            11px, and "choose brand" - repeated on every card
+                            and already said by the heading - is dropped. */}
+                        <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground max-sm:text-[11px] max-sm:normal-case max-sm:tracking-normal">{d.generic_name ?? d.category}</p>
+                        <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-primary max-sm:hidden">
                           <Tags className="size-3" />
                           choose brand
                         </p>
@@ -988,8 +1005,12 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
 
       <AnimatePresence>
         {brandDrug && (
+          /* Scrolls itself: stacked one to a row on a phone, a medicine with
+             many brands is taller than the screen, and this layer could not
+             scroll. my-auto centres the card when it fits and lets it start at
+             the top when it does not. */
           <motion.div
-            className="fixed inset-0 z-50 grid place-items-center bg-background/70 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-background/70 p-4 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -998,7 +1019,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
               initial={{ opacity: 0, y: 18, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.98 }}
-              className="glass-card w-full max-w-xl p-5"
+              className="glass-card my-auto w-full max-w-xl p-5"
             >
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
@@ -1008,7 +1029,7 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
                 </div>
                 <button
                   onClick={() => setBrandDrug(null)}
-                  className="rounded-full border border-border/50 p-2 text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+                  className="rounded-full border border-border/50 p-2 text-muted-foreground transition hover:border-primary/50 hover:text-primary max-sm:grid max-sm:size-11 max-sm:place-items-center max-sm:p-0"
                   aria-label="Close brand selector"
                 >
                   <XIcon className="size-4" />
@@ -1249,7 +1270,7 @@ function CompoundFacts({ rows }: { rows: Array<[string, string]> }) {
       <div className="space-y-2">
         {rows.map(([label, value]) => (
           <div key={label} className="rounded-xl border border-border/30 bg-background/35 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground max-sm:text-[11px]">{label}</p>
             <p className="mt-1 text-sm font-semibold">{value}</p>
           </div>
         ))}
@@ -1370,7 +1391,7 @@ function DrugInfoStep({ drug, allDrugs, onRead, onSkip, count }: any) {
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
       <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Drug info {count}</p>
-      <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur">
+      <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur max-sm:p-4">
         <h2 className="text-2xl font-bold">{d.name}</h2>
         <p className="text-sm text-muted-foreground">{d.generic_name} · {d.category}</p>
         <InfoSection label="Indications"      items={d.indications} />
@@ -1378,8 +1399,8 @@ function DrugInfoStep({ drug, allDrugs, onRead, onSkip, count }: any) {
         <InfoSection label="Side effects"     items={d.side_effects} />
         <InfoSection label="Contraindications" items={d.contraindications} />
         <div className="mt-5 flex gap-3">
-          <button onClick={onRead}  className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">Mark as read (+15)</button>
-          <button onClick={onSkip} className="rounded-full border border-border/50 px-5 py-2 text-sm">Skip</button>
+          <button onClick={onRead}  className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground max-sm:min-h-11">Mark as read (+15)</button>
+          <button onClick={onSkip} className="rounded-full border border-border/50 px-5 py-2 text-sm max-sm:min-h-11">Skip</button>
         </div>
       </div>
     </main>
@@ -1438,7 +1459,7 @@ function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
       </div>
       <div className="order-1 lg:order-2">
       <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Label {count}</p>
-      <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur" data-tour="rx-label-form">
+      <div className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur max-sm:p-4" data-tour="rx-label-form">
         <h2 className="text-xl font-bold">{drug}</h2>
         <p className="text-sm text-muted-foreground">Choose label instructions</p>
         <OptionPicker label="Frequency" options={FREQS}     value={freq}     onChange={setFreq} />
@@ -1448,7 +1469,7 @@ function LabelStep({ drug, count, onSubmit, previous, caseData }: any) {
         <button
           disabled={!freq || !timing}
           onClick={() => onSubmit({ frequency: freq, timing, duration, instruction: instruction.length ? instruction : undefined })}
-          className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+          className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40 max-sm:min-h-11 max-sm:w-full">
           Submit label
         </button>
       </div>
@@ -1462,10 +1483,13 @@ function OptionPicker({ label, options, value, onChange }: any) {
   return (
     <div className="mt-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">{label}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+      {/* Two even columns of full-size choices on a phone. As 30px pills
+          wrapping at whatever width they fell, these were the smallest
+          controls on the screen and the ones the label is scored on. */}
+      <div className="mt-2 flex flex-wrap gap-2 max-sm:grid max-sm:grid-cols-2">
         {options.map((o: string) => (
-          <button key={o} onClick={() => onChange(o)}
-            className={`rounded-full border px-3 py-1.5 text-xs transition ${
+          <button key={o} onClick={() => onChange(o)} aria-pressed={value === o}
+            className={`rounded-full border px-3 py-1.5 text-xs transition max-sm:min-h-11 max-sm:rounded-xl max-sm:text-sm max-sm:leading-tight ${
               value === o ? "border-primary bg-primary/15 text-primary" : "border-border/40 hover:bg-muted"
             }`}>
             {o}

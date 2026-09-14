@@ -137,19 +137,22 @@ export function OtcPatientChat({
   return (
     <div className="overflow-hidden rounded-2xl border border-primary/25 bg-background/35 shadow-[0_0_34px_-24px_oklch(0.74_0.14_180/0.9)]">
       <div className="flex items-center justify-between gap-3 border-b border-primary/15 bg-primary/10 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-full border border-primary/30 bg-primary/15">
+        {/* On a phone the name keeps its line and the count stops wrapping:
+            side by side at 390 both broke in two ("AMARA SILVA, / 29",
+            "11 QUESTIONS / LEFT"). */}
+        <div className="flex items-center gap-2 max-sm:min-w-0">
+          <span className="grid size-8 place-items-center rounded-full border border-primary/30 bg-primary/15 max-sm:shrink-0">
             <MessageCircle className="size-4 text-primary" />
           </span>
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">
+          <div className="max-sm:min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary max-sm:tracking-[0.12em]">
               {otcCase.patient.name}, {otcCase.patient.age}
             </p>
             <p className="text-[11px] text-muted-foreground">Take the history in your own words.</p>
           </div>
         </div>
         <span
-          className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+          className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider max-sm:shrink-0 max-sm:whitespace-nowrap max-sm:text-[11px] max-sm:normal-case max-sm:tracking-normal ${
             remaining <= 2
               ? "border-amber-400/40 bg-amber-400/10 text-amber-400"
               : "border-primary/25 bg-primary/10 text-primary"
@@ -199,7 +202,7 @@ export function OtcPatientChat({
                   type="button"
                   onClick={retry}
                   disabled={waiting}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-destructive/40 px-3 py-1 font-bold transition hover:bg-destructive/15 disabled:opacity-50"
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-destructive/40 px-3 py-1 font-bold transition hover:bg-destructive/15 disabled:opacity-50 max-sm:min-h-11 max-sm:px-4"
                 >
                   <RotateCcw className="size-3" /> Retry
                 </button>
@@ -222,12 +225,12 @@ export function OtcPatientChat({
             onChange={(event) => setInput(event.target.value)}
             disabled={waiting || limitReached}
             placeholder="Ask the patient a question..."
-            className="min-w-0 flex-1 rounded-full border border-border/45 bg-card/70 px-4 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/70 focus:ring-2 focus:ring-primary/20 disabled:opacity-55"
+            className="min-w-0 flex-1 rounded-full border border-border/45 bg-card/70 px-4 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/70 focus:ring-2 focus:ring-primary/20 disabled:opacity-55 max-sm:min-h-11"
           />
           <button
             type="submit"
             disabled={waiting || limitReached || !input.trim()}
-            className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_-16px_oklch(0.74_0.14_180/0.95)] transition hover:brightness-110 disabled:opacity-45"
+            className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_-16px_oklch(0.74_0.14_180/0.95)] transition hover:brightness-110 disabled:opacity-45 max-sm:size-11 max-sm:shrink-0"
             aria-label="Send question to patient"
           >
             <Send className="size-4" />
@@ -236,7 +239,7 @@ export function OtcPatientChat({
         <button
           type="button"
           onClick={onComplete}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground shadow-[0_0_32px_-16px_oklch(0.74_0.14_180/0.9)] transition hover:-translate-y-0.5 hover:bg-primary/90"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground shadow-[0_0_32px_-16px_oklch(0.74_0.14_180/0.9)] transition hover:-translate-y-0.5 hover:bg-primary/90 max-sm:min-h-11"
         >
           Continue to recommendation <ArrowRight className="size-4" />
         </button>

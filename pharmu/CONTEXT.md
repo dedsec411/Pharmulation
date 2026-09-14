@@ -491,6 +491,32 @@ The Modes page on a phone:
   sideways by about 230px) — a shell problem, not this page's. `BackButton` is
   38px tall on every page.
 
+Community Pharmacy on a phone (Rx, OTC and the look-alike drill):
+- **Toasts clear the case bar.** Below 600px, while a hint strip
+  (`[data-tour="case-hint"]`) is on screen, toasts start at 7.75rem instead of
+  76px (`styles.css`, "Game screens on a phone"). Applies to every mode's bar.
+- **The Rx dispensing tray is in the page's flow below sm**, not sticky: pinned
+  at top-20 it slid under the 116px bar. It still sits directly above the shelf.
+- **Category lists are two columns of name-and-count tiles** (Rx shelf and
+  `DispensingShelf`); the repeated icon, "Open shelf…" and "choose brand" lines
+  are hidden there.
+- **Label choices are a two-column grid of 44px buttons** with `aria-pressed`;
+  the duration slider's touch box, scale and Ongoing switch are phone-sized.
+- **The prescription sheet's printed fields are 12px on a phone** (units 11px),
+  and the "Show typed" link is a real button there.
+- OTC loses its outer card below sm; the chat header no longer wraps.
+- Brand pickers (Rx and `DispensingShelf`) scroll inside their overlay
+  (`overflow-y-auto` + `my-auto`), at every width - they could not scroll.
+- Verified by `community.mjs`-style driving with Supabase writes answered
+  locally and server functions blocked; desktop and 640/768px geometry matched
+  the before runs scene by scene.
+- Known and left: Dr. Hakim's dock still overlaps whatever content is at the
+  bottom-left at some scroll positions (he steps aside for modals) — mentor
+  pass. The sticky tray still tucks 37px under the bar at 640px and up. From
+  601px up toasts use Sonner's desktop position and can sit over the score and
+  pause. The examiner overlay keeps 10px capitals labels. The difficulty modal
+  is taller than a phone screen and scrolls to Expert.
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made

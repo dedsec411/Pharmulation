@@ -117,7 +117,7 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur"
+        className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur max-sm:p-4"
       >
         <div className="flex items-center gap-3">
           <Trophy className="size-8 text-primary" />
@@ -195,7 +195,8 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
         <ContributeCase />
 
         <div className="mt-6 flex flex-wrap gap-3">
-          <button onClick={onNext} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
+          {/* The three ways on from a case are full-size targets on a phone. */}
+          <button onClick={onNext} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 max-sm:min-h-11">
             <RotateCw className="size-4" /> Next case
           </button>
           {/* Sits beside Next case rather than in front of it: skipping the
@@ -205,12 +206,12 @@ export function FeedbackScreen({ score, xpGain, timeTaken, mentorTip, explanatio
           {canExamine && examinerDone && !failed && (
             <button
               onClick={() => setExamining(true)}
-              className="inline-flex items-center gap-2 rounded-full border border-primary/45 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/15"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/45 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/15 max-sm:min-h-11"
             >
               <GraduationCap className="size-4" /> Face the Examiner again
             </button>
           )}
-          <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-full border border-border/50 px-5 py-2.5 text-sm font-semibold hover:bg-muted">
+          <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-full border border-border/50 px-5 py-2.5 text-sm font-semibold hover:bg-muted max-sm:min-h-11">
             <Home className="size-4" /> Dashboard
           </Link>
         </div>

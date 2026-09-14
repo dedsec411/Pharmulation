@@ -185,7 +185,7 @@ function DifficultySelectModal({
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+                  className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:border-primary/50 hover:text-foreground max-sm:min-h-11 max-sm:px-4"
                 >
                   <ArrowLeft className="size-3.5" /> Back
                 </button>
@@ -219,7 +219,7 @@ function DifficultySelectModal({
                     <div className="flex items-center justify-between">
                       <Icon className="size-5 text-primary" />
                       {selected && (
-                        <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
+                        <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold uppercase text-primary max-sm:text-[11px]">
                           Last
                         </span>
                       )}

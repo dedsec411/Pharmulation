@@ -79,7 +79,7 @@ export function ErrorExplanationPanel({ entry, mentorTip, onDismiss }: Props) {
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                 />
               </div>
-              <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[10px] tabular-nums text-muted-foreground">{count}s</span>
+              <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[10px] tabular-nums text-muted-foreground max-sm:text-[11px]">{count}s</span>
             </div>
 
             <div className="p-5 pr-16">
@@ -130,17 +130,19 @@ export function ErrorExplanationPanel({ entry, mentorTip, onDismiss }: Props) {
                 </motion.div>
               )}
 
+              {/* Full-size targets on a phone, where this sheet comes up from
+                  the bottom edge under a thumb; they were 36px. */}
               <div className="mt-5 flex flex-wrap gap-2">
                 <button
                   onClick={onDismiss}
-                  className="flex-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                  className="flex-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 max-sm:min-h-11"
                 >
                   Got it, continue
                 </button>
                 {mentorTip && (
                   <button
                     onClick={() => setExpanded((x) => !x)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border/50 px-4 py-2 text-xs font-medium hover:bg-muted"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/50 px-4 py-2 text-xs font-medium hover:bg-muted max-sm:min-h-11"
                   >
                     <MessageCircle className="size-3.5" />
                     {expanded ? "Hide" : "Ask Mentor"}

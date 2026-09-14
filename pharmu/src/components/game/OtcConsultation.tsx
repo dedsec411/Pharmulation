@@ -400,11 +400,14 @@ export function OtcConsultation({
         </aside>
 
         <section className="relative z-10">
+          {/* No outer card on a phone. The chat, the shelf and the label each
+              bring their own, so this one only nested them a level deeper and
+              took 40px of width from every row inside. */}
           <motion.div
             key={step}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur"
+            className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur max-sm:border-0 max-sm:bg-transparent max-sm:p-0"
           >
             {step === "consult" && (
               <div data-tour-scene="otc-consult" data-tour="otc-chat">
@@ -476,7 +479,7 @@ export function OtcConsultation({
 function WwhamTracker({ grade }: { grade: ConsultationGrade }) {
   return (
     <div className="mt-4">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">History covered</p>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground max-sm:text-[11px]">History covered</p>
       <ul className="mt-2 space-y-1.5">
         {WWHAM_LABELS.map(({ key, label }) => (
           <li key={key} className="flex items-center gap-2 text-xs">

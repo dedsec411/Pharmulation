@@ -420,6 +420,23 @@
   }
 }
 
+/*
+ * Game screens on a phone.
+ *
+ * Toasts sit 76px down on a phone, which clears the app bar - but a case bar
+ * with its hint strip is 116px tall, so every score toast landed on "Use hint".
+ * While a hint strip is on screen, toasts start below it instead. Keyed to the
+ * strip rather than to one mode because every mode's bar is the same
+ * component; a bar without the strip (the look-alike drill) is 71px, which the
+ * 76px default already clears. In rem so it grows with the bar if the text
+ * does. 600px is where Sonner's own phone rules stop.
+ */
+@media (max-width: 600px) {
+  body:has([data-tour="case-hint"]) [data-sonner-toaster][data-y-position="top"] {
+    --mobile-offset-top: 7.75rem !important;
+  }
+}
+
 @utility glass {
   background: var(--glass-fill);
   backdrop-filter: blur(16px);
