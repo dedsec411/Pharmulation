@@ -189,7 +189,7 @@ export function ClinicalExaminer({
         <div className="glass-card p-6">
           <div className="flex items-start justify-between gap-3 border-b border-border/40 pb-4">
             <div>
-              <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-primary">
+              <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-primary max-sm:text-[11px]">
                 <GraduationCap className="size-3.5" /> Clinical reasoning examiner
               </p>
               <h2 className="mt-1 text-xl font-bold">{context.caseTitle}</h2>
@@ -225,7 +225,7 @@ export function ClinicalExaminer({
                       >
                         <div className="flex items-baseline justify-between gap-3">
                           <p className={`font-bold ${style.text}`}>{e.name}</p>
-                          <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                          <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-muted-foreground max-sm:text-[11px]">
                             {e.style}
                           </span>
                         </div>
@@ -254,7 +254,7 @@ export function ClinicalExaminer({
             {stage === "asking" && questions[index] && (
               <motion.div key={`q${index}`} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}>
                 <div className="mt-4 flex items-center justify-between gap-3">
-                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${accent.ring} ${accent.chip} ${accent.text}`}>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider max-sm:text-[11px] ${accent.ring} ${accent.chip} ${accent.text}`}>
                     {chosen.name}
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">

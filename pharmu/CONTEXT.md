@@ -514,8 +514,29 @@ Community Pharmacy on a phone (Rx, OTC and the look-alike drill):
   bottom-left at some scroll positions (he steps aside for modals) — mentor
   pass. The sticky tray still tucks 37px under the bar at 640px and up. From
   601px up toasts use Sonner's desktop position and can sit over the score and
-  pause. The examiner overlay keeps 10px capitals labels. The difficulty modal
-  is taller than a phone screen and scrolls to Expert.
+  pause. The difficulty modal is taller than a phone screen and scrolls to
+  Expert.
+
+Clinical on a phone (`game.hospital.tsx`, `CaseFileSlides`):
+- **The "Clinical alert" banner and the EKG floor are hidden below sm.** The
+  banner sat at top-16, on the 116px bar's hint strip, and only repeats the
+  toast and mistake panel that fire with it; the floor was fixed motion behind
+  the order button.
+- **The case file loses its clipboard card below sm** (the deck is already a
+  card). Labs are a two-column panel there, with flag and range at 11px.
+- **Order lines label every control** (`<label>` with a caption that is
+  `sm:sr-only`): dose and route share a row on a phone, frequency takes the next
+  - three abreast cut "once daily" to "once da". The formulary label is now
+  attached to its field.
+- Slide dots keep their 6px look; a pseudo-element gives each a 44px-tall touch
+  area on a phone (a probe measuring the button still reports 6px).
+- Shared: examiner and debrief eyebrow and chip labels are 11px on a phone.
+- Known and left: the lab slide can list a reading twice (e.g. Potassium) when
+  the default labs and the case's own use different names for it - React warns
+  about the duplicate key. That is the chart data, not the layout. No drug pair
+  in the current formulary data triggers the interaction alarm, so that path
+  was not exercised; the renal alert was. Dr. Hakim still overlaps the
+  formulary queue at the top of the page at some scroll positions.
 
 ## Landmines — every one of these has already bitten
 

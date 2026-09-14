@@ -29,7 +29,9 @@ const FREQS = ["once daily", "twice daily", "three times daily", "four times dai
 
 function ClinicalEkgFloor() {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-0 h-28 overflow-hidden opacity-45" aria-hidden="true">
+    // Not on a phone: a trace scrolling along the bottom of a narrow screen runs
+    // behind the order button and competes with the chart for attention.
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-0 h-28 overflow-hidden opacity-45 max-sm:hidden" aria-hidden="true">
       <div className="absolute inset-x-0 bottom-0 h-px bg-indigo-300/25" />
       <div className="ekg-scroll absolute inset-x-[-40%] bottom-5 h-20">
         <svg viewBox="0 0 640 90" className="h-full w-[200%]" preserveAspectRatio="none">
@@ -62,7 +64,10 @@ function toFiniteNumber(value: unknown, fallback: number) {
 function ClinicalAlarmBanner({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div className="fixed inset-x-0 top-16 z-[70] mx-auto max-w-4xl px-4">
+    // Not on a phone. At top-16 it landed on the case bar's hint strip, which is
+    // 116px tall there, and it only repeats what arrives at the same moment as a
+    // toast (below the bar) and in the mistake panel.
+    <div className="fixed inset-x-0 top-16 z-[70] mx-auto max-w-4xl px-4 max-sm:hidden">
       <div className="score-toast-wrong flex items-center gap-3 rounded-2xl border border-red-400/60 bg-red-950/95 px-4 py-3 text-sm font-bold text-red-50 shadow-[0_0_45px_-12px_rgba(239,68,68,0.9)]">
         <AlertTriangle className="h-5 w-5 shrink-0 animate-pulse text-red-700 dark:text-red-200" />
         <span className="font-mono uppercase tracking-wider">Clinical alert</span>
@@ -315,8 +320,11 @@ export function HospitalGame({ mode }: { mode: TimedMode }) {
         paused={timer.paused} togglePause={timer.togglePause} score={0} hideScore
         onHint={() => { setHints((n) => n + 1); toastScore(-SCORE_WEIGHTS.hint, "hint used"); toast.info(`Hint: ${caseData.mentor_tip}`); }} />
       <main className="relative z-10 mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[1fr_1.3fr]" data-tour-scene="clinical-order">
-        <aside data-tour="clinical-file" className="relative rounded-2xl border border-indigo-300/20 bg-slate-900/[0.07] dark:bg-slate-900/55 p-4 text-slate-900 dark:text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl">
-          <div className="absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-indigo-200/20 bg-slate-200 dark:bg-slate-700/70 shadow-inner backdrop-blur" />
+        {/* No clipboard around the file on a phone: the deck is already a card,
+            and the board around it took 32px of width from every lab value
+            and order line inside. */}
+        <aside data-tour="clinical-file" className="relative rounded-2xl border border-indigo-300/20 bg-slate-900/[0.07] dark:bg-slate-900/55 p-4 text-slate-900 dark:text-slate-100 shadow-[0_24px_65px_-38px_rgba(56,189,248,0.6)] backdrop-blur-xl max-sm:border-0 max-sm:bg-transparent max-sm:p-0 max-sm:shadow-none max-sm:dark:bg-transparent">
+          <div className="absolute left-1/2 top-0 h-8 w-28 -translate-x-1/2 -translate-y-3 rounded-b-xl border border-indigo-200/20 bg-slate-200 dark:bg-slate-700/70 shadow-inner backdrop-blur max-sm:hidden" />
           <CaseFileSlides
             caseId={String(caseData.id ?? "case")}
             caseTitle={String(caseData.title ?? "Clinical case")}
@@ -333,30 +341,33 @@ export function HospitalGame({ mode }: { mode: TimedMode }) {
               <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-200">
                 <Database className="h-4 w-4" /> Hospital formulary
               </p>
-              <span className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-300">
+              <span className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-300 max-sm:hidden">
                 <Terminal className="h-3 w-3" /> DB ONLINE
               </span>
             </div>
-            <label className="text-[10px] uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Query medication database</label>
-            <div className="mt-2 flex items-center gap-2 rounded-lg border border-indigo-300/25 bg-white dark:bg-slate-950 px-3 py-2">
+            {/* The label was not attached to its field; now it names it. On a
+                phone the field itself is 44px tall rather than 23. */}
+            <label htmlFor="clinical-formulary-search" className="text-[10px] uppercase tracking-wider text-indigo-700 dark:text-indigo-300 max-sm:text-[11px]">Query medication database</label>
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-indigo-300/25 bg-white dark:bg-slate-950 px-3 py-2 max-sm:py-0">
               <span className="text-emerald-700 dark:text-emerald-300">&gt;</span>
               <input
+                id="clinical-formulary-search"
                 value={search} onChange={(e) => setSearch(e.target.value)}
                 placeholder="search formulary..."
-                className="w-full bg-transparent text-sm text-emerald-700 dark:text-emerald-100 outline-none placeholder:text-emerald-100/35"
+                className="w-full bg-transparent text-sm text-emerald-700 dark:text-emerald-100 outline-none placeholder:text-emerald-100/35 max-sm:h-11"
               />
               <span className="h-4 w-2 animate-pulse bg-emerald-300" />
             </div>
             {!search && (
               <div className="mt-3 rounded-lg border border-emerald-300/20 bg-emerald-400/10 p-3">
-                <p className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-200">Case-linked formulary queue</p>
+                <p className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-200 max-sm:text-[11px]">Case-linked formulary queue</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {(caseData.correct_answer_json?.drugs ?? []).slice(0, 4).map((o: any) => (
                     <button
                       key={o.drug}
                       type="button"
                       onClick={() => setSearch(o.drug)}
-                      className="rounded-full border border-emerald-300/25 bg-slate-900/[0.07] dark:bg-slate-950/60 px-3 py-1 text-xs text-emerald-700 dark:text-emerald-100 transition hover:border-emerald-200/60 hover:bg-emerald-400/15"
+                      className="rounded-full border border-emerald-300/25 bg-slate-900/[0.07] dark:bg-slate-950/60 px-3 py-1 text-xs text-emerald-700 dark:text-emerald-100 transition hover:border-emerald-200/60 hover:bg-emerald-400/15 max-sm:min-h-11 max-sm:px-4"
                     >
                       {o.drug}
                     </button>
@@ -368,7 +379,7 @@ export function HospitalGame({ mode }: { mode: TimedMode }) {
               <ul className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-indigo-300/20 bg-white/90 dark:bg-slate-950/80">
                 {filtered.map((d) => (
                   <li key={d.id}>
-                    <button onClick={() => addOrder(d)} className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-800 dark:text-slate-200 transition hover:bg-indigo-500/15 hover:text-white">
+                    <button onClick={() => addOrder(d)} className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-800 dark:text-slate-200 transition hover:bg-indigo-500/15 hover:text-white max-sm:min-h-11">
                       <span>{d.name} <span className="text-xs text-indigo-200/60">[{d.category}]</span></span>
                       <Plus className="size-4 text-emerald-700 dark:text-emerald-300" />
                     </button>
@@ -399,21 +410,37 @@ export function HospitalGame({ mode }: { mode: TimedMode }) {
                   >
                     <div className="flex items-center justify-between">
                       <p className="font-mono text-sm font-black uppercase tracking-wide">{o.drug}</p>
-                      <button onClick={() => removeOrder(i)} className="text-slate-600 dark:text-slate-400 hover:text-destructive">
+                      {/* Named, and a full-size target on a phone: it was a bare
+                          14px icon, and the only way to take an order back. */}
+                      <button onClick={() => removeOrder(i)} aria-label={`Remove ${o.drug}`} className="text-slate-600 dark:text-slate-400 hover:text-destructive max-sm:-my-2 max-sm:-mr-2 max-sm:grid max-sm:size-11 max-sm:place-items-center">
                         <Trash2 className="size-3.5" />
                       </button>
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                      <input placeholder="Dose (mg)" value={o.dose} onChange={(e) => updateOrder(i, { dose: e.target.value })}
-                        className="rounded border border-indigo-200/20 bg-white/90 dark:bg-slate-900/80 px-2 py-1 text-slate-900 dark:text-slate-100" />
-                      <select value={o.route} onChange={(e) => updateOrder(i, { route: e.target.value })}
-                        className="rounded border border-indigo-200/20 bg-white/90 dark:bg-slate-900/80 px-2 py-1 text-slate-900 dark:text-slate-100">
-                        {ROUTES.map((r) => <option key={r}>{r}</option>)}
-                      </select>
-                      <select value={o.frequency} onChange={(e) => updateOrder(i, { frequency: e.target.value })}
-                        className="rounded border border-indigo-200/20 bg-white/90 dark:bg-slate-900/80 px-2 py-1 text-slate-900 dark:text-slate-100">
-                        {FREQS.map((r) => <option key={r}>{r}</option>)}
-                      </select>
+                    {/* Every control carries its label now. On a phone the label
+                        shows above it and dose and route share a row, with
+                        frequency under them: three abreast at 390px cut "once
+                        daily" to "once da". From sm up the labels are for screen
+                        readers only and the row is the three columns it was. */}
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs max-sm:grid-cols-2 max-sm:text-sm">
+                      <label className="grid max-sm:gap-1">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 sm:sr-only">Dose (mg)</span>
+                        <input placeholder="Dose (mg)" value={o.dose} onChange={(e) => updateOrder(i, { dose: e.target.value })}
+                          className="rounded border border-indigo-200/20 bg-white/90 dark:bg-slate-900/80 px-2 py-1 text-slate-900 dark:text-slate-100 max-sm:min-h-11" />
+                      </label>
+                      <label className="grid max-sm:gap-1">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 sm:sr-only">Route</span>
+                        <select value={o.route} onChange={(e) => updateOrder(i, { route: e.target.value })}
+                          className="rounded border border-indigo-200/20 bg-white/90 dark:bg-slate-900/80 px-2 py-1 text-slate-900 dark:text-slate-100 max-sm:min-h-11">
+                          {ROUTES.map((r) => <option key={r}>{r}</option>)}
+                        </select>
+                      </label>
+                      <label className="grid max-sm:col-span-2 max-sm:gap-1">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 sm:sr-only">Frequency</span>
+                        <select value={o.frequency} onChange={(e) => updateOrder(i, { frequency: e.target.value })}
+                          className="rounded border border-indigo-200/20 bg-white/90 dark:bg-slate-900/80 px-2 py-1 text-slate-900 dark:text-slate-100 max-sm:min-h-11">
+                          {FREQS.map((r) => <option key={r}>{r}</option>)}
+                        </select>
+                      </label>
                     </div>
                   </motion.li>
                 ))}
@@ -421,7 +448,7 @@ export function HospitalGame({ mode }: { mode: TimedMode }) {
               </motion.ul>
             )}
             <button onClick={submit} disabled={orders.length === 0} data-tour="clinical-submit"
-              className="mt-3 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+              className="mt-3 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40 max-sm:min-h-11">
               Submit order
             </button>
           </div>

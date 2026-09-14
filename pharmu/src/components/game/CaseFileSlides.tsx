@@ -80,18 +80,22 @@ function SlideBody({ slide }: { slide: Slide }) {
       )}
 
       {slide.labs && (
-        <div className="grid gap-1.5 sm:grid-cols-2">
+        /* Two columns on a phone too, read like a lab panel: one tile to a row
+           ran to 640px for eight results. The flag drops under the name when a
+           long name leaves it no room, and the flag and the range - what turns
+           the number into a finding - are 11px there, not 10. */
+        <div className="grid gap-1.5 sm:grid-cols-2 max-sm:grid-cols-2">
           {slide.labs.map((lab) => (
             <div key={lab.name} className={`rounded-lg border px-3 py-2 ${FLAG_STYLE[lab.flag]}`}>
-              <div className="flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline justify-between gap-2 max-sm:flex-wrap max-sm:gap-y-0">
                 <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">{lab.name}</span>
                 {lab.flag !== "unknown" && lab.flag !== "normal" && (
-                  <span className="shrink-0 text-[10px] font-black">{FLAG_MARK[lab.flag]}</span>
+                  <span className="shrink-0 text-[10px] font-black max-sm:text-[11px]">{FLAG_MARK[lab.flag]}</span>
                 )}
               </div>
               <p className="mt-0.5 text-sm font-bold">{lab.value}</p>
               {/* The range is what makes the number mean something. */}
-              {lab.range && <p className="text-[10px] opacity-70">Ref {lab.range}</p>}
+              {lab.range && <p className="text-[10px] opacity-70 max-sm:text-[11px]">Ref {lab.range}</p>}
             </div>
           ))}
         </div>
@@ -213,13 +217,14 @@ export function CaseFileSlides({
   return (
     <div className="rounded-xl border border-indigo-200/20 bg-slate-900/[0.05] dark:bg-slate-950/45 p-4 shadow-inner backdrop-blur-xl">
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-indigo-700 dark:text-indigo-200">
+        <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-indigo-700 dark:text-indigo-200 max-sm:text-[11px]">
           <ClipboardList className="h-3.5 w-3.5" /> Case file
         </p>
         <button
           type="button"
           onClick={() => setNotesOpen((open) => !open)}
-          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
+          aria-expanded={notesOpen}
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition max-sm:min-h-11 max-sm:px-3.5 max-sm:text-[11px] ${
             notesOpen
               ? "border-indigo-300/60 bg-indigo-400/20 text-indigo-700 dark:text-indigo-100"
               : "border-indigo-200/25 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-400/10"
@@ -256,11 +261,13 @@ export function CaseFileSlides({
           type="button"
           onClick={() => go(-1)}
           disabled={index === 0}
-          className="inline-flex items-center gap-1 rounded-full border border-indigo-200/25 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-100 transition hover:bg-indigo-400/10 disabled:opacity-30"
+          className="inline-flex items-center gap-1 rounded-full border border-indigo-200/25 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-100 transition hover:bg-indigo-400/10 disabled:opacity-30 max-sm:min-h-11 max-sm:px-4"
         >
           <ChevronLeft className="h-3.5 w-3.5" /> Back
         </button>
 
+        {/* The dots stay 6px to look at, but on a phone each one answers a
+            44px-tall touch: the pseudo-element around it takes the tap. */}
         <div className="flex gap-1.5">
           {file.slides.map((s, i) => (
             <button
@@ -268,7 +275,8 @@ export function CaseFileSlides({
               type="button"
               onClick={() => setIndex(i)}
               aria-label={s.title}
-              className={`h-1.5 rounded-full transition-all ${
+              aria-current={i === index ? "step" : undefined}
+              className={`h-1.5 rounded-full transition-all max-sm:relative max-sm:after:absolute max-sm:after:-inset-x-1 max-sm:after:-inset-y-[19px] ${
                 i === index ? "w-5 bg-indigo-300" : "w-1.5 bg-indigo-200/30 hover:bg-indigo-200/60"
               }`}
             />
@@ -279,7 +287,7 @@ export function CaseFileSlides({
           type="button"
           onClick={() => go(1)}
           disabled={index === file.slides.length - 1}
-          className="inline-flex items-center gap-1 rounded-full border border-indigo-200/25 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-100 transition hover:bg-indigo-400/10 disabled:opacity-30"
+          className="inline-flex items-center gap-1 rounded-full border border-indigo-200/25 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-100 transition hover:bg-indigo-400/10 disabled:opacity-30 max-sm:min-h-11 max-sm:px-4"
         >
           Next <ChevronRight className="h-3.5 w-3.5" />
         </button>
@@ -300,13 +308,14 @@ export function CaseFileSlides({
                 </p>
               ) : (
                 <>
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-1.5 max-sm:flex-wrap">
                     {NOTE_KINDS.map((k) => (
                       <button
                         key={k.key}
                         type="button"
+                        aria-pressed={kind === k.key}
                         onClick={() => setKind(k.key)}
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition max-sm:min-h-11 max-sm:px-3.5 max-sm:text-[11px] ${
                           kind === k.key ? k.tone : "border-indigo-200/20 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                         }`}
                       >
@@ -329,7 +338,7 @@ export function CaseFileSlides({
                     type="button"
                     disabled={!draft.trim() || addNote.isPending}
                     onClick={() => addNote.mutate()}
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-indigo-500 px-4 py-1.5 text-xs font-bold text-white transition hover:brightness-110 disabled:opacity-40"
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-indigo-500 px-4 py-1.5 text-xs font-bold text-white transition hover:brightness-110 disabled:opacity-40 max-sm:min-h-11"
                   >
                     <Plus className="h-3.5 w-3.5" /> Add note
                   </button>
@@ -341,14 +350,14 @@ export function CaseFileSlides({
                         return (
                           <li key={note.id} className={`rounded-lg border px-3 py-2 text-xs ${meta.tone}`}>
                             <div className="flex items-start justify-between gap-2">
-                              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider max-sm:text-[11px]">
                                 <meta.icon className="h-3 w-3" /> {note.slide ?? "case"}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => removeNote.mutate(note.id)}
                                 aria-label="Delete note"
-                                className="shrink-0 opacity-60 transition hover:opacity-100"
+                                className="shrink-0 opacity-60 transition hover:opacity-100 max-sm:-m-3 max-sm:grid max-sm:size-11 max-sm:place-items-center"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </button>
