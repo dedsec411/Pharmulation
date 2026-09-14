@@ -178,7 +178,7 @@ export function CaseCelebration({
             names it rather than showing a score alone. */}
         {product && (
           <div className="mt-4 rounded-xl border border-border/50 bg-background/50 px-4 py-2.5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">You made</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground max-sm:text-[11px]">You made</p>
             <p className="mt-0.5 font-bold leading-tight">{product.name}</p>
             {product.detail && <p className="text-xs text-muted-foreground">{product.detail}</p>}
           </div>

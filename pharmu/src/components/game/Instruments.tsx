@@ -280,6 +280,10 @@ function Atmosphere({ kind, zone, sev }: { kind: "temperature" | "humidity"; zon
 function Particles({ kind, zone, sev }: { kind: "temperature" | "humidity"; zone: Zone; sev: number }) {
   const reduced = useReducedMotion();
   if (reduced || zone === "within") return null;
+  // Each particle is hidden below sm (max-sm:hidden). Two gauges side by side
+  // on a phone are 160px cards; up to twenty falling or rising specks in them
+  // were motion over the very numbers being read. The tinted face still shows
+  // the state, as it does with reduced motion.
   const count = Math.round(3 + sev * 7);
   const spots = Array.from({ length: count }, (_, i) => i);
   const left = (i: number) => `${(i * 37 + 11) % 94 + 3}%`;
@@ -291,7 +295,7 @@ function Particles({ kind, zone, sev }: { kind: "temperature" | "humidity"; zone
           <motion.span
             key={`snow-${i}`}
             aria-hidden="true"
-            className="pointer-events-none absolute -top-2 rounded-full bg-sky-300 dark:bg-sky-100"
+            className="pointer-events-none absolute -top-2 rounded-full bg-sky-300 dark:bg-sky-100 max-sm:hidden"
             style={{ left: left(i), width: 2 + (i % 3), height: 2 + (i % 3), boxShadow: "0 0 6px rgba(56,189,248,.8)" }}
             animate={{ y: [-6, 230], x: [0, i % 2 ? 7 : -7, 0], opacity: [0, 0.95, 0.95, 0] }}
             transition={{ duration: 3.4 + (i % 4) * 0.7, repeat: Infinity, delay: i * 0.45, ease: "linear" }}
@@ -308,7 +312,7 @@ function Particles({ kind, zone, sev }: { kind: "temperature" | "humidity"; zone
           <motion.span
             key={`heat-${i}`}
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-3 w-[3px] rounded-full blur-[1.5px]"
+            className="pointer-events-none absolute -bottom-3 w-[3px] rounded-full blur-[1.5px] max-sm:hidden"
             style={{
               left: left(i),
               height: 16 + (i % 3) * 7,
@@ -329,7 +333,7 @@ function Particles({ kind, zone, sev }: { kind: "temperature" | "humidity"; zone
           <motion.span
             key={`drop-${i}`}
             aria-hidden="true"
-            className="pointer-events-none absolute -top-2 bg-blue-400/80"
+            className="pointer-events-none absolute -top-2 bg-blue-400/80 max-sm:hidden"
             style={{
               left: left(i),
               width: 4,
@@ -351,7 +355,7 @@ function Particles({ kind, zone, sev }: { kind: "temperature" | "humidity"; zone
         <motion.span
           key={`dust-${i}`}
           aria-hidden="true"
-          className="pointer-events-none absolute -left-2 size-[3px] rounded-full bg-amber-500/70"
+          className="pointer-events-none absolute -left-2 size-[3px] rounded-full bg-amber-500/70 max-sm:hidden"
           style={{ top: `${(i * 29 + 15) % 80 + 5}%` }}
           animate={{ x: [0, 340], y: [0, i % 2 ? -10 : 10, 0], opacity: [0, 0.85, 0] }}
           transition={{ duration: 5 + (i % 4), repeat: Infinity, delay: i * 0.7, ease: "linear" }}
@@ -442,7 +446,7 @@ export function EnvironmentGauge({
         </p>
         <StatePill tone={tone} text={state.text} icon={state.icon} />
       </div>
-      <p className="relative mt-0.5 text-[10px] text-muted-foreground">
+      <p className="relative mt-0.5 text-[10px] text-muted-foreground max-sm:text-[11px]">
         Acceptable {band.low}&ndash;{band.high}{unit}
       </p>
     </div>

@@ -538,6 +538,40 @@ Clinical on a phone (`game.hospital.tsx`, `CaseFileSlides`):
   was not exercised; the renal alert was. Dr. Hakim still overlaps the
   formulary queue at the top of the page at some scroll positions.
 
+Industry on a phone (`game.industry.tsx`, `BatchBooklet`, `Instruments`):
+- **The step comes before the master formula reference below sm**
+  (`order-last` on the aside). Above it, the reference put every task a screen
+  and a half down. The aside has no controls, so focus order is unaffected; the
+  Batch record button stays at the top of every phase.
+- **The spinning gears, conveyor, "GMP" stamp and the gauges' falling or rising
+  particles are hidden below sm.** The stamp sat on the BMR number; the rest was
+  motion behind the numbers being read. Gauge faces still tint by zone.
+- **Formula rows put the amount under the ingredient name** (beside it, the two
+  ran into each other). The batch size field and every slider are 44px/40px
+  tall; acknowledge, Confirm weight, Run drying and QC Continue are 44px and
+  full width.
+- **Tab rows (weighing inventory, batch record sections) are one sideways
+  scrolling row of 44px chips** instead of three wrapped rows of 24-26px pills.
+  Record tabs now carry `aria-pressed`.
+- **QC verdicts sit under the reading as two 44px buttons.**
+- The batch record is capped at 85dvh on a phone. The reference, gauge and
+  "You made" (`CaseCelebration`, shared) labels are 11px there.
+- **Landmine:** a nowrap scrolling row inside a `grid` item widens the item to
+  the row's full length unless the item has `min-w-0` (the inventory card has
+  it below sm). Without it the bench and the balance ran off the screen with no
+  page-level overflow, because the card clipped them.
+- Verified by `industry.mjs` (seeded case, Supabase writes answered locally,
+  server functions blocked); desktop and tablet geometry matched the before runs
+  scene by scene.
+- Known and left: the dial end labels (e.g. "12°C / 33°C", "0 g / 8000 g") are
+  9px SVG text. The reading and "Acceptable" range beside them are full size,
+  and enlarging SVG text would crowd the ticks. The "BMR" `Abbr` tooltip button
+  is 20×16 (shared component). The weighing card says "Step 2 - Weighing"
+  though the room check comes first, and choosing an ingredient does not scroll
+  to the balance below. Dr. Hakim overlaps the reference and process map at the
+  bottom-left at some scroll positions. The balance dial logs framer-motion
+  "motion.stop" warnings (pre-existing).
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made

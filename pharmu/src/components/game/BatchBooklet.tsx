@@ -24,7 +24,7 @@ export function BatchBooklet(props: BookletInput) {
         data-tour="industry-record"
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-400/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-200 transition hover:bg-amber-400/20"
+        className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-400/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-200 transition hover:bg-amber-400/20 max-sm:min-h-11"
       >
         <BookOpen className="h-3.5 w-3.5" /> Batch record
       </button>
@@ -43,11 +43,14 @@ export function BatchBooklet(props: BookletInput) {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 12, opacity: 0 }}
               onClick={(event) => event.stopPropagation()}
-              className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-amber-200/25 bg-white dark:bg-slate-950 shadow-2xl"
+              // 85% of the screen actually visible on a phone (dvh), not of the
+              // screen with the browser's toolbars hidden, which can push the
+              // record's last lines under the address bar.
+              className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-amber-200/25 bg-white dark:bg-slate-950 shadow-2xl max-sm:max-h-[85dvh]"
             >
               <div className="flex items-start justify-between gap-3 border-b border-amber-200/20 bg-amber-400/5 px-5 py-4">
                 <div>
-                  <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-amber-700 dark:text-amber-300">
+                  <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-amber-700 dark:text-amber-300 max-sm:text-[11px]">
                     <BookOpen className="h-3.5 w-3.5" /> Batch manufacturing record
                   </p>
                   <h2 className="mt-1 text-lg font-black text-slate-900 dark:text-slate-50">{props.product}</h2>
@@ -59,19 +62,22 @@ export function BatchBooklet(props: BookletInput) {
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Close batch record"
-                  className="rounded-full border border-slate-300 dark:border-slate-600/50 p-1.5 text-slate-600 dark:text-slate-400 transition hover:text-slate-900 dark:hover:text-slate-100"
+                  className="rounded-full border border-slate-300 dark:border-slate-600/50 p-1.5 text-slate-600 dark:text-slate-400 transition hover:text-slate-900 dark:hover:text-slate-100 max-sm:grid max-sm:size-11 max-sm:shrink-0 max-sm:place-items-center max-sm:p-0"
                 >
                   <XIcon className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-1 border-b border-amber-200/15 px-5 py-2">
+              {/* One sideways-scrolling row of full-size tabs on a phone; wrapped,
+                  five 24px tabs took three rows off the top of the record. */}
+              <div className="flex flex-wrap gap-1 border-b border-amber-200/15 px-5 py-2 max-sm:flex-nowrap max-sm:overflow-x-auto">
                 {sections.map((s) => (
                   <button
                     key={s.key}
                     type="button"
+                    aria-pressed={s.key === section.key}
                     onClick={() => setActive(s.key)}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition max-sm:min-h-11 max-sm:shrink-0 max-sm:whitespace-nowrap max-sm:px-4 ${
                       s.key === section.key
                         ? "bg-amber-400/20 text-amber-700 dark:text-amber-100"
                         : "text-slate-600 dark:text-slate-400 hover:bg-foreground/5 hover:text-slate-800 dark:hover:text-slate-200"

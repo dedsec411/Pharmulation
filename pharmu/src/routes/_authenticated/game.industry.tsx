@@ -338,7 +338,9 @@ function buildIndustryFormula(choice: ProductChoice): IndustryFormula {
 
 function IndustryAmbient() {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+    // Not on a phone: spinning gears and a moving conveyor pinned behind one
+    // narrow column run under the gauges, the record and Dr. Hakim at once.
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden max-sm:hidden" aria-hidden="true">
       <Cog className="gear-spin absolute -right-16 top-24 h-44 w-44 text-amber-300/10" strokeWidth={1.2} />
       <Cog className="gear-spin absolute right-20 top-44 h-24 w-24 text-amber-200/10" strokeWidth={1.3} style={{ animationDirection: "reverse", animationDuration: "16s" }} />
       <div className="absolute inset-x-0 bottom-0 h-20 border-t border-amber-300/10 bg-slate-900/[0.03] dark:bg-black/20">
@@ -411,7 +413,9 @@ function BatchFlash({ decision }: { decision: "release" | "reject" | null }) {
 
 function OfficialStamp({ label = "GMP CONTROLLED" }: { label?: string }) {
   return (
-    <div className="pointer-events-none absolute right-6 top-24 rotate-[-12deg] rounded-md border-4 border-amber-500/20 px-5 py-2 text-center font-mono text-xl font-black uppercase tracking-[0.26em] text-amber-600/20">
+    // A watermark with room to sit beside the record on a wide card; on a phone
+    // it lands on the record number and the ingredient list, so it is left off.
+    <div className="pointer-events-none absolute right-6 top-24 rotate-[-12deg] rounded-md border-4 border-amber-500/20 px-5 py-2 text-center font-mono text-xl font-black uppercase tracking-[0.26em] text-amber-600/20 max-sm:hidden">
       {label}
     </div>
   );
@@ -462,10 +466,10 @@ function EnvSlider({
           min={min} max={max} step={step} value={value}
           onChange={(event) => onChange(Number(event.target.value))}
           aria-label={label}
-          className="relative w-full accent-primary"
+          className="relative w-full accent-primary max-sm:h-10"
         />
       </div>
-      <p className="mt-1 text-[10px] text-muted-foreground">
+      <p className="mt-1 text-[10px] text-muted-foreground max-sm:text-[11px]">
         Acceptable {range[0]}-{range[1]}{unit}
       </p>
     </div>
@@ -538,7 +542,7 @@ function ProductChoiceScreen({ onPick }: { onPick: (choice: ProductChoice) => vo
                 className="rounded-xl border border-border/40 bg-card/60 p-3 text-left text-sm font-semibold transition hover:border-primary/50 hover:bg-primary/10"
               >
                 {type}
-                <span className="mt-1 block text-[10px] font-normal uppercase tracking-wider text-muted-foreground">
+                <span className="mt-1 block text-[10px] font-normal uppercase tracking-wider text-muted-foreground max-sm:text-[11px]">
                   Start batch
                 </span>
               </button>
@@ -1016,10 +1020,10 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "formula" && (
-          <section data-tour-scene="industry-record" className="relative overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 text-slate-900 dark:text-slate-100 shadow-[0_24px_70px_-42px_rgba(245,158,11,0.65)] backdrop-blur-xl">
+          <section data-tour-scene="industry-record" className="relative overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 text-slate-900 dark:text-slate-100 shadow-[0_24px_70px_-42px_rgba(245,158,11,0.65)] max-sm:p-4 backdrop-blur-xl">
             <OfficialStamp />
             <div className="relative border-b border-amber-200/25 pb-3">
-              <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-amber-700 dark:text-amber-300">Batch Manufacturing Record</p>
+              <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-amber-700 dark:text-amber-300 max-sm:text-[11px]">Batch Manufacturing Record</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
                 <div>
                   <h2 className="text-2xl font-black uppercase tracking-tight">{batchProduct}</h2>
@@ -1050,7 +1054,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                     step={batchStep}
                     value={batchCount || ""}
                     onChange={(e) => updateBatchCount(Number(e.target.value))}
-                    className="h-10 w-36 rounded border border-amber-200/25 bg-slate-900/[0.07] dark:bg-slate-950/60 px-3 text-right font-mono text-sm tabular-nums text-slate-900 dark:text-slate-100 outline-none focus:border-amber-400"
+                    className="h-10 w-36 max-sm:h-11 rounded border border-amber-200/25 bg-slate-900/[0.07] dark:bg-slate-950/60 px-3 text-right font-mono text-sm tabular-nums text-slate-900 dark:text-slate-100 outline-none focus:border-amber-400"
                   />
                   <span className="rounded border border-amber-200/20 bg-foreground/5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                     {batchScale.toFixed(2)}x
@@ -1064,16 +1068,18 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                 step={batchStep}
                 value={batchCount || baseBatchCount || minBatchCount}
                 onChange={(e) => updateBatchCount(Number(e.target.value))}
-                className="mt-4 w-full accent-amber-600"
+                className="mt-4 w-full accent-amber-600 max-sm:h-10"
               />
-              <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 max-sm:text-[11px]">
                 <span>{formatBatchSize(f.batchSize, minBatchCount)}</span>
                 <span>{formatBatchSize(f.batchSize, maxBatchCount)}</span>
               </div>
             </div>
             <ul data-tour="industry-formula" className="relative mt-4 divide-y divide-amber-200/15 rounded-xl border border-amber-200/20 bg-slate-900/[0.04] dark:bg-slate-950/35 backdrop-blur">
               {ingredients.map((i: any) => (
-                <li key={i.name} className="grid grid-cols-[26px_1fr_auto] items-center gap-3 p-3 text-sm">
+                /* On a phone the amount goes under the name: beside it, "12,000 g
+                   (11,640-12,360)" ran straight into "Microcrystalline cellulose". */
+                <li key={i.name} className="grid grid-cols-[26px_1fr_auto] items-center gap-3 p-3 text-sm max-sm:grid-cols-[26px_1fr] max-sm:gap-y-1">
                   <span className="grid h-4 w-4 place-items-center border border-amber-200/40 bg-amber-400/10 text-[10px]">
                     <Check className="size-3 text-amber-700 dark:text-amber-300" />
                   </span>
@@ -1081,11 +1087,11 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                     <p className="font-semibold">{i.name}</p>
                     <p className="text-xs text-slate-600 dark:text-slate-400">{i.role}</p>
                   </div>
-                  <span className="text-right font-mono tabular-nums">{formatAmount(i.target)} {i.unit} <span className="text-slate-600 dark:text-slate-400">({formatAmount(i.min)}-{formatAmount(i.max)})</span></span>
+                  <span className="text-right font-mono tabular-nums max-sm:col-start-2 max-sm:text-left">{formatAmount(i.target)} {i.unit} <span className="text-slate-600 dark:text-slate-400">({formatAmount(i.min)}-{formatAmount(i.max)})</span></span>
                 </li>
               ))}
             </ul>
-            <button onClick={acknowledgeFormula} data-tour="industry-ack" className="relative mt-5 rounded-full bg-amber-500 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_0_28px_-12px_rgba(245,158,11,0.9)] hover:bg-amber-400">
+            <button onClick={acknowledgeFormula} data-tour="industry-ack" className="relative mt-5 rounded-full bg-amber-500 px-6 py-2 text-sm font-black text-slate-950 max-sm:min-h-11 max-sm:w-full shadow-[0_0_28px_-12px_rgba(245,158,11,0.9)] hover:bg-amber-400">
               I have read the batch record
             </button>
           </section>
@@ -1106,14 +1112,19 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
 
         {phase === "weighing" && (
           <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]" data-tour-scene="industry-weighing">
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur" data-tour="industry-inventory">
+            {/* min-w-0 on a phone: as a grid item this card would otherwise grow
+                to the full width of the tab row below and push the bench and
+                the balance off the side of the screen. */}
+            <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur max-sm:min-w-0" data-tour="industry-inventory">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Step 2 - Weighing</p>
               <h3 className="mt-1 text-lg font-bold">Ingredient inventory</h3>
 
               {/* Grouped by what each material is for. The tabs are an index,
                   not a hint: every group mixes what belongs in this batch with
                   what does not, because the roles are real. */}
-              <div className="mt-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Filter the inventory by what each material is for">
+              {/* One row that scrolls sideways on a phone, at full touch size:
+                  wrapped, eight 26px tabs took three rows above the bench. */}
+              <div className="mt-3 flex flex-wrap gap-1.5 max-sm:-mx-5 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:px-5 max-sm:pb-1" role="tablist" aria-label="Filter the inventory by what each material is for">
                 {["All", ...benchGroups.map((g) => g.role)].map((role) => {
                   const count = role === "All" ? allWeighingItems.length
                     : (benchGroups.find((g) => g.role === role)?.items.length ?? 0);
@@ -1125,7 +1136,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                       role="tab"
                       aria-selected={on}
                       onClick={() => setBenchTab(role)}
-                      className={`rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-[0.97] ${
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-[0.97] max-sm:min-h-11 max-sm:shrink-0 max-sm:whitespace-nowrap max-sm:px-4 ${
                         on
                           ? "border-primary/60 bg-primary/15 text-primary"
                           : "border-border/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -1147,7 +1158,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                         ? "border-primary/40 bg-primary/10 opacity-60"
                         : "border-border/40 bg-card/60 hover:border-primary/40"}`}>
                       <p className="font-semibold">{it.name}</p>
-                      <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{it.role}</p>
+                      <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground max-sm:text-[11px] max-sm:normal-case max-sm:tracking-normal">{it.role}</p>
                     </button>
                   );
                 })}
@@ -1191,8 +1202,8 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                   <input type="range" min={0} max={weighingMax} step={weighingStep} value={slider}
                     onChange={(e) => setSlider(Number(e.target.value))}
                     aria-label={`Weight of ${active ?? "ingredient"}`}
-                    className={`w-full ${!content.showTolerances ? "accent-primary" : activeWeightOk ? "accent-emerald-500" : "accent-red-500"}`} />
-                  <button onClick={confirmWeigh} className={`w-full rounded-full py-2 text-sm font-semibold transition active:scale-[0.99] ${
+                    className={`w-full max-sm:h-10 ${!content.showTolerances ? "accent-primary" : activeWeightOk ? "accent-emerald-500" : "accent-red-500"}`} />
+                  <button onClick={confirmWeigh} className={`w-full rounded-full py-2 text-sm font-semibold transition active:scale-[0.99] max-sm:min-h-11 ${
                     !content.showTolerances
                       ? "bg-primary text-primary-foreground hover:brightness-110"
                       : activeWeightOk ? "bg-emerald-600 text-white hover:bg-emerald-500" : "bg-red-600 text-white hover:bg-red-500"
@@ -1223,7 +1234,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "env" && (
-          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur" data-tour-scene="industry-env">
+          <section className="rounded-2xl border border-border/40 bg-card/60 p-6 backdrop-blur max-sm:p-4" data-tour-scene="industry-env">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Step 3 - Environmental check</p>
             <h3 className="mt-1 text-lg font-bold">Verify mixing room conditions</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -1299,13 +1310,13 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                         <button
                           onClick={confirmEnvironment}
                           data-tour="industry-confirm-room"
-                          className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+                          className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-110 max-sm:min-h-11"
                         >
                           Confirm and weigh
                         </button>
                         <button
                           onClick={() => setAdjusting(false)}
-                          className="rounded-full border border-border/50 px-5 py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
+                          className="rounded-full border border-border/50 px-5 py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground max-sm:min-h-11"
                         >
                           Back
                         </button>
@@ -1349,7 +1360,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
         )}
 
         {phase === "qc" && (
-          <section data-tour-scene="industry-qc" className="overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 text-slate-900 dark:text-slate-100 shadow-[0_20px_60px_-38px_rgba(245,158,11,0.65)] backdrop-blur-xl">
+          <section data-tour-scene="industry-qc" className="overflow-hidden rounded-2xl border border-amber-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 text-slate-900 dark:text-slate-100 shadow-[0_20px_60px_-38px_rgba(245,158,11,0.65)] max-sm:p-4 backdrop-blur-xl">
             <p className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Step 5 - Quality Control</p>
             <h3 className="mt-1 text-lg font-bold">Judge each test</h3>
             <ul className="mt-3 space-y-3" data-tour="industry-qc-tests">
@@ -1376,16 +1387,19 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
                         {ans ? "PASS" : "FAIL"}
                       </motion.div>
                     )}
-                    <div className="flex items-start justify-between gap-3">
+                    {/* On a phone the verdict sits under the reading as two full-width
+                        buttons: side by side they were 26px pills beside the
+                        result they judge. */}
+                    <div className="flex items-start justify-between gap-3 max-sm:flex-col max-sm:items-stretch">
                       <div>
                         <p className="font-semibold">{t.test}</p>
                         <p className="text-xs text-slate-600 dark:text-slate-400">{t.result}</p>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 max-sm:grid max-sm:grid-cols-2 max-sm:gap-2">
                         <button disabled={ans !== undefined} onClick={() => answerQc(i, true)}
-                          className={`rounded-full px-3 py-1 text-xs ${ans === true ? "bg-emerald-600 text-white" : "border border-emerald-300/25 bg-emerald-400/10 text-emerald-700 dark:text-emerald-100"}`}>Pass</button>
+                          className={`rounded-full px-3 py-1 text-xs max-sm:min-h-11 max-sm:text-sm ${ans === true ? "bg-emerald-600 text-white" : "border border-emerald-300/25 bg-emerald-400/10 text-emerald-700 dark:text-emerald-100"}`}>Pass</button>
                         <button disabled={ans !== undefined} onClick={() => answerQc(i, false)}
-                          className={`rounded-full px-3 py-1 text-xs ${ans === false ? "bg-red-600 text-white" : "border border-red-300/25 bg-red-400/10 text-red-700 dark:text-red-100"}`}>Fail</button>
+                          className={`rounded-full px-3 py-1 text-xs max-sm:min-h-11 max-sm:text-sm ${ans === false ? "bg-red-600 text-white" : "border border-red-300/25 bg-red-400/10 text-red-700 dark:text-red-100"}`}>Fail</button>
                       </div>
                     </div>
                   </motion.li>
@@ -1393,7 +1407,7 @@ function IndustryRun({ productChoice }: { productChoice: ProductChoice }) {
               })}
             </ul>
             <button disabled={!allQcAnswered} onClick={() => setPhase("release")}
-              className="mt-4 rounded-full bg-amber-500 px-6 py-2 text-sm font-black text-slate-950 disabled:opacity-40">
+              className="mt-4 rounded-full bg-amber-500 px-6 py-2 text-sm font-black text-slate-950 disabled:opacity-40 max-sm:min-h-11 max-sm:w-full">
               Continue to batch decision &gt;
             </button>
           </section>
@@ -1464,22 +1478,27 @@ function getMixingProfile(productChoice: ProductChoice) {
 function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, batchSizeLabel, phase, stageIdx }: any) {
   const mixingProfile = getMixingProfile(productChoice);
   return (
-    <aside className="xl:sticky xl:top-24 xl:self-start">
+    // Below the step on a phone, where the page is one column: above it, the
+    // reference pushed every task - the room, the balance, the release
+    // decision - a screen and a half down. It has no controls, so moving it
+    // changes nothing for keyboard order; the Batch record button above still
+    // opens the full record from the top of every phase.
+    <aside className="xl:sticky xl:top-24 xl:self-start max-sm:order-last">
       <div className="relative overflow-hidden rounded-xl border border-amber-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-4 text-slate-900 dark:text-slate-100 shadow-[0_16px_40px_-24px_rgba(245,158,11,0.65)] backdrop-blur-xl">
         <OfficialStamp label="REFERENCE" />
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 dark:text-amber-300">Master formula</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 dark:text-amber-300 max-sm:text-[11px]">Master formula</p>
             <h3 className="mt-1 text-lg font-black leading-tight">{batchProduct}</h3>
             <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">{productChoice.form} dosage form</p>
           </div>
-          <span className="rounded border border-amber-200/20 bg-foreground/5 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-300">
+          <span className="rounded border border-amber-200/20 bg-foreground/5 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-300 max-sm:text-[11px]">
             {batchSizeLabel}
           </span>
         </div>
 
         <div className="mt-4 rounded-xl border border-amber-200/20 bg-slate-900/[0.07] dark:bg-slate-900/55 p-3 backdrop-blur">
-          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">Ingredients</p>
+          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 max-sm:text-[11px]">Ingredients</p>
           <ul className="max-h-52 space-y-2 overflow-y-auto pr-1">
             {ingredients.map((i: any) => (
               <li key={i.name} className="grid grid-cols-[18px_1fr] gap-2 border-b border-amber-200/10 pb-1.5 text-xs last:border-b-0">
@@ -1489,13 +1508,13 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{i.name}</p>
-                    <p className="text-[10px] text-slate-600 dark:text-slate-400">{i.role}</p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400 max-sm:text-[11px]">{i.role}</p>
                   </div>
                   <span className="shrink-0 text-right font-mono text-[11px] tabular-nums">
                     {formatAmount(i.target)}{i.unit}
                   </span>
                 </div>
-                <p className="col-start-2 mt-0.5 text-[10px] text-slate-600 dark:text-slate-400">Range {formatAmount(i.min)}-{formatAmount(i.max)}{i.unit}</p>
+                <p className="col-start-2 mt-0.5 text-[10px] text-slate-600 dark:text-slate-400 max-sm:text-[11px]">Range {formatAmount(i.min)}-{formatAmount(i.max)}{i.unit}</p>
               </li>
             ))}
           </ul>
@@ -1503,22 +1522,22 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
 
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
           <div className="rounded-lg border border-amber-200/20 bg-foreground/5 p-2">
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">Temp</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400 max-sm:text-[11px]">Temp</p>
             <p className="mt-1 font-bold">{f.env.tempRange[0]}-{f.env.tempRange[1]}C</p>
           </div>
           <div className="rounded-lg border border-amber-200/20 bg-foreground/5 p-2">
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">Humidity</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400 max-sm:text-[11px]">Humidity</p>
             <p className="mt-1 font-bold">{f.env.humidityRange[0]}-{f.env.humidityRange[1]}%</p>
           </div>
         </div>
 
         <div className="mt-3 rounded-lg border border-amber-200/20 bg-foreground/5 p-3">
-          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Process map</p>
+          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 max-sm:text-[11px]">Process map</p>
           <div className="flex flex-wrap gap-1">
             {STAGES.map((stage, i) => (
               <span
                 key={stage}
-                className={`rounded px-2 py-1 text-[10px] capitalize ${
+                className={`rounded px-2 py-1 text-[10px] capitalize max-sm:text-[11px] ${
                   phase === "process" && i === stageIdx
                     ? "bg-amber-500 text-slate-950"
                     : "bg-foreground/5 text-slate-600 dark:text-slate-400"
@@ -1530,22 +1549,22 @@ function MasterFormulaReference({ f, batchProduct, productChoice, ingredients, b
           </div>
           <div className="mt-3 rounded-lg border border-amber-200/15 bg-slate-900/[0.04] dark:bg-slate-950/35 p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Mixing rate</p>
-              <span className="rounded-full border border-amber-300/25 bg-amber-400/10 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-700 dark:text-amber-200">
+              <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 max-sm:text-[11px]">Mixing rate</p>
+              <span className="rounded-full border border-amber-300/25 bg-amber-400/10 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-700 dark:text-amber-200 max-sm:text-[11px]">
                 {mixingProfile.grade}
               </span>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <div className="rounded-md bg-foreground/5 p-2">
-                <p className="text-[9px] uppercase tracking-wider text-slate-600 dark:text-slate-500">Speed</p>
+                <p className="text-[9px] uppercase tracking-wider text-slate-600 dark:text-slate-500 max-sm:text-[11px]">Speed</p>
                 <p className="mt-0.5 font-mono text-sm font-bold text-slate-900 dark:text-slate-100">{mixingProfile.speed}</p>
               </div>
               <div className="rounded-md bg-foreground/5 p-2">
-                <p className="text-[9px] uppercase tracking-wider text-slate-600 dark:text-slate-500">Time</p>
+                <p className="text-[9px] uppercase tracking-wider text-slate-600 dark:text-slate-500 max-sm:text-[11px]">Time</p>
                 <p className="mt-0.5 font-mono text-sm font-bold text-slate-900 dark:text-slate-100">{mixingProfile.time}</p>
               </div>
             </div>
-            <p className="mt-2 text-[10px] leading-relaxed text-slate-600 dark:text-slate-400">{mixingProfile.note}</p>
+            <p className="mt-2 text-[10px] leading-relaxed text-slate-600 dark:text-slate-400 max-sm:text-[11px]">{mixingProfile.note}</p>
           </div>
         </div>
       </div>
@@ -1573,8 +1592,8 @@ function StagePicker({ stage, label, spec, seed, dryTemp, setDryTemp, onAnswer }
         <h4 className="mt-1 text-lg font-bold">Set {String(stageLabel).toLowerCase()} parameter</h4>
         <p className="text-sm text-muted-foreground">Target: {spec.target}{spec.unit} ({spec.min}-{spec.max}{spec.unit})</p>
         <p className="mt-3 text-3xl font-mono tabular-nums">{dryTemp}{spec.unit}</p>
-        <input type="range" min={20} max={120} value={dryTemp} onChange={(e) => setDryTemp(Number(e.target.value))} className="mt-2 w-full" />
-        <button onClick={() => onAnswer(ok)} className="mt-3 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">
+        <input type="range" min={20} max={120} value={dryTemp} onChange={(e) => setDryTemp(Number(e.target.value))} className="mt-2 w-full max-sm:h-10" />
+        <button onClick={() => onAnswer(ok)} className="mt-3 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground max-sm:min-h-11 max-sm:w-full">
           Run drying
         </button>
       </div>
