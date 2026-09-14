@@ -479,6 +479,18 @@ The student dashboard on a phone:
   page's layout shift on a phone (0.85 at 390px, 0.15 after).
 - `AssignedWork` is shared with `/class`, so its phone layout shows there too.
 
+The Modes page on a phone:
+- **The four modes come first, Lens after them** (`flex-col-reverse` on a
+  wrapper below sm; DOM order unchanged, so keyboard focus reaches Lens before
+  the modes it is painted under — same trade as the dashboard's weekly report).
+- **Each mode card is a row:** icon tile, name and description across the full
+  width, then time, difficulty as words (not a 10px capitals badge) and a Play
+  mark. The whole card stays the single link; Play is `aria-hidden` and never
+  shown on a locked card. Ambient art is hidden below sm.
+- Known and left: at 768px the desktop nav bar does not fit (the page scrolls
+  sideways by about 230px) — a shell problem, not this page's. `BackButton` is
+  38px tall on every page.
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made
