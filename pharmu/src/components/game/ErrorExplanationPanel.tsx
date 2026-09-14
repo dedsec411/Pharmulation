@@ -54,7 +54,9 @@ export function ErrorExplanationPanel({ entry, mentorTip, onDismiss }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] grid place-items-end sm:place-items-center bg-black/70 backdrop-blur-sm p-4"
+          // Scrolls itself when the explanation is taller than a phone screen,
+          // rather than leaving its dismiss button below the fold.
+          className="fixed inset-0 z-[60] grid place-items-end overflow-y-auto overscroll-contain sm:place-items-center bg-black/70 backdrop-blur-sm p-4"
           onClick={onDismiss}
         >
           <motion.div

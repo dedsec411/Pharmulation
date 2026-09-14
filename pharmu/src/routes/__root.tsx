@@ -187,7 +187,10 @@ function RootComponent() {
         <Analytics />
         {/* Toasts are drawn by sonner outside our stylesheet, so the theme has
             to be handed to it explicitly or they stay dark on a light page. */}
-        <Toaster position="top-right" theme={theme} richColors />
+        {/* On a phone sonner spans the full width at the top, which put every
+            score toast over the case bar's Back button and clock. mobileOffset
+            only applies at phone width, so the desktop corner is unchanged. */}
+        <Toaster position="top-right" theme={theme} richColors mobileOffset={{ top: 76 }} />
       </MotionConfig>
     </QueryClientProvider>
   );

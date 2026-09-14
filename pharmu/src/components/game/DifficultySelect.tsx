@@ -167,7 +167,9 @@ function DifficultySelectModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] grid place-items-end bg-black/70 p-4 backdrop-blur-sm sm:place-items-center"
+          // Scrolls itself: on a phone the three options are taller than the
+          // screen, and a fixed layer that cannot scroll left Expert out of reach.
+          className="fixed inset-0 z-[80] grid place-items-end overflow-y-auto overscroll-contain bg-black/70 p-4 backdrop-blur-sm sm:place-items-center"
           onClick={onCancel}
         >
           <motion.div

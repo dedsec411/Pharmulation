@@ -376,6 +376,35 @@ export function TutorialBot() {
     };
   }, [mounted, userId, inApp, locked, coaching, pathname, tourDone, seenForIntro]);
 
+  /**
+   * Whether a page modal is open, so he can step out of its way.
+   *
+   * z-index alone cannot do this. Every game page wraps its content in a
+   * `relative z-10` layer, and a modal inside that layer ranks below anything
+   * at the root however high its own z-index - so he sat on top of the
+   * difficulty picker in every mode, over the Expert option on a phone.
+   * Throttled to a frame; the check is a handful of style reads.
+   */
+  const [pageCovered, setPageCovered] = useState(false);
+  useEffect(() => {
+    if (!mounted) return;
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      setPageCovered(pageIsCovered());
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(check);
+    };
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.body, { childList: true, subtree: true });
+    check();
+    return () => {
+      observer.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [mounted, pathname]);
+
   // The landing page sells the product and the auth pages are two fields.
   if (!mounted || !inApp || locked) return null;
 
@@ -383,7 +412,10 @@ export function TutorialBot() {
   const home = dockPoint(viewport);
   const width = bubbleWidth(viewport);
   const onScreen = targetRect ? visiblePart(targetRect, viewport) : null;
-  const callout = placeCallout({ target: onScreen, viewport, bubble: { width, height: bubbleHeight } });
+  // The whole box, not just the visible part: placement needs to know which
+  // edge of a tall target ran off the screen.
+  const callout = placeCallout({ target: targetRect, viewport, bubble: { width, height: bubbleHeight } });
+  const stepAside = pageCovered && !step && activity === "docked";
   const frame = onScreen ? spotlightFrame(onScreen, viewport) : null;
   const isLast = index >= steps.length - 1;
   // The overview always offers to show the controls, even when none were on
@@ -402,6 +434,11 @@ export function TutorialBot() {
 
   return (
     <>
+      {/* Room at the end of every page on a phone, so the last card and its
+          buttons can scroll clear of the corner he waits in instead of
+          finishing underneath him. The desktop has space beside him. */}
+      <div aria-hidden="true" className="h-24 md:hidden" />
+
       <PharmacistChat open={chatOpen} onClose={() => store.setChatOpen(false)} />
 
       <AnimatePresence>
@@ -478,7 +515,8 @@ export function TutorialBot() {
         to={step ? callout.avatar : home}
         state={step ? "guiding" : activity === "menu" || activity === "picking" ? "attentive" : "docked"}
         reduced={reduced}
-        interactive={!step && activity !== "library"}
+        interactive={!step && activity !== "library" && !stepAside}
+        hidden={stepAside}
         onClick={onAvatar}
         label={activity === "docked" ? "Dr. Hakim, your guide. Tap for help with this screen." : "Close Dr. Hakim's menu"}
         badge={activity === "docked" && !chatOpen && !seen(pageGuide.key)}

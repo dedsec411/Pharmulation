@@ -29,9 +29,11 @@ type Props = {
   onClick: () => void;
   label: string;
   badge: boolean;
+  /** Stepped aside while a page modal is open; see TutorialBot. */
+  hidden?: boolean;
 };
 
-export function FlyingHakim({ to, state, reduced, interactive, onClick, label, badge }: Props) {
+export function FlyingHakim({ to, state, reduced, interactive, onClick, label, badge, hidden = false }: Props) {
   const x = useSpring(to.x, FLIGHT);
   const y = useSpring(to.y, FLIGHT);
   const hop = useMotionValue(0);
@@ -76,9 +78,9 @@ export function FlyingHakim({ to, state, reduced, interactive, onClick, label, b
       aria-hidden={interactive ? undefined : true}
       aria-label={label}
       style={{ x, y: top, rotate: reduced ? 0 : lean, width: AVATAR, height: AVATAR }}
-      className={`group fixed left-0 top-0 rounded-full outline-none focus-visible:ring-4 focus-visible:ring-primary/50 ${
+      className={`group fixed left-0 top-0 rounded-full outline-none transition-opacity duration-200 focus-visible:ring-4 focus-visible:ring-primary/50 ${
         interactive ? "cursor-pointer" : "pointer-events-none"
-      } ${docked ? "z-[55]" : "z-[96]"}`}
+      } ${hidden ? "opacity-0" : ""} ${docked ? "z-[55]" : "z-[96]"}`}
     >
       <motion.span
         aria-hidden="true"

@@ -102,7 +102,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   return (
     <>
     <header data-tour-scene="case-header" className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-      <div className="mx-auto grid max-w-7xl gap-2 px-3 py-2 sm:px-4 md:h-16 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center md:gap-3 md:py-0">
+      {/* One row at every width. Below md this used to stack Back, the score
+          and the clock as three rows, and with the hint strip the bar stood
+          204px tall - a quarter of a phone screen pinned over every case. The
+          md: classes are what the desktop always had. */}
+      <div className="mx-auto grid max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 sm:px-4 md:h-16 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-3 md:py-0">
         <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
@@ -111,6 +115,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
               group inline-flex shrink-0 items-center gap-2
               rounded-xl border border-foreground/15 bg-foreground/[0.07]
               px-3 py-2 text-xs font-semibold text-foreground/90
+              max-sm:size-10 max-sm:justify-center max-sm:px-0
               shadow-[0_8px_30px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]
               backdrop-blur-2xl transition-all duration-150
               hover:border-foreground/25 hover:bg-foreground/[0.12] hover:text-foreground
@@ -119,14 +124,16 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4 transition-transform duration-150 group-hover:-translate-x-0.5" />
-            <span>Back</span>
+            {/* The arrow alone on a phone, where the word cost the clock its
+                room; the button keeps its aria-label either way. */}
+            <span className="hidden sm:inline">Back</span>
           </button>
           {title && (
             <span className="hidden truncate text-sm font-bold sm:block">{title}</span>
           )}
         </div>
 
-        <div className="order-3 flex min-w-0 justify-center md:order-none">
+        <div className="flex min-w-0 justify-center">
           <div
             data-tour="case-timer"
             className="relative w-full max-w-[280px] overflow-hidden rounded-2xl border border-foreground/10 bg-slate-900/[0.04] dark:bg-black/30 px-3 py-1.5 shadow-inner backdrop-blur-xl sm:py-2 md:min-w-[310px] md:max-w-none md:px-4"
@@ -205,7 +212,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
       {onHint && !sittingLocked && (
         <div className="border-t border-border/35 bg-card/35" data-tour="case-hint">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-2 sm:px-4">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-2 sm:px-4 max-sm:py-1">
             <div className="flex min-w-0 items-center gap-2 text-xs sm:text-sm">
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/12 text-primary">
                 <Lightbulb className="size-3.5" />
@@ -218,7 +225,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <button
               type="button"
               onClick={onHint}
-              className="shrink-0 rounded-full border border-primary/35 bg-primary/12 px-3 py-1.5 text-xs font-bold text-primary transition hover:border-primary/60 hover:bg-primary/18 sm:px-4 sm:text-sm"
+              className="shrink-0 rounded-full border border-primary/35 bg-primary/12 px-3 py-1.5 text-xs font-bold text-primary transition hover:border-primary/60 hover:bg-primary/18 sm:px-4 sm:text-sm max-sm:min-h-9"
             >
               Use hint -10
             </button>

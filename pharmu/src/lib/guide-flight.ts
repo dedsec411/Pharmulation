@@ -109,9 +109,18 @@ export function placeCallout(input: { target: Rect | null; viewport: Size; bubbl
     return { side: "left", bubble: { x: bx, y: sideY }, avatar: onTop(bx, sideY, bx + w) };
   }
 
+  // Too big to sit beside. A target wholly on screen gets the bubble at the
+  // end with more room. One that runs off the screen is different: the tour
+  // scrolled its top edge into view for the reader, and putting the bubble
+  // "where there is more room" parked it right over that edge - on a phone,
+  // the heading of every tall card. So keep the visible edge clear.
+  const full = input.target!;
+  const topCut = full.top < 0;
+  const bottomCut = full.top + full.height > viewport.height;
   const roomAbove = target.top;
   const roomBelow = viewport.height - (target.top + target.height);
-  if (roomBelow >= roomAbove) {
+  const atBottom = topCut || bottomCut ? !(topCut && !bottomCut) : roomBelow >= roomAbove;
+  if (atBottom) {
     const by = Math.max(EDGE + lift, viewport.height - EDGE - h);
     return { side: "over-bottom", bubble: { x: centredX, y: by }, avatar: onTop(centredX, by, cx) };
   }

@@ -349,6 +349,61 @@
   }
 }
 
+/*
+ * Mobile foundation.
+ *
+ * Three rules every page inherits, each one written so that a desktop browser
+ * computes exactly what it computed before. The page layouts themselves are
+ * not touched here; this only removes the ways a phone can break all of them
+ * at once.
+ */
+
+/* 100vh on a phone is the height with the browser's toolbars hidden, so a
+   min-h-screen page opened taller than the screen it opened on, and anything
+   sized to the viewport started underneath the address bar. dvh is the height
+   actually visible. On a desktop the two are the same number. Unlayered on
+   purpose, so it outranks the utility it corrects. */
+@supports (height: 100dvh) {
+  body {
+    min-height: 100dvh;
+  }
+
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+
+  .h-screen {
+    height: 100dvh;
+  }
+}
+
+/* Safari zooms the whole page into any text field under 16px the moment it is
+   tapped, and stays zoomed - the layout is then wider than the screen until
+   the user pinches back out. Most fields here are text-sm or sit inside
+   text-xs. Touch screens only: a mouse never causes the zoom, so a desktop
+   field keeps its size. max() never shrinks a field that inherits more. */
+@media (pointer: coarse) {
+  input:not([type="range"], [type="checkbox"], [type="radio"], [type="color"], [type="file"], [type="hidden"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* Nothing overflows sideways at rest today, but cards slide in from the side
+   as they enter, and on a touch screen a single frame of overflow lets the
+   whole page be dragged left and right. clip, not hidden: hidden turns body
+   into a scroll container and silently breaks every sticky header in the app.
+   Phone widths only. */
+@media (max-width: 767px) {
+  @supports (overflow: clip) {
+    html,
+    body {
+      overflow-x: clip;
+    }
+  }
+}
+
 @utility glass {
   background: var(--glass-fill);
   backdrop-filter: blur(16px);

@@ -75,7 +75,7 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 18, scale: 0.97 }}
           transition={{ duration: 0.2 }}
-          className="glass-card fixed bottom-24 left-5 z-[60] flex h-[min(620px,calc(100vh-8rem))] w-[min(420px,calc(100vw-2.5rem))] flex-col overflow-hidden border-primary/35 bg-background/90 shadow-[0_24px_70px_-26px_oklch(0.74_0.14_180/0.95)]"
+          className="glass-card fixed bottom-24 left-5 z-[60] flex h-[min(620px,calc(100dvh-8rem))] w-[min(420px,calc(100vw-2.5rem))] flex-col overflow-hidden border-primary/35 bg-background/90 shadow-[0_24px_70px_-26px_oklch(0.74_0.14_180/0.95)]"
         >
           <header className="flex items-center justify-between gap-3 border-b border-border/40 bg-primary/10 p-4">
             <div className="flex min-w-0 items-center gap-3">

@@ -49,7 +49,7 @@ npm run lint
 ```
 
 **Always run typecheck, tests and build before claiming something works.** The
-current baseline is **911 tests across 49 files, all passing**.
+current baseline is **913 tests across 49 files, all passing**.
 
 ---
 
@@ -411,6 +411,33 @@ except where explicitly noted. If you add a table, add policies.
    loudly, at the top of your reply, not buried in a summary.
 
 ---
+
+## Mobile — the rules every page is held to
+
+Target widths: 360, 390, 393, 412, 430. **The desktop is designed; mobile work
+must not move it.** Mobile-only changes go in base or `max-sm:` classes with the
+existing `sm:`/`md:` classes left exactly as they were. Prove it: the fingerprint
+approach used for the foundation pass records element geometry at 1440px before
+and after, and the numbers must match.
+
+Global rules (in `src/styles.css`, "Mobile foundation"):
+- **`min-h-screen` / `h-screen` resolve to `100dvh`.** `100vh` on a phone is
+  taller than the visible screen. Write `dvh` in any new viewport-sized value.
+- **Text fields are at least 16px on touch screens**, or Safari zooms the page.
+- **`overflow-x: clip` on phone widths.** Never `hidden` — it breaks sticky.
+
+Conventions for the page passes:
+- Gutter is `px-4` (16px); cards do not touch the screen edge.
+- Touch targets at least 40px, 44px where there is room. Do not shrink buttons
+  to fit; stack instead.
+- Sticky chrome stays small: the case bar is one row plus the hint strip on a
+  phone (~117px). Nothing fixed may permanently cover content — Dr. Hakim's dock
+  has a phone-only spacer after the page, and steps aside when a modal opens.
+- Modals taller than a phone screen scroll inside their overlay
+  (`overflow-y-auto overscroll-contain` on the fixed layer).
+- Animate transform and opacity, not size or position. No new backdrop blur:
+  touch screens already have it switched off for frame budget.
+- No JS resize listeners for layout that CSS breakpoints can do.
 
 ## Landmines — every one of these has already bitten
 

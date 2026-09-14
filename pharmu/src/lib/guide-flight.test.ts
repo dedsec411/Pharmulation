@@ -49,6 +49,22 @@ describe("placeCallout", () => {
       .toBe("over-top");
   });
 
+  // The phone case: a stack of cards taller than the screen, scrolled so its
+  // top sits under the sticky bar. The bubble used to take the top, where the
+  // heading the reader was just brought to is.
+  it("keeps the visible top edge of a target taller than the screen clear", () => {
+    const tall = { left: 16, top: 82, width: 358, height: 1600 };
+    const c = placeCallout({ target: tall, viewport: PHONE, bubble: { width: 358, height: 260 } });
+    expect(c.side).toBe("over-bottom");
+    expect(c.bubble.y).toBeGreaterThan(PHONE.height / 2);
+  });
+
+  it("keeps the visible bottom edge clear when that is the end on screen", () => {
+    const tall = { left: 16, top: -900, width: 358, height: 1500 };
+    expect(placeCallout({ target: tall, viewport: PHONE, bubble: { width: 358, height: 260 } }).side)
+      .toBe("over-top");
+  });
+
   it("centres a step with nothing to point at", () => {
     const c = placeCallout({ target: null, viewport: DESKTOP, bubble: { width: 360, height: 200 } });
     expect(c.side).toBe("centre");
