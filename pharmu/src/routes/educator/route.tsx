@@ -1,5 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect, useLocation } from "@tanstack/react-router";
-import { GraduationCap, LayoutDashboard, Users, ClipboardList, BarChart3, Timer, Radio } from "lucide-react";
+import { ArrowLeftRight, GraduationCap, LayoutDashboard, Users, ClipboardList, BarChart3, Timer, Radio } from "lucide-react";
+import { ShellMenu, shellRowClass } from "@/components/ShellMenu";
+import { sectionLabel } from "@/lib/shell-nav";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useMyInstitution } from "@/lib/educator/queries";
@@ -53,7 +55,7 @@ const NAV = [
   { to: "/educator/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/educator/assessment", label: "Assessments", icon: Timer },
   { to: "/educator/live", label: "Live", icon: Radio },
-];
+] as const;
 
 function EducatorShell() {
   const { pathname } = useLocation();
@@ -81,13 +83,16 @@ function EducatorShell() {
           : "oklch(0.62 0.16 250 / 20%)",
       }}
     >
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-6 py-3">
+      {/* Below md this wrapped into four sticky rows of 32px buttons - 175px
+          of a 390px phone. There it is the mark and one menu; from md up it is
+          exactly the row it always was. */}
+      <header data-app-nav="" className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
           <Link to="/educator/dashboard" className="flex items-center gap-2 font-extrabold">
             <span className="grid size-8 place-items-center rounded-xl border border-primary/40 bg-primary/15 text-primary">
               <GraduationCap className="size-4" />
             </span>
-            Pharmulation
+            <span className="max-sm:sr-only">Pharmulation</span>
             <span className="rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
               Faculty
             </span>
@@ -101,7 +106,7 @@ function EducatorShell() {
             </span>
           )}
 
-          <nav className="ml-auto flex flex-wrap gap-1">
+          <nav className="ml-auto hidden flex-wrap gap-1 md:flex">
             {NAV.map((item) => {
               const active = pathname.startsWith(item.to);
               return (
@@ -126,6 +131,34 @@ function EducatorShell() {
             </Link>
             <ThemeToggle className="ml-2" />
           </nav>
+
+          <ShellMenu
+            className="ml-auto"
+            label="Faculty"
+            current={sectionLabel(pathname, NAV, "Faculty")}
+            badge={
+              <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
+                <GraduationCap className="size-4" />
+              </span>
+            }
+            heading={
+              <p className="mb-3 truncate px-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {institution?.name ?? "Faculty"}
+              </p>
+            }
+            items={[...NAV]}
+            footer={(close) => (
+              <>
+                <Link to="/dashboard" onClick={close} className={shellRowClass}>
+                  <ArrowLeftRight className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" /> Student view
+                </Link>
+                <div className="flex min-h-12 items-center justify-between gap-3 px-3 text-sm font-semibold text-foreground/90">
+                  <span>Theme</span>
+                  <ThemeToggle />
+                </div>
+              </>
+            )}
+          />
         </div>
       </header>
 

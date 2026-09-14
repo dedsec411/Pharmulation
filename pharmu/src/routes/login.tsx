@@ -47,11 +47,14 @@ function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
-      <div className="fixed left-4 top-4 z-10">
+    // On a short phone the card is taller than the screen and started at 40px,
+    // under the fixed Back and theme controls, which then floated over it as it
+    // scrolled. Below sm they sit in the page and the card starts clear of them.
+    <div className="relative min-h-screen flex items-center justify-center px-4 pb-10 pt-20 sm:py-10">
+      <div className="absolute left-4 top-4 z-10 sm:fixed">
         <BackButton to="/" />
       </div>
-      <div className="fixed right-4 top-4 z-10">
+      <div className="absolute right-4 top-4 z-10 sm:fixed">
         <ThemeToggle />
       </div>
       <motion.div

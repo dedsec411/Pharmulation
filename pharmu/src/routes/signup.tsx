@@ -78,11 +78,13 @@ function SignupPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="fixed left-4 top-4 z-10">
+    // Same as login: below sm the corner controls sit in the page instead of
+    // floating over a card that is taller than a short phone.
+    <div className="relative flex min-h-screen items-center justify-center px-4 pb-10 pt-20 sm:py-10">
+      <div className="absolute left-4 top-4 z-10 sm:fixed">
         <BackButton to="/" />
       </div>
-      <div className="fixed right-4 top-4 z-10">
+      <div className="absolute right-4 top-4 z-10 sm:fixed">
         <ThemeToggle />
       </div>
       <motion.div

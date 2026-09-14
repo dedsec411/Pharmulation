@@ -46,6 +46,11 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // The reset to the top on a page change inherited the stylesheet's
+    // scroll-behavior: smooth, so every new page arrived scrolled to wherever
+    // the last one was left and then visibly slid up to the top over half a
+    // second. Instant for navigation; in-page scrolling keeps the smooth rule.
+    scrollRestorationBehavior: "instant",
     defaultPreloadStaleTime: 0,
   });
 

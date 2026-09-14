@@ -439,6 +439,29 @@ Conventions for the page passes:
   touch screens already have it switched off for frame budget.
 - No JS resize listeners for layout that CSS breakpoints can do.
 
+The shell (navigation and page frame) on a phone:
+- **Below md, navigation is one menu control beside the logo** (`ShellMenu`):
+  the button shows the current section (`src/lib/shell-nav.ts`), the panel drops
+  from the bar with the destinations as 56px tiles, then settings, theme and
+  sign-out rows. Used by the student `Navbar` and the faculty header. The desktop
+  bar is unchanged; do not route desktop through it.
+- Not a bottom tab bar, deliberately: Dr. Hakim's dock, the chat and the page-end
+  clearance already own the bottom, and game screens have no nav bar.
+- **Header-to-content gap is one rule** below md: `[data-app-nav] + main` gets
+  24px. Put `data-app-nav` on any new app bar whose `<main>` follows it.
+- **Page changes reset scroll instantly** (`scrollRestorationBehavior` in
+  `src/router.tsx`). The stylesheet's smooth scrolling made every new page slide
+  up from the last page's position.
+- No `viewport-fit=cover`, so browsers keep content out of notches and home
+  indicators themselves and no `env(safe-area-*)` padding is needed. If a bottom
+  bar or cover is ever added, that stops being true.
+- Toasts stay where the foundation pass put them (76px on phones, below the app
+  bar). On a game page they still cross the hint strip; fixing that needs the
+  case bar's height, so it belongs to the game-screen pass, not a shell offset.
+- Known and left: every signed-in page renders its own `Navbar`, so the bar is
+  rebuilt on navigation and the logo animation starts over. Making it persist
+  means a shared layout route, which is an architecture change.
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made

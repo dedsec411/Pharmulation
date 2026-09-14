@@ -404,6 +404,22 @@
   }
 }
 
+/*
+ * Mobile shell.
+ *
+ * Content under the app bar started 24, 32 or 40px below it depending on
+ * which page you were on - each page chose its own top padding, and on a
+ * phone those differences read as the page jumping as you move between them.
+ * One gap below md for any page whose <main> follows the bar directly
+ * ([data-app-nav] is on the student navbar and the faculty header). From md up
+ * every page keeps its own spacing.
+ */
+@media (max-width: 767px) {
+  [data-app-nav] + main {
+    padding-top: 1.5rem;
+  }
+}
+
 @utility glass {
   background: var(--glass-fill);
   backdrop-filter: blur(16px);

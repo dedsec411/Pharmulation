@@ -1,11 +1,15 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, LogOut, User } from "lucide-react";
-import { useState } from "react";
+import {
+  GraduationCap, Layers, LayoutDashboard, LogOut, Pill, Settings, ShieldCheck, Trophy, User, UserRound,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LogoVideo } from "@/components/LogoVideo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ShellMenu, shellRowClass, type ShellMenuItem } from "@/components/ShellMenu";
+import { studentSectionLabel } from "@/lib/shell-nav";
 
 function cleanPlayerName(value?: string | null) {
   const raw = String(value ?? "").trim();
@@ -22,7 +26,28 @@ function cleanPlayerName(value?: string | null) {
 export function Navbar() {
   const { profile } = useAuthStore();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
+  const account = useRef<HTMLDivElement | null>(null);
+
+  // The account dropdown stayed open until its own button was pressed again,
+  // so a click anywhere else on the page went straight through to whatever was
+  // underneath it.
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: PointerEvent) => {
+      if (!account.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -62,8 +87,32 @@ export function Navbar() {
     { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard" },
   ] as const;
 
+  // The same destinations as the bar, plus Profile, as the phone menu's tiles.
+  // Six, so they sit in three even rows of two.
+  const phoneItems: ShellMenuItem[] = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/modes", label: "Modes", icon: Layers },
+    isFaculty
+      ? { to: "/educator/dashboard", label: "Faculty", icon: GraduationCap }
+      : { to: "/class", label: "Class", icon: GraduationCap },
+    { to: "/drugs", label: "Drug DB", icon: Pill },
+    { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    { to: "/profile", label: "Profile", icon: UserRound },
+  ];
+
+  const avatar = (size: "sm" | "md") => (
+    <span
+      aria-hidden="true"
+      className={`grid shrink-0 place-items-center rounded-full bg-primary font-bold text-primary-foreground ${
+        size === "sm" ? "size-8 text-xs" : "size-10 text-sm"
+      }`}
+    >
+      {initials}
+    </span>
+  );
+
   return (
-    <nav className="sticky top-0 z-40 glass border-b border-border">
+    <nav data-app-nav="" aria-label="Main" className="sticky top-0 z-40 glass border-b border-border">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:h-24 sm:px-6">
         <Link to="/dashboard" className="flex h-12 w-36 shrink-0 items-center overflow-visible rounded-2xl transition duration-300 hover:-translate-y-0.5 hover:drop-shadow-[0_16px_34px_oklch(0.74_0.14_180/0.28)] sm:h-20 sm:w-60">
           <LogoVideo className="aspect-video w-full" />
@@ -78,38 +127,21 @@ export function Navbar() {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <div data-tour="theme-toggle">
+          {/* Below md the theme switch and the account button would be two
+              small controls side by side; both move into the phone menu. */}
+          <div data-tour="theme-toggle" className="hidden md:block">
             <ThemeToggle />
           </div>
 
-          <div className="relative">
+          <div ref={account} className="relative hidden md:block">
           <button onClick={() => setOpen((o) => !o)} data-tour="account-menu"
+            aria-expanded={open} aria-haspopup="true" aria-controls="account-menu-panel"
             className="flex items-center gap-2 rounded-full glass px-3 py-1.5 transition duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]">
             <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground grid place-items-center text-xs font-bold">{initials}</div>
             <span className="hidden sm:block text-sm">{displayName}</span>
           </button>
           {open && (
-            <div className="absolute right-0 mt-2 w-48 glass-card p-1 text-sm z-50 shadow-[0_22px_55px_-30px_oklch(0.74_0.14_180/0.8)]">
-              {/* The bar's own links are hidden below md, so without these a
-                  phone could reach Modes, the Drug DB and the Leaderboard only
-                  by going via the dashboard cards. Hidden from md up, where
-                  the bar shows them itself and repeating them would be noise. */}
-              <div className="md:hidden">
-                {/* The dropdown already carries its own Faculty entry below,
-                    styled apart from the rest, so it is dropped from the shared
-                    list here rather than appearing twice. */}
-                {links.filter((l) => l.to !== "/educator/dashboard").map((l) => (
-                  <Link
-                    key={l.to}
-                    to={l.to}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg transition hover:bg-primary/10 hover:text-primary"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
-                <div className="my-1 h-px bg-border" />
-              </div>
+            <div id="account-menu-panel" className="absolute right-0 mt-2 w-48 glass-card p-1 text-sm z-50 shadow-[0_22px_55px_-30px_oklch(0.74_0.14_180/0.8)]">
               <Link to="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-[0_12px_28px_-22px_oklch(0.74_0.14_180/0.8)]">
                 <User className="h-4 w-4" /> Profile
               </Link>
@@ -132,6 +164,46 @@ export function Navbar() {
             </div>
           )}
           </div>
+
+          <ShellMenu
+            label="Main"
+            tour="account-menu"
+            current={studentSectionLabel(pathname)}
+            badge={avatar("sm")}
+            heading={
+              <div className="mb-3 flex items-center gap-3 px-1">
+                {avatar("md")}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{displayName}</p>
+                  <p className="truncate text-xs capitalize text-muted-foreground">
+                    {role || "student"}{profile?.level ? ` · Level ${profile.level}` : ""}
+                  </p>
+                </div>
+              </div>
+            }
+            items={phoneItems}
+            footer={(close) => (
+              <>
+                <Link to="/settings" onClick={close} className={shellRowClass}>
+                  <Settings className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" /> Settings
+                </Link>
+                {isAdmin && (
+                  <Link to="/admin" onClick={close} className={shellRowClass}>
+                    <ShieldCheck className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" /> Admin
+                  </Link>
+                )}
+                {/* A labelled row rather than a bare capsule: on a phone the
+                    switch needs its word beside it to read as a setting. */}
+                <div className="flex min-h-12 items-center justify-between gap-3 px-3 text-sm font-semibold text-foreground/90">
+                  <span>Theme</span>
+                  <ThemeToggle />
+                </div>
+                <button type="button" onClick={() => { close(); void signOut(); }} className={shellRowClass}>
+                  <LogOut className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" /> Sign out
+                </button>
+              </>
+            )}
+          />
         </div>
       </div>
     </nav>
