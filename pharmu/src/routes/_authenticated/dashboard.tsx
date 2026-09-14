@@ -150,14 +150,16 @@ function MentorTipBanner({ tip }: { tip: string }) {
       <div className="absolute inset-0 rounded-2xl pointer-events-none"
         style={{ background: "linear-gradient(90deg, transparent 0%, oklch(0.74 0.14 180 / 0.15) 50%, transparent 100%)", animation: "ekg-scroll 4s linear infinite", backgroundSize: "200% 100%" }} />
 
-      <div className="relative flex items-start gap-5 px-6 py-5">
+      {/* Phone: less padding and a 48px avatar, so the tip has the width to
+          run three lines rather than four or five words to a line. */}
+      <div className="relative flex items-start gap-5 px-6 py-5 max-sm:gap-3 max-sm:px-4 max-sm:py-4">
         {/* Dr. Hakim avatar */}
         <div className="shrink-0 relative">
-          <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border border-primary/40 bg-background/55 text-transparent shadow-[0_0_18px_oklch(0.74_0.14_180/0.35)]">
+          <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-2xl border border-primary/40 bg-background/55 text-transparent shadow-[0_0_18px_oklch(0.74_0.14_180/0.35)] max-sm:size-12">
             <motion.img
               src={MENTOR_IMAGE}
               alt=""
-              className="absolute inset-x-0 top-0 mx-auto h-16 w-14 object-contain object-top"
+              className="absolute inset-x-0 top-0 mx-auto h-16 w-14 object-contain object-top max-sm:h-14 max-sm:w-12"
               animate={{ y: [0, -2, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -167,15 +169,27 @@ function MentorTipBanner({ tip }: { tip: string }) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">PAGER</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Dr. Hakim</span>
-            <span className="text-[10px] text-muted-foreground">tip of the day</span>
-            <Lightbulb className="h-3 w-3 text-primary animate-pulse" />
+          {/* On a phone the labels wrap between each other, never inside one:
+              at 360 this row was breaking "Dr." from "Hakim". The bulb is a
+              second pulse next to the avatar's own, so a phone goes without. */}
+          <div className="flex items-center gap-2 mb-1.5 max-sm:flex-wrap max-sm:gap-y-1 max-sm:whitespace-nowrap">
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-primary max-sm:text-[11px]">PAGER</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-primary max-sm:text-[11px]">Dr. Hakim</span>
+            <span className="text-[10px] text-muted-foreground max-sm:text-[11px]">tip of the day</span>
+            <Lightbulb className="h-3 w-3 text-primary animate-pulse max-sm:hidden" />
           </div>
-          <p className="min-h-[2.1rem] text-base font-semibold leading-relaxed text-foreground/95 sm:text-lg lg:text-xl">
-            "{displayed}
-            {!done && <span className="ml-1 inline-block h-5 w-0.5 animate-pulse bg-primary align-middle sm:h-6" />}"
+          {/* The typing is drawn over the whole tip, which is laid out but
+              transparent, so the card is its final height from the first
+              frame. On a phone the tip runs to three or four lines, and the
+              cards under it used to step down a line at a time while it typed.
+              A screen reader gets the whole tip, not whatever had been typed
+              when it arrived. */}
+          <p className="relative min-h-[2.1rem] text-base font-semibold leading-relaxed text-foreground/95 max-sm:leading-6 sm:text-lg lg:text-xl">
+            <span className="text-transparent">"{tip}"</span>
+            <span aria-hidden="true" className="absolute inset-0">
+              "{displayed}
+              {!done && <span className="ml-1 inline-block h-5 w-0.5 animate-pulse bg-primary align-middle sm:h-6" />}"
+            </span>
           </p>
         </div>
 
@@ -278,22 +292,25 @@ function Dashboard() {
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             whileHover={DASHBOARD_CARD_HOVER}
             whileTap={{ scale: 0.99 }}
-            className="glass-card p-6 lg:col-span-2 transition duration-300 hover:border-primary/40"
+            className="glass-card p-6 lg:col-span-2 transition duration-300 hover:border-primary/40 max-sm:p-4"
           >
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-primary text-primary-foreground grid place-items-center text-2xl font-bold">
+            {/* On a phone the name column may shrink and wrap (min-w-0), so a
+                long name takes a second line instead of squeezing the level
+                onto two and the streak off the edge. */}
+            <div className="flex items-center gap-4 max-sm:gap-3">
+              <div className="h-16 w-16 rounded-2xl bg-primary text-primary-foreground grid place-items-center text-2xl font-bold max-sm:size-12 max-sm:shrink-0 max-sm:text-xl">
                 {playerName.slice(0, 1).toUpperCase()}
               </div>
-              <div className="flex-1">
-                <div className="text-xl font-bold">{playerName}</div>
-                <div className="text-xs text-muted-foreground capitalize">{profile?.role} | Level {profile?.level}</div>
+              <div className="flex-1 max-sm:min-w-0">
+                <div className="text-xl font-bold max-sm:line-clamp-2 max-sm:break-words max-sm:text-lg max-sm:leading-tight">{playerName}</div>
+                <div className="text-xs text-muted-foreground capitalize max-sm:mt-0.5">{profile?.role} | Level {profile?.level}</div>
               </div>
               <motion.div
-                className="flex items-center gap-2 rounded-full border border-warning/30 bg-warning/15 px-4 py-2 text-warning shadow-[0_12px_30px_-18px_oklch(0.78_0.16_75/0.9)]"
+                className="flex items-center gap-2 rounded-full border border-warning/30 bg-warning/15 px-4 py-2 text-warning shadow-[0_12px_30px_-18px_oklch(0.78_0.16_75/0.9)] max-sm:shrink-0 max-sm:gap-1.5 max-sm:px-3 max-sm:py-1.5"
                 animate={{ boxShadow: ["0 12px 30px -18px oklch(0.78 0.16 75 / 0.75)", "0 14px 36px -16px oklch(0.78 0.16 75 / 1)", "0 12px 30px -18px oklch(0.78 0.16 75 / 0.75)"] }}
                 transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
               >
-                <Flame className="h-6 w-6 drop-shadow-[0_0_10px_oklch(0.78_0.16_75/0.75)]" />
+                <Flame className="h-6 w-6 drop-shadow-[0_0_10px_oklch(0.78_0.16_75/0.75)] max-sm:size-5" />
                 <span className="text-base font-black">{profile?.streak_days ?? 0}</span>
                 <span className="text-xs font-bold uppercase tracking-wider">day{profile?.streak_days === 1 ? "" : "s"}</span>
               </motion.div>
@@ -330,7 +347,10 @@ function Dashboard() {
                   />
                 </motion.div>
                 <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-b from-foreground/20 to-transparent" />
-                <div className="pointer-events-none absolute inset-x-2 bottom-0.5 flex justify-between font-mono text-[8px] font-bold tabular-nums text-slate-900/45 dark:text-white/45">
+                {/* 8px scale numbers are texture on a wide meter and unreadable
+                    noise on a phone, where the percentage beside the meter
+                    already says the same thing. The tick marks stay. */}
+                <div className="pointer-events-none absolute inset-x-2 bottom-0.5 flex justify-between font-mono text-[8px] font-bold tabular-nums text-slate-900/45 dark:text-white/45 max-sm:hidden">
                   <span>0</span>
                   <span>25</span>
                   <span>50</span>
@@ -346,39 +366,54 @@ function Dashboard() {
             whileHover={DASHBOARD_CARD_HOVER}
             whileTap={{ scale: 0.99 }}
             data-tour="dash-daily"
-            className="glass-card p-6 bg-gradient-to-br from-primary/15 to-transparent border-primary/30 transition duration-300 hover:border-primary/50"
+            className="glass-card p-6 bg-gradient-to-br from-primary/15 to-transparent border-primary/30 transition duration-300 hover:border-primary/50 max-sm:p-4"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
+            {/* On a phone the icon moves up to the eyebrow's line and the
+                title gets the card's full width: beside it, "Today: Clinical
+                Review · Hard" dropped its last word onto a line of its own at
+                360. contents dissolves the title block into the grid there;
+                from sm up it is the same row as before. */}
+            <div className="flex items-start justify-between gap-3 max-sm:grid max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:items-center max-sm:gap-y-1">
+              <div className="max-sm:contents">
                 <div className="text-xs font-semibold text-primary uppercase tracking-wider">Daily Challenge</div>
-                <div className="mt-2 text-lg font-bold">Today: {dailyChallenge.label} · {dailyChallenge.difficulty}</div>
+                <div className="mt-2 text-lg font-bold max-sm:col-span-2 max-sm:row-start-2 max-sm:mt-0">Today: {dailyChallenge.label} · {dailyChallenge.difficulty}</div>
               </div>
-              <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/15 text-primary">
+              <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/15 text-primary max-sm:col-start-2 max-sm:row-start-1 max-sm:size-10">
                 <DailyIcon className="h-5 w-5" />
               </div>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">{dailyChallenge.bonus} for completing before midnight.</p>
             <Link to={dailyChallenge.to as any}
-              className="mt-4 block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:scale-105 transition text-center">
+              className="mt-4 block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:scale-105 transition text-center max-sm:mt-3 max-sm:flex max-sm:min-h-11 max-sm:items-center max-sm:justify-center">
               Start challenge
             </Link>
           </motion.div>
         </div>
 
-        <WeeklyReportBanner
-          userId={userId}
-          map={weaknessMap?.clinical ?? null}
-          level={profile?.level ?? 1}
-          xp={profile?.xp ?? 0}
-          xpToNextLevel={Math.max(0, ((profile?.level ?? 1) + 1) * 500 - (profile?.xp ?? 0))}
-          casesThisWeek={weekly?.casesThisWeek ?? 0}
-          casesLastWeek={weekly?.casesLastWeek ?? 0}
-          accuracyThisWeek={weekly?.accuracyThisWeek ?? null}
-          accuracyLastWeek={weekly?.accuracyLastWeek ?? null}
-        />
+        {/* On a phone, work a lecturer has set - due dates, sometimes already
+            overdue - comes before the weekly reflection, which was 500px of
+            reading between the daily challenge and it. Only the painted order
+            changes; the DOM, and so a screen reader, keeps the report first.
+            From sm up this wrapper does nothing: a plain block whose
+            children's margins collapse through it exactly as they did when
+            they sat in main. empty:hidden keeps a phone from giving it a gap
+            of its own when neither renders. */}
+        <div className="max-sm:mt-6 max-sm:flex max-sm:flex-col-reverse max-sm:gap-6 max-sm:*:mt-0 max-sm:empty:hidden sm:space-y-5">
+          <WeeklyReportBanner
+            userId={userId}
+            map={weaknessMap?.clinical ?? null}
+            level={profile?.level ?? 1}
+            xp={profile?.xp ?? 0}
+            xpToNextLevel={Math.max(0, ((profile?.level ?? 1) + 1) * 500 - (profile?.xp ?? 0))}
+            casesThisWeek={weekly?.casesThisWeek ?? 0}
+            casesLastWeek={weekly?.casesLastWeek ?? 0}
+            accuracyThisWeek={weekly?.accuracyThisWeek ?? null}
+            accuracyLastWeek={weekly?.accuracyLastWeek ?? null}
+          />
 
-        {/* Renders nothing unless a lecturer has set this student work. */}
-        <AssignedWork userId={userId} />
+          {/* Renders nothing unless a lecturer has set this student work. */}
+          <AssignedWork userId={userId} />
+        </div>
 
         {weaknessMap && hasEnoughHistory(weaknessMap.clinical) && (
           <RecommendedCases map={weaknessMap.clinical} />
@@ -397,6 +432,12 @@ function Dashboard() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="dash-modes">
             {Object.entries(MODE_META).map(([key, m], i) => {
               const Icon = m.icon;
+              // On a phone each mode is a row, not a poster: icon, difficulty
+              // and name, then the count beside a right-hand Play. Four
+              // stacked posters were 880px - more than a screen - to offer
+              // four buttons. The same elements are placed on a grid below sm
+              // (the top row dissolves with contents); from sm up the card is
+              // untouched.
               return (
                 <motion.div
                   key={key}
@@ -404,7 +445,7 @@ function Dashboard() {
                   transition={{ delay: i * 0.06 }}
                   whileHover={{ y: -8, scale: 1.025 }}
                   whileTap={{ scale: 0.985 }}
-                  className="group relative overflow-hidden rounded-2xl border p-5 shadow-lg backdrop-blur-xl transition duration-300"
+                  className="group relative overflow-hidden rounded-2xl border p-5 shadow-lg backdrop-blur-xl transition duration-300 max-sm:grid max-sm:grid-cols-[auto_minmax(0,1fr)_auto] max-sm:gap-x-3 max-sm:p-4"
                   style={{
                     background: m.tint,
                     borderColor: "rgb(var(--hairline) / calc(0.12 * var(--hairline-boost, 1)))",
@@ -418,22 +459,32 @@ function Dashboard() {
                     event.currentTarget.style.boxShadow = "";
                   }}
                 >
-                  <ModeAmbientLayer mode={key} intensity="card" />
+                  {/* Not on a phone. In a row this short the pills, trace and
+                      conveyor run straight through the name and the count, and
+                      four of them moving at once down a narrow column is busy
+                      rather than alive. Paused, they read as smudges. The tint,
+                      icon, name and Play keep each mode's colour; the Modes
+                      page and wider screens keep the art. */}
+                  <div className="pointer-events-none absolute inset-0 max-sm:hidden">
+                    <ModeAmbientLayer mode={key} intensity="card" />
+                  </div>
                   <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"
                     style={{ background: `linear-gradient(135deg, transparent 0%, ${m.glow.replace("0.9", "0.16")} 45%, transparent 75%)` }} />
-                  <div className="relative flex items-start justify-between">
+                  <div className="relative flex items-start justify-between max-sm:contents">
                     <div
-                      className="relative grid h-10 w-10 place-items-center rounded-xl transition duration-300 group-hover:scale-110 group-hover:rotate-3"
+                      className="relative grid h-10 w-10 place-items-center rounded-xl transition duration-300 group-hover:scale-110 group-hover:rotate-3 max-sm:col-start-1 max-sm:row-span-2 max-sm:row-start-1 max-sm:self-center"
                       style={{ backgroundColor: m.glow.replace("0.9", "0.15"), color: theme === "light" ? m.ink : m.accent }}
                     >
                       <Icon className="h-5 w-5 transition duration-300 group-hover:-translate-y-0.5" />
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full bg-foreground/10 px-2 py-1">{m.tag}</span>
+                    {/* relative on a phone too: once its row dissolves, a
+                        static tag would be painted under the ambient layer. */}
+                    <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full bg-foreground/10 px-2 py-1 max-sm:relative max-sm:col-span-2 max-sm:col-start-2 max-sm:row-start-1 max-sm:justify-self-start max-sm:py-0.5 max-sm:text-[11px]">{m.tag}</span>
                   </div>
-                  <div className="relative mt-4 text-base font-bold transition duration-300 group-hover:brightness-125" style={{ color: theme === "light" ? m.ink : m.accent }}>{m.label}</div>
-                  <div className="relative text-xs text-muted-foreground mt-0.5">{publicModeCount(counts as Record<string, number>, m.modes)} cases completed</div>
+                  <div className="relative mt-4 text-base font-bold transition duration-300 group-hover:brightness-125 max-sm:col-span-2 max-sm:col-start-2 max-sm:row-start-2 max-sm:mt-1 max-sm:leading-snug" style={{ color: theme === "light" ? m.ink : m.accent }}>{m.label}</div>
+                  <div className="relative text-xs text-muted-foreground mt-0.5 max-sm:col-start-2 max-sm:row-start-3 max-sm:mt-2 max-sm:self-center">{publicModeCount(counts as Record<string, number>, m.modes)} cases completed</div>
                   <Link to={m.to as any}
-                    className="relative mt-4 flex items-center justify-center gap-1 w-full rounded-full py-2 text-center text-sm font-semibold text-background transition duration-300 hover:brightness-110"
+                    className="relative mt-4 flex items-center justify-center gap-1 w-full rounded-full py-2 text-center text-sm font-semibold text-background transition duration-300 hover:brightness-110 max-sm:col-start-3 max-sm:row-start-3 max-sm:mt-2 max-sm:min-h-11 max-sm:w-auto max-sm:px-5"
                     style={{ backgroundColor: theme === "light" ? m.ink : m.accent, boxShadow: `0 12px 28px -18px ${m.glow}` }}>
                     Play <ChevronRight className="h-3.5 w-3.5 transition duration-300 group-hover:translate-x-0.5" />
                   </Link>
@@ -450,7 +501,7 @@ function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             whileHover={DASHBOARD_CARD_HOVER}
             whileTap={{ scale: 0.99 }}
-            className="glass-card p-6 lg:col-span-2 transition duration-300 hover:border-primary/40"
+            className="glass-card p-6 lg:col-span-2 transition duration-300 hover:border-primary/40 max-sm:p-4"
           >
             <h3 className="font-bold mb-3">Recent activity</h3>
             {/* An empty list and a list that has not arrived yet look identical
@@ -520,7 +571,7 @@ function Dashboard() {
               boxShadow: "0 26px 70px -36px oklch(0.74 0.14 180 / 0.95)",
             }}
             whileTap={{ scale: 0.99 }}
-            className="group relative overflow-hidden rounded-2xl border border-primary/25 bg-white/70 dark:bg-slate-950/55 p-5 shadow-[0_24px_80px_-54px_oklch(0.74_0.14_180/0.85)] backdrop-blur-xl transition duration-300 hover:border-primary/45"
+            className="group relative overflow-hidden rounded-2xl border border-primary/25 bg-white/70 dark:bg-slate-950/55 p-5 max-sm:p-4 shadow-[0_24px_80px_-54px_oklch(0.74_0.14_180/0.85)] backdrop-blur-xl transition duration-300 hover:border-primary/45"
           >
             <div className="pointer-events-none absolute inset-0 opacity-70"
               style={{
@@ -589,7 +640,7 @@ function Dashboard() {
                 );
               })}
             </ol>
-            <Link to="/leaderboard" className="relative mt-4 flex items-center justify-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-4 py-2 text-center text-xs font-bold text-primary transition hover:border-primary/45 hover:bg-primary/15">
+            <Link to="/leaderboard" className="relative mt-4 flex items-center justify-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-4 py-2 text-center text-xs font-bold text-primary transition hover:border-primary/45 hover:bg-primary/15 max-sm:min-h-11 max-sm:text-sm">
               View full leaderboard <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </motion.div>

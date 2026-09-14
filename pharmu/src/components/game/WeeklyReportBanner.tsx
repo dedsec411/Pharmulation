@@ -120,11 +120,11 @@ export function WeeklyReportBanner({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, height: 0 }}
         data-tour="dash-week"
-        className="glass-card mt-6 p-5"
+        className="glass-card mt-6 p-5 max-sm:p-4"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary max-sm:text-[11px]">
               <Sparkles className="size-3.5" /> Your week
             </p>
             <h3 className="mt-1 text-lg font-bold">
@@ -135,16 +135,19 @@ export function WeeklyReportBanner({
             type="button"
             onClick={() => setDismissed(true)}
             aria-label="Dismiss this week's report"
-            className="rounded-full border border-border/50 p-1.5 text-muted-foreground transition hover:text-foreground"
+            className="rounded-full border border-border/50 p-1.5 text-muted-foreground transition hover:text-foreground max-sm:-mr-1 max-sm:-mt-1 max-sm:grid max-sm:size-10 max-sm:shrink-0 max-sm:place-items-center max-sm:p-0"
           >
             <XIcon className="size-4" />
           </button>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {/* Side by side these are three panels. Stacked on a phone they were
+            three boxed cards inside a card, each with its own border and
+            padding; there they are one list divided by hairlines instead. */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-3 max-sm:mt-2 max-sm:gap-0">
           {lines.map((line) => (
-            <div key={line.label} className="rounded-xl border border-border/40 bg-background/40 p-3">
-              <p className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${line.tone}`}>
+            <div key={line.label} className="rounded-xl border border-border/40 bg-background/40 p-3 max-sm:rounded-none max-sm:border-x-0 max-sm:border-t-0 max-sm:bg-transparent max-sm:px-0 max-sm:py-3">
+              <p className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider max-sm:text-[11px] ${line.tone}`}>
                 <line.icon className="size-3" /> {line.label}
               </p>
               <p className="mt-1 text-sm">{line.text}</p>

@@ -462,6 +462,23 @@ The shell (navigation and page frame) on a phone:
   rebuilt on navigation and the logo animation starts over. Making it persist
   means a shared layout route, which is an architecture change.
 
+The student dashboard on a phone:
+- **Order below sm:** mentor tip, standing (name, level, streak, XP), daily
+  challenge, work set by the class, weekly report, then recommended, Lens,
+  modes, recent activity and the board. Class work and the weekly report swap
+  with `flex-col-reverse` on a wrapper; the DOM, and so a screen reader and the
+  desktop, keep the report first.
+- **Regroup with `contents`, not a second tree.** A wrapper that is a row or grid
+  on a phone and `sm:contents` above it lets the same elements sit differently
+  without moving the desktop row (assignment and assessment cards, the
+  recommended button, the daily challenge header, the mode cards).
+- **Mode cards are rows below sm** and their ambient art is hidden there: in a
+  row that short it ran through the name and the count.
+- **The tip does not grow while it types.** The full tip is laid out in
+  transparent text and the typing is drawn over it. That growth was most of the
+  page's layout shift on a phone (0.85 at 390px, 0.15 after).
+- `AssignedWork` is shared with `/class`, so its phone layout shows there too.
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made

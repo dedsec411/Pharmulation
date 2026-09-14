@@ -57,13 +57,17 @@ export function AssignedWork({ userId }: { userId?: string }) {
           {assessments.map((a) => {
             const state = windowState(a);
             return (
+              /* Stacked on a phone for the same reason as the assignments
+                 below: in one wrapping row the class name ran to three lines
+                 beside the time limit, and the button fell to its own line on
+                 the left, under Dr. Hakim's corner. */
               <div
                 key={a.id}
-                className={`glass-card flex flex-wrap items-center gap-4 border-sky-400/25 p-4 ${
+                className={`glass-card flex flex-wrap items-center gap-4 border-sky-400/25 p-4 max-sm:flex-col max-sm:items-stretch max-sm:gap-3 ${
                   a.submittedAt ? "opacity-60" : ""
                 }`}
               >
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 max-sm:flex-none">
                   <p className="inline-flex items-center gap-1.5 truncate font-semibold">
                     <Lock className="size-3.5 text-sky-700 dark:text-sky-300" /> {a.title}
                   </p>
@@ -73,6 +77,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
                   </p>
                 </div>
 
+                <div className="flex flex-wrap items-center justify-between gap-3 sm:contents">
                 <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                   <Timer className="size-3.5" />
                   {Math.round(a.time_limit_sec / 60)} min · {state.note}
@@ -87,7 +92,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
                   <Link
                     to="/assessment/$assessmentId"
                     params={{ assessmentId: a.id }}
-                    className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    className={`rounded-full px-4 py-1.5 text-sm font-semibold transition max-sm:ml-auto max-sm:inline-flex max-sm:min-h-11 max-sm:items-center max-sm:px-5 ${
                       state.open
                         ? "bg-sky-500 text-white hover:brightness-110"
                         : "border border-border/50 text-muted-foreground"
@@ -96,6 +101,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
                     {state.open ? "Sit assessment" : "Details"}
                   </Link>
                 )}
+                </div>
               </div>
             );
           })}
@@ -116,11 +122,12 @@ export function AssignedWork({ userId }: { userId?: string }) {
                  reviews" became "Two ...", and the class name wrapped to five
                  lines. The date and the action sit together underneath instead,
                  and sm:contents dissolves that wrapper on a wider screen so the
-                 original single row is unchanged. */
+                 original single row is unchanged. The title may take two lines
+                 on a phone rather than end in an ellipsis. */
               className={`glass-card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 ${a.done ? "opacity-60" : ""}`}
             >
               <div className="min-w-0 sm:flex-1">
-                <p className="truncate font-semibold">
+                <p className="truncate font-semibold max-sm:line-clamp-2 max-sm:whitespace-normal">
                   {a.title || (a.mode ? MODE_LABEL[a.mode as Mode] : "Assigned case")}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -149,7 +156,7 @@ export function AssignedWork({ userId }: { userId?: string }) {
               ) : route ? (
                 <Link
                   to={route}
-                  className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+                  className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 max-sm:ml-auto max-sm:inline-flex max-sm:min-h-11 max-sm:items-center max-sm:px-5"
                 >
                   Start
                 </Link>
