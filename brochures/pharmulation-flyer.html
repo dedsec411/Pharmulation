@@ -1,0 +1,578 @@
+<title>Pharmulation Flyer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Caveat:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Without this the padded .sheet is 236x310mm, not A4. */
+  *,*::before,*::after{box-sizing:border-box}
+
+  :root{
+    --navy:#080F1C;
+    --navy-2:#101E33;
+    --teal:#00BFA5;
+    --indigo:#6366F1;
+    --amber:#F59E0B;
+    --sky:#0EA5E9;
+    --mist:#93A6BC;
+  }
+  @page { size: A4 portrait; margin: 0; }
+
+  body{
+    background:#8E959C;
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding:22px 12px 56px; gap:16px;
+  }
+
+  /* screen-only toolbar. Deliberately NOT called .bar - that name collided
+     with the viva score bars and won the cascade. */
+  .toolbar{
+    width:210mm; max-width:100%; background:#fff; border-radius:10px;
+    padding:13px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    box-shadow:0 2px 14px rgba(0,0,0,.2); font-size:13px; color:#41505F;
+  }
+  .toolbar b{color:#14202E; font-weight:600}
+  .toolbar button{
+    font:600 13px/1 "IBM Plex Sans",sans-serif; background:var(--navy);
+    color:#fff; border:0; padding:10px 18px; border-radius:7px; cursor:pointer;
+  }
+  .toolbar button:hover{background:var(--navy-2)}
+  .toolbar button:focus-visible{outline:3px solid var(--teal); outline-offset:2px}
+
+  /* ================= the sheet ================= */
+  .sheet{
+    width:210mm; height:297mm; position:relative; overflow:hidden;
+    background:var(--navy); color:#fff;
+    box-shadow:0 6px 34px rgba(0,0,0,.32);
+    display:flex; flex-direction:column;
+    padding:12mm 13mm 0;
+  }
+  .sheet + .sheet{break-before:page}
+  .sheet::before{
+    content:""; position:absolute; top:-42mm; right:-30mm;
+    width:120mm; height:120mm; border-radius:50%;
+    background:radial-gradient(circle, rgba(0,191,165,.26), transparent 68%);
+  }
+  .sheet.faculty::before{background:radial-gradient(circle, rgba(99,102,241,.32), transparent 68%)}
+  .sheet > *{position:relative}
+  /* grid children default to min-width:auto and blow their tracks open */
+  .phones > div, .fcards > *, .wstrip > *, .stats > *{min-width:0}
+
+  /* ================= masthead ================= */
+  .brand{display:flex; justify-content:space-between; align-items:baseline}
+  .mark{font-family:Archivo,sans-serif; font-weight:900; font-size:14pt; letter-spacing:-.03em}
+  .mark span{color:var(--teal)}
+  .sheet.faculty .mark span{color:#A5AEF9}
+  .brand .tag{
+    font-family:"IBM Plex Mono",monospace; font-size:6pt;
+    letter-spacing:.2em; text-transform:uppercase; color:var(--mist);
+  }
+  .sheet.faculty .brand .tag{color:#A5AEF9}
+
+  h1{
+    font-family:Archivo,sans-serif; font-weight:900;
+    font-size:36pt; line-height:.94; letter-spacing:-.035em;
+    margin-top:6mm; text-wrap:balance;
+  }
+  h1 em{font-style:normal; color:var(--teal)}
+  .sheet.faculty h1 em{color:#8D90F7}
+
+  /* ================= FRONT: prescription lens ================= */
+  .lens{
+    margin-top:5.5mm; border:.35mm solid rgba(255,255,255,.15);
+    border-left:1.6mm solid var(--teal); border-radius:0 2.5mm 2.5mm 0;
+    background:rgba(255,255,255,.035); padding:4mm 4.5mm 4.5mm;
+  }
+  .lens-top{display:flex; justify-content:space-between; align-items:baseline; gap:6mm}
+  .kick{
+    font-family:"IBM Plex Mono",monospace; font-size:5.6pt;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--teal);
+  }
+  .lens h2{
+    font-family:Archivo,sans-serif; font-weight:800; font-size:13pt;
+    letter-spacing:-.025em; margin-top:1.2mm;
+  }
+  .lens .sub{font-size:7.2pt; color:#C2D1E0; margin-top:1.4mm; line-height:1.34; max-width:112mm}
+
+  .demo{display:grid; grid-template-columns:1fr 12mm 1fr; align-items:center; margin-top:4mm}
+  .demo > *{min-width:0}
+  .rx{
+    background:#FCFBF6; color:#20211C; border-radius:1.5mm;
+    padding:4mm 4.5mm 3.6mm; transform:rotate(-1.8deg);
+    box-shadow:0 4mm 9mm rgba(0,0,0,.42);
+  }
+  .rx-top{
+    display:flex; justify-content:space-between; align-items:baseline;
+    border-bottom:.4mm solid #DCD9CC; padding-bottom:1.8mm;
+  }
+  .rx-sym{font-family:Archivo,sans-serif; font-weight:700; font-size:13pt; line-height:1}
+  .rx-top small{font-family:"IBM Plex Mono",monospace; font-size:4.6pt; color:#9A9788; letter-spacing:.1em}
+  .hand{font-family:Caveat,cursive; font-size:11.5pt; line-height:1.38; color:#1B2A4A; margin-top:2.4mm}
+  .hand span{display:block}
+  .rx-sig{
+    font-family:Caveat,cursive; font-size:9.5pt; color:#6C7789;
+    margin-top:2.6mm; padding-top:1.8mm; border-top:.4mm solid #DCD9CC;
+  }
+  .arrow{display:grid; place-items:center; gap:1.2mm}
+  .arrow svg{width:7mm; height:7mm}
+  .arrow div{font-family:"IBM Plex Mono",monospace; font-size:4.6pt; color:var(--teal); letter-spacing:.14em}
+  .case{
+    background:var(--navy-2); border:.4mm solid rgba(0,191,165,.4);
+    border-radius:2.5mm; padding:3.8mm; transform:rotate(1.4deg);
+    box-shadow:0 4mm 9mm rgba(0,0,0,.45);
+  }
+  .case .k{font-family:"IBM Plex Mono",monospace; font-size:4.6pt; letter-spacing:.14em; color:var(--teal)}
+  .case h4{font-family:Archivo,sans-serif; font-weight:700; font-size:9.4pt; margin-top:1.4mm}
+  .case .who{font-size:6.2pt; color:var(--mist); margin-top:.9mm}
+  .chips{display:flex; flex-wrap:wrap; gap:1.2mm; margin-top:2.4mm}
+  .chip{
+    font-family:"IBM Plex Mono",monospace; font-size:4.8pt; padding:1mm 1.8mm;
+    border-radius:1mm; background:rgba(255,255,255,.08); color:#DCE6F0;
+  }
+  .alert{
+    margin-top:2.4mm; padding:2mm 2.4mm; border-radius:1.5mm;
+    background:rgba(0,191,165,.13); border-left:.9mm solid var(--teal);
+    font-size:6pt; line-height:1.3; color:#CFF3EC;
+  }
+  .alert b{color:#fff; font-weight:600}
+  .privacy{
+    display:flex; flex-wrap:wrap; gap:1.8mm; margin-top:3.6mm;
+    font-family:"IBM Plex Mono",monospace; font-size:4.6pt; letter-spacing:.06em;
+  }
+  .privacy span{
+    padding:1.1mm 2mm; border-radius:1mm;
+    border:.3mm solid rgba(0,191,165,.4); color:#8FD8CC;
+  }
+
+  /* ================= FRONT: three phones ================= */
+  .phones{display:grid; grid-template-columns:repeat(3,1fr); gap:5mm; margin-top:5.5mm}
+  .phone{
+    position:relative; height:60mm; overflow:hidden;
+    border-radius:4mm; border:.6mm solid rgba(255,255,255,.2);
+    background:#0B1828; padding:3.8mm 2.2mm 2.2mm;
+    display:flex; flex-direction:column;
+    box-shadow:0 3mm 8mm rgba(0,0,0,.45);
+  }
+  .phone::before{
+    content:""; position:absolute; top:1.3mm; left:50%; transform:translateX(-50%);
+    width:9mm; height:1.1mm; border-radius:1mm; background:rgba(255,255,255,.22);
+  }
+  .ph-head{
+    font-family:"IBM Plex Mono",monospace; font-size:3.8pt; letter-spacing:.1em;
+    color:var(--teal); display:flex; justify-content:space-between;
+  }
+  .shelf{display:grid; grid-template-columns:repeat(3,1fr); gap:1mm; margin-top:1.8mm}
+  .box{
+    aspect-ratio:.92; border-radius:.8mm; background:rgba(255,255,255,.06);
+    border:.28mm solid rgba(255,255,255,.09); display:flex; align-items:flex-end;
+    padding:.6mm; font-family:"IBM Plex Mono",monospace; font-size:2.7pt;
+    color:#8DA0B6; line-height:1.05;
+  }
+  .box.on{
+    background:rgba(0,191,165,.2); border-color:var(--teal); color:#CFF3EC;
+    box-shadow:0 0 2.5mm rgba(0,191,165,.55);
+  }
+  .ph-btn{
+    margin-top:auto; background:var(--teal); color:#04231F; border-radius:1.4mm;
+    text-align:center; padding:1.3mm; font-size:4.2pt; font-weight:700;
+  }
+  .chat{display:flex; flex-direction:column; gap:1.1mm; margin-top:1.8mm}
+  .msg{max-width:88%; padding:1.2mm 1.6mm; border-radius:1.8mm; font-size:3.8pt; line-height:1.3}
+  .msg.them{background:rgba(255,255,255,.09); color:#D7E3EE; border-bottom-left-radius:.5mm}
+  .msg.you{background:var(--teal); color:#04231F; align-self:flex-end; border-bottom-right-radius:.5mm; font-weight:600}
+  .ph-input{
+    margin-top:auto; border:.28mm solid rgba(255,255,255,.16); border-radius:1.8mm;
+    padding:1.2mm 1.6mm; font-size:3.6pt; color:#67798E;
+  }
+  .exam{display:flex; align-items:center; gap:1.5mm; margin-top:1.8mm}
+  .av{width:5.2mm; height:5.2mm; border-radius:50%; flex:none; background:linear-gradient(140deg,#F0788E,#A32C4A)}
+  .exam b{font-size:4.6pt; display:block; font-family:Archivo,sans-serif; font-weight:700}
+  .exam i{font-size:3.5pt; color:var(--mist); display:block; font-style:normal; margin-top:.3mm}
+  .q{
+    margin-top:1.6mm; background:rgba(255,255,255,.07); border-left:.6mm solid var(--teal);
+    padding:1.4mm 1.6mm; font-size:3.8pt; line-height:1.3; font-style:italic; color:#DDE9F4;
+  }
+  .axes{margin-top:auto; display:grid; gap:1.1mm}
+  .axis{font-family:"IBM Plex Mono",monospace; font-size:3.2pt; color:var(--mist)}
+  .axis i{display:block; height:.9mm; border-radius:.45mm; background:rgba(255,255,255,.1); margin-top:.5mm}
+  .axis i u{display:block; height:100%; border-radius:.45mm; background:var(--teal); width:var(--w)}
+  .plabel{margin-top:2.2mm; text-align:center}
+  .plabel b{font-family:Archivo,sans-serif; font-weight:800; font-size:7.6pt; display:block}
+  .plabel span{font-size:5.6pt; color:var(--mist); display:block; margin-top:.7mm; line-height:1.3}
+
+  /* ================= worlds strip ================= */
+  .wstrip{display:grid; grid-template-columns:repeat(4,1fr); gap:3.4mm; margin-top:5.5mm}
+  .ws{border-top:1.2mm solid var(--c); padding-top:1.8mm}
+  .ws b{font-family:Archivo,sans-serif; font-weight:700; font-size:7.4pt; display:block}
+  .ws span{font-size:5.4pt; color:var(--mist); display:block; margin-top:.6mm}
+
+  /* ================= closing band ================= */
+  .endblock{margin:auto -13mm 0}
+  .cta{
+    background:var(--teal); color:#04231F; padding:5mm 13mm;
+    display:flex; justify-content:space-between; align-items:center; gap:8mm;
+  }
+  .sheet.faculty .cta{background:#8D90F7}
+  .cta b{font-family:Archivo,sans-serif; font-weight:900; font-size:14pt; letter-spacing:-.03em; line-height:1.04; display:block}
+  .cta span{font-size:7.4pt; font-weight:500; display:block; margin-top:1.2mm; color:#07322C}
+  .sheet.faculty .cta span{color:#171B4E}
+  .qr{
+    width:20mm; height:20mm; flex:none; background:rgba(255,255,255,.55);
+    border:.5mm dashed #04231F; border-radius:2mm; display:grid; place-items:center;
+    text-align:center; font-family:"IBM Plex Mono",monospace; font-size:4.6pt;
+    line-height:1.35; color:#04231F; padding:1.6mm;
+  }
+  .fineprint{
+    background:#04100B; color:#5C7A73; padding:2.2mm 13mm;
+    font-family:"IBM Plex Mono",monospace; font-size:4.6pt; line-height:1.45;
+  }
+  .sheet.faculty .fineprint{background:#080C22; color:#6871A8}
+
+  /* ================= BACK: faculty dashboard ================= */
+  .dash{
+    margin-top:6.5mm; border:.4mm solid rgba(255,255,255,.16); border-radius:2.5mm;
+    background:rgba(255,255,255,.04); overflow:hidden;
+  }
+  .dash-bar{
+    display:flex; align-items:center; gap:1.6mm; padding:2.2mm 3.4mm;
+    background:rgba(0,0,0,.3); border-bottom:.3mm solid rgba(255,255,255,.1);
+    font-family:"IBM Plex Mono",monospace; font-size:4.6pt; color:#A5AEF9; letter-spacing:.12em;
+  }
+  .dot{width:1.5mm; height:1.5mm; border-radius:50%; background:rgba(255,255,255,.25); flex:none}
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:.3mm; background:rgba(255,255,255,.08)}
+  .stat{background:#0D1730; padding:3.2mm}
+  .stat b{font-family:Archivo,sans-serif; font-weight:900; font-size:15pt; display:block; line-height:1}
+  .stat span{font-size:5.2pt; color:var(--mist); display:block; margin-top:1.1mm; line-height:1.3}
+  .stat.warn b{color:var(--amber)}
+  .roster{padding:3.2mm}
+  .rhead{
+    font-family:"IBM Plex Mono",monospace; font-size:4.2pt; letter-spacing:.12em;
+    color:#A5AEF9; display:flex; justify-content:space-between; padding-bottom:1.8mm;
+    border-bottom:.3mm solid rgba(255,255,255,.1);
+  }
+  .rrow{display:flex; align-items:center; gap:2.4mm; margin-top:2mm}
+  .rrow em{font-size:5.4pt; color:#DDE3FF; font-style:normal; width:26mm; flex:none}
+  .rrow i{flex:1; height:1.3mm; border-radius:.65mm; background:rgba(255,255,255,.12)}
+  .rrow i u{display:block; height:100%; border-radius:.65mm; background:var(--k); width:var(--w)}
+  .rrow s{font-family:"IBM Plex Mono",monospace; font-size:4.4pt; color:var(--mist); text-decoration:none; width:17mm; text-align:right}
+
+  /* three faculty cards */
+  .fcards{display:grid; grid-template-columns:repeat(3,1fr); gap:5mm; margin-top:6.5mm}
+  .fc{border-top:1mm solid #8D90F7; padding-top:2.4mm; display:flex; flex-direction:column}
+  .fc h3{font-family:Archivo,sans-serif; font-weight:800; font-size:9pt; letter-spacing:-.02em}
+  .fc p{font-size:6.4pt; color:#C2D1E0; line-height:1.32; margin-top:1.2mm}
+  .fc .art{margin-top:2.6mm}
+
+  .code{
+    border:.4mm dashed rgba(141,144,247,.6); border-radius:1.8mm; padding:2.4mm;
+    text-align:center; background:rgba(141,144,247,.1);
+  }
+  .code b{font-family:"IBM Plex Mono",monospace; font-size:9pt; letter-spacing:.12em; color:#fff; display:block}
+  .code span{font-family:"IBM Plex Mono",monospace; font-size:3.8pt; color:#A5AEF9; display:block; margin-top:.9mm; letter-spacing:.1em}
+
+  .assign{border-radius:1.8mm; background:rgba(255,255,255,.06); padding:2.4mm}
+  .assign .t{font-size:5.6pt; font-weight:600}
+  .assign .m{font-family:"IBM Plex Mono",monospace; font-size:3.8pt; color:var(--mist); margin-top:1.1mm; display:flex; justify-content:space-between; gap:2mm}
+  .assign .timer{
+    margin-top:1.8mm; font-family:"IBM Plex Mono",monospace; font-size:4.2pt;
+    color:var(--amber); border-top:.3mm solid rgba(255,255,255,.1); padding-top:1.4mm;
+  }
+
+  .hm{display:grid; grid-template-columns:7.5mm repeat(6,1fr); gap:.6mm; align-items:center}
+  .hm .cl{font-family:"IBM Plex Mono",monospace; font-size:2.7pt; color:var(--mist); text-align:center}
+  .hm .rl{font-family:"IBM Plex Mono",monospace; font-size:2.9pt; color:var(--mist); text-align:right; padding-right:.6mm}
+  .hm i{aspect-ratio:1.6; border-radius:.4mm; background:rgba(255,255,255,.07)}
+  .hm i.a{background:rgba(0,191,165,.9)}
+  .hm i.b{background:rgba(0,191,165,.42)}
+  .hm i.c{background:rgba(245,158,11,.9)}
+  .hm i.d{background:rgba(245,158,11,.45)}
+
+  /* the isolation guarantee */
+  .lock{
+    margin-top:6.5mm; display:grid; grid-template-columns:10mm 1fr; gap:4.5mm;
+    align-items:center; border:.35mm solid rgba(141,144,247,.4); border-radius:2.5mm;
+    background:rgba(99,102,241,.1); padding:3.6mm 4.2mm;
+  }
+  .lock > *{min-width:0}
+  .lock svg{width:10mm; height:10mm}
+  .lock h3{font-family:Archivo,sans-serif; font-weight:800; font-size:9.6pt; letter-spacing:-.02em}
+  .lock p{font-size:6.8pt; color:#C7CEEF; line-height:1.34; margin-top:1.2mm}
+
+  .three{
+    margin-top:6mm; padding-top:5mm; border-top:.35mm solid rgba(255,255,255,.14);
+    display:grid; grid-template-columns:repeat(3,1fr); gap:7mm;
+  }
+  .three > *{min-width:0}
+  .three b{
+    font-family:Archivo,sans-serif; font-weight:900; font-size:17pt;
+    color:#8D90F7; display:block; line-height:1;
+  }
+  .three span{font-size:6.8pt; color:#C2D1E0; display:block; margin-top:1.8mm; line-height:1.34}
+
+  @media print{
+    body{background:#fff; padding:0; display:block}
+    .toolbar{display:none}
+    .sheet{box-shadow:none}
+  }
+</style>
+
+<div class="toolbar">
+  <button onclick="window.print()">Print / Save as PDF</button>
+  <span><b>PDF settings:</b> paper <b>A4</b>, margins <b>None</b>, tick <b>Background graphics</b>.
+  Print <b>double-sided, flip on long edge</b>.</span>
+</div>
+
+<!-- ============================ FRONT ============================ -->
+<div class="sheet">
+
+  <div class="brand">
+    <div class="mark">Pharmu<span>lation</span></div>
+    <div class="tag">Four worlds &middot; One pharmacist</div>
+  </div>
+
+  <h1>Practise the job.<br>Not the <em>exam.</em></h1>
+
+  <div class="lens">
+    <div class="lens-top">
+      <div>
+        <div class="kick">Prescription Lens</div>
+        <h2>Photograph it. Play it.</h2>
+      </div>
+      <div class="kick">New</div>
+    </div>
+    <div class="sub">Point your phone at any prescription, label or discharge summary. It comes
+    back as a case you can actually play &mdash; built from real medicines on the shelf.</div>
+
+    <div class="demo">
+      <div class="rx">
+        <div class="rx-top"><div class="rx-sym">&#8478;</div><small>CLINIC COPY</small></div>
+        <div class="hand">
+          <span>Amoxicillin 500mg</span>
+          <span>1 cap TDS &times; 7/7</span>
+          <span>Salbutamol inhaler prn</span>
+        </div>
+        <div class="rx-sig">Allergy: penicillin</div>
+      </div>
+
+      <div class="arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#00BFA5" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 12h15"/><path d="M13 6l6 6-6 6"/>
+        </svg>
+        <div>5 SEC</div>
+      </div>
+
+      <div class="case">
+        <div class="k">CASE READY</div>
+        <h4>Chest infection, 34F</h4>
+        <div class="who">Community pharmacy &middot; Hard</div>
+        <div class="chips">
+          <span class="chip">AMOXICILLIN 500mg</span>
+          <span class="chip">SALBUTAMOL</span>
+          <span class="chip">LABEL IT</span>
+        </div>
+        <div class="alert"><b>Trap live:</b> the allergy on this script rules out what was
+        prescribed. Catch it before you dispense.</div>
+      </div>
+    </div>
+
+    <div class="privacy">
+      <span>NAME REPLACED BEFORE ANYTHING IS SHOWN</span>
+      <span>IMAGE NEVER STORED</span>
+      <span>AN UNCLEAR READ IS REFUSED</span>
+    </div>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="ph-head"><span>RX CASE</span><span>02:41</span></div>
+        <div class="shelf">
+          <div class="box">IBUPROF</div>
+          <div class="box on">AMOXI<br>500</div>
+          <div class="box">OMEPRA</div>
+          <div class="box">METFOR</div>
+          <div class="box">ASPIRIN</div>
+          <div class="box on">SALBUT</div>
+          <div class="box">RAMIPRL</div>
+          <div class="box">CETIRIZ</div>
+          <div class="box">PARACET</div>
+        </div>
+        <div class="ph-btn">Confirm collection</div>
+      </div>
+      <div class="plabel"><b>Dispense it</b><span>Every medicine on a real shelf</span></div>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="ph-head"><span>OTC COUNTER</span><span>WWHAM</span></div>
+        <div class="chat">
+          <div class="msg them">I need something strong for a headache.</div>
+          <div class="msg you">How long have you had it?</div>
+          <div class="msg them">Four days. It is not shifting.</div>
+          <div class="msg you">Any other medicines?</div>
+          <div class="msg them">Just my warfarin.</div>
+        </div>
+        <div class="ph-input">Type your next question&hellip;</div>
+      </div>
+      <div class="plabel"><b>Consult it</b><span>An AI patient who answers back</span></div>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="ph-head"><span>VIVA</span><span>Q2 / 3</span></div>
+        <div class="exam">
+          <div class="av"></div>
+          <div><b>Dr. Hassan</b><i>STRICT EXAMINER</i></div>
+        </div>
+        <div class="q">&ldquo;You supplied it. On what basis was that dose safe with her
+        warfarin?&rdquo;</div>
+        <div class="axes">
+          <div class="axis">REASONING<i><u style="--w:86%"></u></i></div>
+          <div class="axis">SAFETY<i><u style="--w:64%"></u></i></div>
+          <div class="axis">COMMS<i><u style="--w:78%"></u></i></div>
+          <div class="axis">EVIDENCE<i><u style="--w:52%"></u></i></div>
+        </div>
+      </div>
+      <div class="plabel"><b>Justify it</b><span>A viva marks your reasoning</span></div>
+    </div>
+  </div>
+
+  <div class="wstrip">
+    <div class="ws" style="--c:var(--teal)"><b>Community</b><span>Dispense &amp; counsel</span></div>
+    <div class="ws" style="--c:var(--indigo)"><b>Clinical</b><span>Ward orders</span></div>
+    <div class="ws" style="--c:var(--amber)"><b>Industry</b><span>Batch to release</span></div>
+    <div class="ws" style="--c:var(--sky)"><b>Warehousing</b><span>FEFO &amp; cold chain</span></div>
+  </div>
+
+  <div class="endblock">
+    <div class="cta">
+      <div>
+        <b>Bring a prescription to our stand.</b>
+        <span>Play it before you walk away &middot; 881 medicines &middot; CPD as you go</span>
+      </div>
+      <div class="qr">QR<br>live demo</div>
+    </div>
+    <div class="fineprint">
+      A training simulator &mdash; not a clinical decision-support or dispensing tool, and not for
+      use in real patient care. Prescription Lens reads a document to build a training case; it
+      does not verify or approve a prescription.
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================ BACK ============================ -->
+<div class="sheet faculty">
+
+  <div class="brand">
+    <div class="mark">Pharmu<span>lation</span></div>
+    <div class="tag">For educators</div>
+  </div>
+
+  <h1>Run a cohort.<br>Not a <em>spreadsheet.</em></h1>
+
+  <div class="dash">
+    <div class="dash-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      &nbsp;FACULTY OVERVIEW &middot; PHARM D YEAR 3
+    </div>
+    <div class="stats">
+      <div class="stat"><b>34</b><span>students enrolled</span></div>
+      <div class="stat"><b>212</b><span>cases this week</span></div>
+      <div class="stat warn"><b>5</b><span>gone quiet this week</span></div>
+      <div class="stat warn"><b>3</b><span>assignments past due</span></div>
+    </div>
+    <div class="roster">
+      <div class="rhead"><span>STUDENT</span><span>ACCURACY &middot; CASES</span></div>
+      <div class="rrow"><em>Adaeze Nwosu</em><i><u style="--w:88%;--k:#00BFA5"></u></i><s>88% &middot; 41</s></div>
+      <div class="rrow"><em>Tomas Lindqvist</em><i><u style="--w:74%;--k:#00BFA5"></u></i><s>74% &middot; 33</s></div>
+      <div class="rrow"><em>Priya Raman</em><i><u style="--w:46%;--k:#F59E0B"></u></i><s>46% &middot; 12</s></div>
+      <div class="rrow"><em>Marcus Bell</em><i><u style="--w:19%;--k:#F59E0B"></u></i><s>19% &middot; 4</s></div>
+      <div class="rrow"><em>Leila Haddad</em><i><u style="--w:81%;--k:#00BFA5"></u></i><s>81% &middot; 37</s></div>
+      <div class="rrow"><em>Yusuf Demir</em><i><u style="--w:63%;--k:#00BFA5"></u></i><s>63% &middot; 25</s></div>
+    </div>
+  </div>
+
+  <div class="fcards">
+    <div class="fc">
+      <h3>Start a class in a minute</h3>
+      <p>Sign up as faculty and hand out a code. No administrator in the loop.</p>
+      <div class="art">
+        <div class="code"><b>PH3&middot;8K2Q</b><span>JOIN CODE</span></div>
+      </div>
+    </div>
+
+    <div class="fc">
+      <h3>Set work with a deadline</h3>
+      <p>Assignments and timed assessments, with the sitting managed for you.</p>
+      <div class="art">
+        <div class="assign">
+          <div class="t">Antibiotics &mdash; 5 cases</div>
+          <div class="m"><span>DUE FRI 17:00</span><span>28/34 DONE</span></div>
+          <div class="timer">SITTING &middot; 45:00 LOCKED</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc">
+      <h3>See who is struggling</h3>
+      <p>The weakness map read across a whole class, not just one student.</p>
+      <div class="art">
+        <div class="hm">
+          <span class="rl"></span>
+          <span class="cl">SEL</span><span class="cl">DOSE</span><span class="cl">INT</span>
+          <span class="cl">LBL</span><span class="cl">COUN</span><span class="cl">RENAL</span>
+
+          <span class="rl">ANTIB</span>
+          <i class="a"></i><i class="b"></i><i class="a"></i><i class="b"></i><i class="a"></i><i class="c"></i>
+
+          <span class="rl">CARDIAC</span>
+          <i class="b"></i><i class="c"></i><i class="a"></i><i class="a"></i><i class="b"></i><i class="c"></i>
+
+          <span class="rl">ANALG</span>
+          <i class="a"></i><i class="a"></i><i class="b"></i><i class="a"></i><i class="b"></i><i class="d"></i>
+
+          <span class="rl">DIABET</span>
+          <i class="b"></i><i class="d"></i><i class="a"></i><i class="b"></i><i class="a"></i><i class="c"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lock">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#A5AEF9" stroke-width="1.6"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="10" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    <div>
+      <h3>Their data is locked down in the database</h3>
+      <p>Not in the interface. Row-level security means you can only ever read students enrolled in
+      your own classes, and a student can only ever read their own &mdash; a guarantee that holds
+      whatever the app asks for.</p>
+    </div>
+  </div>
+
+  <div class="three">
+    <div><b>CPD</b><span>One hour earned per ten completed cases, with certificates your students
+    download as a PDF</span></div>
+    <div><b>6 ranks</b><span>Intern through to Expert Pharmacist, with badges, streaks and a live
+    leaderboard</span></div>
+    <div><b>881</b><span>real medicines with their classes, dosages, brands and manufacturers</span></div>
+  </div>
+
+  <div class="endblock">
+    <div class="cta">
+      <div>
+        <b>Try it with one class.</b>
+        <span>Free to start &middot; scan the code or talk to us at the stand</span>
+      </div>
+      <div class="qr">QR<br>faculty signup</div>
+    </div>
+    <div class="fineprint">
+      A training simulator for pharmacy education. Not a clinical decision-support or dispensing
+      tool, and not intended for use in real patient care. Medicine data is for training and is
+      pending pharmacist review.
+    </div>
+  </div>
+
+</div>

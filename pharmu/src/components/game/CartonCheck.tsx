@@ -182,14 +182,14 @@ function CartonGraphic({
         <div className="relative mb-3 h-5">
           <div className="absolute inset-x-0 top-1/2 h-px bg-black/25" />
           {condition.seal ? (
-            <div className="absolute left-1/2 top-0 h-5 w-28 -translate-x-1/2 rounded-sm bg-sky-900/70 text-center text-[8px] font-black uppercase leading-5 tracking-[0.18em] text-sky-50">
+            <div className="absolute left-1/2 top-0 h-5 w-28 -translate-x-1/2 rounded-sm bg-sky-900/70 text-center text-[8px] font-black uppercase leading-5 tracking-[0.18em] text-sky-50 max-sm:text-[11px]">
               sealed
             </div>
           ) : (
             <>
               <div className="absolute left-1/2 top-0 h-5 w-12 -translate-x-[110%] rounded-sm bg-sky-900/70" />
               <div className="absolute left-1/2 top-0 h-5 w-12 translate-x-[10%] rounded-sm bg-sky-900/70" />
-              <span className="absolute left-1/2 top-0 -translate-x-1/2 text-[8px] font-black uppercase leading-5 tracking-[0.18em] text-red-900">
+              <span className="absolute left-1/2 top-0 -translate-x-1/2 text-[8px] font-black uppercase leading-5 tracking-[0.18em] text-red-900 max-sm:text-[11px]">
                 cut
               </span>
             </>
@@ -209,7 +209,7 @@ function CartonGraphic({
                 <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black tabular-nums text-white" aria-hidden="true">
                   {f.n}
                 </span>
-                <dt className="w-24 shrink-0 text-[10px] uppercase tracking-wide text-slate-500 sm:w-32">{f.label}</dt>
+                <dt className="w-24 shrink-0 text-[10px] uppercase tracking-wide text-slate-500 sm:w-32 max-sm:text-[11px]">{f.label}</dt>
                 <dd className={`min-w-0 flex-1 break-words text-xs font-semibold ${f.label === "Product name" ? "text-sm" : ""}`}>
                   {f.value}
                 </dd>
@@ -223,7 +223,7 @@ function CartonGraphic({
                 <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black tabular-nums text-white" aria-hidden="true">
                   {fields.find((f) => f.label === "Barcode (GTIN)")?.n}
                 </span>
-                <span className="text-[10px] uppercase tracking-wide text-slate-500">GTIN</span>
+                <span className="text-[10px] uppercase tracking-wide text-slate-500 max-sm:text-[11px]">GTIN</span>
               </div>
               <div className="mt-1 flex h-9 items-stretch overflow-hidden" aria-hidden="true">
                 {carton.gtin.split("").flatMap((digit, i) => [
@@ -231,7 +231,7 @@ function CartonGraphic({
                   <span key={`gap-${i}`} style={{ width: ((Number(digit) + 1) % 3) + 1 }} />,
                 ])}
               </div>
-              <p className="text-[10px] font-semibold tabular-nums tracking-wider">{carton.gtin}</p>
+              <p className="text-[10px] font-semibold tabular-nums tracking-wider max-sm:text-[11px]">{carton.gtin}</p>
             </div>
             <div className="shrink-0 text-center">
               <div className="grid grid-cols-8 gap-px" aria-hidden="true">
@@ -239,7 +239,7 @@ function CartonGraphic({
                   <span key={i} className={`size-1.5 ${on ? "bg-slate-900" : "bg-white"}`} />
                 ))}
               </div>
-              <p className="mt-1 text-[9px] font-semibold tracking-wider">
+              <p className="mt-1 text-[9px] font-semibold tracking-wider max-sm:text-[11px]">
                 <span className="mr-1 inline-flex size-3 items-center justify-center rounded-full bg-slate-900 text-[8px] font-black text-white" aria-hidden="true">
                   {fields.find((f) => f.label === "Serial number")?.n}
                 </span>
@@ -297,7 +297,9 @@ function ConditionPanel({
         {CONDITION_ROWS.map((row) => (
           <div key={row.key} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/40 p-2.5">
             <span className="text-sm font-medium">{row.question}</span>
-            <div className="flex gap-1.5">
+            {/* A pair of full-size buttons under the question on a phone;
+                as 26px pills they were the smallest controls in the shift. */}
+            <div className="flex gap-1.5 max-sm:grid max-sm:w-full max-sm:grid-cols-2 max-sm:gap-2">
               {[true, false].map((value) => {
                 const picked = (recorded ? recorded[row.key] : draft[row.key]) === value;
                 return (
@@ -306,7 +308,7 @@ function ConditionPanel({
                     type="button"
                     onClick={() => onPick(row.key, value)}
                     aria-pressed={picked}
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-[0.97] ${
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-[0.97] max-sm:min-h-11 max-sm:text-sm ${
                       picked
                         ? value
                           ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
@@ -331,7 +333,7 @@ function ConditionPanel({
           type="button"
           disabled={!complete}
           onClick={onSubmit}
-          className="mt-3 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground transition active:scale-[0.98] disabled:opacity-40"
+          className="mt-3 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground transition active:scale-[0.98] disabled:opacity-40 max-sm:min-h-11"
         >
           {complete ? "Record condition on the GRN" : "Answer all four to continue"}
         </button>

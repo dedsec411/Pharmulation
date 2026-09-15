@@ -680,21 +680,24 @@ function WarehouseGame() {
                         <p className="text-[11px] text-slate-600 dark:text-slate-400">Batch {sh.batch} · exp {sh.expiry}</p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                           <p className="text-[11px] text-sky-700 dark:text-sky-200">{sh.requirement}</p>
-                          <span className="rotate-[-4deg] rounded border border-sky-200/35 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-sky-100/80">arrived</span>
+                          <span className="rotate-[-4deg] rounded border border-sky-200/35 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-sky-100/80 max-sm:text-[11px]">arrived</span>
                         </div>
+                        {/* On a phone the zones are below the whole manifest list,
+                            out of sight of the card just picked. */}
+                        {active && <span className="mt-2 block text-xs font-semibold text-sky-700 dark:text-sky-200 sm:hidden">Now choose a zone below</span>}
                         {sh.tempLog && (
                           <div className="mt-3 rounded-lg border border-sky-200/15 bg-slate-900/[0.05] dark:bg-slate-950/45 p-2">
                             <TempLogChart log={sh.tempLog} />
                           </div>
                         )}
-                        {done && <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-sky-200/70">Landed in {placed[sh.id]}</p>}
+                        {done && <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-sky-200/70 max-sm:text-[11px]">Landed in {placed[sh.id]}</p>}
                       </motion.button>
                     </li>
                   );
                 })}
               </ul>
               <button disabled={!allReceived} onClick={startDispatch}
-                className="mt-4 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+                className="mt-4 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40 max-sm:min-h-11">
                 Proceed to dispatch →
               </button>
             </div>
@@ -702,18 +705,21 @@ function WarehouseGame() {
             <div data-tour="wh-zones" className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-4 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
               <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">Warehouse zones</p>
               {!activeShip && <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">Select a manifest, then choose a zone.</p>}
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {/* Two columns on a phone too, with the repeated "drop here" line
+                  left off, so the bays sit a thumb's reach below the manifests
+                  rather than a full screen. Quarantine keeps its full row. */}
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 max-sm:grid-cols-2">
                 {s.zones.map((z: string) => (
                   <motion.button key={z} disabled={!activeShip} onClick={() => placeShipment(z)}
                     whileTap={activeShip ? { y: [0, 8, 0], scale: [1, 0.98, 1] } : undefined}
                     className="rounded-xl border border-sky-300/20 bg-sky-400/5 p-3 text-left text-sm transition hover:border-sky-300/45 hover:bg-sky-400/10 disabled:opacity-40">
                     <p className="font-semibold">{z}</p>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400">Drop the selected shipment here.</p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 max-sm:hidden">Drop the selected shipment here.</p>
                   </motion.button>
                 ))}
                 <motion.button disabled={!activeShip} onClick={() => placeShipment("quarantine")}
                   whileTap={activeShip ? { y: [0, 8, 0], scale: [1, 0.98, 1] } : undefined}
-                  className="rounded-xl border border-amber-400/50 bg-amber-400/10 p-3 text-left text-sm shadow-[0_0_34px_-22px_rgba(251,191,36,0.9)] transition hover:bg-amber-400/15 disabled:opacity-40"
+                  className="rounded-xl border border-amber-400/50 bg-amber-400/10 p-3 text-left text-sm shadow-[0_0_34px_-22px_rgba(251,191,36,0.9)] transition hover:bg-amber-400/15 disabled:opacity-40 max-sm:col-span-2"
                   style={{ borderImage: "repeating-linear-gradient(45deg, rgba(251,191,36,0.95) 0 10px, rgba(15,23,42,0.95) 10px 20px) 1" }}>
                   <p className="flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-300"><AlertTriangle className="size-3.5 animate-pulse" /> Quarantine - temperature excursion</p>
                   <p className="text-[11px] text-slate-600 dark:text-slate-400">Use if the shipment's temp log shows an excursion.</p>
@@ -724,11 +730,11 @@ function WarehouseGame() {
         )}
 
         {phase === "dispatch" && s.dispatch[dispatchIdx] && (
-          <section data-tour-scene="wh-dispatch" className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-50px_rgba(56,189,248,0.85)] backdrop-blur-xl">
+          <section data-tour-scene="wh-dispatch" className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-50px_rgba(56,189,248,0.85)] backdrop-blur-xl max-sm:p-4">
             <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80"><Abbr term="FEFO" /> dispatch {dispatchIdx + 1} / {s.dispatch.length}</p>
             <h3 className="mt-1 text-lg font-bold">Pick a batch of {s.dispatch[dispatchIdx].drug}</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">Use <Abbr term="FEFO" /> - the earliest expiry goes out first, wherever it is on the shelf.</p>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/[0.04] dark:bg-slate-900/35 p-4">
+            <div className="mt-5 overflow-hidden rounded-2xl border border-sky-300/20 bg-slate-900/[0.04] dark:bg-slate-900/35 p-4 max-sm:p-3">
               <div className="mb-3 h-2 rounded-full bg-gradient-to-r from-sky-300/50 via-slate-300 dark:via-slate-700 to-sky-300/30" />
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-tour="wh-fefo">
                 {/* Sorted earliest-first, highlighted, and labelled "front" -
@@ -747,7 +753,7 @@ function WarehouseGame() {
                       whileTap={{ y: 8, scale: 0.98 }}
                       className="relative min-h-28 rounded-lg border border-sky-300/20 bg-slate-900/[0.07] p-3 text-left text-sm shadow-[0_16px_36px_-28px_rgba(56,189,248,0.9)] transition hover:-translate-y-1 hover:border-sky-300/60 hover:bg-sky-400/10 dark:bg-slate-950/55"
                     >
-                      <span className="absolute right-3 top-3 rounded border border-sky-200/30 px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-sky-100/70">
+                      <span className="absolute right-3 top-3 rounded border border-sky-200/30 px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] text-sky-100/70 max-sm:text-[11px]">
                         {`slot ${i + 1}`}
                       </span>
                       <Package className="mb-3 size-7 text-sky-200/80" />
@@ -761,18 +767,21 @@ function WarehouseGame() {
         )}
 
         {phase === "expiry" && (
-          <section data-tour-scene="wh-expiry" className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+          <section data-tour-scene="wh-expiry" className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl max-sm:p-4">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Expiry management</p>
             <h3 className="mt-1 text-lg font-bold">Items approaching expiry</h3>
             <ul className="mt-3 space-y-2" data-tour="wh-expiry">
               {s.expiring.map((it: any, i: number) => (
                 <li key={i} className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
-                  <div className="flex items-center justify-between">
+                  {/* On a phone the two calls go under the item as a pair of
+                      full-size buttons: beside it they squeezed the batch line
+                      and broke "Return to Supplier" over three lines. */}
+                  <div className="flex items-center justify-between max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
                     <div>
                       <p className="font-semibold">{it.drug}</p>
                       <p className="text-xs text-muted-foreground">Batch {it.batch} · expires {it.expiry} {it.hasOrder ? "· has active order" : "· no orders"}</p>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 max-sm:grid max-sm:grid-cols-2 max-sm:gap-2">
                       {shuffledBySeed(
                         ["Mark for Priority Dispatch", "Mark for Return to Supplier"],
                         `${caseData?.id ?? ""}:expiry:${i}`,
@@ -780,7 +789,8 @@ function WarehouseGame() {
                         const ruledOut = (expiryTried[i] ?? []).includes(a);
                         return (
                           <button key={a} disabled={!!expiryAns[i] || ruledOut} onClick={() => answerExpiry(i, a)}
-                            className={`rounded-full px-3 py-1 text-xs ${
+                            aria-pressed={expiryAns[i] === a}
+                            className={`rounded-full px-3 py-1 text-xs max-sm:min-h-11 max-sm:text-sm ${
                               expiryAns[i] === a
                                 ? "bg-primary text-primary-foreground"
                                 : ruledOut
@@ -797,7 +807,7 @@ function WarehouseGame() {
               ))}
             </ul>
             <button disabled={!allExpiryAnswered} onClick={() => setPhase("audit")}
-              className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+              className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40 max-sm:min-h-11 max-sm:w-full">
               Continue to operations audit →
             </button>
           </section>
@@ -805,7 +815,10 @@ function WarehouseGame() {
 
         {phase === "audit" && auditScenarios[auditIdx] && (
           <section className="relative z-10 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]" data-tour-scene="wh-audit">
-            <aside data-tour="wh-audit-board" className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-5 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+            {/* The board follows the decision on a phone: it is a status list
+                with no controls (so focus order is unchanged), and above the
+                question it pushed the options below the fold. */}
+            <aside data-tour="wh-audit-board" className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-5 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl max-sm:order-last max-sm:p-4">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Operations audit</p>
               <h3 className="mt-1 text-lg font-bold">Deviation dashboard</h3>
               <div className="mt-4 space-y-2">
@@ -822,7 +835,7 @@ function WarehouseGame() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-semibold">{item.title}</span>
-                      <span className="rounded-full bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground">
+                      <span className="rounded-full bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground max-sm:text-[11px]">
                         {auditAns[i] ? "Done" : i === auditIdx ? "Active" : "Pending"}
                       </span>
                     </div>
@@ -832,7 +845,7 @@ function WarehouseGame() {
               </div>
             </aside>
 
-            <div data-tour="wh-audit-decision" className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl">
+            <div data-tour="wh-audit-decision" className="rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.7)] backdrop-blur-xl max-sm:p-4">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">
                 Audit decision {auditIdx + 1} / {auditScenarios.length}
               </p>
@@ -862,35 +875,42 @@ function WarehouseGame() {
         )}
 
         {phase === "reconcile" && (
-          <section data-tour-scene="wh-count" className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.75)] backdrop-blur-xl">
+          <section data-tour-scene="wh-count" className="relative z-10 rounded-2xl border border-sky-300/20 bg-slate-900/[0.07] dark:bg-slate-950/55 p-6 shadow-[0_24px_80px_-52px_rgba(56,189,248,0.75)] backdrop-blur-xl max-sm:p-4">
             <p className="text-xs uppercase tracking-[0.24em] text-sky-200/80">Printed stocktake sheet</p>
             <h3 className="mt-1 text-lg font-bold">Check items needing investigation</h3>
             <table data-tour="wh-count" className="mt-4 w-full overflow-hidden rounded-xl border border-sky-300/20 bg-slate-900/[0.05] dark:bg-slate-900/40 text-sm">
               <thead className="border-b border-sky-300/20 bg-sky-400/10 text-xs uppercase text-sky-100/75">
-                <tr><th className="p-2 text-left">Item</th><th className="p-2 text-right">Expected</th><th className="p-2 text-right">Actual</th><th className="p-2 text-center">Investigate?</th></tr>
+                {/* Still a table on a phone - it is a four-column comparison -
+                    but with tighter cells, so "Investigate?" is no longer cut
+                    off the right edge of the card. */}
+                <tr><th className="p-2 text-left max-sm:px-1.5">Item</th><th className="p-2 text-right max-sm:px-1.5">Expected</th><th className="p-2 text-right max-sm:px-1.5">Actual</th><th className="p-2 text-center max-sm:px-1.5">Investigate?</th></tr>
               </thead>
               <tbody>
                 {s.reconciliation.map((r: any, i: number) => {
                   const discrepancy = Number(r.expected) !== Number(r.actual);
                   return (
                   <tr key={i} className={`border-t border-sky-300/10 ${discrepancy ? "bg-red-500/10 text-red-50" : ""}`}>
-                    <td className="p-2">
+                    <td className="p-2 max-sm:px-1.5">
                       <span className="inline-flex items-center gap-2">
                         {discrepancy && <Flag className="size-3.5 text-red-700 dark:text-red-300" />}
                         {r.item}
                       </span>
                     </td>
-                    <td className="p-2 text-right tabular-nums">{r.expected}</td>
-                    <td className="p-2 text-right tabular-nums">{r.actual}</td>
-                    <td className="p-2 text-center">
-                      <input type="checkbox" checked={!!reconChecked[i]} onChange={(e) => setReconChecked((m) => ({ ...m, [i]: e.target.checked }))} />
+                    <td className="p-2 text-right tabular-nums max-sm:px-1.5">{r.expected}</td>
+                    <td className="p-2 text-right tabular-nums max-sm:px-1.5">{r.actual}</td>
+                    <td className="p-2 text-center max-sm:px-1.5">
+                      {/* The label is the touch area on a phone: the box alone
+                          is 13px. It also names the box, which had no name. */}
+                      <label className="max-sm:inline-grid max-sm:size-11 max-sm:cursor-pointer max-sm:place-items-center">
+                        <input type="checkbox" aria-label={`Investigate ${r.item}`} className="max-sm:size-5" checked={!!reconChecked[i]} onChange={(e) => setReconChecked((m) => ({ ...m, [i]: e.target.checked }))} />
+                      </label>
                     </td>
                   </tr>
                   );
                 })}
               </tbody>
             </table>
-            <button onClick={finishReconcile} className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]">
+            <button onClick={finishReconcile} className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground transition active:scale-[0.98] max-sm:min-h-11 max-sm:w-full">
               {cartons.length ? "Close the count and sign the challan →" : "Finalize and submit"}
             </button>
           </section>
@@ -898,7 +918,8 @@ function WarehouseGame() {
 
         {/* Controlled substance register modal */}
         {registerOpen && (
-          <div className="fixed inset-0 z-40 grid place-items-center bg-background/80 backdrop-blur" onClick={() => setRegisterOpen(null)}>
+          // Side margins on a phone: the panel ran to both edges of the screen.
+          <div className="fixed inset-0 z-40 grid place-items-center bg-background/80 backdrop-blur max-sm:p-4" onClick={() => setRegisterOpen(null)}>
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               className="w-full max-w-md rounded-2xl border border-border/40 bg-card p-6" onClick={(e) => e.stopPropagation()}>
               <p className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400"><Lock className="size-3.5" /> Controlled substances register</p>
@@ -907,15 +928,15 @@ function WarehouseGame() {
                 <label className="block">
                   <span className="text-muted-foreground">Quantity received</span>
                   <input value={registerData.qty} onChange={(e) => setRegisterData({ ...registerData, qty: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-border/40 bg-background px-3 py-2" placeholder="e.g. 50 ampoules" />
+                    className="mt-1 w-full rounded-lg border border-border/40 bg-background px-3 py-2 max-sm:min-h-11" placeholder="e.g. 50 ampoules" />
                 </label>
                 <label className="block">
                   <span className="text-muted-foreground">Received by</span>
                   <input value={registerData.receiver} onChange={(e) => setRegisterData({ ...registerData, receiver: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-border/40 bg-background px-3 py-2" placeholder="Pharmacist name" />
+                    className="mt-1 w-full rounded-lg border border-border/40 bg-background px-3 py-2 max-sm:min-h-11" placeholder="Pharmacist name" />
                 </label>
               </div>
-              <button onClick={completeRegister} className="mt-4 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground">
+              <button onClick={completeRegister} className="mt-4 w-full rounded-full bg-primary py-2 text-sm font-semibold text-primary-foreground max-sm:min-h-11">
                 Sign and place in secure zone
               </button>
             </motion.div>
@@ -940,7 +961,7 @@ function TempLogChart({ log }: { log: { min: number; max: number; excursion: boo
   const redZoneY = yFor(8);
   return (
     <div className="space-y-1">
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em]">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em] max-sm:text-[11px]">
         <span className={log.excursion ? "text-red-700 dark:text-red-300" : "text-sky-200/80"}>Temp log</span>
         <span className="text-slate-600 dark:text-slate-400">{log.min}-{log.max}C</span>
       </div>

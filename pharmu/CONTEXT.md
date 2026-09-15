@@ -572,6 +572,32 @@ Industry on a phone (`game.industry.tsx`, `BatchBooklet`, `Instruments`):
   bottom-left at some scroll positions. The balance dial logs framer-motion
   "motion.stop" warnings (pre-existing).
 
+Warehousing on a phone (`game.warehousing.tsx`, `CartonCheck`,
+`ModeAmbientLayer`):
+- **Only the timed six-phase case is routed.** The parked facility engine
+  (`src/lib/warehouse`, `src/components/warehouse`, `wh_*`) was not touched;
+  nothing routable imports it. The probe logged every Supabase table the page
+  reached at every width: no `wh_*` table, and the only writes
+  (`user_seen_cases`, `scores`, `rpc/apply_case_result`) were answered locally.
+- **The warehousing conveyor is hidden below sm** (screen intensity only; the
+  dashboard and Modes cards already hide their art on phones). It is drawn
+  twice - by `ModeTheme` and inside the route's `main` - and sat across the
+  quarantine bay and the dispatch shelf.
+- **Receiving:** zones are two columns with the repeated "Drop the selected
+  shipment here" line hidden, quarantine keeps a full row, and the picked
+  manifest says "Now choose a zone below" (the zones are under the whole list).
+- **Expiry calls, carton condition toggles and QC-style pairs are two 44px
+  buttons under their item**; expiry buttons now carry `aria-pressed`.
+- **The audit status board follows the decision** (`order-last`, no controls,
+  so focus order is unchanged).
+- **The stocktake stays a table** (a four-column comparison) with tighter
+  cells; each checkbox has a 44px label as its touch area and a name
+  ("Investigate Vitamin D3") - it had none.
+- The register modal has side margins, 44px fields and button. Stamp, slot,
+  temp log, seal, GTIN and serial labels are 11px on a phone.
+- Probe: `warehouse.mjs` also freezes `Date.now` while the shift is dealt -
+  the seed uses the clock as well as `Math.random`.
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made

@@ -1,0 +1,365 @@
+<title>Pharmulation Brochure</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --navy:#0A1628;
+    --navy-2:#132540;
+    --teal:#00BFA5;
+    --teal-ink:#0A7A6B;
+    --indigo:#6366F1;
+    --amber:#F59E0B;
+    --sky:#0EA5E9;
+    --paper:#FBFAF7;
+    --ink:#14202E;
+    --ink-2:#41505F;
+    --rule:#D8DBD6;
+  }
+
+  @page { size: A4 portrait; margin: 0; }
+
+  body{
+    background:#9AA0A6;
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding:24px 12px 60px;
+    gap:18px;
+  }
+
+  /* ---- screen-only toolbar ---------------------------------------- */
+  .bar{
+    width:210mm; max-width:100%;
+    background:#fff; border-radius:10px; padding:14px 18px;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    box-shadow:0 2px 14px rgba(0,0,0,.18);
+    font-size:13px; color:var(--ink-2);
+  }
+  .bar b{color:var(--ink);font-weight:600}
+  .bar button{
+    font:600 13px/1 "IBM Plex Sans",sans-serif;
+    background:var(--navy); color:#fff; border:0;
+    padding:10px 18px; border-radius:7px; cursor:pointer;
+  }
+  .bar button:hover{background:var(--navy-2)}
+  .bar button:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+
+  /* ---- the sheet --------------------------------------------------- */
+  .sheet{
+    width:210mm; height:297mm;
+    background:var(--paper);
+    box-shadow:0 6px 34px rgba(0,0,0,.3);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+
+  /* ---- masthead ---------------------------------------------------- */
+  .top{
+    background:var(--navy); color:#fff;
+    padding:5.5mm 10mm 4.5mm;
+    display:flex; justify-content:space-between; align-items:flex-start; gap:8mm;
+  }
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:6.2pt; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--teal);
+  }
+  .wordmark{
+    font-family:Archivo,sans-serif; font-weight:800;
+    font-size:24pt; letter-spacing:-.025em; line-height:.95;
+    margin-top:2mm;
+  }
+  .wordmark span{color:var(--teal)}
+  .tagline{font-size:9pt; color:#B9C6D4; margin-top:1.6mm; font-weight:500}
+
+  /* the authentic detail: a correctly-set dispensing label */
+  .label{
+    background:#fff; color:#1a1a1a;
+    border:.5mm solid #E3E3DD;
+    padding:2.6mm 3.4mm; width:58mm; flex:none;
+    font-family:"IBM Plex Mono",monospace; font-size:5.7pt; line-height:1.34;
+  }
+  .label .rx{
+    font-size:5.2pt; letter-spacing:.12em; color:#8A8A82;
+    border-bottom:.3mm solid #E3E3DD; padding-bottom:1.2mm; margin-bottom:1.8mm;
+  }
+  .label .drug{font-size:7.4pt; font-weight:600; letter-spacing:-.01em}
+  .label .sig{font-weight:500; margin-top:1mm}
+  .label .warn{color:var(--teal-ink); margin-top:1.2mm; font-weight:500}
+  .label .meta{
+    margin-top:2mm; padding-top:1.4mm; border-top:.3mm solid #E3E3DD;
+    color:#8A8A82; font-size:5.2pt; display:flex; justify-content:space-between;
+  }
+
+  /* ---- shared section furniture ------------------------------------ */
+  .body{padding:0 10mm; flex:1; display:flex; flex-direction:column}
+  .kicker{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:5.9pt; letter-spacing:.15em; text-transform:uppercase;
+    color:var(--teal-ink); margin-bottom:1.3mm;
+  }
+  h2{
+    font-family:Archivo,sans-serif; font-weight:700;
+    font-size:13.5pt; letter-spacing:-.02em; line-height:1.08;
+    text-wrap:balance;
+  }
+  h3{font-family:Archivo,sans-serif; font-weight:700; font-size:8.4pt; letter-spacing:-.01em}
+  p{font-size:7.5pt; line-height:1.4; color:var(--ink-2)}
+
+  /* ---- thesis ------------------------------------------------------- */
+  .thesis{
+    padding:3mm 0 3mm; border-bottom:.35mm solid var(--rule);
+    display:grid; grid-template-columns:66mm 1fr; gap:8mm; align-items:start;
+  }
+  .thesis h2{font-size:15pt}
+
+  /* ---- lens spotlight ----------------------------------------------- */
+  .lens{
+    margin:3mm 0; padding:3.6mm 4.4mm;
+    background:#fff; border:.35mm solid var(--rule);
+    border-left:1.6mm solid var(--teal);
+  }
+  .lens-head{display:flex; justify-content:space-between; align-items:baseline; gap:6mm}
+  .speed{
+    font-family:"IBM Plex Mono",monospace; font-size:6.6pt; font-weight:600;
+    color:var(--teal-ink); white-space:nowrap; text-align:right; line-height:1.4;
+  }
+  .lens p{margin-top:1.4mm}
+  .privacy{
+    margin-top:2.8mm; display:grid; grid-template-columns:repeat(3,1fr); gap:3.6mm;
+    border-top:.3mm solid var(--rule); padding-top:2.4mm;
+  }
+  .privacy div{font-size:6.8pt; line-height:1.33; color:var(--ink-2)}
+  .privacy b{display:block; color:var(--ink); font-weight:600; font-size:6.9pt; margin-bottom:.7mm}
+
+  /* ---- four environments -------------------------------------------- */
+  .envs{display:grid; grid-template-columns:repeat(4,1fr); gap:4.2mm; margin-top:3mm}
+  .env{border-top:1.1mm solid var(--accent); padding-top:2.2mm}
+  .env:nth-child(1){--accent:var(--teal)}
+  .env:nth-child(2){--accent:var(--indigo)}
+  .env:nth-child(3){--accent:var(--amber)}
+  .env:nth-child(4){--accent:var(--sky)}
+  .env h3{font-size:8pt}
+  .env p{font-size:6.8pt; line-height:1.32; margin-top:1.2mm}
+
+  /* ---- two-column detail --------------------------------------------- */
+  .cols{
+    display:grid; grid-template-columns:1fr 1fr; gap:8mm;
+    margin-top:3.5mm; padding-top:3mm; border-top:.35mm solid var(--rule);
+  }
+  .item{margin-bottom:2.5mm}
+  .item:last-child{margin-bottom:0}
+  .item h3{margin-bottom:1mm}
+  .item p{font-size:7pt; line-height:1.38}
+  .ranks{
+    font-family:"IBM Plex Mono",monospace; font-size:6pt;
+    color:var(--teal-ink); margin-top:1.2mm; letter-spacing:-.01em;
+  }
+  ul{list-style:none; margin-top:1.2mm}
+  li{
+    font-size:7pt; line-height:1.36; color:var(--ink-2);
+    padding-left:3.6mm; position:relative; margin-bottom:.9mm;
+  }
+  li::before{
+    content:""; position:absolute; left:0; top:1.3mm;
+    width:1.5mm; height:1.5mm; background:var(--teal); border-radius:50%;
+  }
+  li b{color:var(--ink); font-weight:600}
+
+  /* ---- closing band ---------------------------------------------------- */
+  .closer{background:var(--navy); color:#fff; padding:4.5mm 10mm 4mm; margin-top:auto}
+  .cta{display:flex; justify-content:space-between; align-items:center; gap:8mm}
+  .cta h2{font-size:13pt; color:#fff}
+  .cta p{color:var(--teal); font-size:8pt; margin-top:1.2mm; font-weight:500}
+  .qr{
+    width:16mm; height:16mm; flex:none;
+    border:.4mm dashed rgba(255,255,255,.45); border-radius:1.5mm;
+    display:grid; place-items:center; text-align:center;
+    font-family:"IBM Plex Mono",monospace; font-size:5.1pt; line-height:1.4;
+    color:rgba(255,255,255,.6); padding:2mm;
+  }
+  .stack{
+    font-family:"IBM Plex Mono",monospace; font-size:5.9pt; line-height:1.65;
+    color:#8FA3B8; margin-top:2.5mm; padding-top:2mm;
+    border-top:.3mm solid rgba(255,255,255,.16);
+  }
+  .stack b{color:#fff; font-weight:600}
+  .disclaimer{font-size:5.3pt; color:#6E8299; margin-top:1.5mm; line-height:1.4}
+
+  @media print{
+    body{background:#fff; padding:0; display:block}
+    .bar{display:none}
+    .sheet{box-shadow:none; margin:0}
+  }
+</style>
+
+<div class="bar">
+  <button onclick="window.print()">Print / Save as PDF</button>
+  <span><b>To get the PDF:</b> click Print, choose <b>Save as PDF</b>, paper size <b>A4</b>,
+  margins <b>None</b>, and tick <b>Background graphics</b>.</span>
+</div>
+
+<div class="sheet">
+
+  <header class="top">
+    <div>
+      <div class="eyebrow">Pharmacy practice simulator</div>
+      <div class="wordmark">Pharmu<span>lation</span></div>
+      <div class="tagline">Four worlds. One pharmacist.</div>
+    </div>
+
+    <div class="label">
+      <div class="rx">DISPENSING LABEL &mdash; TRAINING USE</div>
+      <div class="drug">AMOXICILLIN 500 mg CAPSULES</div>
+      <div class="sig">ONE capsule THREE times a day</div>
+      <div class="sig">Take for 7 days. Complete the course.</div>
+      <div class="warn">&#9888; Check penicillin allergy before supply</div>
+      <div class="meta"><span>Qty 21</span><span>Simulated &mdash; not for patient use</span></div>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <section class="thesis">
+      <div>
+        <div class="kicker">The problem</div>
+        <h2>Practice judgement, not recall.</h2>
+      </div>
+      <div>
+        <p>Written assessment measures what a student can recall. The counter measures what they
+        decide &mdash; with an interaction in front of them and a queue behind. Pharmulation puts
+        the learner in the job and marks every decision: the medicine, the interaction, the label,
+        the counselling.</p>
+      </div>
+    </section>
+
+    <section class="lens">
+      <div class="lens-head">
+        <div>
+          <div class="kicker">Flagship feature</div>
+          <h2>Prescription Lens &mdash; photograph it, play it.</h2>
+        </div>
+        <div class="speed">2.7&ndash;7.5 s<br>measured, real photos</div>
+      </div>
+      <p>Photograph a handwritten prescription, a medication label, a discharge summary or an
+      inpatient chart, and it becomes a playable case in seconds. Every medicine read off the page
+      is matched against the live catalogue first, so the case is always playable.</p>
+
+      <div class="privacy">
+        <div><b>The name never lands.</b> Replaced with a fictional one on the server, before
+        anything is shown or stored.</div>
+        <div><b>The image is never stored.</b> Held in memory for one request and discarded. No
+        bucket, and no id to fetch it by.</div>
+        <div><b>An unclear read is refused.</b> Below the confidence threshold it asks for a better
+        photo rather than inventing a case.</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker">Four practice environments</div>
+      <div class="envs">
+        <div class="env">
+          <h3>Community Pharmacy</h3>
+          <p>Dispense from the shelf, catch the interaction, then build the label: frequency, timing,
+          duration, instruction. OTC is a typed consultation with an AI patient, marked against
+          WWHAM.</p>
+        </div>
+        <div class="env">
+          <h3>Clinical</h3>
+          <p>Build medication orders on the ward: dose, route and frequency, interaction checks,
+          and renal adjustment.</p>
+        </div>
+        <div class="env">
+          <h3>Industry</h3>
+          <p>Run a tablet batch from formula to release &mdash; batch booklet, in-process checks,
+          QA release.</p>
+        </div>
+        <div class="env">
+          <h3>Warehousing</h3>
+          <p>Goods receiving, FEFO stock rotation, cold-chain integrity and stock
+          reconciliation.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="cols">
+      <div>
+        <div class="kicker">How it marks you</div>
+
+        <div class="item">
+          <h3>AI Clinical Reasoning Examiner</h3>
+          <p>A case shows what a learner did, not whether they knew why. After each one: three
+          questions on the decisions just made, answered in their own words and marked on four axes
+          rather than right or wrong. Pick your examiner &mdash; Dr. Hassan accepts no hedging,
+          Dr. Hakim is Socratic, Dr. Zara asks only what you would do at the counter.</p>
+        </div>
+
+        <div class="item">
+          <h3>Predictive weakness analytics</h3>
+          <p>Every mistake is logged against a drug class and a clinical skill, building a heatmap
+          across seven skills. Where a cell has too little behind it, it says so rather than showing a
+          figure built on two data points. The map then drives recommended cases.</p>
+        </div>
+
+        <div class="item">
+          <h3>Progression and CPD</h3>
+          <p>Six ranks, plus badges, streaks and peer benchmarking. One CPD hour per ten completed
+          cases, with downloadable certificates at 1, 5, 10, 25 and 50 hours.</p>
+          <div class="ranks">INTERN &rarr; JUNIOR &rarr; RESIDENT &rarr; SENIOR &rarr; CLINICAL &rarr; EXPERT</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="kicker">For faculty</div>
+
+        <div class="item">
+          <h3>Run a cohort, not a spreadsheet</h3>
+          <ul>
+            <li><b>Classes with join codes.</b> Faculty is a role chosen at signup &mdash; no
+            administrator in the loop.</li>
+            <li><b>Cohort overview:</b> students enrolled, cases this week, students gone quiet,
+            assignments past due.</li>
+            <li><b>Assignments and timed assessments</b> with managed sittings.</li>
+            <li><b>Class analytics with per-student drill-down</b> &mdash; the weakness map, read
+            across a cohort.</li>
+          </ul>
+        </div>
+
+        <div class="item">
+          <h3>Isolation enforced by the database</h3>
+          <p>Not by the interface. Row-level security means an educator can only read data for
+          students in their own classes, and a student only their own &mdash; a guarantee that holds
+          whatever the front end asks for.</p>
+        </div>
+
+        <div class="item">
+          <h3>Progression that cannot be gamed</h3>
+          <p>XP is bound at the database level to a case that was genuinely recorded and can be claimed
+          exactly once, so a cohort's figures mean what they say.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="closer">
+    <div class="cta">
+      <div>
+        <h2>Bring a prescription to the stand.</h2>
+        <p>Photograph it, and play it as a case before you walk away.</p>
+      </div>
+      <div class="qr">QR &mdash; live demo</div>
+    </div>
+
+    <div class="stack">
+      <b>881 medicines</b> with generic names, classes and branded products by manufacturer
+      &nbsp;&middot;&nbsp; <b>252 automated tests</b> across 16 files &nbsp;&middot;&nbsp;
+      <b>Row-level security</b> on every table &nbsp;&middot;&nbsp; React 19 &nbsp;&middot;&nbsp;
+      TanStack Start (SSR) &nbsp;&middot;&nbsp; TypeScript &nbsp;&middot;&nbsp; Supabase
+      &nbsp;&middot;&nbsp; Google Gemini
+      <div class="disclaimer">A training simulator &mdash; not a clinical decision-support tool, not
+      a dispensing system, and not for use in real patient care. Prescription Lens reads a document
+      to build a training case; it does not verify or approve a prescription. Medicine data is
+      pending pharmacist review.</div>
+    </div>
+  </footer>
+
+</div>

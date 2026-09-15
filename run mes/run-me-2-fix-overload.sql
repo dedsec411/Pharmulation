@@ -1,0 +1,19 @@
+-- 20260828120000 added accuracy/time arguments to apply_case_result using
+-- CREATE OR REPLACE. That only replaces a function of the *same* signature, so
+-- it created a second overload alongside the original one-argument version.
+--
+-- With both present, a one-argument call cannot be resolved:
+--   PGRST203 "Could not choose the best candidate function between:
+--             apply_case_result(_xp_gain => integer),
+--             apply_case_result(_xp_gain => integer, _accuracy => numeric,
+--                               _time_taken => integer)"
+--
+-- Any client still calling the one-argument form therefore fails and stops
+-- recording XP, level and completed cases.
+--
+-- Dropping the old overload resolves it in both directions: the three-argument
+-- call is unaffected, and a one-argument call now unambiguously matches the new
+-- function, with _accuracy and _time_taken falling back to their NULL defaults
+-- so the running averages are simply left untouched. That is the backwards
+-- compatibility the previous migration intended.
+DROP FUNCTION IF EXISTS public.apply_case_result(int);

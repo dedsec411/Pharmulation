@@ -70,7 +70,9 @@ export function ModeAmbientLayer({ mode, intensity = "card" }: Props) {
 
   if (normalized === "warehousing") {
     return (
-      <div className={`${base} ${screen ? "opacity-[0.32]" : "opacity-65"}`} aria-hidden="true">
+      // Not behind a game on a phone: the moving conveyor sat across the
+      // quarantine bay and the dispatch shelf in a single column.
+      <div className={`${base} ${screen ? "opacity-[0.32] max-sm:hidden" : "opacity-65"}`} aria-hidden="true">
         <div className="absolute inset-x-0 bottom-4 h-14 overflow-hidden border-y border-sky-300/20 bg-sky-400/5">
           <div className="conveyor-scroll flex h-full w-[calc(100%+96px)] items-center gap-4">
             {Array.from({ length: 14 }).map((_, i) => (

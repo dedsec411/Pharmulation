@@ -1,0 +1,82 @@
+OVERALL
+STARTING
+Built (DEVELOPED)
+Site map to be added 
+The text under PHARMULATION to be changed
+VIEW LEADERBOARD to be removed as we haven't logged in yet
+FOUR WORLDS ONE PHARMACIST to be changed
+And the tagline after that too 
+DASHBOARD
+Instead of easy medium hard we should do smth like trainee, apprentice and expert or smth
+Maybe change the animation of the four modes
+MODES
+No back button in switching modes
+Explanation to difficulties like what to expect in which difficulty 
+DRUG DB
+How to bookmark 
+Categories & Classes have no color
+Info of drugs to be changed by using PDF library or online database
+Study list, flash card, quizzes to be activated just like notebookLm
+LEADERBOARDS
+The name in the leaderboards are not showing
+Add friends leaderboard and an overall leaderboard (if we adding friends tab)
+CPD bar and certificates???
+Badges are not working
+
+COMMUNITY
+Rx Cases
+The prescription has problems like age gender and all
+In community we need prescription with brand names 
+Need more categories for meds like not only analgesic, antibiotics we need to add more 
+Add only three brands for each medicine along with the company name example Panadol (Haleon)
+Prescription to be shown while labeling step too 
+The duration bar is to be changed 
+Add “add other/ special instruction”
+
+OTC Consultation
+Patient profile to be corrected like name gender and all
+Case to be proper in paragraph with bullets 
+Patient conversation to be changed into an AI chatbot mimicking a patient
+Steps check mark example
+Medical history
+Diagnoses
+Ask for medical complications or allergies
+Identify which medicine to dispense 
+After that the same drug choosing and labelling steps as Rx case 
+
+CLINICAL
+Clinical case
+Case file to be modified into a proper slides with info
+Add “Notes” to mark any mistake in the case file or an opinion smth
+
+INDUSTRIAL
+Managing temp and humidity should be before weighing
+The option should be change or proceed if change then the sliding bar should be there to adjust the temp and humidity
+A booklet or smth is to be added which contains steps of preparation QC test info and other details
+Celebration after completion with the product u made
+
+
+***********TO BE DISCUSSED LATER*************
+
+
+
+WAREHOUSE
+Receiving check cases 
+Inventory management
+Cold chain management 
+Environmental management 
+SOPs 
+
+COMPOUNDING 
+Oncology 
+Peads
+Derma
+IVBP (intravenous bag 
+Prescription came, selection of sterility stage, calculation done, ingredients selected, process , dispense , label. 
+
+SIDE QUEST
+Hazards and incident 
+SOPs  
+
+To add a simple warehouse management thing like a hospital warehouse because industry one might not be much valuable. .TO BE REDESIGNED 
+

@@ -1,0 +1,342 @@
+<title>Pharmulation Feature List</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+
+  :root{
+    --paper:#FBFAF7;
+    --ink:#131E2B;
+    --ink-2:#4B5866;
+    --muted:#78848F;
+    --navy:#0A1628;
+    --teal:#0A7A6B;
+    --teal-bright:#00BFA5;
+    --indigo:#4F46E5;
+    --amber:#B45309;
+    --sky:#0369A1;
+    --rule:#E2E4DF;
+  }
+
+  @page { size: A4 portrait; margin: 16mm 15mm 18mm; }
+
+  html{background:#8E959C}
+  body{
+    margin:0 auto; background:var(--paper); color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    font-size:10.5pt; line-height:1.45;
+    width:180mm; padding:14mm 0 20mm;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead{border-bottom:2.4pt solid var(--navy); padding-bottom:5mm; margin-bottom:7mm}
+  .wordmark{
+    font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:900;
+    font-size:19pt; letter-spacing:-.03em; color:var(--navy);
+  }
+  .wordmark span{color:var(--teal)}
+  h1{
+    font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:800;
+    font-size:26pt; letter-spacing:-.03em; line-height:1.05;
+    margin:4mm 0 0; color:var(--navy);
+  }
+  .standfirst{font-size:11pt; color:var(--ink-2); margin-top:2.5mm; max-width:150mm}
+  .meta{
+    font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:7.6pt;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+    margin-top:4mm; display:flex; gap:6mm; flex-wrap:wrap;
+  }
+
+  /* ---------- sections ---------- */
+  section{margin-top:8mm; break-inside:avoid}
+  h2{
+    font-family:Archivo,sans-serif; font-weight:800; font-size:14pt;
+    letter-spacing:-.02em; color:var(--navy); margin:0 0 1mm;
+    padding-bottom:1.6mm; border-bottom:1pt solid var(--rule);
+    display:flex; align-items:baseline; justify-content:space-between; gap:6mm;
+  }
+  h2 .count{
+    font-family:"IBM Plex Mono",monospace; font-size:8pt; font-weight:500;
+    letter-spacing:.1em; color:var(--teal); text-transform:uppercase;
+  }
+  h3{
+    font-family:Archivo,sans-serif; font-weight:700; font-size:10.5pt;
+    margin:0; color:var(--ink); letter-spacing:-.01em;
+  }
+  p{margin:0; color:var(--ink-2)}
+
+  /* ---------- mode table ---------- */
+  table{width:100%; border-collapse:collapse; margin-top:4mm}
+  th{
+    font-family:"IBM Plex Mono",monospace; font-size:7.4pt; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); text-align:left;
+    padding:0 0 2mm; border-bottom:1pt solid var(--rule); font-weight:500;
+  }
+  td{padding:3mm 0; border-bottom:.5pt solid var(--rule); vertical-align:top}
+  td:first-child{width:44mm; padding-right:6mm}
+  .mode-name{font-family:Archivo,sans-serif; font-weight:700; font-size:10.5pt}
+  .mode-bar{height:2.4pt; border-radius:1.2pt; width:16mm; margin-bottom:1.8mm}
+
+  /* ---------- numbered / plain feature rows ---------- */
+  .rows{margin-top:4mm; display:flex; flex-direction:column; gap:3.4mm}
+  .row{display:flex; gap:4mm; align-items:baseline; break-inside:avoid}
+  .num{
+    flex:0 0 6mm; font-family:"IBM Plex Mono",monospace; font-size:8.4pt;
+    font-weight:600; color:var(--teal); padding-top:.4mm;
+  }
+  .row .body{flex:1}
+  .row .body p{margin-top:.8mm; font-size:9.8pt}
+
+  ul{margin:3.5mm 0 0; padding:0; list-style:none;
+     display:flex; flex-direction:column; gap:2.2mm}
+  li{position:relative; padding-left:5mm; font-size:9.8pt; color:var(--ink-2); break-inside:avoid}
+  li::before{
+    content:""; position:absolute; left:0; top:1.9mm;
+    width:1.8mm; height:1.8mm; border-radius:50%; background:var(--teal);
+  }
+  li b{color:var(--ink); font-weight:600}
+
+  /* ---------- stat strip ---------- */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:5mm; margin-top:4mm}
+  .stat{border-top:2.4pt solid var(--teal); padding-top:2.4mm}
+  .stat b{
+    display:block; font-family:Archivo,sans-serif; font-weight:900;
+    font-size:17pt; color:var(--navy); line-height:1; letter-spacing:-.02em;
+  }
+  .stat span{display:block; font-size:8.6pt; color:var(--ink-2); margin-top:1.4mm; line-height:1.3}
+
+  /* ---------- chips ---------- */
+  .chips{display:flex; flex-wrap:wrap; gap:1.8mm; margin-top:3.5mm}
+  .chip{
+    font-family:"IBM Plex Mono",monospace; font-size:7.6pt; letter-spacing:.06em;
+    padding:1.4mm 2.6mm; border:.6pt solid var(--rule); border-radius:1mm;
+    color:var(--ink-2); background:#fff;
+  }
+
+  /* ---------- callout ---------- */
+  .note{
+    margin-top:5mm; border-left:2.4pt solid var(--amber);
+    background:#FDF8F1; padding:3.4mm 4mm; break-inside:avoid;
+  }
+  .note h3{color:var(--amber); font-size:9.6pt}
+  .note p{font-size:9.6pt; margin-top:1.2mm}
+
+  .foot{
+    margin-top:9mm; padding-top:3.5mm; border-top:1pt solid var(--rule);
+    font-family:"IBM Plex Mono",monospace; font-size:7.4pt; line-height:1.6;
+    color:var(--muted);
+  }
+
+  @media screen{
+    body{box-shadow:0 6px 34px rgba(0,0,0,.28); margin-top:22px; margin-bottom:40px;
+         width:210mm; padding:16mm 15mm 20mm}
+    .toolbar{
+      width:210mm; margin:22px auto 0; background:#fff; border-radius:10px;
+      padding:13px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+      box-shadow:0 2px 14px rgba(0,0,0,.2); font-size:13px; color:#4B5866;
+      font-family:"IBM Plex Sans",system-ui,sans-serif;
+    }
+    .toolbar button{
+      font:600 13px/1 "IBM Plex Sans",sans-serif; background:#0A1628; color:#fff;
+      border:0; padding:10px 18px; border-radius:7px; cursor:pointer;
+    }
+  }
+  @media print{ .toolbar{display:none} html{background:#fff} body{width:auto; padding:0; box-shadow:none} }
+</style>
+
+<div class="toolbar">
+  <button onclick="window.print()">Print / Save as PDF</button>
+  <span>Paper <b>A4</b>, margins <b>Default</b>, tick <b>Background graphics</b>.</span>
+</div>
+
+<div class="masthead">
+  <div class="wordmark">Pharmu<span>lation</span></div>
+  <h1>Feature list</h1>
+  <div class="standfirst">Everything the platform does today, read from the codebase and the live database.</div>
+  <div class="meta">
+    <span>Compiled 9 September 2026</span>
+    <span>896 medicines live</span>
+    <span>273 automated tests</span>
+  </div>
+</div>
+
+<section>
+  <h2>Practice modes <span class="count">Four environments</span></h2>
+  <table>
+    <thead>
+      <tr><th>Mode</th><th>What the learner does</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="mode-bar" style="background:#00BFA5"></div>
+          <div class="mode-name">Community Pharmacy</div>
+        </td>
+        <td>Read the prescription, collect each medicine from the dispensing shelf, then build the label &mdash; frequency, timing, duration and auxiliary warning. Includes OTC consultation and compounding.</td>
+      </tr>
+      <tr>
+        <td>
+          <div class="mode-bar" style="background:#4F46E5"></div>
+          <div class="mode-name">Clinical</div>
+        </td>
+        <td>Ward rounds and medication orders: dose, route and frequency, interaction checks, and renal adjustment against the patient in front of you.</td>
+      </tr>
+      <tr>
+        <td>
+          <div class="mode-bar" style="background:#B45309"></div>
+          <div class="mode-name">Industry</div>
+        </td>
+        <td>A tablet batch through eight stages &mdash; formula, weighing, granulation, drying, compression, coating, packaging and QA release &mdash; recorded in a batch booklet.</td>
+      </tr>
+      <tr>
+        <td>
+          <div class="mode-bar" style="background:#0369A1"></div>
+          <div class="mode-name">Warehousing</div>
+        </td>
+        <td>Goods receiving, quarantine decisions, cold-chain deviation handling, dispatch, and stock reconciliation with corrective actions.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="chips">
+    <span class="chip">3 DIFFICULTY LEVELS</span>
+    <span class="chip">PER-MODE TIMERS</span>
+    <span class="chip">DIFFICULTY SCALES TIME AND SCORE</span>
+    <span class="chip">65 CASES IN THE POOL</span>
+  </div>
+</section>
+
+<section>
+  <h2>Artificial intelligence <span class="count">Five systems</span></h2>
+  <div class="rows">
+    <div class="row">
+      <div class="num">01</div>
+      <div class="body">
+        <h3>Prescription Lens</h3>
+        <p>Photograph any prescription, medication label, discharge summary or inpatient chart and it becomes a playable case. Every medicine read off the page is resolved against the live catalogue first, so the case is always playable. The patient name is replaced on the server before anything is displayed or stored, the image is never saved, and a read the model is not confident in is refused rather than guessed.</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="num">02</div>
+      <div class="body">
+        <h3>AI Clinical Reasoning Examiner</h3>
+        <p>A viva that opens automatically once a case is scored and cannot be dismissed. Three questions about the decisions just made, answered in the learner's own words and marked on four axes. Three examiner personalities: Dr. Hassan (strict), Dr. Hakim (Socratic), Dr. Zara (practical).</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="num">03</div>
+      <div class="body">
+        <h3>AI patient</h3>
+        <p>The OTC consultation is a typed conversation across the counter. The patient improvises its wording but cannot invent facts beyond the case, and will withhold relevant history until asked. Marked against the WWHAM framework.</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="num">04</div>
+      <div class="body">
+        <h3>Dr. Hakim, AI mentor</h3>
+        <p>An in-app tutor for medicines, doses, counselling, interactions, calculations, compounding and study help, available alongside gameplay.</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="num">05</div>
+      <div class="body">
+        <h3>Weekly progress report</h3>
+        <p>An AI-written summary of the week's practice, generated at most once per learner per week and surfaced on the dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Learning and analytics</h2>
+  <ul>
+    <li><b>Predictive weakness heatmap</b> &mdash; seven clinical skills across every drug class, built from the error log. A cell with too little behind it says so rather than showing a figure built on two data points.</li>
+    <li><b>Recommended cases</b> &mdash; today's practice chosen from that map, offered alongside the mode cards rather than replacing them.</li>
+    <li><b>Peer benchmarking</b> &mdash; where a learner stands against others at the same rank, computed server-side and returning nothing about anyone else.</li>
+    <li><b>Error explanation panel</b> &mdash; why each mistake was a mistake, at the moment it is made.</li>
+    <li><b>Failure debrief</b> &mdash; a structured review when a case is lost.</li>
+    <li><b>Case file slides</b> &mdash; the clinical picture read one slide at a time, the way a handover actually runs.</li>
+    <li><b>Simulated prescription viewer</b>, <b>mentor tips</b> during play, and a <b>case celebration</b> screen on completion.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Progression and CPD</h2>
+  <div class="stats">
+    <div class="stat"><b>6</b><span>ranks, Intern to Expert Pharmacist</span></div>
+    <div class="stat"><b>14</b><span>badges</span></div>
+    <div class="stat"><b>1 hr</b><span>CPD per 10 completed cases</span></div>
+    <div class="stat"><b>5</b><span>certificate milestones</span></div>
+  </div>
+  <ul>
+    <li><b>XP and levels</b> bound to genuinely recorded cases, with daily streaks and a global leaderboard.</li>
+    <li><b>Downloadable PDF certificates</b> at 1, 5, 10, 25 and 50 CPD hours.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Drug database <span class="count">896 medicines</span></h2>
+  <div class="stats">
+    <div class="stat"><b>896</b><span>medicines with full clinical data</span></div>
+    <div class="stat"><b>1,282</b><span>branded products</span></div>
+    <div class="stat"><b>4</b><span>markets: US, UK, Global, Pakistan</span></div>
+    <div class="stat"><b>94</b><span>Pakistani brands</span></div>
+  </div>
+  <ul>
+    <li>Generic name, drug class, category, dosage, indications, side effects, contraindications and interactions for every entry.</li>
+    <li>Branded products attributed to their manufacturer, so a script written by brand resolves to the right medicine.</li>
+    <li><b>Search</b>, <b>study lists</b>, <b>flashcards</b>, <b>quiz</b> and <b>bookmarks</b> built on top of the same catalogue.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Faculty platform</h2>
+  <ul>
+    <li><b>Classes with join codes</b> &mdash; faculty is a role chosen at signup, with no administrator in the loop.</li>
+    <li><b>Cohort overview</b> &mdash; students enrolled, cases completed this week, students gone quiet, assignments past due.</li>
+    <li><b>Assignments</b> with deadlines, shown on the student's own dashboard.</li>
+    <li><b>Timed assessments</b> with a managed sitting: the clock bar follows the student across the whole app, not just the game screen.</li>
+    <li><b>Class analytics</b> and <b>per-student drill-down</b>, including the weakness map read across a cohort.</li>
+    <li><b>Row-level security isolation</b> &mdash; an educator can only ever read students enrolled in their own classes, and a student only their own. Enforced in the database, not the interface.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Administration</h2>
+  <ul>
+    <li>Admin panel with <b>overview, users, cases and drugs</b> tabs.</li>
+    <li><b>Promote to educator</b> and <b>promote to admin</b> from the user list.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Account and platform</h2>
+  <ul>
+    <li><b>Sign-up with role choice</b> (learner or faculty), email and OAuth sign-in.</li>
+    <li><b>Profile</b> with badges, case history and certificates.</li>
+    <li><b>Settings</b> &mdash; sound effects, mentor tips, timer warnings, display name, password change, and account deletion.</li>
+    <li><b>Dark and light themes</b>, switchable from the menu bar.</li>
+    <li><b>Onboarding modal</b> and a context-aware <b>tutorial bot</b> on every screen.</li>
+    <li><b>Mobile-optimised</b> layout, animated transitions throughout, and server-side rendering.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Engineering and integrity</h2>
+  <ul>
+    <li><b>Row-level security on every table</b>; the AI key never reaches the browser.</li>
+    <li><b>XP cannot be farmed</b> &mdash; it is bound at the database level to a case that was genuinely recorded, and each case can be claimed exactly once.</li>
+    <li><b>Rate limits and sanity constraints</b> on recorded scores.</li>
+    <li><b>273 automated tests across 16 files.</b></li>
+    <li>React 19, TanStack Start with SSR, TypeScript, Tailwind, Supabase (Postgres, auth, RLS) and Google Gemini.</li>
+  </ul>
+
+  <div class="note">
+    <h3>Two open items</h3>
+    <p>Printed material still quotes <b>881 medicines</b>; the live figure is <b>896</b> after the latest catalogue migrations. And an <b>&ldquo;Emergency Responder&rdquo;</b> badge remains in the database from a mode that was removed, so it can never be earned.</p>
+  </div>
+</section>
+
+<div class="foot">
+  A training simulator &mdash; not a clinical decision-support or dispensing tool, and not intended for use in real patient care.<br>
+  Prescription Lens reads a document to build a training case; it does not verify or approve a prescription.<br>
+  Medicine data is for training and is pending pharmacist review.
+</div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useThemeStore } from "@/lib/theme-store";
 
 type LogoVideoProps = {
@@ -23,27 +23,58 @@ type LogoVideoProps = {
  */
 export function LogoVideo({ className = "", size = "nav" }: LogoVideoProps) {
   const [isLooping, setIsLooping] = useState(false);
+  const [canAnimate, setCanAnimate] = useState(false);
   const theme = useThemeStore((s) => s.theme);
+
+  useEffect(() => {
+    // The reveal and loop are VP9 WebM files with an alpha channel. iOS and
+    // Safari may play the video while discarding that alpha; the old H.264
+    // fallback cannot carry alpha at all. Both paths paint the video's blue
+    // 16:9 canvas as a rectangle around the mark.
+    //
+    // Start from the transparent poster so SSR and the first client render
+    // agree, then opt known-good browsers into animation. All browsers on iOS
+    // use WebKit regardless of the browser name, so the platform check covers
+    // Safari, Chrome and Firefox on an iPhone or iPad.
+    const ua = navigator.userAgent;
+    const isiOS = /iPad|iPhone|iPod/.test(ua)
+      || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isDesktopSafari = /Safari/.test(ua)
+      && !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(ua);
+    const probe = document.createElement("video");
+    const supportsVp9 = probe.canPlayType('video/webm; codecs="vp9"') !== "";
+
+    setCanAnimate(!isiOS && !isDesktopSafari && supportsVp9);
+  }, []);
 
   if (theme === "light") return <Wordmark size={size} />;
 
   return (
     <span className={`inline-flex items-center ${className}`}>
-      <video
-        key={isLooping ? "logo-loop" : "logo-reveal"}
-        aria-hidden="true"
-        autoPlay
-        loop={isLooping}
-        muted
-        playsInline
-        poster="/logo-poster.webp"
-        preload="auto"
-        onEnded={() => setIsLooping(true)}
-        className="h-full w-full object-contain"
-      >
-        <source src={isLooping ? "/logo-loop.webm" : "/logo.webm"} type="video/webm" />
-        <source src="/logo.mp4" type="video/mp4" />
-      </video>
+      {canAnimate ? (
+        <video
+          key={isLooping ? "logo-loop" : "logo-reveal"}
+          aria-hidden="true"
+          autoPlay
+          loop={isLooping}
+          muted
+          playsInline
+          poster="/logo-poster.webp"
+          preload="auto"
+          onEnded={() => setIsLooping(true)}
+          onError={() => setCanAnimate(false)}
+          className="h-full w-full object-contain"
+        >
+          <source src={isLooping ? "/logo-loop.webm" : "/logo.webm"} type='video/webm; codecs="vp9"' />
+        </video>
+      ) : (
+        <img
+          src="/logo-poster.webp"
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-contain"
+        />
+      )}
       <span className="sr-only">Pharmulation</span>
     </span>
   );
