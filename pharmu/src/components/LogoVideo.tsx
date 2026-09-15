@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useThemeStore } from "@/lib/theme-store";
 
+const LOGO_REVEAL_DURATION_MS = 5_082;
+
+type LogoMedia = "poster" | "webm" | "webp";
+
 type LogoVideoProps = {
   className?: string;
   /** Sizes the light-theme wordmark. The video ignores it and uses className. */
@@ -23,7 +27,7 @@ type LogoVideoProps = {
  */
 export function LogoVideo({ className = "", size = "nav" }: LogoVideoProps) {
   const [isLooping, setIsLooping] = useState(false);
-  const [canAnimate, setCanAnimate] = useState(false);
+  const [media, setMedia] = useState<LogoMedia>("poster");
   const theme = useThemeStore((s) => s.theme);
 
   useEffect(() => {
@@ -33,8 +37,8 @@ export function LogoVideo({ className = "", size = "nav" }: LogoVideoProps) {
     // 16:9 canvas as a rectangle around the mark.
     //
     // Start from the transparent poster so SSR and the first client render
-    // agree, then opt known-good browsers into animation. All browsers on iOS
-    // use WebKit regardless of the browser name, so the platform check covers
+    // agree, then select an alpha-capable animation. All browsers on iOS use
+    // WebKit regardless of the browser name, so the platform check covers
     // Safari, Chrome and Firefox on an iPhone or iPad.
     const ua = navigator.userAgent;
     const isiOS = /iPad|iPhone|iPod/.test(ua)
@@ -44,14 +48,55 @@ export function LogoVideo({ className = "", size = "nav" }: LogoVideoProps) {
     const probe = document.createElement("video");
     const supportsVp9 = probe.canPlayType('video/webm; codecs="vp9"') !== "";
 
-    setCanAnimate(!isiOS && !isDesktopSafari && supportsVp9);
+    if (!isiOS && !isDesktopSafari && supportsVp9) {
+      setMedia("webm");
+      return;
+    }
+
+    // Safari supports animated WebP with alpha, unlike the opaque H.264 MP4.
+    // Preload both stages before mounting the reveal so its timer starts only
+    // after the files are cached and the reveal-to-loop handoff stays seamless.
+    const reveal = new Image();
+    const loop = new Image();
+    let cancelled = false;
+    let loadedImages = 0;
+
+    const showAnimationWhenReady = () => {
+      loadedImages += 1;
+      if (!cancelled && loadedImages === 2) setMedia("webp");
+    };
+    const showPoster = () => {
+      if (!cancelled) setMedia("poster");
+    };
+
+    reveal.onload = showAnimationWhenReady;
+    loop.onload = showAnimationWhenReady;
+    reveal.onerror = showPoster;
+    loop.onerror = showPoster;
+    reveal.src = "/logo-reveal.webp";
+    loop.src = "/logo-loop.webp";
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  useEffect(() => {
+    if (media !== "webp" || isLooping) return;
+
+    const timer = window.setTimeout(
+      () => setIsLooping(true),
+      LOGO_REVEAL_DURATION_MS,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [isLooping, media]);
 
   if (theme === "light") return <Wordmark size={size} />;
 
   return (
     <span className={`inline-flex items-center ${className}`}>
-      {canAnimate ? (
+      {media === "webm" ? (
         <video
           key={isLooping ? "logo-loop" : "logo-reveal"}
           aria-hidden="true"
@@ -62,11 +107,20 @@ export function LogoVideo({ className = "", size = "nav" }: LogoVideoProps) {
           poster="/logo-poster.webp"
           preload="auto"
           onEnded={() => setIsLooping(true)}
-          onError={() => setCanAnimate(false)}
+          onError={() => setMedia("poster")}
           className="h-full w-full object-contain"
         >
           <source src={isLooping ? "/logo-loop.webm" : "/logo.webm"} type='video/webm; codecs="vp9"' />
         </video>
+      ) : media === "webp" ? (
+        <img
+          key={isLooping ? "logo-loop" : "logo-reveal"}
+          src={isLooping ? "/logo-loop.webp" : "/logo-reveal.webp"}
+          alt=""
+          aria-hidden="true"
+          onError={() => setMedia("poster")}
+          className="h-full w-full object-contain"
+        />
       ) : (
         <img
           src="/logo-poster.webp"
