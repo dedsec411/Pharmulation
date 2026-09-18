@@ -280,7 +280,9 @@ function Dashboard() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5" data-tour-scene="dashboard">
+      {/* A column on a phone so its children can be ordered; the spacing is
+          space-y either way, and above sm this is the block it always was. */}
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5 max-sm:flex max-sm:flex-col" data-tour-scene="dashboard">
 
         {/* MENTOR TIP - top, first thing you see */}
         <MentorTipBanner tip={tip} />
@@ -415,8 +417,22 @@ function Dashboard() {
           <AssignedWork userId={userId} />
         </div>
 
+        {/* Painted last on a phone, where main is a column.
+            The weakness map is a 500-row query, so this is the last thing on
+            the page to arrive - 610px of it, landing above the Lens button and
+            the mode grid about three seconds in and pushing a screen of content
+            down: 0.29 of layout shift at 390px, 0.38 at 430px. Ordering costs
+            nothing to lay out and moves no DOM, so a screen reader still meets
+            the recommendation here; reserving its height instead would have
+            traded the shift for a collapse on every account whose map has
+            nothing to recommend. Every class involved is max-sm:, so above sm
+            this is the page it always was - a wrapper here was not: main
+            spaces its children with space-y-5 (`main > * + *`), and three
+            children behind one wrapper stopped being main's children, which
+            lifted the Lens entry and the modes 20, 40 and 60px on every
+            desktop width. */}
         {weaknessMap && hasEnoughHistory(weaknessMap.clinical) && (
-          <RecommendedCases map={weaknessMap.clinical} />
+          <RecommendedCases map={weaknessMap.clinical} className="max-sm:order-last" />
         )}
 
         {/* Scanning a document is a thing you do, not a mode you enter, so it

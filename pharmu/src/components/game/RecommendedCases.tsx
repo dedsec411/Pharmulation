@@ -40,12 +40,14 @@ const MODE_LABEL: Record<string, string> = {
   oncology: "Clinical",
 };
 
-export function RecommendedCases({ map }: { map: WeaknessMap }) {
+export function RecommendedCases({ map, className = "" }: { map: WeaknessMap; className?: string }) {
   const gaps = weakestAreas(map, 3);
   if (!gaps.length) return null;
 
   return (
-    <section className="mt-6">
+    /* The caller decides where this sits on a phone: it is the last thing on
+       the dashboard to arrive, and arriving in the middle moved the page. */
+    <section className={`mt-6 ${className}`}>
       <h2 className="flex items-center gap-2 text-xl font-bold">
         <Target className="size-5 text-primary" /> Recommended for you today
       </h2>

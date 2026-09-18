@@ -684,6 +684,39 @@ Shared mobile polish - the guide, and the controls every page shares:
   (page work, not shared). The nested-`<button>` hydration warning on `/drugs`
   is unchanged and still open.
 
+Global smoothness on a phone - what was measured, and the one thing wrong:
+- **The app was already smooth.** At 360-430 under a 4x CPU throttle every
+  route scrolls at a 60fps median (0-2 frames over 32ms out of 100-440), with
+  no long tasks except one 51-67ms render on `/drugs` when its 60-row page
+  lands - which is a button press, not scroll work. Nothing animates a
+  non-transform property except the two loading-screen loops below, and there
+  is **no backdrop blur on any route**: an earlier reading of "55 screens of
+  blur" was a probe bug (Chrome answers the unprefixed property with an empty
+  string, so `'none' && '' === 'none'` counted every element on the page).
+- **The one real defect was the dashboard's late layout shift.** The weakness
+  map is a 500-row query, so `RecommendedCases` arrived about three seconds in,
+  610px tall, above the Lens entry and the mode grid, and pushed a screen of
+  content down: **0.2931 at 390, 0.2807 at 360, 0.3835 at 430**, against 0.0014
+  at 1440 where those blocks sit side by side.
+- **Fixed by painting it last on a phone**: `<main>` is `max-sm:flex
+  max-sm:flex-col` and the recommendation carries `max-sm:order-last`. Ordering
+  moves no DOM, so a screen reader still meets it where it was, and every class
+  is `max-sm:`, so the desktop is untouched by construction. After:
+  **0.1409 / 0.1465 / 0.1764 / 0.0820** at 390 / 360 / 430 / 390x667.
+- **A wrapper cannot do this, and the measurement says so twice.** Two attempts
+  grouped those siblings in a `sm:contents` div; both moved **63 text runs on
+  every desktop width** by 20, 40 and 60px, because main spaces its children
+  with `space-y-5` - which compiles to `main > * + *` - and children behind a
+  wrapper stop being main's children. `display: contents` does not bring that
+  selector back, and neither does `sm:space-y-5` on the wrapper. Reverted both.
+- Known and left: the residual ~0.14 is `WeeklyReportBanner`, which returns
+  null until its stored report resolves and then inserts 439px. Reserving a
+  height would trade that shift for a collapse on every account that never gets
+  a report, so it waits until the banner can distinguish "still deciding" from
+  "nothing to say". `CaseLoading` animates `clip-path` and `background-position`
+  against the house rule, but its route measured 17ms median and 0 dropped
+  frames, so it was left alone rather than churned.
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made
