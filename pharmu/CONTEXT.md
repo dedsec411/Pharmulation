@@ -717,6 +717,41 @@ Global smoothness on a phone - what was measured, and the one thing wrong:
   against the house rule, but its route measured 17ms median and 0 dropped
   frames, so it was left alone rather than churned.
 
+Mobile hardening, QA and performance - what the sweep across all five phone
+widths found:
+- **393 and 412 had never been measured. They are no different.** Zero
+  horizontal overflow on every route at 360/390/393/412/430, the guide blocking
+  nothing, and the same control inventory at all five widths. The edge-case
+  hunt found the app consistent; the defects were density, not width.
+- **Density, on two pages.** `/drugs`: the four filter chips were 32px and the
+  sixty save chips 27px carrying 10px text. `/profile`: the four tabs were
+  32px. All fixed with `max-sm:` classes only - chips and tabs to 44px, and the
+  save chip keeping its drawn size while a pseudo-element carries the target
+  (measured 70x29 with a **47px hit span**, text 11px). Sub-44 controls at 390:
+  `/drugs` 65 -> 61, `/profile` 39 -> 35; text under 11px on `/drugs` 180 -> 120.
+- **One duplicated clinical row is gone.** `interpretLab` answers with the
+  canonical label, so a case carrying both `K` and `Potassium` produced two
+  readings named "Potassium" - the same value twice on the slide, keyed
+  identically for React. `buildCaseFile` keeps the first spelling now. No
+  value, range or flag changed.
+- **The nested `<button>` on `/drugs` is still open, and the price is now
+  known.** The card is a `motion.button` holding the save `<button>`, so React
+  reports a hydration error on every load. Swapping the card for a
+  `div role="button"` removes it - 0 reports at all five phone widths - but is
+  not free: the cards **rose 8-36px at every desktop width** and sixty button
+  rects left the fingerprint, because a `<button>` carries vertical metrics a
+  div does not. Reverted; do it when the desktop grid can be re-laid out.
+- **Performance is unchanged, and was already fine.** Under a 4x CPU throttle
+  every route scrolls at a 17ms median at 390 and 412. `/drugs` still spends
+  one 58-63ms task rendering its 60-row page; it did not fire in the 390
+  after-run, which is sampling, not a win. Dashboard layout shift held at 0.002.
+- Desktop: **0 moved and 0 missing rects** at 640/768/900/1024/1440, noise 0.
+- **Landmine: a broken build measures beautifully.** A mismatched closing tag
+  left every route serving the dev server's error page, and the fingerprint
+  diff duly reported "0 moved" - with every key missing and the only controls
+  on the page being "Try again" and "Go home". Check the page renders before
+  believing a diff; `shared-audit` runs are worthless against a failed compile.
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made

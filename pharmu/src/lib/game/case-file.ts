@@ -194,7 +194,24 @@ export function buildCaseFile({
     { label: "Respiratory rate", value: `${vitals.rr ?? vitals.RR ?? 16} /min` },
   ];
 
-  const labReadings = Object.entries(labs ?? {}).map(([k, v]) => interpretLab(k, v));
+  /**
+   * One row per reading, not one per key.
+   *
+   * interpretLab answers with the canonical label, so a case carrying both
+   * `K` and `Potassium` - the default set and the case's own - produced two
+   * readings called "Potassium": the same value twice on the slide, and a
+   * duplicate React key with it. The first spelling wins; the second is the
+   * same measurement under another name.
+   */
+  const seenLabs = new Set<string>();
+  const labReadings = Object.entries(labs ?? {})
+    .map(([k, v]) => interpretLab(k, v))
+    .filter((reading) => {
+      const key = reading.name.toLowerCase();
+      if (seenLabs.has(key)) return false;
+      seenLabs.add(key);
+      return true;
+    });
   const abnormal = labReadings.filter((l) => l.flag === "low" || l.flag === "high");
 
   const slides: Slide[] = [

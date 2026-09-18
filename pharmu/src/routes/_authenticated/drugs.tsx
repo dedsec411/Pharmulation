@@ -168,7 +168,7 @@ function DrugsPage() {
           <div className="flex max-w-full shrink-0 gap-1 overflow-x-auto glass rounded-full p-1 text-sm">
             {(["all", "study", "flashcards", "quiz"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)}
-                className={`px-4 py-1.5 rounded-full transition capitalize ${
+                className={`px-4 py-1.5 rounded-full transition capitalize max-sm:inline-flex max-sm:min-h-11 max-sm:items-center ${
                   tab === t ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:text-foreground"
                 }`}>
                 {t === "all" ? "All" : t === "study" ? "Study list" : t === "flashcards" ? "Flashcards" : "Quiz"}
@@ -211,6 +211,14 @@ function DrugsPage() {
                     // No `layout` prop: it makes framer-motion measure every
                     // card's box on each render, and with hundreds on screen
                     // that pass is felt on every keystroke in the search field.
+                    //
+                    // This card holds a real <button> (the save chip), so it is
+                    // a button inside a button - invalid HTML, and React says so
+                    // on every load. Swapping it for a div with role="button"
+                    // fixes that but is NOT free: measured, the cards rose 8 to
+                    // 36px at every desktop width, because a <button> carries
+                    // vertical metrics a div does not. Left as it was until that
+                    // can be done deliberately, with the desktop re-laid out.
                     key={d.id} onClick={() => setSelected(d)}
                     whileHover={{ y: -2 }}
                     className="glass-card p-5 text-left hover:border-primary/40 transition relative">
@@ -220,7 +228,9 @@ function DrugsPage() {
                         title={bookmarked ? `Remove ${d.name} from your study list` : `Save ${d.name} to your study list`}
                         aria-label={bookmarked ? `Remove ${d.name} from your study list` : `Save ${d.name} to your study list`}
                         aria-pressed={bookmarked}
-                        className={`absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition ${
+                        /* 27px and 10px on a phone, sixty of them to a page.
+                           The chip keeps its size; the finger gets the rest. */
+                        className={`absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition max-sm:text-[11px] max-sm:after:absolute max-sm:after:-inset-x-2 max-sm:after:-inset-y-2.5 max-sm:after:content-[''] ${
                           bookmarked
                             ? "bg-rose-500/20 text-rose-400"
                             : "bg-foreground/5 text-muted-foreground hover:bg-rose-500/15 hover:text-rose-400"

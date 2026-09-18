@@ -245,7 +245,7 @@ function ProfilePage() {
         <div className="mt-6 flex max-w-full gap-1 overflow-x-auto glass rounded-full p-1 text-sm w-fit mx-auto">
           {(["overview", "badges", "history", "certificates"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-5 py-1.5 rounded-full capitalize transition ${
+              className={`px-5 py-1.5 rounded-full capitalize transition max-sm:inline-flex max-sm:min-h-11 max-sm:items-center ${
                 tab === t ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground"
               }`}>{t}</button>
           ))}
