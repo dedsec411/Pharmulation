@@ -586,8 +586,8 @@ Warehousing on a phone (`game.warehousing.tsx`, `CartonCheck`,
 - **Receiving:** zones are two columns with the repeated "Drop the selected
   shipment here" line hidden, quarantine keeps a full row, and the picked
   manifest says "Now choose a zone below" (the zones are under the whole list).
-- **Expiry calls, carton condition toggles and QC-style pairs are two 44px
-  buttons under their item**; expiry buttons now carry `aria-pressed`.
+- **Expiry calls and the four carton condition checks are pairs of 44px buttons
+  under their item**, not pills beside it; expiry now carries `aria-pressed`.
 - **The audit status board follows the decision** (`order-last`, no controls,
   so focus order is unchanged).
 - **The stocktake stays a table** (a four-column comparison) with tighter
@@ -597,6 +597,14 @@ Warehousing on a phone (`game.warehousing.tsx`, `CartonCheck`,
   temp log, seal, GTIN and serial labels are 11px on a phone.
 - Probe: `warehouse.mjs` also freezes `Date.now` while the shift is dealt -
   the seed uses the clock as well as `Math.random`.
+- Known and left: the `Abbr` tooltip buttons (FEFO, DC, PO, GRN) are about
+  18x16 - shared component, a mentor/typography pass. The temp log's "8C red
+  zone" caption is 8px SVG text scaled up by the viewBox; the range beside it
+  ("2-16C") is 11px. A score toast can sit over "Proceed to dispatch" while it
+  is on screen. Dr. Hakim still overlaps the manifest list, the audit options
+  and the three-way match at the bottom-left at some scroll positions. There is
+  no barcode scanner or camera in this mode - the barcode is drawn on the
+  carton and read by eye - so no scanning UI was exercised.
 
 ## Landmines — every one of these has already bitten
 
