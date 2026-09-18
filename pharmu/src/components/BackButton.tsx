@@ -29,6 +29,7 @@ export function BackButton({ to, label = "Back", className = "" }: BackButtonPro
         group inline-flex items-center gap-2
         rounded-xl
         px-4 py-2
+        max-sm:min-h-11
         text-sm font-semibold
         text-foreground/90
         border border-foreground/15
@@ -77,6 +78,7 @@ export function FloatingBackButton({ to, label = "Exit", onBeforeNavigate }: Flo
         inline-flex items-center gap-2
         rounded-xl
         px-4 py-2
+        max-sm:min-h-11
         text-sm font-semibold
         text-foreground/90
         border border-foreground/15

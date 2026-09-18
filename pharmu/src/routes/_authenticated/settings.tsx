@@ -136,7 +136,9 @@ function Toggle({ label, desc, checked, onChange }: { label: string; desc: strin
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${checked ? "bg-primary" : "bg-foreground/15"}`}>
+        /* 24px of switch, 44px of finger: the pseudo-element carries the rest
+           of the target without turning the row into a slab. */
+        className={`relative h-6 w-11 shrink-0 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background max-sm:after:absolute max-sm:after:-inset-y-2.5 max-sm:after:inset-x-0 max-sm:after:content-[''] ${checked ? "bg-primary" : "bg-foreground/15"}`}>
         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${checked ? "left-5" : "left-0.5"}`} />
       </button>
     </div>

@@ -60,7 +60,10 @@ export function scenesOnPage(anchors: { scene: string | null }[]): string[] {
  * same classes but let clicks through, and that is what tells the two apart.
  */
 export function pageIsCovered(): boolean {
-  return Array.from(document.querySelectorAll(".fixed.inset-0, [aria-modal='true']")).some((el) => {
+  // The phone menu counts too. It is not a fixed full-screen layer - it hangs
+  // off the app bar - so it passed this test while asking for the same
+  // attention a modal does, and he stayed lit and tappable in front of it.
+  return Array.from(document.querySelectorAll(".fixed.inset-0, [aria-modal='true'], [data-app-menu]")).some((el) => {
     if (el.closest(`[${GUIDE_LAYER}]`)) return false;
     const style = window.getComputedStyle(el);
     if (style.pointerEvents === "none" || style.visibility === "hidden" || style.display === "none") return false;

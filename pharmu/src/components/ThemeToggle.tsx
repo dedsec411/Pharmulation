@@ -28,10 +28,13 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
       title={dark ? "Switch to light theme" : "Switch to dark theme"}
       onClick={toggle}
-      className={`group relative inline-flex h-8 w-[3.75rem] shrink-0 items-center overflow-hidden rounded-full border border-border/70 transition duration-300 hover:border-primary/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${className}`}
+      /* The capsule stays 32px tall - it is a drawn object, not a hit box - and
+         a pseudo-element gives the finger the missing 12px on a phone. */
+      className={`group relative inline-flex h-8 w-[3.75rem] shrink-0 items-center rounded-full border border-border/70 transition duration-300 hover:border-primary/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-sm:after:absolute max-sm:after:-inset-x-2 max-sm:after:-inset-y-1.5 max-sm:after:content-[''] ${className}`}
     >
-      {/* The capsule body: coloured half, powder half, seam between. */}
-      <span aria-hidden="true" className="absolute inset-0 flex">
+      {/* The capsule body: coloured half, powder half, seam between. Clipped
+          here rather than on the button, whose hit area now reaches past it. */}
+      <span aria-hidden="true" className="absolute inset-0 flex overflow-hidden rounded-full">
         <span className="h-full w-1/2 bg-primary/85" />
         <span className="h-full w-1/2 bg-foreground/[0.09] dark:bg-white/85" />
       </span>

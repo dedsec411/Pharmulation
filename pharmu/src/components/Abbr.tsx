@@ -34,7 +34,10 @@ export function Abbr({ term, className = "" }: { term: string; className?: strin
         title={tooltip(entry)}
         aria-expanded={open}
         aria-label={`${term}: ${tooltip(entry)}`}
-        className={`cursor-help underline decoration-dotted decoration-from-font underline-offset-2 transition hover:text-primary ${className}`}
+        /* A term inside a sentence cannot grow to 44px without breaking the
+           line it sits in, so the finger gets a taller invisible box around it
+           on a phone and the text keeps its place. */
+        className={`cursor-help underline decoration-dotted decoration-from-font underline-offset-2 transition hover:text-primary max-sm:relative max-sm:after:absolute max-sm:after:-inset-x-1 max-sm:after:-inset-y-3.5 max-sm:after:content-[''] ${className}`}
       >
         {entry.term}
       </button>

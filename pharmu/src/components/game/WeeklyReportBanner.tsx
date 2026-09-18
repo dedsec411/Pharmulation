@@ -135,7 +135,7 @@ export function WeeklyReportBanner({
             type="button"
             onClick={() => setDismissed(true)}
             aria-label="Dismiss this week's report"
-            className="rounded-full border border-border/50 p-1.5 text-muted-foreground transition hover:text-foreground max-sm:-mr-1 max-sm:-mt-1 max-sm:grid max-sm:size-10 max-sm:shrink-0 max-sm:place-items-center max-sm:p-0"
+            className="rounded-full border border-border/50 p-1.5 text-muted-foreground transition hover:text-foreground max-sm:-mr-1 max-sm:-mt-1 max-sm:grid max-sm:size-11 max-sm:shrink-0 max-sm:place-items-center max-sm:p-0"
           >
             <XIcon className="size-4" />
           </button>

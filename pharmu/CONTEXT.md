@@ -647,6 +647,43 @@ Class, assignments and assessments on a phone (`class.tsx`,
   report" is 40px - all shell/dashboard, not this flow. Dr. Hakim still
   overlaps the last card on the class page at some scroll positions.
 
+Shared mobile polish - the guide, and the controls every page shares:
+- **The docked guide yields to whatever is under him.** He waits in a fixed
+  corner, so what he covers is whatever the reader has scrolled to. Measured
+  across the app at phone widths: 56-59% of Save on Settings, 29% of the
+  profile's hours, 25% of the certificate download, 7% of Join class, a
+  different drug's Save button every screen of the database. `FlyingHakim` now
+  hit-tests nine points of his own box (centre, quarters, edge midpoints) with
+  `elementsFromPoint`, ignores anything in the guide layer, and when an
+  interactive control is under any of them drops to 20% opacity and
+  `pointer-events: none` - so the press reaches the control. **Driven by the
+  page, not by the width**: a desktop's left margin has nothing under him, so
+  1024 and 1440 behave exactly as before.
+- **It has to re-check on DOM changes, not only on scroll.** The first version
+  looked once at mount - before his spring had landed and before the page had
+  painted - and a page opened at the top never asked again. That is precisely
+  how he stayed sitting on Settings' Save button while reporting itself clear.
+  A throttled `MutationObserver` plus one late look at 700ms is what fixed it;
+  keep both if you touch that hook.
+- **The phone menu counts as covering the page.** `pageIsCovered()` looks for a
+  fixed full-screen layer that takes clicks; the ShellMenu panel hangs off the
+  app bar and is neither, so he stayed lit and tappable in front of it.
+  `[data-app-menu]` is now in that selector.
+- Phone touch targets, verified by hit-testing the points around each control
+  rather than reading its box: `BackButton` 38 -> 44 (seven pages), the
+  settings switches 24 -> 44, the theme capsule 32 -> 44, `Abbr`'s inline terms
+  16 -> 44, the weekly report's dismiss 40 -> 44. The switch, the capsule and
+  the abbreviations keep their drawn size and carry the rest of the target in a
+  pseudo-element - a 44px capsule in the phone menu would be a slab.
+- Reduced motion needed nothing: `MotionConfig reducedMotion="user"` in
+  `__root.tsx` plus the CSS block already leave 0 animations running.
+- Known and left: he still clips about **1% of one wide button on the dashboard
+  at 390x667 and at 768** - a sliver at his rim that falls between sample
+  points; sampling the whole perimeter would make him fade far more often than
+  it would help. `/drugs` and `/profile` keep their own 27-36px chips and tabs
+  (page work, not shared). The nested-`<button>` hydration warning on `/drugs`
+  is unchanged and still open.
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made

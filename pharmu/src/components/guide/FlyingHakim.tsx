@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { animate, motion, useMotionValue, useSpring, useTransform, useVelocity } from "framer-motion";
 import { MENTOR_IMAGE } from "@/lib/mentor";
 import { AVATAR, hopHeight, type Point } from "@/lib/guide-flight";
@@ -32,6 +32,95 @@ type Props = {
   /** Stepped aside while a page modal is open; see TutorialBot. */
   hidden?: boolean;
 };
+
+/**
+ * He gets out of the way of whatever he has come to rest on.
+ *
+ * He waits in a fixed corner, so what is underneath him is whatever the reader
+ * has scrolled to: measured across the app, that was the Save button on
+ * Settings (56% of it at 390px), the certificate download on the profile, and
+ * a different drug's Save button every screen of the database. A corner that
+ * is empty on a wide screen is the middle of the content column on a phone.
+ *
+ * So the page decides, not the width: when an interactive control is actually
+ * under his centre he fades back and stops taking taps, which hands the press
+ * to the control he was sitting on. Nothing is under him on a desktop's left
+ * margin, so nothing changes there. One hit test after scrolling stops - no
+ * polling, no width, no layout written back.
+ */
+const TAPPABLE = "a[href], button, input, select, textarea, [role='switch'], [role='tab'], [role='checkbox']";
+/**
+ * Where he looks to see what he is standing on, in fractions of his own box.
+ *
+ * Centre, quarters, and the middle of each edge. The edges earn their place:
+ * with the quarters alone he still sat on a 4% sliver of "View full
+ * leaderboard" and 5% of "Delete account" at 360px, where the button clipped
+ * his rim between the points he was testing.
+ */
+const CORNERS: Array<[number, number]> = [
+  [0.5, 0.5],
+  [0.22, 0.22], [0.78, 0.22], [0.22, 0.82], [0.78, 0.82],
+  [0.5, 0.04], [0.5, 0.96], [0.04, 0.5], [0.96, 0.5],
+];
+
+function useYieldToContent(ref: React.RefObject<HTMLElement | null>, active: boolean): boolean {
+  const [covering, setCovering] = useState(false);
+  useEffect(() => {
+    if (!active) {
+      setCovering(false);
+      return;
+    }
+    let frame = 0;
+    let idle = 0;
+    const check = () => {
+      frame = 0;
+      const el = ref.current;
+      if (!el) return;
+      const box = el.getBoundingClientRect();
+      // Five points rather than his middle. Measured: his lower edge was
+      // sitting on 59% of the Save button on Settings while his centre was
+      // over the card above it, so a single reading called that clear.
+      const onControl = CORNERS.some(([fx, fy]) =>
+        document.elementsFromPoint(box.left + box.width * fx, box.top + box.height * fy)
+          .some((node) => !node.closest("[data-guide-layer]") && node.closest(TAPPABLE)));
+      setCovering(onControl);
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(check);
+    };
+    // After the movement stops rather than during it: mid-scroll he would
+    // blink on and off past every card.
+    const soon = () => {
+      window.clearTimeout(idle);
+      idle = window.setTimeout(schedule, 140);
+    };
+    /**
+     * Scrolling is not the only way the page arrives under him.
+     *
+     * The first reading happens before his spring has landed and before the
+     * page below has painted, so it finds nothing - and a page opened at the
+     * top and never scrolled never asks again. Measured: he sat on 59% of the
+     * Save button on Settings, having decided at mount that the corner was
+     * empty. So the page changing counts too, and one late look catches the
+     * paint that mount was too early for.
+     */
+    const observer = new MutationObserver(soon);
+    observer.observe(document.body, { childList: true, subtree: true });
+    const settle = window.setTimeout(schedule, 700);
+    schedule();
+    window.addEventListener("scroll", soon, { passive: true });
+    window.addEventListener("resize", soon);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", soon);
+      window.removeEventListener("resize", soon);
+      if (frame) window.cancelAnimationFrame(frame);
+      window.clearTimeout(idle);
+      window.clearTimeout(settle);
+    };
+  }, [ref, active]);
+  return covering;
+}
 
 export function FlyingHakim({ to, state, reduced, interactive, onClick, label, badge, hidden = false }: Props) {
   const x = useSpring(to.x, FLIGHT);
@@ -68,19 +157,27 @@ export function FlyingHakim({ to, state, reduced, interactive, onClick, label, b
   const top = useTransform(() => y.get() + hop.get());
 
   const docked = state === "docked";
+  // Only while he is parked: in flight he is the thing being watched, and the
+  // spotlight has already taken the page's clicks.
+  const self = useRef<HTMLButtonElement | null>(null);
+  const yielding = useYieldToContent(self, docked && interactive && !hidden);
 
   return (
     <motion.button
+      ref={self}
       type="button"
       data-guide-layer=""
+      data-guide-yielding={yielding ? "" : undefined}
       onClick={onClick}
+      /* Still reachable by keyboard while he is faded: a tap landing on the
+         control underneath is the point, but Tab was never the problem. */
       tabIndex={interactive ? 0 : -1}
       aria-hidden={interactive ? undefined : true}
       aria-label={label}
       style={{ x, y: top, rotate: reduced ? 0 : lean, width: AVATAR, height: AVATAR }}
-      className={`group fixed left-0 top-0 rounded-full outline-none transition-opacity duration-200 focus-visible:ring-4 focus-visible:ring-primary/50 ${
-        interactive ? "cursor-pointer" : "pointer-events-none"
-      } ${hidden ? "opacity-0" : ""} ${docked ? "z-[55]" : "z-[96]"}`}
+      className={`group fixed left-0 top-0 rounded-full outline-none transition-opacity duration-200 focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:!opacity-100 ${
+        interactive && !yielding ? "cursor-pointer" : "pointer-events-none"
+      } ${hidden ? "opacity-0" : yielding ? "opacity-20" : ""} ${docked ? "z-[55]" : "z-[96]"}`}
     >
       <motion.span
         aria-hidden="true"
