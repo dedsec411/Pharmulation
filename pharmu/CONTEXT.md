@@ -606,6 +606,47 @@ Warehousing on a phone (`game.warehousing.tsx`, `CartonCheck`,
   no barcode scanner or camera in this mode - the barcode is drawn on the
   carton and read by eye - so no scanning UI was exercised.
 
+Class, assignments and assessments on a phone (`class.tsx`,
+`assessment.$assessmentId.tsx`, `SittingBar`, `ClassMembership`):
+- **Three sticky bars wanted offset 0.** `SittingBar` is mounted for the whole
+  signed-in area; the app bar and the case bar stick too. Scrolled, the app bar
+  covered the clock, and inside a case the assessment bar covered the case
+  bar's Back and timer outright (102px over 71px). Below md the two lower bars
+  now start at `4.5rem` (`body:has([data-sitting-bar])` in styles.css), which
+  is why **the phone assessment bar is a fixed 4.5rem two-row grid** - title
+  and clock, then progress and a 44px Submit. Change one and change the other.
+- Toasts clear the assessment bar (5.25rem), and both bars together when a case
+  is open under one (12.25rem).
+- **Class summary tiles are two by two below sm**: one column spent 600px of
+  the first screen on four numbers before the work they summarise. The loading
+  skeleton matches that grid, so nothing jumps when it lands.
+- The assessment briefing keeps its three facts (cases, minutes, mode) on one
+  row on a phone; stacked they pushed the rules and Begin off the first screen.
+- Class stat tiles drop their entry animation and stagger under
+  `prefers-reduced-motion` - a framer transform is not reached by the global
+  CSS reduced-motion block in styles.css.
+- Probe: `class.mjs` serves the educator tables from fixtures and answers
+  `start_assessment_sitting`, `submit_assessment_sitting` and
+  `join_class_by_code` locally, so the whole flow can be driven without
+  enrolling anyone, opening a sitting or writing a submission.
+- **The signed-in bar fits at 768 now.** It needed 998px to lay out, so at 768 -
+  where the desktop links first appear - the page scrolled 230px sideways with
+  the account button off the right edge (768 and 900 both; below 768 the
+  `overflow-x: clip` rule hid it). Between md and lg the logo is `w-40`, the
+  link padding `px-2` and the account shows initials without the name. Every
+  `lg:` value is what the desktop always had, and 1024/1440 were verified
+  unchanged.
+- Probe noise, not a regression: the join form's wrap row (`ClassMembership`
+  inside the class page's `details`) moves 3-10px between two runs of the same
+  code at 640 and 1024, and sometimes samples not at all. Check a repeat run
+  against itself before reading anything into those seven rects.
+- Known and left: above md the assessment bar still overlaps the app bar and
+  the case bar once scrolled - the same `top` offset would fix it, but desktop
+  geometry is frozen in these passes. `BackButton` is 38px, the theme switch
+  inside the phone menu is 32px and the dashboard's "Dismiss this week's
+  report" is 40px - all shell/dashboard, not this flow. Dr. Hakim still
+  overlaps the last card on the class page at some scroll positions.
+
 ## Landmines — every one of these has already bitten
 
 - **Do not wrap the router outlet in `AnimatePresence`.** A keyed remount made

@@ -114,14 +114,19 @@ export function Navbar() {
   return (
     <nav data-app-nav="" aria-label="Main" className="sticky top-0 z-40 glass border-b border-border">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:h-24 sm:px-6">
-        <Link to="/dashboard" className="flex h-12 w-36 shrink-0 items-center overflow-visible rounded-2xl transition duration-300 hover:-translate-y-0.5 hover:drop-shadow-[0_16px_34px_oklch(0.74_0.14_180/0.28)] sm:h-20 sm:w-60">
+        {/* Narrower between md and lg. The bar needs 998px to lay out: at 768,
+            where the desktop links first appear, that let the page scroll 230px
+            sideways with the account button off the right edge. The logo, the
+            link padding and the account name each give some of it back, and
+            every lg: value is what the desktop always had. */}
+        <Link to="/dashboard" className="flex h-12 w-36 shrink-0 items-center overflow-visible rounded-2xl transition duration-300 hover:-translate-y-0.5 hover:drop-shadow-[0_16px_34px_oklch(0.74_0.14_180/0.28)] sm:h-20 sm:w-60 md:w-40 lg:w-60">
           <LogoVideo className="aspect-video w-full" />
         </Link>
-        <div className="hidden md:flex items-center gap-1 text-sm">
+        <div className="hidden md:flex items-center gap-0.5 lg:gap-1 text-sm">
           {[...links, { to: "/profile", label: "Profile", tour: "nav-profile" } as const].map((l) => (
             <Link key={l.to} to={l.to} data-tour={l.tour}
-              className="rounded-full border border-transparent px-4 py-2 text-muted-foreground transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/10 hover:text-foreground hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]"
-              activeProps={{ className: "rounded-full border border-primary/35 bg-primary/10 px-4 py-2 text-primary shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]" }}>
+              className="rounded-full border border-transparent px-2 py-2 lg:px-4 text-muted-foreground transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/10 hover:text-foreground hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]"
+              activeProps={{ className: "rounded-full border border-primary/35 bg-primary/10 px-2 py-2 lg:px-4 text-primary shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]" }}>
               {l.label}
             </Link>
           ))}
@@ -136,9 +141,11 @@ export function Navbar() {
           <div ref={account} className="relative hidden md:block">
           <button onClick={() => setOpen((o) => !o)} data-tour="account-menu"
             aria-expanded={open} aria-haspopup="true" aria-controls="account-menu-panel"
-            className="flex items-center gap-2 rounded-full glass px-3 py-1.5 transition duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]">
+            className="flex items-center gap-2 rounded-full glass px-2 py-1.5 lg:px-3 transition duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]">
             <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground grid place-items-center text-xs font-bold">{initials}</div>
-            <span className="hidden sm:block text-sm">{displayName}</span>
+            {/* The initials stand in for the name until there is room for both:
+                the name is what the menu's own heading repeats anyway. */}
+            <span className="hidden lg:block text-sm">{displayName}</span>
           </button>
           {open && (
             <div id="account-menu-panel" className="absolute right-0 mt-2 w-48 glass-card p-1 text-sm z-50 shadow-[0_22px_55px_-30px_oklch(0.74_0.14_180/0.8)]">

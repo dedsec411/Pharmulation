@@ -112,23 +112,29 @@ function AssessmentBriefing() {
               <h1 className="mt-4 text-3xl font-extrabold">{a.title}</h1>
               <p className="mt-1 text-sm text-muted-foreground">{state.note}</p>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-border/40 bg-background/40 p-4">
+              {/* Three across on a phone as well: stacked, the three numbers
+                  that say what this sitting is took 375px and pushed the rules
+                  and the start button off the first screen. */}
+              <div className="mt-6 grid gap-3 max-sm:grid-cols-3 max-sm:gap-2 sm:grid-cols-3">
+                <div className="rounded-xl border border-border/40 bg-background/40 p-4 max-sm:p-3">
                   <ListChecks className="size-4 text-primary" />
                   <p className="mt-2 text-xl font-black tabular-nums">{a.case_count}</p>
                   <p className="text-xs text-muted-foreground">
                     {a.case_count === 1 ? "case" : "cases"}
                   </p>
                 </div>
-                <div className="rounded-xl border border-border/40 bg-background/40 p-4">
+                <div className="rounded-xl border border-border/40 bg-background/40 p-4 max-sm:p-3">
                   <Timer className="size-4 text-primary" />
                   <p className="mt-2 text-xl font-black tabular-nums">
                     {Math.round(a.time_limit_sec / 60)}
                   </p>
                   <p className="text-xs text-muted-foreground">minutes</p>
                 </div>
-                <div className="rounded-xl border border-border/40 bg-background/40 p-4">
-                  <p className="mt-6 text-sm font-bold">{MODE_LABEL[a.mode as Mode] ?? a.mode}</p>
+                <div className="rounded-xl border border-border/40 bg-background/40 p-4 max-sm:p-3">
+                  {/* The spacer stands in for the icon the other two tiles
+                      have, so all three read from the same baseline. On a
+                      phone that is 24px of a 100px-wide tile, not 24 of 358. */}
+                  <p className="mt-6 text-sm font-bold max-sm:mt-5">{MODE_LABEL[a.mode as Mode] ?? a.mode}</p>
                   <p className="text-xs text-muted-foreground">mode</p>
                 </div>
               </div>

@@ -104,7 +104,7 @@ export function ClassMembership({ userId }: { userId?: string }) {
         <button
           type="submit"
           disabled={!normaliseJoinCode(code) || !!problem || joining}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50 max-sm:min-h-11 max-sm:w-full max-sm:justify-center"
         >
           {joining && <Loader2 className="size-4 animate-spin" />}
           Join class

@@ -111,25 +111,37 @@ export function SittingBar() {
     // Deliberately one look in both themes. An exam banner is an interruption,
     // not part of the page, and a saturated ground with its own light text is
     // legible whichever theme the rest of the app is wearing.
+    // data-sitting-bar is what styles.css keys the phone offsets off: while a
+    // sitting is open the app bar and the case bar start below this one
+    // instead of underneath it.
     <div
+      data-sitting-bar=""
       className={`sticky top-0 z-50 text-white ${urgent ? "bg-rose-700" : "bg-sky-800"}`}
     >
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 text-sm">
-        <span className="inline-flex items-center gap-2 font-bold">
-          <Lock className="size-4" /> {active.title}
+      {/* A fixed two-row grid on a phone, 72px tall: wrapped, the same four
+          pieces took three rows and 102px of a 844px screen, and the height
+          changed with the title. Fixed, because the offsets below depend on
+          it. The clock and Submit sit in the right-hand column, where a thumb
+          already is. */}
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 text-sm max-sm:grid max-sm:h-[4.5rem] max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:items-center max-sm:gap-x-3 max-sm:gap-y-0 max-sm:px-3 max-sm:py-0">
+        <span className="inline-flex items-center gap-2 font-bold max-sm:col-start-1 max-sm:row-start-1 max-sm:min-w-0">
+          <Lock className="size-4 shrink-0" /> <span className="max-sm:truncate">{active.title}</span>
         </span>
-        <span className="text-white/75">
-          Assessment in progress · no hints · {done} of {active.caseCount} cases
+        <span className="text-white/75 max-sm:col-start-1 max-sm:row-start-2 max-sm:truncate max-sm:text-xs">
+          {/* The phone keeps the two facts that change - no hints, and how far
+              through you are. The bar itself says an assessment is running. */}
+          <span className="max-sm:hidden">Assessment in progress · </span>
+          no hints · {done} of {active.caseCount} cases
         </span>
 
-        <span className="ml-auto inline-flex items-center gap-2 font-mono text-base font-black tabular-nums">
+        <span className="ml-auto inline-flex items-center gap-2 font-mono text-base font-black tabular-nums max-sm:col-start-2 max-sm:row-start-1 max-sm:ml-0 max-sm:justify-self-end">
           <Timer className="size-4" /> {clock(left)}
         </span>
 
         <button
           type="button"
           onClick={() => finish("manual")}
-          className="rounded-full border border-white/35 px-3.5 py-1 text-xs font-semibold transition hover:bg-white/15"
+          className="rounded-full border border-white/35 px-3.5 py-1 text-xs font-semibold transition hover:bg-white/15 max-sm:col-start-2 max-sm:row-start-2 max-sm:inline-flex max-sm:min-h-11 max-sm:items-center max-sm:justify-self-end max-sm:px-4 max-sm:text-sm"
         >
           Submit now
         </button>

@@ -437,6 +437,39 @@
   }
 }
 
+/*
+ * A timed sitting, on a phone.
+ *
+ * The assessment bar is mounted for the whole signed-in area and sticks to the
+ * top; so do the app bar and the case bar. All three asked for offset 0, so the
+ * second one to arrive sat on top of the first: scrolled, the app bar covered
+ * the clock, and in a case the assessment bar covered the case bar's Back and
+ * timer completely (102px over 71px, measured at every width from 390 to 1440).
+ *
+ * The bar is a fixed 4.5rem on a phone, so the two bars underneath can simply
+ * start below it. Phones only: above md the desktop layout is untouched, and
+ * the same overlap there is left for a shared pass rather than fixed here.
+ */
+@media (max-width: 767px) {
+  body:has([data-sitting-bar]) [data-app-nav],
+  body:has([data-sitting-bar]) header[data-tour-scene="case-header"] {
+    top: 4.5rem;
+  }
+}
+
+/* Toasts clear the assessment bar too - and both bars together when a case is
+   open underneath one. Same reasoning as the hint strip above. */
+@media (max-width: 600px) {
+  body:has([data-sitting-bar]) [data-sonner-toaster][data-y-position="top"] {
+    --mobile-offset-top: 5.25rem !important;
+  }
+
+  body:has([data-sitting-bar]):has([data-tour="case-hint"])
+    [data-sonner-toaster][data-y-position="top"] {
+    --mobile-offset-top: 12.25rem !important;
+  }
+}
+
 @utility glass {
   background: var(--glass-fill);
   backdrop-filter: blur(16px);

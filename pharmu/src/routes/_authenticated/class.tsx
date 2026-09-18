@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight, CalendarClock, CheckCircle2, ClipboardList, GraduationCap,
   Target, Timer, TrendingUp, type LucideIcon,
@@ -50,13 +50,16 @@ function Stat({
     tone === "good" ? "text-emerald-500"
     : tone === "warn" ? "text-amber-500"
     : "text-primary";
+  // The CSS reduced-motion block cannot reach a framer transform, so the entry
+  // and its stagger are dropped here rather than played at 0.001s.
+  const reduced = useReducedMotion();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={reduced ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.07, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -4 }}
-      className="glass-card p-5"
+      transition={reduced ? { duration: 0 } : { delay: index * 0.07, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={reduced ? undefined : { y: -4 }}
+      className="glass-card p-5 max-sm:p-4"
     >
       <Icon className={`size-5 ${colour}`} aria-hidden="true" />
       <p className="mt-3 text-2xl font-black tabular-nums">
@@ -134,7 +137,7 @@ function ClassPage() {
           {enrolled && (
             <Link
               to="/modes"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 max-sm:min-h-11"
             >
               Start training <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
@@ -149,7 +152,7 @@ function ClassPage() {
             </p>
             <Link
               to="/educator/dashboard"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 max-sm:min-h-11"
             >
               Educator dashboard <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
@@ -157,9 +160,11 @@ function ClassPage() {
         )}
 
         {work.classesPending ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-hidden="true">
+          /* Two columns on a phone, exactly like the tiles it stands in for:
+             a one-column skeleton followed by a two-column answer is a jump. */
+          <div className="grid gap-4 max-sm:grid-cols-2 max-sm:gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-hidden="true">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="glass-card p-5">
+              <div key={i} className="glass-card p-5 max-sm:p-4">
                 <div className="size-5 animate-pulse rounded bg-foreground/10" />
                 <div className="mt-3 h-7 w-16 animate-pulse rounded bg-foreground/10" />
                 <div className="mt-2 h-3 w-24 animate-pulse rounded bg-foreground/10" />
@@ -170,7 +175,9 @@ function ClassPage() {
           <NotEnrolled userId={userId} />
         ) : (
           <div className="space-y-6">
-            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Two by two on a phone. One column made four numbers - the whole
+                summary - cost 600px before the work they summarise. */}
+            <section className="grid gap-4 max-sm:grid-cols-2 max-sm:gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Stat
                 index={0}
                 icon={work.outstanding ? ClipboardList : CheckCircle2}
@@ -226,7 +233,7 @@ function ClassPage() {
                 </p>
                 <Link
                   to="/modes"
-                  className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+                  className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 max-sm:min-h-11"
                 >
                   Pick a mode <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
@@ -234,7 +241,7 @@ function ClassPage() {
             )}
 
             <details className="glass-card group p-5">
-              <summary className="cursor-pointer list-none text-sm font-semibold text-muted-foreground transition hover:text-foreground">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-muted-foreground transition hover:text-foreground max-sm:flex max-sm:min-h-11 max-sm:items-center">
                 In another class too? Enter its code
               </summary>
               <div className="mt-4">
