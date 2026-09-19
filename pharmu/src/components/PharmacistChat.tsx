@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Send, X } from "lucide-react";
 import { sendChatMessage } from "@/lib/api/chat.functions";
+import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { MENTOR_IMAGE } from "@/lib/mentor";
 
 type ChatMessage = {
@@ -120,7 +121,12 @@ export function PharmacistChat({ open, onClose }: { open: boolean; onClose: () =
                       : "glass-card border-border/40 bg-card/65 text-foreground"
                   }`}
                 >
-                  {message.content}
+                  {/* The mentor answers in Markdown; the learner types plain
+                      text, and rendering theirs as Markdown would mangle a
+                      dose like "5 * 3" back at them. */}
+                  {message.role === "assistant"
+                    ? <ChatMarkdown text={message.content} />
+                    : message.content}
                 </div>
               </div>
             ))}
