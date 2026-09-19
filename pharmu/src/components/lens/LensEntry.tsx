@@ -39,7 +39,7 @@ export function LensEntry({ className = "" }: { className?: string }) {
           <span className="min-w-0 flex-1">
             <span className="flex flex-wrap items-center gap-2">
               <span className="text-base font-black">Prescription Lens</span>
-              <span className="rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-primary">
+              <span className="rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-primary max-sm:text-[11px]">
                 New
               </span>
             </span>

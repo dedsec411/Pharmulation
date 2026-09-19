@@ -207,21 +207,33 @@ function DrugsPage() {
               {visible.map((d) => {
                 const bookmarked = bookmarks.includes(d.id);
                 return (
-                  <motion.button
+                  <motion.div
                     // No `layout` prop: it makes framer-motion measure every
                     // card's box on each render, and with hundreds on screen
                     // that pass is felt on every keystroke in the search field.
                     //
-                    // This card holds a real <button> (the save chip), so it is
-                    // a button inside a button - invalid HTML, and React says so
-                    // on every load. Swapping it for a div with role="button"
-                    // fixes that but is NOT free: measured, the cards rose 8 to
-                    // 36px at every desktop width, because a <button> carries
-                    // vertical metrics a div does not. Left as it was until that
-                    // can be done deliberately, with the desktop re-laid out.
-                    key={d.id} onClick={() => setSelected(d)}
+                    // A div rather than a button because it holds the save chip,
+                    // which is a real button: nesting them is invalid HTML and
+                    // React reported it on every load. The swap used to cost 8
+                    // to 36px of vertical movement per card, because the grid
+                    // stretches every card to the tallest in its row and a
+                    // <button> centres its content in that slack while a div
+                    // starts at the top - hence flex-col justify-center, which
+                    // reproduces the centring exactly. Measured at 640 to 1440.
+                    key={d.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelected(d)}
+                    // Only when the card itself has focus. keydown bubbles, so
+                    // without this a learner tabbing to the save chip and pressing
+                    // Enter would bookmark the drug AND open its panel: the chip
+                    // stops propagation for click, which is a different event.
+                    onKeyDown={(e) => {
+                      if (e.target !== e.currentTarget) return;
+                      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(d); }
+                    }}
                     whileHover={{ y: -2 }}
-                    className="glass-card p-5 text-left hover:border-primary/40 transition relative">
+                    className="glass-card p-5 text-left hover:border-primary/40 transition relative flex flex-col justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
                     {(
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleBookmark.mutate(d); }}
@@ -244,18 +256,18 @@ function DrugsPage() {
                     <div className="mt-3 flex gap-2 flex-wrap">
                       {d.drug_class && (
                         <span
-                          className="rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider"
+                          className="rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider max-sm:text-[11px]"
                           style={drugTagColor(d.drug_class, theme)}
                         >{d.drug_class}</span>
                       )}
                       {d.category && (
                         <span
-                          className="rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider"
+                          className="rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider max-sm:text-[11px]"
                           style={drugTagColor(d.category, theme)}
                         >{d.category}</span>
                       )}
                     </div>
-                  </motion.button>
+                  </motion.div>
                 );
               })}
               {list.length === 0 && <div className="col-span-full text-center text-muted-foreground py-10">No drugs match your filters.</div>}

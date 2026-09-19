@@ -204,7 +204,9 @@ const catalogSeeds: CatalogSeed[] = [
     "Cetirizine", "Loratadine", "Fexofenadine", "Levocetirizine", "Desloratadine", "Chlorpheniramine", "Diphenhydramine", "Hydroxyzine",
   ]),
   ...makeSeeds("Respiratory", "Bronchodilator", ["Bronchospasm", "Asthma symptoms"], "Use inhaler according to action plan", [
-    "Salbutamol", "Albuterol", "Terbutaline", "Ipratropium", "Tiotropium", "Salmeterol", "Formoterol", "Theophylline",
+    // Albuterol is Salbutamol under its US name; seeding both put one medicine
+    // on the bronchodilator shelf twice.
+    "Salbutamol", "Terbutaline", "Ipratropium", "Tiotropium", "Salmeterol", "Formoterol", "Theophylline",
   ]),
   ...makeSeeds("Respiratory", "Inhaled corticosteroid", ["Asthma control", "Airway inflammation"], "Use daily and rinse mouth after use", [
     "Budesonide", "Beclomethasone", "Fluticasone", "Mometasone", "Ciclesonide",
@@ -261,17 +263,27 @@ export function normalizeDrugCategory(category?: string | null) {
 
 export function prepareDrugCatalog(drugs: DrugLike[]) {
   const normalized = drugs.map((d) => ({ ...d, category: normalizeDrugCategory(d.category) }));
-  const byName = new Map<string, DrugLike>();
+  // Keyed by molecule, not by spelling: the table holds Paracetamol and
+  // Acetaminophen as separate rows, and a shelf that offers both asks the
+  // learner to choose between one medicine and itself.
+  const byMolecule = new Map<string, DrugLike>();
   normalized.forEach((d) => {
-    const key = normalizeDrugKey(d.name);
-    if (!byName.has(key)) byName.set(key, d);
+    const key = canonicalDrugKey(d.name);
+    const held = byMolecule.get(key);
+    if (!held) {
+      byMolecule.set(key, d);
+      return;
+    }
+    // Both spellings are present: keep the one the prescriptions are written
+    // in, which is the canonical key itself.
+    if (normalizeDrugKey(d.name) === key && normalizeDrugKey(held.name) !== key) byMolecule.set(key, d);
   });
   for (const d of supplementalDrugs) {
-    if (byName.size >= TARGET_CATALOG_SIZE) break;
-    const key = normalizeDrugKey(d.name);
-    if (!byName.has(key)) byName.set(key, d);
+    if (byMolecule.size >= TARGET_CATALOG_SIZE) break;
+    const key = canonicalDrugKey(d.name);
+    if (!byMolecule.has(key)) byMolecule.set(key, d);
   }
-  return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
+  return Array.from(byMolecule.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function normalizeDrugKey(value?: string | null) {
@@ -281,6 +293,59 @@ export function normalizeDrugKey(value?: string | null) {
     .replace(/\d+(\.\d+)?\s*(mg|g|mcg|ml|iu|%)\b/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/**
+ * One molecule, two accepted names.
+ *
+ * The catalogue carries both spellings of five medicines - measured against the
+ * live `drugs` table: Paracetamol/Acetaminophen, Salbutamol/Albuterol,
+ * Glibenclamide/Glyburide, Atropine/Atropine Sulfate, Lidocaine/Lidocaine HCl.
+ * Two of those pairs even sit on different shelves (Atropine under Emergency
+ * and Respiratory; Lidocaine under Anesthetic and Cardiovascular).
+ *
+ * That is not a harmless double entry. Dispensing checks the name against the
+ * prescription's `drugs_required`, so a learner who hands over Acetaminophen
+ * for a Paracetamol prescription is told they picked the wrong drug, loses the
+ * marks, and has a weakness recorded against them - for dispensing exactly the
+ * right medicine.
+ *
+ * The value is the spelling that survives. Every case in the database is
+ * written in the Commonwealth spelling (Paracetamol five times, Salbutamol
+ * once, the US spellings never), which is also the spelling a Pakistani
+ * counter uses, so that is the one kept.
+ *
+ * Only names that are the SAME molecule belong here. A pair that is merely
+ * similar - the look-alike drill's whole subject - must never be listed: that
+ * drill reads from brand names in `drug_brands` and is untouched by this map.
+ *
+ * The first five entries are the pairs the live table actually holds. The last
+ * three - lignocaine, amoxycillin, frusemide - are not in it today; they are
+ * the older British spellings of drugs that are, kept here so a future import
+ * written that way folds in rather than arriving as a second medicine.
+ */
+const DRUG_SYNONYMS: Record<string, string> = {
+  acetaminophen: "paracetamol",
+  albuterol: "salbutamol",
+  glyburide: "glibenclamide",
+  "atropine sulfate": "atropine",
+  "lidocaine hcl": "lidocaine",
+  lignocaine: "lidocaine",
+  amoxycillin: "amoxicillin",
+  frusemide: "furosemide",
+};
+
+/**
+ * The key a medicine is known by once its synonyms are folded together.
+ *
+ * Use this anywhere two medicine names are compared for identity - the shelf,
+ * the dispensing check, matching a scanned prescription. `normalizeDrugKey`
+ * alone only strips strengths and forms, so it reads two spellings of one drug
+ * as two drugs.
+ */
+export function canonicalDrugKey(value?: string | null) {
+  const key = normalizeDrugKey(value);
+  return DRUG_SYNONYMS[key] ?? key;
 }
 
 /**

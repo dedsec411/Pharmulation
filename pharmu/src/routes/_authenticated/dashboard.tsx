@@ -601,13 +601,13 @@ function Dashboard() {
 
             <div className="relative mb-4 flex items-start justify-between gap-3">
               <div>
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-primary">Pharmulation rankings board</p>
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-primary max-sm:tracking-[0.18em] max-sm:text-[11px]">Pharmulation rankings board</p>
                 <h3 className="mt-1 flex items-center gap-2 text-lg font-black">
                   <Trophy className="h-5 w-5 text-primary drop-shadow-[0_0_12px_oklch(0.74_0.14_180/0.75)]" />
                   Top this week
                 </h3>
               </div>
-              <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-primary">
+              <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-primary max-sm:text-[11px]">
                 live
               </span>
             </div>
@@ -647,7 +647,7 @@ function Dashboard() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-foreground">{cleanPlayerName(p.full_name)}</p>
-                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">pharmacist rank</p>
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground max-sm:text-[11px]">pharmacist rank</p>
                     </div>
                     <span className="rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 font-mono text-xs font-black tabular-nums text-primary shadow-inner">
                       {Number(p.xp ?? 0).toLocaleString()} XP

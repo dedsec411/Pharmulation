@@ -58,13 +58,21 @@ const modes = [
  * This block previously claimed seventy thousand pharmacists trained and a
  * hundred CPD credit hours. Neither was true, and the first question a judge
  * or a pharmacist asks about a number like that is where it came from. What
- * the product genuinely has is more persuasive anyway: nine hundred medicines
- * and thirteen hundred Pakistani brand names is a real catalogue, and nobody
- * else demonstrating here will have one.
+ * the product genuinely has is more persuasive anyway: nearly nine hundred
+ * medicines and twelve hundred Pakistani brand names is a real catalogue, and
+ * nobody else demonstrating here will have one.
+ *
+ * Count the distinct thing the label names, not the rows. `drugs` holds 896
+ * rows but 881 distinct medicines once the same molecule under two spellings
+ * is folded together (see canonicalDrugKey), and that fold is what the shelf
+ * and the dispensing check both use. `drug_brands` holds 1,286 rows under
+ * 1,212 distinct brand names, because one brand can be listed for more than
+ * one drug. Verified against the live database and the running /drugs page on
+ * 2026-09-19.
  */
 const stats = [
-  { icon: Database, value: "896", label: "Medicines in the catalogue" },
-  { icon: Pill, value: "1,286", label: "Pakistani brand names" },
+  { icon: Database, value: "881", label: "Medicines in the catalogue" },
+  { icon: Pill, value: "1,212", label: "Pakistani brand names" },
   { icon: Trophy, value: "4", label: "Training modes" },
   { icon: GraduationCap, value: "65", label: "Written case files" },
 ];

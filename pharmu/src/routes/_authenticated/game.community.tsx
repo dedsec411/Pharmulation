@@ -14,7 +14,7 @@ import { useTimer } from "@/lib/game/useTimer";
 import { computeScore, submitScore, toastScore, liveScore, modeTimeLimit, retryRewardFactor, SCORE_WEIGHTS } from "@/lib/game/shared";
 import { useGameExit } from "@/lib/game/useGameExit";
 import { useAuthStore } from "@/lib/auth-store";
-import { RX_DRUG_CATEGORIES, getBrandsForDrug, prepareDrugCatalog } from "@/lib/drug-catalog";
+import { RX_DRUG_CATEGORIES, canonicalDrugKey, getBrandsForDrug, prepareDrugCatalog } from "@/lib/drug-catalog";
 import { supabase } from "@/integrations/supabase/client";
 import { useErrorPanel } from "@/components/game/useErrorPanel";
 import { toast } from "sonner";
@@ -530,10 +530,24 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
     }
   }
 
+  /**
+   * The prescription's own spelling for the medicine just picked, when the two
+   * names are the same molecule.
+   *
+   * One drug can be written two ways - Paracetamol on the prescription,
+   * Acetaminophen on the shelf - and comparing the strings marked the second
+   * one wrong: the marks went, a mistake was logged, and a weakness was
+   * recorded against the learner for dispensing exactly the right medicine.
+   */
+  function requiredNameFor(name: string) {
+    return required.find((r) => canonicalDrugKey(r) === canonicalDrugKey(name));
+  }
+
   function openBrandSelection(drug: any) {
     const name = drug.name;
-    if (collected.includes(name)) return;
-    if (!required.includes(name)) {
+    const match = requiredNameFor(name);
+    if (collected.includes(match ?? name)) return;
+    if (!match) {
       setWrong((n) => n + 1); toastScore(-SCORE_WEIGHTS.wrongDrug, `wrong: ${name}`);
       errPanel.logError({
         errorType: "Wrong drug selected",
@@ -567,7 +581,9 @@ function RxGame({ caseData, next, LIMIT }: { caseData: any; next: () => void; LI
   }
 
   function selectBrand(drug: any, brand: string) {
-    addDrug(drug.name, brand);
+    // Kept under the prescription's spelling: the label step, the score and
+    // the feedback all look this medicine up by the name the case uses.
+    addDrug(requiredNameFor(drug.name) ?? drug.name, brand);
     setBrandDrug(null);
   }
 

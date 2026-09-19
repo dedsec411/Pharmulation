@@ -770,6 +770,23 @@ widths found:
 - **Placeholders are not labels.** Every input needs a real `<label>`, hidden
   with `sr-only` if the design has no room.
 - **Check the live API, don't trust its docs.** See PrescriptoAI above.
+- **A mark sized by its content ignores the box you put it in.** The light
+  theme draws the wordmark instead of playing the video, and `LogoVideo`
+  dropped the `className` the navbar passed it. At 190px wide inside an anchor
+  of `w-36`/`md:w-40` it ran 46px past that box on a phone and 30px at 768 -
+  the account pill covered the last letter at 360, and the word sat under the
+  first nav link at 768. Dark mode was fine throughout, because the video is
+  exactly anchor-width. If you change either, change both: the mark now follows
+  the same four breakpoint steps as the anchor.
+- **A `<button>` centres its content when a grid row stretches it; a `<div>`
+  does not.** That, not "vertical metrics", is why swapping the `/drugs` card
+  from `motion.button` to a div moved every card 8-36px. `flex flex-col
+  justify-center` reproduces the centring exactly - measured 0 moved at 640,
+  768, 900, 1024 and 1440.
+- **Count the distinct thing the label names, not the rows.** `drugs` holds 896
+  rows but 881 distinct medicines once one molecule under two spellings is
+  folded; `drug_brands` holds 1,286 rows under 1,212 brand names. The landing
+  page claimed the row counts.
 - **`.env` is gitignored and must stay that way.** A Gemini key was committed
   once and had to be rotated. Real keys: `PRESCRIPTOAI_API_KEY`,
   `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server-only, never `VITE_`).
@@ -789,8 +806,11 @@ navigation (students see Class, faculty see Faculty).
 
 **Landing page claims were corrected** — it previously said "70,000+
 Pharmacists Trained" and "100 CPD Credit Hours" with invented testimonials.
-Now: 896 medicines, 1,286 brand names, 4 modes, 65 case files, all countable.
-Do not reintroduce unverifiable claims.
+Now: 881 medicines, 1,212 brand names, 4 modes, 65 case files, all countable.
+Those first two were themselves corrected on 2026-09-19: they had been the row
+counts (896 and 1,286) rather than the distinct medicines and brand names the
+labels promise. Do not reintroduce unverifiable claims, and re-count rather
+than assume when the catalogue changes.
 
 **Open items:**
 - `PRESCRIPTOAI_API_KEY` must be set in the Vercel project or the scanner

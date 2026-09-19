@@ -41,7 +41,7 @@ function CellBox({ cell, onPick }: { cell: Cell; onPick: (c: Cell) => void }) {
       title={known
         ? `${cell.drugClass} · ${cell.skill}: ${Math.round(cell.accuracy! * 100)}% (${cell.errors} errors in ${cell.attempts})`
         : `${cell.drugClass} · ${cell.skill}: ${cell.attempts} attempts, needs ${MIN_ATTEMPTS}`}
-      className={`grid h-9 place-items-center rounded-md border text-[11px] font-bold tabular-nums transition hover:scale-[1.06] ${BAND_STYLE[band]}`}
+      className={`grid h-9 place-items-center rounded-md border text-[11px] font-bold tabular-nums transition hover:scale-[1.06] max-sm:h-11 ${BAND_STYLE[band]}`}
       style={known ? undefined : {
         // Hatching, so "not measured" never reads as a shade of a real score.
         backgroundImage:
@@ -128,7 +128,7 @@ export function WeaknessHeatmap({ map, operations }: { map: WeaknessMap; operati
             Accuracy by drug class and clinical skill, across {map.totalCases} cases.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-[10px]">
+        <div className="flex flex-wrap items-center gap-2 text-[10px] max-sm:text-[11px]">
           {(["critical", "weak", "fair", "strong", "unknown"] as Band[]).map((b) => (
             <span key={b} className="inline-flex items-center gap-1.5">
               <span className={`size-3 rounded-sm border ${BAND_STYLE[b]}`} />
@@ -145,7 +145,7 @@ export function WeaknessHeatmap({ map, operations }: { map: WeaknessMap; operati
           <div className="grid grid-cols-[9rem_repeat(7,minmax(0,1fr))] gap-1.5">
             <span />
             {SKILLS.map((s) => (
-              <span key={s.key} className="pb-1 text-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <span key={s.key} className="pb-1 text-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground max-sm:text-[11px]">
                 {s.short}
               </span>
             ))}

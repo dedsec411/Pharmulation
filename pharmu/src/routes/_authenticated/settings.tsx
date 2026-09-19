@@ -93,14 +93,14 @@ function SettingsPage() {
           <label className="block text-xs text-muted-foreground">Display name</label>
           <input value={name} onChange={(e) => setName(e.target.value)}
             className="w-full rounded-xl glass px-4 py-2.5 outline-none" />
-          <button onClick={saveName} className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">Save</button>
+          <button onClick={saveName} className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground max-sm:min-h-11">Save</button>
         </section>
 
         <section className="glass-card p-6 space-y-3">
           <h2 className="font-bold">Change password</h2>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
             placeholder="New password" className="w-full rounded-xl glass px-4 py-2.5 outline-none" />
-          <button onClick={changePassword} className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">Update</button>
+          <button onClick={changePassword} className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground max-sm:min-h-11">Update</button>
         </section>
 
         <section className="glass-card p-6">
@@ -109,7 +109,7 @@ function SettingsPage() {
           <button
             onClick={deleteAccount}
             disabled={deleting}
-            className="mt-3 rounded-full bg-destructive/20 text-destructive border border-destructive/40 px-5 py-2 text-sm font-semibold hover:bg-destructive/30 disabled:opacity-50"
+            className="mt-3 rounded-full bg-destructive/20 text-destructive border border-destructive/40 px-5 py-2 text-sm font-semibold hover:bg-destructive/30 disabled:opacity-50 max-sm:min-h-11"
           >
             {deleting ? "Deleting..." : "Delete account"}
           </button>

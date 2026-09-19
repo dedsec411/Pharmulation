@@ -152,16 +152,27 @@ function Capsule({ className }: { className: string }) {
   );
 }
 
+/**
+ * The drawn mark, used wherever the video would land as a black rectangle.
+ *
+ * This mark is sized by its own content, so it used to ignore the anchor it
+ * sits in. The anchor is w-36 / sm:w-60 / md:w-40 / lg:w-60, and at 190px wide
+ * the mark ran 46px past it below 640 and 30px past it between 768 and 1023 -
+ * far enough for the account pill to cover the last letter at 360, and for the
+ * word to run under the first nav link at 768. The sizes below follow the same
+ * four steps as the anchor, so the mark fits its box at every width: 139px in
+ * the narrow steps, 190px in the wide ones.
+ */
 function Wordmark({ size }: { size: "nav" | "hero" }) {
   const hero = size === "hero";
   return (
     <span
-      className={`inline-flex items-center justify-center ${hero ? "gap-4" : "gap-2.5"}`}
+      className={`inline-flex items-center justify-center ${hero ? "gap-4" : "gap-1.5 sm:gap-2.5 md:gap-1.5 lg:gap-2.5"}`}
     >
-      <Capsule className={hero ? "h-8 w-20 sm:h-11 sm:w-28" : "h-6 w-14"} />
+      <Capsule className={hero ? "h-8 w-20 sm:h-11 sm:w-28" : "h-5 w-10 sm:h-6 sm:w-14 md:h-5 md:w-10 lg:h-6 lg:w-14"} />
       <span
         className={`font-extrabold tracking-tight text-gradient-teal ${
-          hero ? "text-4xl sm:text-6xl md:text-7xl" : "text-xl"
+          hero ? "text-4xl sm:text-6xl md:text-7xl" : "text-[15px] sm:text-xl md:text-[15px] lg:text-xl"
         }`}
       >
         Pharmulation
