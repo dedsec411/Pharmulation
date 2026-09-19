@@ -26,11 +26,20 @@
 --
 -- NOTHING HERE IS A BLIND DELETE. A bookmark is a student's study list, so
 -- bookmarks pointing at a discarded row are MOVED to the row that survives and
--- only dropped when that student already has the survivor. drug_bookmarks.
--- drug_ref carries no foreign key, so nothing would have cascaded and the rows
--- would simply have stopped resolving. Brands are moved the same way. The
--- duplicate detection insists rows match on name AND category AND class, so it
--- can never collapse two medicines that differ in any way that shows.
+-- only dropped when that student already has the survivor. Brands are moved
+-- the same way. The duplicate detection insists rows match on name AND
+-- category AND class, so it can never collapse two medicines that differ in
+-- any way that shows.
+--
+-- drug_bookmarks.drug_ref is text, not a uuid foreign key: 20260828160000
+-- widened it so the client-generated half of the catalogue, whose ids look
+-- like "catalog-ibuprofen", can be bookmarked at all. That is why there is no
+-- foreign key here and why nothing would have cascaded. So every comparison
+-- against it casts the uuid TO text, never the column to uuid. That direction
+-- is not a style choice - "catalog-ibuprofen"::uuid raises 22P02 and takes the
+-- whole migration down, and only on databases that have such a bookmark. Cast
+-- this way and a text value that names no row here simply fails to match,
+-- which is exactly what should happen to it.
 --
 -- The application already tolerates all of this: canonicalDrugKey folds the
 -- spellings and prepareDrugCatalog keys by molecule, which is why the
@@ -78,21 +87,21 @@ WHERE r.rn > 1;
 
 -- Move a student's bookmark onto the row that survives.
 UPDATE public.drug_bookmarks b
-SET drug_ref = d.keeper_id
+SET drug_ref = d.keeper_id::text
 FROM dup_drug d
-WHERE b.drug_ref = d.loser_id
+WHERE b.drug_ref = d.loser_id::text
   AND NOT EXISTS (
     SELECT 1
     FROM public.drug_bookmarks x
     WHERE x.user_id = b.user_id
-      AND x.drug_ref = d.keeper_id
+      AND x.drug_ref = d.keeper_id::text
   );
 
 -- What is left pointed at a discarded row is a bookmark that student already
 -- holds against the survivor.
 DELETE FROM public.drug_bookmarks b
 USING dup_drug d
-WHERE b.drug_ref = d.loser_id;
+WHERE b.drug_ref = d.loser_id::text;
 
 -- Same for brands: move the ones the survivor does not already carry.
 UPDATE public.drug_brands b
@@ -152,7 +161,13 @@ COMMIT;
 --   ('pain reliever','pain relief','pain relief extra strength','antifungal',
 --    'aloe vera gel','sunburn relief gel');
 --
+--   -- The regex keeps the generated "catalog-..." bookmarks out of the count:
+--   -- those legitimately name no row in `drugs` and always will not.
 --   SELECT count(*) FROM public.drug_bookmarks b
---   LEFT JOIN public.drugs d ON d.id = b.drug_ref WHERE d.id IS NULL;
+--   LEFT JOIN public.drugs d ON d.id::text = b.drug_ref
+--   WHERE d.id IS NULL AND b.drug_ref ~ '^[0-9a-fA-F-]{36}
+--
+--   SELECT count(*) FROM public.drugs;
+;
 --
 --   SELECT count(*) FROM public.drugs;

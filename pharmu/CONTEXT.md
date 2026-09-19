@@ -783,6 +783,15 @@ widths found:
   from `motion.button` to a div moved every card 8-36px. `flex flex-col
   justify-center` reproduces the centring exactly - measured 0 moved at 640,
   768, 900, 1024 and 1440.
+- **`drug_bookmarks.drug_ref` is text, and the cast direction matters.**
+  `20260828160000` widened it from a uuid foreign key so the generated half of
+  the catalogue - ids like `catalog-ibuprofen` - could be bookmarked, which is
+  why the table shows `Relationships: []`. Comparing it to `drugs.id` raises
+  `42883 operator does not exist: text = uuid`, and the obvious repair,
+  `drug_ref::uuid`, raises `22P02 invalid input syntax for type uuid:
+  "catalog-ibuprofen"` instead - on a real database, not a test one. Always
+  cast the uuid to text. Both failures were reproduced against Postgres before
+  `20260919120000` was corrected.
 - **Count the distinct thing the label names, not the rows.** `drugs` holds 896
   rows but 881 distinct medicines once one molecule under two spellings is
   folded; `drug_brands` holds 1,286 rows under 1,212 brand names. The landing
@@ -821,8 +830,11 @@ than assume when the catalogue changes.
   seven duplicated medicines and removes six brand rows that are shelf
   descriptions rather than brands. It moves bookmarks and brands onto the
   surviving row first, because `drug_bookmarks.drug_ref` carries no foreign key
-  and nothing would have cascaded. Apply in timestamp order, by hand, after a
-  backup, and run the verification queries at the bottom of each file
+  and nothing would have cascaded. A first attempt to apply it on 2026-09-19
+  failed with `42883 operator does not exist: text = uuid` and rolled back
+  whole; the comparisons now cast the uuid to text. Apply in timestamp order,
+  by hand, after a backup, and run the verification queries at the bottom of
+  each file
 - `PRESCRIPTOAI_API_KEY` must be set in the Vercel project or the scanner
   reports itself unconfigured
 - `SITE_URL` in `src/lib/site.ts` is `https://pharmulation.vercel.app`; if a
