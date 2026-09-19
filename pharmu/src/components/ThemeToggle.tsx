@@ -1,22 +1,22 @@
-import { useState } from "react";
-import { motion, useReducedMotion, type Transition } from "framer-motion";
-import { Moon, Sun } from "lucide-react";
-import { useThemeStore } from "@/lib/theme-store";
+import { motion, useReducedMotion } from "framer-motion";
+import { flushSync } from "react-dom";
+import { useRef } from "react";
+import { applyTheme, useThemeStore, type Theme } from "@/lib/theme-store";
 
 /**
- * The theme switch, shaped as a capsule that opens.
+ * The theme switch: a capsule holding a small sky.
  *
- * A toggle is already a lozenge, so rather than bolt a pill icon onto a
- * generic switch the control is drawn as the capsule itself: one coloured
- * half, one powder half, a seam down the middle, and the knob travelling
- * between them. It reads as a pharmacy object at a glance and as a switch on
- * second look, which is the right way round for something that lives in the
- * nav bar of a dispensing simulator.
+ * The capsule shape is the pharmacy object this product is named for and it
+ * stays. What is inside it changed: pressing the switch runs the sky from day
+ * to night, the sun's rays fold away as it becomes a crescent moon, stars come
+ * up behind it, and the new theme is then wiped across the whole page in a
+ * circle growing out of the button itself.
  *
- * Pressing it pulls the capsule apart at the seam, scatters a little of what
- * was inside, and snaps it shut on the other side. Every part of that is a
- * transform or an absolutely positioned element, so the control occupies the
- * same 60x32 box at every frame and nothing around it moves.
+ * The page wipe is the View Transitions API, which is the only way to animate
+ * between two states of a document that has already re-rendered. It degrades
+ * to an instant switch where the API is missing, and is skipped entirely for
+ * anybody who has asked for less motion. `src/styles.css` holds the keyframes,
+ * because the pseudo-elements it animates belong to the document, not here.
  *
  * role="switch" with aria-checked, so it is a switch to a screen reader
  * whatever it looks like.
@@ -34,27 +34,52 @@ import { useThemeStore } from "@/lib/theme-store";
  * phone with no switch at all on nav-bar screens.
  */
 
-/**
- * Where the granules go. Fixed, never random: a Math.random() in a render body
- * re-rolls on every re-render and mismatches between the server's HTML and the
- * client's, which is a documented trap in this codebase.
- */
-const GRANULES = [
-  { x: -17, y: -8, tone: "bg-primary" },
-  { x: 16, y: -10, tone: "bg-foreground/80 dark:bg-white/90" },
-  { x: -19, y: 6, tone: "bg-foreground/70 dark:bg-white/75" },
-  { x: 18, y: 7, tone: "bg-primary/90" },
-  { x: -3, y: -14, tone: "bg-primary/80" },
-  { x: 4, y: 13, tone: "bg-foreground/60 dark:bg-white/65" },
-] as const;
+/** Eight rays, each its own rotation of the knob's box. */
+const RAYS = [0, 45, 90, 135, 180, 225, 270, 315];
 
 /**
- * One open-and-shut. The four stops matter: open by a third of the way in,
- * HELD open for the next fifth, then shut. Without that hold the halves turn
- * round at the peak and the whole thing reads as a wobble rather than as a
- * capsule being pulled apart and pushed back together.
+ * Fixed star positions, never Math.random(): a random value in a render body
+ * re-rolls on every re-render and mismatches between the server's HTML and the
+ * client's, which is a trap this codebase has already been bitten by.
  */
-const PULL: Transition = { duration: 0.52, times: [0, 0.3, 0.5, 1], ease: "easeOut" };
+const STARS = [
+  { left: "60%", top: "26%", size: 2 },
+  { left: "74%", top: "60%", size: 1.5 },
+  { left: "86%", top: "34%", size: 1.5 },
+  { left: "68%", top: "46%", size: 1 },
+];
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+};
+
+/**
+ * Grow the new theme out of the button.
+ *
+ * The circle has to reach the corner furthest from the switch or the old theme
+ * is left showing in a corner, which is why the radius is the longest diagonal
+ * rather than a fixed size. The custom properties go on the document element
+ * because ::view-transition pseudo-elements hang off the root, not off us.
+ */
+function wipeFrom(origin: HTMLElement | null, change: () => void, skip: boolean) {
+  const doc = document as ViewTransitionDocument;
+  if (skip || !origin || typeof doc.startViewTransition !== "function") {
+    change();
+    return;
+  }
+  const box = origin.getBoundingClientRect();
+  const x = box.left + box.width / 2;
+  const y = box.top + box.height / 2;
+  const radius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y),
+  );
+  const root = document.documentElement;
+  root.style.setProperty("--theme-reveal-x", `${Math.round(x)}px`);
+  root.style.setProperty("--theme-reveal-y", `${Math.round(y)}px`);
+  root.style.setProperty("--theme-reveal-r", `${Math.ceil(radius)}px`);
+  doc.startViewTransition(change);
+}
 
 export function ThemeToggle({
   className = "",
@@ -64,113 +89,119 @@ export function ThemeToggle({
   slot?: "always" | "desktop" | "menu" | "floating";
 }) {
   const theme = useThemeStore((s) => s.theme);
-  const toggle = useThemeStore((s) => s.toggle);
+  const setTheme = useThemeStore((s) => s.setTheme);
   const dark = theme === "dark";
-
-  // MotionConfig reducedMotion="user" already flattens durations, but the
-  // granules should not be there at all rather than be there instantly.
   const reduced = useReducedMotion();
-  // Counts presses. Keying the moving parts on it replays the open, which an
-  // animation driven by `dark` alone would not do on a double press back.
-  const [presses, setPresses] = useState(0);
-  const opening = presses > 0 && !reduced;
+  const button = useRef<HTMLButtonElement | null>(null);
+
+  function press() {
+    const next: Theme = dark ? "light" : "dark";
+    wipeFrom(button.current, () => {
+      // Both, and synchronously: the attribute is what the CSS selects on and
+      // has to have changed before the transition takes its second snapshot,
+      // while the store is what every other component reads.
+      flushSync(() => setTheme(next));
+      applyTheme(next);
+    }, Boolean(reduced));
+  }
+
+  const ease = reduced ? { duration: 0 } : { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const };
 
   return (
     <button
+      ref={button}
       type="button"
       role="switch"
       data-theme-slot={slot}
       aria-checked={!dark}
       aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
       title={dark ? "Switch to light theme" : "Switch to dark theme"}
-      onClick={() => { toggle(); setPresses((n) => n + 1); }}
+      onClick={press}
       /* The capsule stays 32px tall - it is a drawn object, not a hit box - and
-         a pseudo-element gives the finger the missing 12px on a phone. */
+         a pseudo-element gives the finger the missing 12px on a phone. No
+         overflow-hidden here: it would clip that pseudo-element away and take
+         the phone's tap target with it. The sky below does its own clipping. */
       className={`group relative inline-flex h-8 w-[3.75rem] shrink-0 items-center rounded-full border border-border/70 transition duration-300 hover:border-primary/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-sm:after:absolute max-sm:after:-inset-x-2 max-sm:after:-inset-y-1.5 max-sm:after:content-[''] ${className}`}
     >
-      {/* The capsule body: coloured half, powder half, and the shell's inside
-          showing through while the two are apart. Clipped here rather than on
-          the button, whose hit area now reaches past it. */}
       <span aria-hidden="true" className="absolute inset-0 overflow-hidden rounded-full">
-        {/* The shell's inside. Both halves are translucent, so a permanent
-            colour behind them would tint the capsule shut as well as open -
-            it is painted only while they are apart. */}
+        {/* Two skies, cross-faded. One element whose colour changes cannot run
+            a gradient from day to night; two stacked can. */}
         <motion.span
-          key={`i${presses}`}
-          initial={{ opacity: 0 }}
-          animate={opening ? { opacity: [0, 1, 1, 0] } : { opacity: 0 }}
-          transition={PULL}
-          className="absolute inset-y-0 left-1/2 w-4 -translate-x-1/2 bg-foreground/45 dark:bg-slate-950/85"
+          animate={{ opacity: dark ? 0 : 1 }}
+          transition={ease}
+          className="absolute inset-0 bg-gradient-to-b from-sky-300 to-sky-100"
         />
-        <span className="absolute inset-0 flex">
+        <motion.span
+          animate={{ opacity: dark ? 1 : 0 }}
+          transition={ease}
+          className="absolute inset-0 bg-gradient-to-b from-indigo-950 to-slate-900"
+        />
+
+        {STARS.map((star, i) => (
           <motion.span
-            key={`l${presses}`}
-            animate={opening ? { x: [0, -6, -6, 0] } : undefined}
-            transition={PULL}
-            className="h-full w-1/2 rounded-l-full bg-primary/85"
+            key={i}
+            animate={{ opacity: dark ? 1 : 0, scale: dark ? 1 : 0.2 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.35, delay: dark ? 0.12 + i * 0.05 : 0 }}
+            style={{ left: star.left, top: star.top, width: star.size * 2, height: star.size * 2 }}
+            className="absolute rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,0.9)]"
           />
-          <motion.span
-            key={`r${presses}`}
-            animate={opening ? { x: [0, 6, 6, 0] } : undefined}
-            transition={PULL}
-            className="h-full w-1/2 rounded-r-full bg-foreground/[0.09] dark:bg-white/85"
-          />
-        </span>
+        ))}
+
+        {/* Clouds on the left, stars on the right: each sits opposite the
+            body, which would otherwise be parked on top of them. */}
+        {/* A lozenge alone reads as a dash, so each cloud is a base with a
+            bump sitting on it - the least shape that still says "cloud". */}
+        <motion.span
+          animate={{ opacity: dark ? 0 : 1, x: dark ? -6 : 0 }}
+          transition={ease}
+          className="absolute left-[11%] top-[34%]"
+        >
+          <span className="block h-[7px] w-[17px] rounded-full bg-white" />
+          <span className="absolute -top-[4px] left-[3px] size-[9px] rounded-full bg-white" />
+          <span className="absolute -top-[2px] left-[10px] size-[7px] rounded-full bg-white" />
+        </motion.span>
+        <motion.span
+          animate={{ opacity: dark ? 0 : 0.8, x: dark ? -4 : 0 }}
+          transition={ease}
+          className="absolute left-[30%] top-[62%]"
+        >
+          <span className="block h-[5px] w-[11px] rounded-full bg-white" />
+          <span className="absolute -top-[3px] left-[2px] size-[6px] rounded-full bg-white" />
+        </motion.span>
       </span>
 
-      {/* The seam is only a seam while the halves are touching. */}
-      <motion.span
-        key={`s${presses}`}
-        aria-hidden="true"
-        animate={opening ? { opacity: [1, 0, 0, 1] } : undefined}
-        transition={PULL}
-        className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/25 dark:bg-slate-900/25"
-      />
-
-      {/* What was inside. Rendered only after a press, so nothing scatters on
-          first paint, and never for a visitor who asked for less motion. */}
-      {opening && (
-        <span key={`g${presses}`} aria-hidden="true" className="pointer-events-none absolute inset-0">
-          {GRANULES.map((granule, i) => (
-            <motion.span
-              key={i}
-              initial={{ x: -2, y: -2, opacity: 0.95, scale: 1 }}
-              animate={{ x: granule.x, y: granule.y, opacity: 0, scale: 0.35 }}
-              transition={{ duration: 0.52, ease: "easeOut", delay: i * 0.012 }}
-              className={`absolute left-1/2 top-1/2 size-1 rounded-full ${granule.tone}`}
-            />
-          ))}
-        </span>
-      )}
-
-      {/* Sits on the coloured half in dark, the powder half in light - the
-          side you are switching away from stays visible as the destination.
-          `layout` moves the knob; the pop lives on the inner span so the two
-          are not both writing transform. */}
+      {/* The sun, which becomes the moon. `layout` carries it across; the
+          morph below is all inside it. */}
       <motion.span
         layout
-        transition={{ type: "spring", stiffness: 520, damping: 34 }}
-        className="relative z-10 grid size-6 place-items-center rounded-full bg-background shadow-[0_2px_8px_-2px_rgb(0_0_0/0.45)]"
+        transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 30 }}
+        className="relative z-10 grid size-6 place-items-center"
         style={{ marginLeft: dark ? "0.25rem" : "1.875rem" }}
       >
+        {RAYS.map((deg) => (
+          <span key={deg} className="absolute inset-0" style={{ transform: `rotate(${deg}deg)` }}>
+            <motion.span
+              animate={{ scaleY: dark ? 0 : 1, opacity: dark ? 0 : 1 }}
+              transition={reduced ? { duration: 0 } : { duration: 0.3, delay: dark ? 0 : 0.14 }}
+              className="absolute left-1/2 top-0 h-[3px] w-[1.5px] origin-top -translate-x-1/2 rounded-full bg-amber-300"
+            />
+          </span>
+        ))}
+
+        {/* One circle for both bodies. A filled inset ring is the sun; an
+            offset one leaves exactly the crescent of a moon, so the two are
+            the same property and the shape can actually animate between them
+            rather than cross-fading two icons. */}
         <motion.span
-          key={`k${presses}`}
-          animate={opening ? { scale: [1, 0.82, 1.06, 1] } : undefined}
-          transition={{ duration: 0.46, ease: "easeOut" }}
-          className="grid size-full place-items-center"
-        >
-          <motion.span
-            key={dark ? "moon" : "sun"}
-            initial={reduced ? false : { rotate: -110, scale: 0.4, opacity: 0 }}
-            animate={{ rotate: 0, scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 420, damping: 22 }}
-            className="grid place-items-center"
-          >
-            {dark
-              ? <Moon className="size-3.5 text-primary" />
-              : <Sun className="size-3.5 text-primary" />}
-          </motion.span>
-        </motion.span>
+          animate={{
+            boxShadow: dark
+              ? "inset -5px -2px 0 0 #e2e8f0, 0 0 7px 0 rgba(226,232,240,0.45)"
+              : "inset 0 0 0 9px #fbbf24, 0 0 8px 0 rgba(251,191,36,0.65)",
+            rotate: dark ? -22 : 0,
+          }}
+          transition={ease}
+          className="size-[18px] rounded-full"
+        />
       </motion.span>
     </button>
   );
