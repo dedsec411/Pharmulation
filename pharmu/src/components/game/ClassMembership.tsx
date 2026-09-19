@@ -119,36 +119,27 @@ export function ClassMembership({ userId }: { userId?: string }) {
         </button>
       </form>
 
-      {/* Always here, not only after a code is refused. A live session is the
-          other thing a lecturer reads a six-character code out for, and this
-          is where a student holding one comes looking - the join page had no
-          link to it anywhere, so the only way in was typing the address. */}
-      <p
-        role={rejected ? "status" : undefined}
-        className={`mt-3 rounded-xl px-3 py-2.5 text-sm ${
-          rejected
-            ? "border border-primary/30 bg-primary/10 text-foreground/90"
-            : "text-muted-foreground"
-        }`}
-      >
-        <Radio className="mr-1.5 inline size-4 align-text-bottom text-primary" aria-hidden="true" />
-        {rejected ? (
-          <>
-            Was <span className="font-mono font-bold tracking-[0.12em]">{rejected}</span> read out for a
-            live session? Those use a separate code.{" "}
-          </>
-        ) : (
-          <>Given a code for a live session? Those are separate from class codes.{" "}</>
-        )}
-        <Link
-          to="/live"
-          search={rejected ? { code: rejected } : {}}
-          className="font-semibold text-primary underline underline-offset-2"
+      {/* Only after a code is refused. The standing offer is the live session
+          card beside this one; what this adds is the code already typed, so a
+          session code entered in the wrong box is not typed out twice. */}
+      {rejected && (
+        <p
+          role="status"
+          className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-sm text-foreground/90"
         >
-          {rejected ? "Join the live session instead" : "Join a live session"}
-        </Link>
-        .
-      </p>
+          <Radio className="mr-1.5 inline size-4 align-text-bottom text-primary" aria-hidden="true" />
+          Was <span className="font-mono font-bold tracking-[0.12em]">{rejected}</span> read out for a
+          live session? Those use a separate code.{" "}
+          <Link
+            to="/live"
+            search={{ code: rejected }}
+            className="font-semibold text-primary underline underline-offset-2"
+          >
+            Join the live session instead
+          </Link>
+          .
+        </p>
+      )}
     </div>
   );
 }

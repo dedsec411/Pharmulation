@@ -8,6 +8,7 @@ import {
 import { Navbar } from "@/components/Navbar";
 import { CountUp } from "@/components/CountUp";
 import { ClassMembership } from "@/components/game/ClassMembership";
+import { LiveSessionJoin } from "@/components/game/LiveSessionJoin";
 import { AssignedWork } from "@/components/game/AssignedWork";
 import { useAuthStore } from "@/lib/auth-store";
 import { useStudentWork } from "@/lib/educator/student-work";
@@ -240,6 +241,11 @@ function ClassPage() {
               </section>
             )}
 
+            {/* Not inside the collapsed block below: a session code is read
+                out while everyone is sitting there, so it cannot be behind a
+                disclosure that has to be found first. */}
+            <LiveSessionJoin />
+
             <details className="glass-card group p-5">
               <summary className="cursor-pointer list-none text-sm font-semibold text-muted-foreground transition hover:text-foreground max-sm:flex max-sm:min-h-11 max-sm:items-center">
                 In another class too? Enter its code
@@ -294,8 +300,11 @@ function NotEnrolled({ userId }: { userId?: string }) {
         </ul>
       </div>
 
-      <div className="p-6 sm:p-8">
+      <div className="space-y-4 p-6 sm:p-8">
         <ClassMembership userId={userId} />
+        {/* A student with no class can still be sitting in a live session -
+            it needs no enrolment, only the code on the screen. */}
+        <LiveSessionJoin />
       </div>
     </motion.div>
   );
