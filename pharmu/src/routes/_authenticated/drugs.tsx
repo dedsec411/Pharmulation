@@ -212,28 +212,20 @@ function DrugsPage() {
                     // card's box on each render, and with hundreds on screen
                     // that pass is felt on every keystroke in the search field.
                     //
-                    // A div rather than a button because it holds the save chip,
-                    // which is a real button: nesting them is invalid HTML and
-                    // React reported it on every load. The swap used to cost 8
-                    // to 36px of vertical movement per card, because the grid
-                    // stretches every card to the tallest in its row and a
-                    // <button> centres its content in that slack while a div
-                    // starts at the top - hence flex-col justify-center, which
-                    // reproduces the centring exactly. Measured at 640 to 1440.
+                    // The card is a plain div holding two real buttons: the
+                    // save chip, and the drug name, whose ::after covers the whole
+                    // card so anywhere on it still opens the drug. One control per
+                    // action, rather than a control inside a control - the card
+                    // used to be the button, which put the chip inside it.
+                    //
+                    // flex-col justify-center stays. The grid stretches every card
+                    // to the tallest in its row, and a <button> centres its content
+                    // in that slack while a div starts at the top; this reproduces
+                    // the centring the card had when it was a button. Measured at
+                    // 640 to 1440.
                     key={d.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelected(d)}
-                    // Only when the card itself has focus. keydown bubbles, so
-                    // without this a learner tabbing to the save chip and pressing
-                    // Enter would bookmark the drug AND open its panel: the chip
-                    // stops propagation for click, which is a different event.
-                    onKeyDown={(e) => {
-                      if (e.target !== e.currentTarget) return;
-                      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(d); }
-                    }}
                     whileHover={{ y: -2 }}
-                    className="glass-card p-5 text-left hover:border-primary/40 transition relative flex flex-col justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
+                    className="glass-card p-5 text-left hover:border-primary/40 transition relative flex flex-col justify-center">
                     {(
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleBookmark.mutate(d); }}
@@ -242,7 +234,7 @@ function DrugsPage() {
                         aria-pressed={bookmarked}
                         /* 27px and 10px on a phone, sixty of them to a page.
                            The chip keeps its size; the finger gets the rest. */
-                        className={`absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition max-sm:text-[11px] max-sm:after:absolute max-sm:after:-inset-x-2 max-sm:after:-inset-y-2.5 max-sm:after:content-[''] ${
+                        className={`absolute top-4 right-4 z-10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition max-sm:text-[11px] max-sm:after:absolute max-sm:after:-inset-x-2 max-sm:after:-inset-y-2.5 max-sm:after:content-[''] ${
                           bookmarked
                             ? "bg-rose-500/20 text-rose-400"
                             : "bg-foreground/5 text-muted-foreground hover:bg-rose-500/15 hover:text-rose-400"
@@ -251,7 +243,11 @@ function DrugsPage() {
                         {bookmarked ? "Saved" : "Save"}
                       </button>
                     )}
-                    <div className="font-bold pr-20">{d.name}</div>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(d)}
+                      className="font-bold pr-20 text-left after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                    >{d.name}</button>
                     <div className="text-xs text-muted-foreground">{d.generic_name}</div>
                     <div className="mt-3 flex gap-2 flex-wrap">
                       {d.drug_class && (
