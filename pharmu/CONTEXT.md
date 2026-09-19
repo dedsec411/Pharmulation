@@ -813,6 +813,16 @@ labels promise. Do not reintroduce unverifiable claims, and re-count rather
 than assume when the catalogue changes.
 
 **Open items:**
+- **Two migrations are written but NOT applied.**
+  `20260913120000_live_sessions.sql` was never run: on 2026-09-19 the REST API
+  still answered PGRST205 for `live_sessions` and `live_session_players`, so
+  live cohort sessions cannot work against the live database.
+  `20260919120000_collapse_duplicate_drugs_and_shelf_descriptors.sql` collapses
+  seven duplicated medicines and removes six brand rows that are shelf
+  descriptions rather than brands. It moves bookmarks and brands onto the
+  surviving row first, because `drug_bookmarks.drug_ref` carries no foreign key
+  and nothing would have cascaded. Apply in timestamp order, by hand, after a
+  backup, and run the verification queries at the bottom of each file
 - `PRESCRIPTOAI_API_KEY` must be set in the Vercel project or the scanner
   reports itself unconfigured
 - `SITE_URL` in `src/lib/site.ts` is `https://pharmulation.vercel.app`; if a
