@@ -103,7 +103,13 @@ DELETE FROM public.drug_bookmarks b
 USING dup_drug d
 WHERE b.drug_ref = d.loser_id::text;
 
--- Same for brands: move the ones the survivor does not already carry.
+-- Same for brands: move the ones the survivor does not already carry. The
+-- guard names the same three columns as the UNIQUE constraint it exists to
+-- protect - (drug_id, brand, market) - because a brand is per market and the
+-- table was built that way deliberately: the same molecule is Lasix in one
+-- market and something else locally. Testing the brand alone treats the
+-- survivor's Claforan/US as already covering the loser's Claforan/PK, and the
+-- DELETE below then drops a row that is genuinely different.
 UPDATE public.drug_brands b
 SET drug_id = d.keeper_id
 FROM dup_drug d
@@ -113,6 +119,7 @@ WHERE b.drug_id = d.loser_id
     FROM public.drug_brands x
     WHERE x.drug_id = d.keeper_id
       AND lower(btrim(x.brand)) = lower(btrim(b.brand))
+      AND lower(btrim(x.market)) = lower(btrim(b.market))
   );
 
 DELETE FROM public.drug_brands b
