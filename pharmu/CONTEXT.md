@@ -792,6 +792,13 @@ widths found:
   "catalog-ibuprofen"` instead - on a real database, not a test one. Always
   cast the uuid to text. Both failures were reproduced against Postgres before
   `20260919120000` was corrected.
+- **A `position` class passed in from outside loses to the one already on
+  the component.** `ThemeToggle` carries `relative`, and Tailwind generates
+  `relative` after `fixed`, so both being single classes the later rule wins
+  however the class string is ordered. Handing it `fixed bottom-5 right-5`
+  put the switch at [-20, 920] in a 390x844 viewport - off screen, while still
+  passing a naive "is it visible" check. Position such a component from a
+  wrapper, and when probing, require the rect to be inside the viewport.
 - **Count the distinct thing the label names, not the rows.** `drugs` holds 896
   rows but 881 distinct medicines once one molecule under two spellings is
   folded; `drug_brands` holds 1,286 rows under 1,212 brand names. The landing

@@ -129,7 +129,7 @@ function EducatorShell() {
             >
               Student view
             </Link>
-            <ThemeToggle className="ml-2" />
+            <ThemeToggle slot="desktop" className="ml-2" />
           </nav>
 
           <ShellMenu
@@ -154,7 +154,7 @@ function EducatorShell() {
                 </Link>
                 <div className="flex min-h-12 items-center justify-between gap-3 px-3 text-sm font-semibold text-foreground/90">
                   <span>Theme</span>
-                  <ThemeToggle />
+                  <ThemeToggle slot="menu" />
                 </div>
               </>
             )}

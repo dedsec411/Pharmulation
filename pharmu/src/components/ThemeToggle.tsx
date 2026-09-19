@@ -14,8 +14,26 @@ import { useThemeStore } from "@/lib/theme-store";
  *
  * role="switch" with aria-checked, so it is a switch to a screen reader
  * whatever it looks like.
+ *
+ * `slot` says WHEN this copy is actually on screen, which is what lets the
+ * floating fallback in the root layout know whether it is needed:
+ *
+ *   always   - visible at every width (a landing page corner, the case header)
+ *   desktop  - inside a `hidden md:flex` nav, so absent on a phone
+ *   menu     - inside a menu that is shut until someone opens it
+ *   floating - the fallback itself
+ *
+ * styles.css stands the fallback down only against a switch that is really
+ * showing. Marking "desktop" as though it counted everywhere is what left a
+ * phone with no switch at all on nav-bar screens.
  */
-export function ThemeToggle({ className = "" }: { className?: string }) {
+export function ThemeToggle({
+  className = "",
+  slot = "always",
+}: {
+  className?: string;
+  slot?: "always" | "desktop" | "menu" | "floating";
+}) {
   const theme = useThemeStore((s) => s.theme);
   const toggle = useThemeStore((s) => s.toggle);
   const dark = theme === "dark";
@@ -24,6 +42,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       type="button"
       role="switch"
+      data-theme-slot={slot}
       aria-checked={!dark}
       aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
       title={dark ? "Switch to light theme" : "Switch to dark theme"}

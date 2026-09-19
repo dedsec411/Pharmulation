@@ -470,6 +470,35 @@
   }
 }
 
+/*
+ * One theme switch on screen, never two.
+ *
+ * The switch used to live only in chrome that a screen had to opt into - the
+ * nav bar, and nothing else - so the four game modes had none at all: a case
+ * in play is where a learner spends most of their time, and for all of it the
+ * theme was stuck. The root layout now parks a floating one in the corner and
+ * this stands it down wherever a screen already shows one of its own.
+ *
+ * Deliberately a CSS relationship rather than a list of routes in JS: a screen
+ * added later is covered whether or not anyone remembers it exists, and the
+ * fallback disappears on its own the moment that screen grows a nav bar.
+ */
+body:has([data-theme-slot="always"]) [data-theme-slot="floating"] {
+  display: none;
+}
+
+/*
+ * The nav bar's own switch is `hidden md:block`, and the other copy sits in a
+ * menu that is shut. So on a phone a nav-bar screen shows no switch at all,
+ * and treating "desktop" as coverage everywhere is what left one there. Below
+ * md the fallback stays.
+ */
+@media (min-width: 768px) {
+  body:has([data-theme-slot="desktop"]) [data-theme-slot="floating"] {
+    display: none;
+  }
+}
+
 @utility glass {
   background: var(--glass-fill);
   backdrop-filter: blur(16px);

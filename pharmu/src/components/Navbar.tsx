@@ -144,7 +144,7 @@ export function Navbar() {
           {/* Below md the theme switch and the account button would be two
               small controls side by side; both move into the phone menu. */}
           <div data-tour="theme-toggle" className="hidden md:block">
-            <ThemeToggle />
+            <ThemeToggle slot="desktop" />
           </div>
 
           <div ref={account} className="relative hidden md:block">
@@ -212,7 +212,7 @@ export function Navbar() {
                     switch needs its word beside it to read as a setting. */}
                 <div className="flex min-h-12 items-center justify-between gap-3 px-3 text-sm font-semibold text-foreground/90">
                   <span>Theme</span>
-                  <ThemeToggle />
+                  <ThemeToggle slot="menu" />
                 </div>
                 <button type="button" onClick={() => { close(); void signOut(); }} className={shellRowClass}>
                   <LogOut className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" /> Sign out

@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { TutorialBot } from "@/components/TutorialBot";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useInitAuth } from "@/lib/use-init-auth";
 import { THEME_BOOT_SCRIPT, useThemeStore, useThemeSync } from "@/lib/theme-store";
 import { MotionConfig } from "framer-motion";
@@ -179,6 +180,23 @@ function RootComponent() {
           <Outlet />
         </PageTransition>
         <TutorialBot />
+        {/* The theme switch of last resort. Most screens carry one in their
+            own chrome - the nav bar, the case header - and styles.css hides
+            this one whenever they do, so a screen that has neither (a mode
+            being chosen, a feedback screen, anything added later) is still
+            never a dead end for someone who needs the light theme.
+            Bottom-right: Dr. Hakim owns bottom-left. */}
+        {/* Positioned by this wrapper, not by a class passed to the switch:
+            the switch is already `relative`, and `relative` is generated after
+            `fixed` in Tailwind's sheet, so a `fixed` handed to it loses the tie
+            and the control lands at the foot of the document. Measured at
+            [-20, 920] in a 390x844 viewport before this wrapper existed. */}
+        <div data-theme-slot="floating" className="fixed bottom-5 right-5 z-40 print:hidden">
+          <ThemeToggle
+            slot="floating"
+            className="border-border bg-background/85 shadow-[0_8px_30px_-8px_rgb(0_0_0/0.45)] backdrop-blur"
+          />
+        </div>
         {/* Page views and which modes get played, so there is something better
             than a guess about what to build next. Deliberately this one rather
             than a tag manager: it sets no cookies and builds no profile of a

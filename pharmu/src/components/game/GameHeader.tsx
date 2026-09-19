@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Activity, Trophy, Zap, ArrowLeft, Pause, Play, AlertTriangle, Lightbulb } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSittingLock } from "@/lib/educator/assessment";
 
 interface GameHeaderProps {
@@ -179,6 +180,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-2">
+          {/* A case in play has no nav bar, so without this the theme could
+              not be changed for the length of a case - which is most of the
+              time anyone spends in the app. */}
+          <ThemeToggle />
+
           {!hideScore && (
             <div className="flex items-center rounded-lg border border-border/40 bg-muted/60 px-2.5 py-1.5 text-sm font-medium sm:px-3">
               <Trophy className="mr-1.5 h-4 w-4 shrink-0 text-amber-500" />
