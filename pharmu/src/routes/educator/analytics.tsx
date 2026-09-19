@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BarChart3, AlertTriangle } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import {
-  useAllMyStudents, useClassRoster, useCohortScores, useMyClasses,
+  useAllMyStudents, useCohortScores, useMyClasses, useStudentNames,
 } from "@/lib/educator/queries";
 import { useDrugIndex } from "@/lib/game/useWeaknessMap";
 import { buildWeaknessMap } from "@/lib/game/weakness";
@@ -34,7 +34,9 @@ function AnalyticsPage() {
   const { data: allStudents = [] } = useAllMyStudents(selected);
   const { data: scores = [] } = useCohortScores(allStudents);
   const { data: drugIndex = {} } = useDrugIndex();
-  const { data: roster = [] } = useClassRoster(classId || undefined);
+  // Keyed to the students actually in view, so the names are there whether
+  // one class is selected or all of them are.
+  const { data: names = {} } = useStudentNames(allStudents);
 
   const map = useMemo(
     () => (scores.length ? buildWeaknessMap(scores, drugIndex) : null),
@@ -81,10 +83,10 @@ function AnalyticsPage() {
         id,
         cases: v.cases,
         accuracy: v.accuracy / v.cases,
-        name: roster.find((r) => r.student_id === id)?.full_name ?? null,
+        name: names[id] ?? null,
       }))
       .sort((a, b) => a.accuracy - b.accuracy);
-  }, [scores, roster]);
+  }, [scores, names]);
 
   const cohortAccuracy = scores.length
     ? scores.reduce((sum, s) => sum + Number(s.accuracy), 0) / scores.length
@@ -166,9 +168,7 @@ function AnalyticsPage() {
             <section className="glass-card p-6">
               <h2 className="font-bold">Who needs attention</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {classId
-                  ? "Lowest mean accuracy first."
-                  : "Lowest mean accuracy first. Choose a class above to see names."}
+                Lowest mean accuracy first.
               </p>
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[360px] text-sm">
@@ -183,9 +183,10 @@ function AnalyticsPage() {
                     {standings.slice(0, 12).map((s, i) => (
                       <tr key={s.id} className="border-b border-border/20 last:border-0">
                         <td className="py-2.5 font-semibold">
-                          {/* Names come from profiles, which are readable only
-                              for a selected class roster. Across all classes
-                              the row is still shown, anonymised. */}
+                          {/* The numbered fallback is for a student whose
+                              profile carries no name, which is rare. It used
+                              to be every student unless a class was picked,
+                              because the name query needed a class id. */}
                           {s.name ?? `Student ${i + 1}`}
                         </td>
                         <td className="py-2.5 text-right tabular-nums">{s.cases}</td>

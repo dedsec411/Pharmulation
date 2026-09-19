@@ -186,6 +186,42 @@ export function useAllMyStudents(classes: ClassRow[]) {
 }
 
 /**
+ * Names for a set of students, whichever class each one is in.
+ *
+ * `useClassRoster` needs a class id, so anything looking at more than one
+ * class at once had no names and fell back to "Student 1", "Student 2" - which
+ * read as a privacy rule and was really just a query that never ran.
+ *
+ * Nothing is being widened here. `profiles_select_educator` is built on
+ * `teaches_student`, which asks whether this educator teaches the student in
+ * ANY class they own, not in one chosen class - so these names were always
+ * readable, and a student this educator does not teach still returns nothing
+ * whatever is asked for.
+ */
+export function useStudentNames(studentIds: string[]) {
+  const key = studentIds.slice().sort().join(",");
+  return useQuery<Record<string, string>>({
+    queryKey: ["student-names", key],
+    enabled: studentIds.length > 0,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await db().from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", studentIds);
+      if (error) throw error;
+      const rows = (data ?? []) as Array<{ user_id: string; full_name: string | null }>;
+      const names: Record<string, string> = {};
+      for (const row of rows) {
+        // A profile with a blank name is left out, so the caller's own
+        // fallback shows rather than an empty cell.
+        const name = String(row.full_name ?? "").trim();
+        if (name) names[String(row.user_id)] = name;
+      }
+      return names;
+    },
+  });
+}
+
+/**
  * Score rows for a set of students.
  *
  * Returns nothing for a student the caller does not teach, because the policy
