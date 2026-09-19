@@ -6,7 +6,7 @@ import { Loader2, Radio, Trophy, Users } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { LookalikeDrill } from "@/components/game/LookalikeDrill";
 import { useAuthStore } from "@/lib/auth-store";
-import { joinCodeProblem, normaliseJoinCode } from "@/lib/educator/codes";
+import { CODE_LENGTH, joinCodeProblem, normaliseJoinCode } from "@/lib/educator/codes";
 import { DIFFICULTY_LABEL } from "@/lib/game/shared";
 import {
   joinLiveSession, rankParticipants, reportResult,
@@ -26,14 +26,29 @@ import {
  */
 export const Route = createFileRoute("/_authenticated/live")({
   head: () => ({ meta: [{ title: "Join a live session - Pharmulation" }] }),
+  /**
+   * A code can arrive in the link.
+   *
+   * Class join codes and session codes are both six characters from the same
+   * alphabet, so a session code typed into the class box is a normal mistake.
+   * That page sends the person here with what they typed rather than making
+   * them read it off the projector a second time.
+   */
+  validateSearch: (search: Record<string, unknown>): { code?: string } => {
+    const raw = typeof search.code === "string" ? normaliseJoinCode(search.code) : "";
+    return raw ? { code: raw.slice(0, CODE_LENGTH) } : {};
+  },
   component: LiveJoinPage,
   errorComponent: ({ error }) => <div className="p-5 sm:p-8 text-destructive">{error.message}</div>,
 });
 
 function LiveJoinPage() {
   const { profile } = useAuthStore();
+  const { code: codeFromLink } = Route.useSearch();
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [code, setCode] = useState("");
+  // Prefilled but not auto-joined: arriving here is a correction of a wrong
+  // turn, so the person should see which code is about to be used.
+  const [code, setCode] = useState(codeFromLink ?? "");
   const [joining, setJoining] = useState(false);
   const [reported, setReported] = useState(false);
 

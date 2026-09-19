@@ -829,10 +829,13 @@ labels promise. Do not reintroduce unverifiable claims, and re-count rather
 than assume when the catalogue changes.
 
 **Open items:**
-- **Two migrations are written but NOT applied.**
-  `20260913120000_live_sessions.sql` was never run: on 2026-09-19 the REST API
-  still answered PGRST205 for `live_sessions` and `live_session_players`, so
-  live cohort sessions cannot work against the live database.
+- **One migration is written but NOT applied.**
+  `20260913120000_live_sessions.sql` HAS since been applied - re-checked on
+  2026-09-19, `live_sessions` and `live_participants` both answer 200 and
+  `join_live_session_by_code` answers P0001 "not signed in" rather than
+  PGRST202, which is what a missing function returns. Note the table is
+  `live_participants`; an earlier note here called it `live_session_players`,
+  which never existed.
   `20260919120000_collapse_duplicate_drugs_and_shelf_descriptors.sql` collapses
   seven duplicated medicines and removes six brand rows that are shelf
   descriptions rather than brands. It moves bookmarks and brands onto the

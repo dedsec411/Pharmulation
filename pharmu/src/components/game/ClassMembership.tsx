@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { GraduationCap, Loader2, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { joinCodeProblem, normaliseJoinCode } from "@/lib/educator/codes";
 import { redeemJoinCode, useMyEnrollments } from "@/lib/educator/join";
@@ -18,6 +19,8 @@ export function ClassMembership({ userId }: { userId?: string }) {
   const { data: classes = [] } = useMyEnrollments(userId);
   const [code, setCode] = useState("");
   const [joining, setJoining] = useState(false);
+  /** A code that matched no class, kept so it can be tried as a session code. */
+  const [rejected, setRejected] = useState<string | null>(null);
 
   const problem = joinCodeProblem(code);
 
@@ -31,19 +34,24 @@ export function ClassMembership({ userId }: { userId?: string }) {
     setJoining(false);
 
     if (!result.ok) {
+      // A session code is six characters from the same alphabet as a class
+      // code, so the two are indistinguishable to whoever was given one out
+      // loud. Keep it and offer the other door rather than just saying no.
+      setRejected(result.reason === "unknown-code" ? clean : null);
       toast.error(
         result.reason === "unknown-code"
           ? "That code did not match a class"
           : "Could not join right now",
         {
           description: result.reason === "unknown-code"
-            ? "Ask your lecturer for the current code - it may have been changed."
+            ? "If it was for a live session, use the link below. Otherwise ask your lecturer for the current code."
             : "Please try again in a moment.",
         }
       );
       return;
     }
 
+    setRejected(null);
     setCode("");
     queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
     queryClient.invalidateQueries({ queryKey: ["my-assignments"] });
@@ -110,6 +118,25 @@ export function ClassMembership({ userId }: { userId?: string }) {
           Join class
         </button>
       </form>
+
+      {rejected && (
+        <p
+          role="status"
+          className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-sm text-foreground/90"
+        >
+          <Radio className="mr-1.5 inline size-4 align-text-bottom text-primary" aria-hidden="true" />
+          Was <span className="font-mono font-bold tracking-[0.12em]">{rejected}</span> read out for a live
+          session? Those use a separate code.{" "}
+          <Link
+            to="/live"
+            search={{ code: rejected }}
+            className="font-semibold text-primary underline underline-offset-2"
+          >
+            Join the live session instead
+          </Link>
+          .
+        </p>
+      )}
     </div>
   );
 }
