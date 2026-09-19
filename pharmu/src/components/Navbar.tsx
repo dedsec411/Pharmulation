@@ -118,15 +118,24 @@ export function Navbar() {
             where the desktop links first appear, that let the page scroll 230px
             sideways with the account button off the right edge. The logo, the
             link padding and the account name each give some of it back, and
-            every lg: value is what the desktop always had. */}
-        <Link to="/dashboard" className="flex h-12 w-36 shrink-0 items-center overflow-visible rounded-2xl transition duration-300 hover:-translate-y-0.5 hover:drop-shadow-[0_16px_34px_oklch(0.74_0.14_180/0.28)] sm:h-20 sm:w-60 md:w-40 lg:w-60">
+            every lg: value is what the desktop always had.
+
+            Measured again on 2026-09-19: at 768 the link row still wanted 459px
+            and was given 437, so "Drug DB" - the only two-word label - wrapped
+            onto a second line. md:w-36 here and px-1.5 on the links give back
+            16px and 24px, which leaves 18px spare rather than the 2px that
+            trimming only the padding would have left. Deliberately no
+            whitespace-nowrap: if a future label ever outgrows the row again it
+            should wrap, which is ugly, rather than push the page sideways,
+            which is the bug this comment already describes. */}
+        <Link to="/dashboard" className="flex h-12 w-36 shrink-0 items-center overflow-visible rounded-2xl transition duration-300 hover:-translate-y-0.5 hover:drop-shadow-[0_16px_34px_oklch(0.74_0.14_180/0.28)] sm:h-20 sm:w-60 md:w-36 lg:w-60">
           <LogoVideo className="aspect-video w-full" />
         </Link>
         <div className="hidden md:flex items-center gap-0.5 lg:gap-1 text-sm">
           {[...links, { to: "/profile", label: "Profile", tour: "nav-profile" } as const].map((l) => (
             <Link key={l.to} to={l.to} data-tour={l.tour}
-              className="rounded-full border border-transparent px-2 py-2 lg:px-4 text-muted-foreground transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/10 hover:text-foreground hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]"
-              activeProps={{ className: "rounded-full border border-primary/35 bg-primary/10 px-2 py-2 lg:px-4 text-primary shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]" }}>
+              className="rounded-full border border-transparent px-1.5 py-2 lg:px-4 text-muted-foreground transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/10 hover:text-foreground hover:shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]"
+              activeProps={{ className: "rounded-full border border-primary/35 bg-primary/10 px-1.5 py-2 lg:px-4 text-primary shadow-[0_14px_34px_-22px_oklch(0.74_0.14_180/0.85)]" }}>
               {l.label}
             </Link>
           ))}
