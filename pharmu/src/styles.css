@@ -471,84 +471,94 @@
 }
 
 /*
- * The new theme is traced across the page like a rhythm strip.
+ * The new theme is cut in on a diagonal, fast.
  *
  * These pseudo-elements belong to the document, not to any component, so this
- * lives here. The old snapshot sits still underneath while the new one is
- * uncovered left to right behind a line carrying one QRS complex - the same
- * trace the case header already draws over a running case, which is where the
- * shape comes from.
+ * lives here. Both snapshots move, which is what stops it reading as a
+ * screen-wipe: the outgoing theme swells and dims as it is pushed off, while
+ * the incoming one is cut in behind a slanted edge with a QRS complex riding
+ * down it - the same trace the case header draws over a running case, here as
+ * a pulse travelling along the blade rather than as the whole show.
  *
- * THE EDGE IS HARD ON PURPOSE. The reveal this replaced faded out over its
- * last 16%, so at the end of its run the far corners of the page were still
- * only partly covered and the old theme showed through them; the moment the
- * transition ended and the snapshots were dropped, those corners snapped to
- * the new theme. That was the flash. A clip-path has no soft edge to leave
- * behind, and the sweep finishes at 118vw - past the far side even allowing
- * for the 26px the trace dips backwards - so the page is wholly covered
- * before the animation is over.
+ * 460ms, and the easing gets on with it. This replaced a 1150ms linear sweep
+ * that was accurate to a rhythm strip and far too slow to watch.
  *
- * No origin: an ECG runs left to right, which is also why the timing is
- * linear rather than eased. A trace that slowed down at the end would be a
- * trace of something going wrong.
+ * THE EDGE IS HARD ON PURPOSE. An earlier reveal faded out over its last 16%,
+ * so its fringe had not cleared the screen when the animation ended and the
+ * far corners snapped to the new theme the instant the snapshots were
+ * dropped - a visible flash. A clip-path leaves no fringe. The sweep ends at
+ * 132vw, and the last point to arrive is the bottom of the blade at
+ * 132vw - 14vw - 30px: 1481px against a 1280px viewport, 395px against a
+ * 360px phone. Covered at every width with room to spare, before the
+ * animation is over.
  */
 ::view-transition-old(root) {
-  animation: none;
+  /* Pushed back rather than left sitting still, so the two layers read as
+     depth. Scaled UP only: scaling a snapshot down would uncover its own
+     edges. */
+  animation: theme-recede 460ms cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 0;
 }
 
 ::view-transition-new(root) {
-  animation: theme-trace 1150ms linear;
+  animation: theme-cut 460ms cubic-bezier(0.5, 0, 0.2, 1);
   z-index: 1;
 }
 
-@keyframes theme-trace {
+@keyframes theme-recede {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.08);
+    opacity: 0.72;
+  }
+}
+
+@keyframes theme-cut {
   from {
     clip-path: polygon(
-      0% 0%,
-      -8vw 0%,
-      -8vw 28%,
-      calc(-8vw + 7px) 31%,
-      -8vw 34%,
-      calc(-8vw + -18px) 38%,
-      calc(-8vw + 46px) 42%,
-      calc(-8vw + -26px) 46%,
-      calc(-8vw + 9px) 50%,
-      -8vw 55%,
-      calc(-8vw + 16px) 63%,
-      -8vw 67%,
-      -8vw 100%,
-      0% 100%
+      calc(-34vw + 14vw) 0%,
+      calc(-34vw + 6.72vw) 26%,
+      calc(-34vw + 5.6vw + 9px) 30%,
+      calc(-34vw + 4.48vw) 34%,
+      calc(-34vw + 3.36vw - 20px) 38%,
+      calc(-34vw + 2.24vw + 54px) 42%,
+      calc(-34vw + 1.12vw - 30px) 46%,
+      calc(-34vw + 0vw + 11px) 50%,
+      calc(-34vw - 1.4vw) 55%,
+      calc(-34vw - 14vw) 100%,
+      -60vw 100%,
+      -60vw 0%
     );
   }
   to {
     clip-path: polygon(
-      0% 0%,
-      118vw 0%,
-      118vw 28%,
-      calc(118vw + 7px) 31%,
-      118vw 34%,
-      calc(118vw + -18px) 38%,
-      calc(118vw + 46px) 42%,
-      calc(118vw + -26px) 46%,
-      calc(118vw + 9px) 50%,
-      118vw 55%,
-      calc(118vw + 16px) 63%,
-      118vw 67%,
-      118vw 100%,
-      0% 100%
+      calc(132vw + 14vw) 0%,
+      calc(132vw + 6.72vw) 26%,
+      calc(132vw + 5.6vw + 9px) 30%,
+      calc(132vw + 4.48vw) 34%,
+      calc(132vw + 3.36vw - 20px) 38%,
+      calc(132vw + 2.24vw + 54px) 42%,
+      calc(132vw + 1.12vw - 30px) 46%,
+      calc(132vw + 0vw + 11px) 50%,
+      calc(132vw - 1.4vw) 55%,
+      calc(132vw - 14vw) 100%,
+      -60vw 100%,
+      -60vw 0%
     );
   }
 }
 
 /*
- * The trace glows, but only where there is power to spare: this is a filter
+ * The blade glows, but only where there is power to spare: this is a filter
  * over a full-viewport snapshot repainted every frame, which is exactly the
  * kind of work a low-end phone cannot afford. The shape reads fine without it.
  */
 @media (min-width: 768px) {
   ::view-transition-new(root) {
-    filter: drop-shadow(0 0 7px oklch(0.74 0.14 180 / 0.55));
+    filter: drop-shadow(-3px 0 12px oklch(0.74 0.14 180 / 0.8));
   }
 }
 
