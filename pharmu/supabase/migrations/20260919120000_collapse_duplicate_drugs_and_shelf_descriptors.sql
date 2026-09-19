@@ -163,10 +163,17 @@ COMMIT;
 --   SELECT lower(btrim(name)) AS name, count(*)
 --   FROM public.drugs GROUP BY 1 HAVING count(*) > 1;
 --
+--   -- Scoped to the same medicines as the DELETE above, deliberately. An
+--   -- unscoped check calls the migration broken the day someone adds a real
+--   -- brand spelled like one of these to some other drug. Today all six rows
+--   -- carrying these texts are the six this migration removes, checked live.
 --   SELECT b.brand, d.name FROM public.drug_brands b JOIN public.drugs d
---   ON d.id = b.drug_id WHERE lower(btrim(b.brand)) IN
---   ('pain reliever','pain relief','pain relief extra strength','antifungal',
---    'aloe vera gel','sunburn relief gel');
+--   ON d.id = b.drug_id WHERE
+--      (lower(btrim(d.name)) = 'acetaminophen'
+--       AND lower(btrim(b.brand)) IN ('pain reliever','pain relief','pain relief extra strength'))
+--   OR (lower(btrim(d.name)) = 'clotrimazole' AND lower(btrim(b.brand)) = 'antifungal')
+--   OR (lower(btrim(d.name)) = 'lidocaine hcl'
+--       AND lower(btrim(b.brand)) IN ('aloe vera gel','sunburn relief gel'));
 --
 --   -- The regex keeps the generated "catalog-..." bookmarks out of the count:
 --   -- those legitimately name no row in `drugs` and always will not.
