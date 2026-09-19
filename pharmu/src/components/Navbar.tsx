@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuthStore } from "@/lib/auth-store";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  GraduationCap, Layers, LayoutDashboard, LogOut, Pill, Settings, ShieldCheck, Trophy, User, UserRound,
+  GraduationCap, Layers, LayoutDashboard, LogOut, Pill, Radio, Settings, ShieldCheck, Trophy, User, UserRound,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -161,6 +161,14 @@ export function Navbar() {
               <Link to="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-[0_12px_28px_-22px_oklch(0.74_0.14_180/0.8)]">
                 <User className="h-4 w-4" /> Profile
               </Link>
+              {/* The only way into a live session used to be typing the
+                  address: it is in no link list, and the nav row at 768 has
+                  18px of slack, which a seventh label does not fit into. */}
+              {!isFaculty && (
+                <Link to="/live" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-[0_12px_28px_-22px_oklch(0.74_0.14_180/0.8)]">
+                  <Radio className="h-4 w-4" /> Live session
+                </Link>
+              )}
               <Link to="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition duration-300 hover:-translate-y-0.5 hover:bg-primary/10 hover:text-primary hover:shadow-[0_12px_28px_-22px_oklch(0.74_0.14_180/0.8)]">
                 ⚙️ Settings
               </Link>
@@ -200,6 +208,13 @@ export function Navbar() {
             items={phoneItems}
             footer={(close) => (
               <>
+                {/* A footer row rather than a seventh tile: the tiles are six
+                    so they fill three even rows of two. */}
+                {!isFaculty && (
+                  <Link to="/live" onClick={close} className={shellRowClass}>
+                    <Radio className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" /> Live session
+                  </Link>
+                )}
                 <Link to="/settings" onClick={close} className={shellRowClass}>
                   <Settings className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" /> Settings
                 </Link>
