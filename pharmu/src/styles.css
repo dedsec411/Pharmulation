@@ -471,104 +471,84 @@
 }
 
 /*
- * The new theme grows out of the switch like a culture across a plate.
+ * The new theme is traced across the page like a rhythm strip.
  *
- * These pseudo-elements belong to the document, not to any component, which is
- * why this lives here while ThemeToggle supplies the centre and the radius as
- * custom properties. The default cross-fade is turned off on both snapshots:
- * the old theme sits still underneath while the new one spreads over it, which
- * is what makes it read as growth rather than as a blend.
+ * These pseudo-elements belong to the document, not to any component, so this
+ * lives here. The old snapshot sits still underneath while the new one is
+ * uncovered left to right behind a line carrying one QRS complex - the same
+ * trace the case header already draws over a running case, which is where the
+ * shape comes from.
  *
- * A single circle is the fallback, and is what a browser without mask-image
- * gets. Where masks work the front is instead the union of several growing
- * shapes: a main body that is not quite round, three lobes pushing out of it
- * at different rates, and six satellites seeded ahead of the front that stay
- * invisible until it has spread far enough - each subtracts a lag from its own
- * radius, so they surface one after another and are then swallowed as the
- * body reaches them. Nothing here is random; it is the uneven radii that stop
- * the edge reading as a circle.
+ * THE EDGE IS HARD ON PURPOSE. The reveal this replaced faded out over its
+ * last 16%, so at the end of its run the far corners of the page were still
+ * only partly covered and the old theme showed through them; the moment the
+ * transition ended and the snapshots were dropped, those corners snapped to
+ * the new theme. That was the flash. A clip-path has no soft edge to leave
+ * behind, and the sweep finishes at 118vw - past the far side even allowing
+ * for the 26px the trace dips backwards - so the page is wholly covered
+ * before the animation is over.
  *
- * Every stop ends soft rather than hard, which gives the boundary the fringe
- * of something growing instead of the cut edge of a wipe.
- *
- * The radius falls back to 150vmax so that a switch which somehow starts a
- * transition without setting it still reveals the whole page rather than a
- * circle of nothing.
+ * No origin: an ECG runs left to right, which is also why the timing is
+ * linear rather than eased. A trace that slowed down at the end would be a
+ * trace of something going wrong.
  */
-@property --colony {
-  syntax: "<length>";
-  inherits: true;
-  initial-value: 0px;
-}
-
 ::view-transition-old(root) {
   animation: none;
   z-index: 0;
 }
 
 ::view-transition-new(root) {
-  animation: theme-reveal 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: theme-trace 1150ms linear;
   z-index: 1;
 }
 
-@keyframes theme-reveal {
+@keyframes theme-trace {
   from {
-    clip-path: circle(0 at var(--theme-reveal-x, 50%) var(--theme-reveal-y, 50%));
+    clip-path: polygon(
+      0% 0%,
+      -8vw 0%,
+      -8vw 28%,
+      calc(-8vw + 7px) 31%,
+      -8vw 34%,
+      calc(-8vw + -18px) 38%,
+      calc(-8vw + 46px) 42%,
+      calc(-8vw + -26px) 46%,
+      calc(-8vw + 9px) 50%,
+      -8vw 55%,
+      calc(-8vw + 16px) 63%,
+      -8vw 67%,
+      -8vw 100%,
+      0% 100%
+    );
   }
   to {
-    clip-path: circle(var(--theme-reveal-r, 150vmax) at var(--theme-reveal-x, 50%) var(--theme-reveal-y, 50%));
+    clip-path: polygon(
+      0% 0%,
+      118vw 0%,
+      118vw 28%,
+      calc(118vw + 7px) 31%,
+      118vw 34%,
+      calc(118vw + -18px) 38%,
+      calc(118vw + 46px) 42%,
+      calc(118vw + -26px) 46%,
+      calc(118vw + 9px) 50%,
+      118vw 55%,
+      calc(118vw + 16px) 63%,
+      118vw 67%,
+      118vw 100%,
+      0% 100%
+    );
   }
 }
 
-@supports (mask-image: radial-gradient(circle, #000 0%, transparent 100%)) {
+/*
+ * The trace glows, but only where there is power to spare: this is a filter
+ * over a full-viewport snapshot repainted every frame, which is exactly the
+ * kind of work a low-end phone cannot afford. The shape reads fine without it.
+ */
+@media (min-width: 768px) {
   ::view-transition-new(root) {
-    clip-path: none;
-    /* Layers union by default, which is exactly the merge wanted here. */
-    mask-repeat: no-repeat;
-    mask-size: 100% 100%;
-    mask-image:
-      radial-gradient(ellipse calc(var(--colony) * 1.06) calc(var(--colony) * 0.92)
-        at var(--theme-reveal-x, 50%) var(--theme-reveal-y, 50%),
-        #000 84%, rgba(0, 0, 0, 0.55) 95%, transparent 100%),
-      radial-gradient(circle calc(var(--colony) * 0.74)
-        at calc(var(--theme-reveal-x, 50%) + 9vw) calc(var(--theme-reveal-y, 50%) - 8vh),
-        #000 80%, rgba(0, 0, 0, 0.5) 94%, transparent 100%),
-      radial-gradient(circle calc(var(--colony) * 0.66)
-        at calc(var(--theme-reveal-x, 50%) - 11vw) calc(var(--theme-reveal-y, 50%) + 7vh),
-        #000 80%, rgba(0, 0, 0, 0.5) 94%, transparent 100%),
-      radial-gradient(circle calc(var(--colony) * 0.58)
-        at calc(var(--theme-reveal-x, 50%) + 3vw) calc(var(--theme-reveal-y, 50%) + 13vh),
-        #000 78%, rgba(0, 0, 0, 0.5) 93%, transparent 100%),
-      radial-gradient(circle max(0px, calc(var(--colony) * 0.55 - 5vmax))
-        at calc(var(--theme-reveal-x, 50%) - 26vw) calc(var(--theme-reveal-y, 50%) + 14vh),
-        #000 74%, rgba(0, 0, 0, 0.45) 92%, transparent 100%),
-      radial-gradient(circle max(0px, calc(var(--colony) * 0.5 - 9vmax))
-        at calc(var(--theme-reveal-x, 50%) - 12vw) calc(var(--theme-reveal-y, 50%) + 30vh),
-        #000 74%, rgba(0, 0, 0, 0.45) 92%, transparent 100%),
-      radial-gradient(circle max(0px, calc(var(--colony) * 0.46 - 13vmax))
-        at calc(var(--theme-reveal-x, 50%) - 38vw) calc(var(--theme-reveal-y, 50%) - 6vh),
-        #000 74%, rgba(0, 0, 0, 0.45) 92%, transparent 100%),
-      radial-gradient(circle max(0px, calc(var(--colony) * 0.44 - 17vmax))
-        at calc(var(--theme-reveal-x, 50%) + 14vw) calc(var(--theme-reveal-y, 50%) + 24vh),
-        #000 74%, rgba(0, 0, 0, 0.45) 92%, transparent 100%),
-      radial-gradient(circle max(0px, calc(var(--colony) * 0.42 - 21vmax))
-        at calc(var(--theme-reveal-x, 50%) - 20vw) calc(var(--theme-reveal-y, 50%) - 22vh),
-        #000 74%, rgba(0, 0, 0, 0.45) 92%, transparent 100%),
-      radial-gradient(circle max(0px, calc(var(--colony) * 0.4 - 25vmax))
-        at calc(var(--theme-reveal-x, 50%) + 26vw) calc(var(--theme-reveal-y, 50%) - 14vh),
-        #000 74%, rgba(0, 0, 0, 0.45) 92%, transparent 100%);
-    animation: theme-colony 1600ms cubic-bezier(0.36, 0.06, 0.28, 1);
-  }
-
-  @keyframes theme-colony {
-    from {
-      --colony: 0px;
-    }
-    to {
-      /* Past the far corner: the satellites lag, so the body alone has to
-         finish the job. */
-      --colony: calc(var(--theme-reveal-r, 150vmax) * 1.12);
-    }
+    filter: drop-shadow(0 0 7px oklch(0.74 0.14 180 / 0.55));
   }
 }
 
@@ -578,6 +558,7 @@
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation: none;
+    filter: none;
   }
 }
 

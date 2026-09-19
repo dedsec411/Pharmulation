@@ -1,6 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { flushSync } from "react-dom";
-import { useRef } from "react";
 import { applyTheme, useThemeStore, type Theme } from "@/lib/theme-store";
 
 /**
@@ -8,15 +7,16 @@ import { applyTheme, useThemeStore, type Theme } from "@/lib/theme-store";
  *
  * The capsule shape is the pharmacy object this product is named for and it
  * stays. What is inside it changed: pressing the switch runs the sky from day
- * to night, the sun's rays fold away as it becomes a crescent moon, stars come
- * up behind it, and the new theme is then wiped across the whole page in a
- * circle growing out of the button itself.
+ * to night, the sun's rays fold away as it becomes a crescent moon, and stars
+ * come up behind it. The page itself is then re-drawn under an ECG trace
+ * sweeping across it - see `src/styles.css`, which owns that entirely.
  *
- * The page wipe is the View Transitions API, which is the only way to animate
- * between two states of a document that has already re-rendered. It degrades
- * to an instant switch where the API is missing, and is skipped entirely for
- * anybody who has asked for less motion. `src/styles.css` holds the keyframes,
- * because the pseudo-elements it animates belong to the document, not here.
+ * The page reveal is the View Transitions API, which is the only way to
+ * animate between two states of a document that has already re-rendered. It
+ * degrades to an instant switch where the API is missing, and is skipped
+ * entirely for anybody who has asked for less motion. The keyframes live in
+ * the stylesheet because the pseudo-elements they animate belong to the
+ * document rather than to this component.
  *
  * role="switch" with aria-checked, so it is a switch to a screen reader
  * whatever it looks like.
@@ -54,30 +54,18 @@ type ViewTransitionDocument = Document & {
 };
 
 /**
- * Grow the new theme out of the button.
+ * Hand the change to the browser to animate, if it can.
  *
- * The circle has to reach the corner furthest from the switch or the old theme
- * is left showing in a corner, which is why the radius is the longest diagonal
- * rather than a fixed size. The custom properties go on the document element
- * because ::view-transition pseudo-elements hang off the root, not off us.
+ * The reveal itself is entirely in styles.css - it needs no origin from here,
+ * because a rhythm strip runs left to right whatever started it. All this
+ * decides is whether there is a transition at all.
  */
-function wipeFrom(origin: HTMLElement | null, change: () => void, skip: boolean) {
+function runThemeChange(change: () => void, skip: boolean) {
   const doc = document as ViewTransitionDocument;
-  if (skip || !origin || typeof doc.startViewTransition !== "function") {
+  if (skip || typeof doc.startViewTransition !== "function") {
     change();
     return;
   }
-  const box = origin.getBoundingClientRect();
-  const x = box.left + box.width / 2;
-  const y = box.top + box.height / 2;
-  const radius = Math.hypot(
-    Math.max(x, window.innerWidth - x),
-    Math.max(y, window.innerHeight - y),
-  );
-  const root = document.documentElement;
-  root.style.setProperty("--theme-reveal-x", `${Math.round(x)}px`);
-  root.style.setProperty("--theme-reveal-y", `${Math.round(y)}px`);
-  root.style.setProperty("--theme-reveal-r", `${Math.ceil(radius)}px`);
   doc.startViewTransition(change);
 }
 
@@ -92,11 +80,10 @@ export function ThemeToggle({
   const setTheme = useThemeStore((s) => s.setTheme);
   const dark = theme === "dark";
   const reduced = useReducedMotion();
-  const button = useRef<HTMLButtonElement | null>(null);
 
   function press() {
     const next: Theme = dark ? "light" : "dark";
-    wipeFrom(button.current, () => {
+    runThemeChange(() => {
       // Both, and synchronously: the attribute is what the CSS selects on and
       // has to have changed before the transition takes its second snapshot,
       // while the store is what every other component reads.
@@ -109,7 +96,6 @@ export function ThemeToggle({
 
   return (
     <button
-      ref={button}
       type="button"
       role="switch"
       data-theme-slot={slot}
